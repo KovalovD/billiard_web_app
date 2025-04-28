@@ -2,7 +2,6 @@
 
 namespace App\Core\Providers;
 
-use App\Matches\Models\MatchGame;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\ServiceProvider;

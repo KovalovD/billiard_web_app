@@ -27,7 +27,8 @@ it('calculates correct delta when weaker wins', function () {
     ]);
 
     /** @var Rating $r1 */
-    /** @var Rating $r2 */    $r1 = Rating::factory()->create(['rating' => 980]);
+    /** @var Rating $r2 */
+    $r1 = Rating::factory()->create(['rating' => 980]);
     $r2 = Rating::factory()->create(['rating' => 1080]);
 
     $result = $strategy->calculate(
