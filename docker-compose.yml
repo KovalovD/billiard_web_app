@@ -1,0 +1,45 @@
+version: "3.1"
+services:
+  www:
+    build: .docker
+    ports:
+      - "8001:80"
+    volumes:
+      - ./:/var/www
+      - ./public/:/var/www/html
+      - ./.docker/conf/xdebug.ini/:/usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
+      - ./.docker/conf/php.ini/:/usr/local/etc/php/conf.d/php.ini
+    links:
+      - db
+    networks:
+      - default
+  db:
+    image: mysql:latest
+    ports:
+      - "3306:3306"
+    command:
+      --local-infile
+    environment:
+      MYSQL_DATABASE: laravel
+      MYSQL_USER: laravel
+      MYSQL_PASSWORD: test
+      MYSQL_ROOT_PASSWORD: test
+    volumes:
+      - ./.docker/dump:/docker-entrypoint-initdb.d
+      - ./.docker/conf:/etc/mysql/conf.d
+      - persistent:/var/lib/mysql
+    networks:
+      - default
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    links:
+      - db:db
+    ports:
+      - "8000:80"
+    environment:
+      MYSQL_USER: laravel
+      MYSQL_PASSWORD: test
+      MYSQL_ROOT_PASSWORD: test
+
+volumes:
+  persistent:
