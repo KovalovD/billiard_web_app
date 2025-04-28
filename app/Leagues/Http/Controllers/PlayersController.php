@@ -51,7 +51,7 @@ readonly class PlayersController
     /**
      * Send a challenge to the player
      * @authenticated
-    */
+     */
     public function sendMatchGame(League $league, User $user, SendGameRequest $request): bool
     {
         $array = array_merge([

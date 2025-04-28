@@ -47,13 +47,14 @@ it('1) breaks tie by wins_count descending', function () {
 
     // A выигрывает один матч, B — ни одного
     MatchGame::create([
-        'league_id'         => $league->id,
-        'first_rating_id'   => $rA->id,
-        'second_rating_id'  => $rB->id,
-        'first_user_score'  => 5,
-        'second_user_score' => 3,
-        'winner_rating_id'  => $rA->id,
-        'loser_rating_id'   => $rB->id,
+        'league_id'          => $league->id,
+        'first_rating_id'    => $rA->id,
+        'second_rating_id'   => $rB->id,
+        'first_user_score'   => 5,
+        'second_user_score'  => 3,
+        'winner_rating_id'   => $rA->id,
+        'loser_rating_id'    => $rB->id,
+        'invitation_sent_at' => now(),
     ]);
 
     $this->service->rearrangePositions($league->id);
@@ -76,23 +77,25 @@ it('2) breaks tie by frame_diff descending when rating and wins_count equal', fu
     // ни у кого нет побед → wins_count = 0
     // A: проигрыш 3–5 → diff = 3 – 5 = -2
     MatchGame::create([
-        'league_id'         => $league->id,
-        'first_rating_id'   => $rA->id,
-        'second_rating_id'  => $rB->id + 100, // не B, чисто для записи
-        'first_user_score'  => 3,
-        'second_user_score' => 5,
-        'winner_rating_id'  => null,
-        'loser_rating_id'   => null,
+        'league_id'          => $league->id,
+        'first_rating_id'    => $rA->id,
+        'second_rating_id'   => $rB->id + 100, // не B, чисто для записи
+        'first_user_score'   => 3,
+        'second_user_score'  => 5,
+        'winner_rating_id'   => null,
+        'loser_rating_id'    => null,
+        'invitation_sent_at' => now(),
     ]);
     // B: проигрыш 1–5 → diff = 1 – 5 = -4
     MatchGame::create([
-        'league_id'         => $league->id,
-        'first_rating_id'   => $rB->id,
-        'second_rating_id'  => $rA->id + 100,
-        'first_user_score'  => 1,
-        'second_user_score' => 5,
-        'winner_rating_id'  => null,
-        'loser_rating_id'   => null,
+        'league_id'          => $league->id,
+        'first_rating_id'    => $rB->id,
+        'second_rating_id'   => $rA->id + 100,
+        'first_user_score'   => 1,
+        'second_user_score'  => 5,
+        'winner_rating_id'   => null,
+        'loser_rating_id'    => null,
+        'invitation_sent_at' => now(),
     ]);
 
     $this->service->rearrangePositions($league->id);
@@ -116,43 +119,47 @@ it('3) breaks tie by frames_won descending when previous metrics equal', functio
     // A: выиграл 7–5, проиграл 5–7 → frames_won = 7+5 = 12
     MatchGame::insert([
         [
-            'league_id'         => $league->id,
-            'first_rating_id'   => $rA->id,
-            'second_rating_id'  => $rB->id,
-            'first_user_score'  => 7,
-            'second_user_score' => 5,
-            'winner_rating_id'  => $rA->id,
-            'loser_rating_id'   => $rB->id,
+            'league_id'          => $league->id,
+            'first_rating_id'    => $rA->id,
+            'second_rating_id'   => $rB->id,
+            'first_user_score'   => 7,
+            'second_user_score'  => 5,
+            'winner_rating_id'   => $rA->id,
+            'loser_rating_id'    => $rB->id,
+            'invitation_sent_at' => now(),
         ],
         [
-            'league_id'         => $league->id,
-            'first_rating_id'   => $rA->id,
-            'second_rating_id'  => $rB->id,
-            'first_user_score'  => 5,
-            'second_user_score' => 7,
-            'winner_rating_id'  => $rB->id,
-            'loser_rating_id'   => $rA->id,
+            'league_id'          => $league->id,
+            'first_rating_id'    => $rA->id,
+            'second_rating_id'   => $rB->id,
+            'first_user_score'   => 5,
+            'second_user_score'  => 7,
+            'winner_rating_id'   => $rB->id,
+            'loser_rating_id'    => $rA->id,
+            'invitation_sent_at' => now(),
         ],
     ]);
     // B: выиграл 6–4, проиграл 4–6 → frames_won = 6+4 = 10
     MatchGame::insert([
         [
-            'league_id'         => $league->id,
-            'first_rating_id'   => $rB->id,
-            'second_rating_id'  => $rA->id,
-            'first_user_score'  => 6,
-            'second_user_score' => 4,
-            'winner_rating_id'  => $rB->id,
-            'loser_rating_id'   => $rA->id,
+            'league_id'          => $league->id,
+            'first_rating_id'    => $rB->id,
+            'second_rating_id'   => $rA->id,
+            'first_user_score'   => 6,
+            'second_user_score'  => 4,
+            'winner_rating_id'   => $rB->id,
+            'loser_rating_id'    => $rA->id,
+            'invitation_sent_at' => now(),
         ],
         [
-            'league_id'         => $league->id,
-            'first_rating_id'   => $rB->id,
-            'second_rating_id'  => $rA->id,
-            'first_user_score'  => 4,
-            'second_user_score' => 6,
-            'winner_rating_id'  => $rA->id,
-            'loser_rating_id'   => $rB->id,
+            'league_id'          => $league->id,
+            'first_rating_id'    => $rB->id,
+            'second_rating_id'   => $rA->id,
+            'first_user_score'   => 4,
+            'second_user_score'  => 6,
+            'winner_rating_id'   => $rA->id,
+            'loser_rating_id'    => $rB->id,
+            'invitation_sent_at' => now(),
         ],
     ]);
 
@@ -178,34 +185,37 @@ it('4) breaks tie by matches_count descending when all previous metrics equal', 
     // Два первых матча между A и B дают wins_count=1, diff=0, frames_won=10
     MatchGame::insert([
         [
-            'league_id'         => $league->id,
-            'first_rating_id'   => $rA->id,
-            'second_rating_id'  => $rB->id,
-            'first_user_score'  => 6,
-            'second_user_score' => 4,
-            'winner_rating_id'  => $rA->id,
-            'loser_rating_id'   => $rB->id,
+            'league_id'          => $league->id,
+            'first_rating_id'    => $rA->id,
+            'second_rating_id'   => $rB->id,
+            'first_user_score'   => 6,
+            'second_user_score'  => 4,
+            'winner_rating_id'   => $rA->id,
+            'loser_rating_id'    => $rB->id,
+            'invitation_sent_at' => now(),
         ],
         [
-            'league_id'         => $league->id,
-            'first_rating_id'   => $rB->id,
-            'second_rating_id'  => $rA->id,
-            'first_user_score'  => 6,
-            'second_user_score' => 4,
-            'winner_rating_id'  => $rB->id,
-            'loser_rating_id'   => $rA->id,
+            'league_id'          => $league->id,
+            'first_rating_id'    => $rB->id,
+            'second_rating_id'   => $rA->id,
+            'first_user_score'   => 6,
+            'second_user_score'  => 4,
+            'winner_rating_id'   => $rB->id,
+            'loser_rating_id'    => $rA->id,
+            'invitation_sent_at' => now(),
         ],
     ]);
     // Дополнительный "пустой" матч C→B, нулевые очки и без победителя,
     // чтобы увеличить matches_count только для B
     MatchGame::create([
-        'league_id'         => $league->id,
-        'first_rating_id'   => $rC->id,
-        'second_rating_id'  => $rB->id,
-        'first_user_score'  => 0,
-        'second_user_score' => 0,
-        'winner_rating_id'  => null,
-        'loser_rating_id'   => null,
+        'league_id'          => $league->id,
+        'first_rating_id'    => $rC->id,
+        'second_rating_id'   => $rB->id,
+        'first_user_score'   => 0,
+        'second_user_score'  => 0,
+        'winner_rating_id'   => null,
+        'loser_rating_id'    => null,
+        'invitation_sent_at' => now(),
     ]);
 
     $this->service->rearrangePositions($league->id);

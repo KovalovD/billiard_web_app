@@ -1,9 +1,12 @@
 <?php
 
+use App\Core\Models\Game;
 use App\Core\Models\User;
 use App\Leagues\Models\League;
 use App\Leagues\Models\Rating;
 use App\Leagues\Services\RatingService;
+use App\Matches\Models\MatchGame;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -32,6 +35,7 @@ it('updates ratings and reorders positions for 5 users with strict positions', f
     [$u1, $u2, $u3, $u4, $u5] = $users;
 
     // Уникальные рейтинги
+    /** @var Collection<MatchGame> $ratings */
     $ratings = collect([980, 1000, 1080, 990, 1060])
         ->map(fn($rating, $i) => Rating::create([
             'league_id' => $league->id,
@@ -42,9 +46,21 @@ it('updates ratings and reorders positions for 5 users with strict positions', f
         ]))
     ;
 
+    $matchGame = MatchGame::create([
+        'game_id'            => Game::factory()->create()->id,
+        'league_id'          => $league->id,
+        'first_rating_id'    => $ratings[0]->id,
+        'second_rating_id'   => $ratings[2]->id,
+        'first_user_score'   => 5,
+        'second_user_score'  => 3,
+        'winner_rating_id'   => $ratings[0]->id,
+        'loser_rating_id'    => $ratings[2]->id,
+        'invitation_sent_at' => now(),
+    ]);
+
     // u1 (980) выигрывает у u3 (1080) → Δ = 100 → слабый победил
     // по правилам: +30/-30
-    $service->updateRatings($league, [$ratings[0], $ratings[2]], $u1->id);
+    $service->updateRatings($matchGame, $u1->id);
 
     // Обновляем модели
     $ratings = $ratings->map(fn($r) => $r->refresh());
