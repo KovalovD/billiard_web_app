@@ -1,0 +1,481 @@
+name: Leagues
+description: ''
+endpoints:
+  -
+    httpMethods:
+      - GET
+    uri: api/leagues
+    metadata:
+      groupName: Leagues
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get a list of leagues'
+      description: ''
+      authenticated: false
+      custom: []
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 200
+        content: '[{"id":1,"name":"B2B Pool League","picture":null,"details":null,"has_rating":true,"started_at":null,"finished_at":null,"start_rating":1000,"rating_change_for_winners_rule":[{"weak":25,"range":[0,50],"strong":25},{"weak":30,"range":[51,100],"strong":20},{"weak":35,"range":[101,200],"strong":15},{"weak":40,"range":[201,1000000],"strong":10}],"rating_change_for_losers_rule":[{"weak":-25,"range":[0,50],"strong":-25},{"weak":-30,"range":[51,100],"strong":-20},{"weak":-35,"range":[101,200],"strong":-15},{"weak":-40,"range":[201,1000000],"strong":-10}],"created_at":null,"updated_at":null,"matches_count":2,"game":"\u041f\u0443\u043b 8"},{"id":2,"name":"B2B Killer Pool League","picture":null,"details":null,"has_rating":true,"started_at":null,"finished_at":null,"start_rating":1000,"rating_change_for_winners_rule":[{"weak":25,"range":[0,50],"strong":25},{"weak":30,"range":[51,100],"strong":20},{"weak":35,"range":[101,200],"strong":15},{"weak":40,"range":[201,1000000],"strong":10}],"rating_change_for_losers_rule":[{"weak":-25,"range":[0,50],"strong":-25},{"weak":-30,"range":[51,100],"strong":-20},{"weak":-35,"range":[101,200],"strong":-15},{"weak":-40,"range":[201,1000000],"strong":-10}],"created_at":null,"updated_at":null,"matches_count":0,"game":"Killer pool"}]'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/leagues/{id}'
+    metadata:
+      groupName: Leagues
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get league by id'
+      description: ''
+      authenticated: false
+      custom: []
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the league.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 200
+        content: '{"id":1,"name":"B2B Pool League","picture":null,"details":null,"has_rating":true,"started_at":null,"finished_at":null,"start_rating":1000,"rating_change_for_winners_rule":[{"weak":25,"range":[0,50],"strong":25},{"weak":30,"range":[51,100],"strong":20},{"weak":35,"range":[101,200],"strong":15},{"weak":40,"range":[201,1000000],"strong":10}],"rating_change_for_losers_rule":[{"weak":-25,"range":[0,50],"strong":-25},{"weak":-30,"range":[51,100],"strong":-20},{"weak":-35,"range":[101,200],"strong":-15},{"weak":-40,"range":[201,1000000],"strong":-10}],"created_at":null,"updated_at":null,"matches_count":2,"game":"\u041f\u0443\u043b 8"}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - POST
+    uri: api/leagues
+    metadata:
+      groupName: Leagues
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Create a new league'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer 123456'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      name:
+        name: name
+        description: ''
+        required: true
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      game_id:
+        name: game_id
+        description: 'The <code>id</code> of an existing record in the games table.'
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      picture:
+        name: picture
+        description: ''
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      details:
+        name: details
+        description: ''
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      has_rating:
+        name: has_rating
+        description: ''
+        required: false
+        example: false
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      started_at:
+        name: started_at
+        description: 'Must be a valid date.'
+        required: false
+        example: '2025-04-28T13:46:17'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      finished_at:
+        name: finished_at
+        description: 'Must be a valid date.'
+        required: false
+        example: '2025-04-28T13:46:17'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      start_rating:
+        name: start_rating
+        description: ''
+        required: true
+        example: 16
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      rating_change_for_winners_rule:
+        name: rating_change_for_winners_rule
+        description: ''
+        required: false
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      rating_change_for_losers_rule:
+        name: rating_change_for_losers_rule
+        description: ''
+        required: false
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+    cleanBodyParameters:
+      name: architecto
+      has_rating: false
+      started_at: '2025-04-28T13:46:17'
+      finished_at: '2025-04-28T13:46:17'
+      start_rating: 16
+      rating_change_for_winners_rule: architecto
+      rating_change_for_losers_rule: architecto
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 123456'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - PUT
+      - PATCH
+    uri: 'api/leagues/{id}'
+    metadata:
+      groupName: Leagues
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update league by id'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer 123456'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the league.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      name:
+        name: name
+        description: ''
+        required: true
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      game_id:
+        name: game_id
+        description: 'The <code>id</code> of an existing record in the games table.'
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      picture:
+        name: picture
+        description: ''
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      details:
+        name: details
+        description: ''
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      has_rating:
+        name: has_rating
+        description: ''
+        required: false
+        example: false
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      started_at:
+        name: started_at
+        description: 'Must be a valid date.'
+        required: false
+        example: '2025-04-28T13:46:17'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      finished_at:
+        name: finished_at
+        description: 'Must be a valid date.'
+        required: false
+        example: '2025-04-28T13:46:17'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      start_rating:
+        name: start_rating
+        description: ''
+        required: true
+        example: 16
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      rating_change_for_winners_rule:
+        name: rating_change_for_winners_rule
+        description: ''
+        required: false
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      rating_change_for_losers_rule:
+        name: rating_change_for_losers_rule
+        description: ''
+        required: false
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+    cleanBodyParameters:
+      name: architecto
+      has_rating: false
+      started_at: '2025-04-28T13:46:17'
+      finished_at: '2025-04-28T13:46:17'
+      start_rating: 16
+      rating_change_for_winners_rule: architecto
+      rating_change_for_losers_rule: architecto
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 123456'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - DELETE
+    uri: 'api/leagues/{id}'
+    metadata:
+      groupName: Leagues
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Delete league by id'
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer 123456'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the league.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 123456'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/leagues/{league_id}/players'
+    metadata:
+      groupName: Leagues
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get a list of players in a league'
+      description: ''
+      authenticated: false
+      custom: []
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      league_id:
+        name: league_id
+        description: 'The ID of the league.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      league_id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 200
+        content: '[{"id":1,"player":{"id":1,"name":"Kovalov Dmytro"},"rating":1070,"position":1},{"id":2,"player":{"id":2,"name":"Nudik Volodymyr"},"rating":930,"position":2}]'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+    custom: []
