@@ -1,36 +1,42 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/AppLayout.vue';
-import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/vue3';
-import PlaceholderPattern from '../components/PlaceholderPattern.vue';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import { Head, Link } from '@inertiajs/vue3';
+import { useAuth } from '@/composables/useAuth';
+import { Button } from '@/Components/ui';
 
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Dashboard',
-        href: '/dashboard',
-    },
-];
+defineOptions({ layout: AuthenticatedLayout });
+defineProps<{ title?: string }>();
+
+const { user, isAdmin } = useAuth(); // Получаем user и isAdmin
 </script>
 
 <template>
     <Head title="Dashboard" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-            <div class="grid auto-rows-min gap-4 md:grid-cols-3">
-                <div class="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                    <PlaceholderPattern />
+    <div class="py-12">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 text-gray-900 dark:text-gray-100">
+                    <h1 v-if="user" class="text-xl font-semibold mb-4">Welcome back, {{ user.firstname || 'User' }}!</h1>
+                    <h1 v-else class="text-xl font-semibold mb-4">Welcome!</h1>
+
+                    <p class="mb-2">{{ user ? 'You are logged in.' : 'Please log in to continue.' }}</p>
+
+                    <p v-if="isAdmin" class="text-green-600 font-semibold mb-4">You have administrator privileges.</p>
+
+                    <div v-if="user" class="mt-6 space-x-4">
+                        <Link :href="route('leagues.index')">
+                            <Button variant="outline">View Leagues</Button>
+                        </Link>
+                        <Link :href="route('profile.edit')">
+                            <Button variant="outline">My Profile</Button>
+                        </Link>
+                        <Link v-if="isAdmin" :href="route('leagues.create')">
+                            <Button>Create New League</Button>
+                        </Link>
+                    </div>
                 </div>
-                <div class="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                    <PlaceholderPattern />
-                </div>
-                <div class="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                    <PlaceholderPattern />
-                </div>
-            </div>
-            <div class="relative min-h-[100vh] flex-1 rounded-xl border border-sidebar-border/70 dark:border-sidebar-border md:min-h-min">
-                <PlaceholderPattern />
             </div>
         </div>
-    </AppLayout>
+    </div>
 </template>

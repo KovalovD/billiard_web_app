@@ -1,0 +1,19 @@
+// Re-export all UI components for easier import
+export { default as Button } from './Button.vue';
+export { default as Input } from './Input.vue';
+export { default as Label } from './Label.vue';
+export { default as Card } from './Card.vue';
+export { default as CardHeader } from './CardHeader.vue';
+export { default as CardTitle } from './CardTitle.vue';
+export { default as CardDescription } from './CardDescription.vue';
+export { default as CardContent } from './CardContent.vue';
+export { default as CardFooter } from './CardFooter.vue';
+export { default as Modal } from './Modal.vue';
+export { default as Select } from './Select.vue';
+//export { default as SelectTrigger } from './SelectTrigger.vue';
+//export { default as SelectValue } from './SelectValue.vue';
+//export { default as SelectContent } from './SelectContent.vue';
+//export { default as SelectItem } from './SelectItem.vue';
+export { default as Textarea } from './Textarea.vue';
+export { default as Spinner } from './Spinner.vue';
+// Добавь другие по мере необходимости
