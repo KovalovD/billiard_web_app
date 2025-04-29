@@ -1,7 +1,8 @@
-// resources/js/Types/api.ts
+// resources/js/Types/api.ts - Improved version
 
-// --- Auth ---
-// Определяем структуру пользователя на основе UserFactory и ожиданий
+import type { AxiosResponse } from 'axios';
+
+// --- Auth Types ---
 export interface User {
     id: number;
     firstname: string;
@@ -9,139 +10,169 @@ export interface User {
     email: string;
     phone?: string | null;
     email_verified_at?: string | null;
-    is_admin?: boolean; // Убедись, что бэкенд отдает это поле
-    // Добавь другие поля при необходимости (например, name, если бэкенд его формирует)
-    name?: string; // Добавим опционально, если UserResource его создает
+    is_admin?: boolean;
+    name?: string; // Combined name field if provided by backend
+    created_at?: string;
+    updated_at?: string;
 }
 
-// Ответ API логина теперь может просто содержать пользователя (или быть пустым при успехе)
-// Сессия устанавливается через cookie
 export interface LoginResponse {
-    user?: User; // Пользователь опционален, главное - успешный статус 2xx
+    user: User;
+    token: string;
 }
 
+export interface LogoutResponse {
+    success: boolean;
+    message?: string;
+}
 
-// --- Leagues & Games ---
-// Структура игры
+// --- League & Game Types ---
 export interface Game {
     id: number;
     name: string;
-    type?: string; // GameType enum (Pool, Snooker, etc.) - опционально, если не всегда приходит
+    type?: string;
     is_multiplayer?: boolean;
+    created_at?: string;
+    updated_at?: string;
 }
 
-// Структура элемента правил рейтинга
 export interface RatingRuleItem {
     range: [number, number];
     strong: number;
     weak: number;
 }
 
-// Структура Лиги
 export interface League {
     id: number;
     name: string;
     picture: string | null;
     details: string | null;
     has_rating: boolean;
-    started_at: string | null; // Формат 'YYYY-MM-DD HH:MM:SS' или ISO
-    finished_at: string | null; // Формат 'YYYY-MM-DD HH:MM:SS' или ISO
+    started_at: string | null;
+    finished_at: string | null;
     start_rating: number;
     rating_change_for_winners_rule: RatingRuleItem[];
     rating_change_for_losers_rule: RatingRuleItem[];
     created_at: string | null;
     updated_at: string | null;
-    matches_count?: number; // Сделаем опциональным на всякий случай
-    // game - строка, как ты указал в последнем JSON
+    matches_count?: number;
     game: string | null;
-    // game_id нужен для форм
     game_id: number;
-    rating_type?: string; // Тип рейтинга, например 'elo'
+    rating_type?: string;
 }
 
-// Структура для форм создания/редактирования Лиги
 export interface LeaguePayload {
     name: string;
     game_id: number | null;
-    picture?: string | null; // Для загрузки файла нужна отдельная логика
+    picture?: string | null;
     details?: string | null;
     has_rating?: boolean;
-    started_at?: string | null; // Отправлять в ISO или 'YYYY-MM-DD HH:MM:SS'
+    started_at?: string | null;
     finished_at?: string | null;
     start_rating: number;
-    // Правила рейтинга отправляем как JSON строки для простоты Textarea
     rating_change_for_winners_rule?: string | null;
     rating_change_for_losers_rule?: string | null;
 }
 
-// --- Players & Ratings ---
-// Структура игрока (из RatingResource)
+// --- Player & Rating Types ---
 export interface Player {
-    id: number; // User ID
-    name: string; // Готовое имя
+    id: number;
+    name: string;
+    firstname?: string;
+    lastname?: string;
+    email?: string;
+    avatar?: string | null;
 }
 
-// Структура Рейтинга (из эндпоинта /players)
 export interface Rating {
-    id: number; // ID самой записи рейтинга
-    player: Player; // Вложенный объект игрока
+    id: number;
+    player: Player;
     rating: number;
     position: number;
     is_active?: boolean;
-}
-
-// --- Matches ---
-// Предполагаемая структура матча (нужно уточнять по MatchGameResource/Model)
-export interface MatchGame {
-    id: number;
-    league_id: number;
-    sender_id: number;
-    receiver_id: number;
-    sender?: Player | null; // Опционально
-    receiver?: Player | null; // Опционально
-    status: 'pending' | 'accepted' | 'declined' | 'finished' | 'result_pending' | string; // Добавим string для гибкости
-    sender_score?: number | null;
-    receiver_score?: number | null;
-    details?: string | null;
-    stream_url?: string | null;
-    club_id?: number | null;
-    played_at?: string | null;
+    matches_count?: number;
+    wins_count?: number;
+    losses_count?: number;
     created_at?: string;
     updated_at?: string;
 }
 
-// Структура для отправки вызова
-export interface SendGamePayload {
+// --- Match Types ---
+export enum MatchStatus {
+    PENDING = 'pending',
+    ACCEPTED = 'accepted',
+    DECLINED = 'declined',
+    FINISHED = 'finished',
+    RESULT_PENDING = 'result_pending'
+}
+
+export interface MatchGame {
+    id: number;
+    league_id: number;
+    game_id?: number;
+    first_rating_id: number;
+    second_rating_id: number;
+    sender_id?: number;
+    receiver_id?: number;
+    sender?: Player | null;
+    receiver?: Player | null;
+    first_user_score?: number | null;
+    second_user_score?: number | null;
+    winner_rating_id?: number | null;
+    loser_rating_id?: number | null;
+    status: MatchStatus | string;
+    details?: string | null;
+    stream_url?: string | null;
+    club_id?: number | null;
+    invitation_sent_at?: string | null;
+    invitation_available_till?: string | null;
+    invitation_accepted_at?: string | null;
+    finished_at?: string | null;
+    played_at?: string | null;
+    created_at?: string;
+    updated_at?: string;
+    rating_change_for_winner?: number;
+    rating_change_for_loser?: number;
+}
+
+export interface SendChallengePayload {
+    receiver_id: number;
     stream_url?: string | null;
     details?: string | null;
     club_id?: number | string | null;
 }
 
-// Структура для отправки результата
 export interface SendResultPayload {
     first_user_score: number;
     second_user_score: number;
 }
 
-// --- API Error ---
-// Ошибка валидации Laravel
+// --- API Response/Error Types ---
 export interface ApiValidationError {
-    message: string; // "The given data was invalid."
-    errors: Record<string, string[]>; // { field_name: ["Error message 1"] }
+    message: string;
+    errors: Record<string, string[]>;
 }
 
-// Общий тип ошибки API клиента
+// Enhanced API error with better type support
 export interface ApiError extends Error {
-    response?: import('axios').AxiosResponse; // Ответ от axios
-    data?: { // Данные из тела ответа ошибки
+    // The response object from axios
+    response?: AxiosResponse;
+
+    // The parsed response data
+    data?: {
         message?: string;
         errors?: Record<string, string[]>;
-        // Другие возможные поля
-    }
+        [key: string]: any;
+    };
+
+    // HTTP status code (extracted from response for convenience)
+    status?: number;
+
+    // Error type for easier handling in catch blocks
+    type?: 'auth_failure' | 'validation_error' | 'server_error' | 'network_error' | 'unknown';
 }
 
-// Тип для ответа API, который оборачивает данные в ключ 'data'
-// (например, от стандартных ResourceCollection)
+// Response wrapper types for Laravel API Resources
 export interface ApiCollectionResponse<T> {
     data: T[];
     links?: {
@@ -162,8 +193,15 @@ export interface ApiCollectionResponse<T> {
     };
 }
 
-// Тип для ответа API, который оборачивает один ресурс в ключ 'data'
-// (например, от стандартного Resource)
 export interface ApiItemResponse<T> {
     data: T;
+}
+
+// Pagination params for API requests
+export interface PaginationParams {
+    page?: number;
+    per_page?: number;
+    sort_by?: string;
+    sort_dir?: 'asc' | 'desc';
+    search?: string;
 }

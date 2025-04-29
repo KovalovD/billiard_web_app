@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import { useAuth } from '@/composables/useAuth';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import Dropdown from '@/Components/Dropdown.vue';
@@ -8,15 +8,31 @@ import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
 import { LogOutIcon, UserIcon, SettingsIcon, LogInIcon } from 'lucide-vue-next';
-import { Spinner, Button } from '@/Components/ui'; // Импортируем Button
+import { Spinner, Button } from '@/Components/ui'; // Import Button
 
 const auth = useAuth();
 const showingNavigationDropdown = ref(false);
 
-const handleLogout = () => { auth.logout(); };
-const goToProfile = () => { router.visit(route('profile.edit')); };
-const goToLogin = () => { router.visit(route('login')); };
+const handleLogout = async () => {
+    try {
+        await auth.logout();
+        // Logout now handles redirection internally
+    } catch (error) {
+        console.error('Logout error:', error);
+        // Fallback redirect if logout fails
+        window.location.href = '/login';
+    }
+};
 
+const goToProfile = () => {
+    // Use window.location for more reliable navigation between auth state changes
+    window.location.href = route('profile.edit');
+};
+
+const goToLogin = () => {
+    // Use window.location instead of router.visit for more reliable auth state transitions
+    window.location.href = route('login');
+};
 </script>
 
 <template>
@@ -81,7 +97,9 @@ const goToLogin = () => { router.visit(route('login')); };
                         <ResponsiveNavLink :href="route('leagues.index')" :active="route().current('leagues.*')"> Leagues </ResponsiveNavLink>
                     </div>
                     <div v-if="!auth.isAuthenticated.value" class="pt-4 pb-1 border-t border-gray-200 dark:border-gray-700">
-                        <div class="mt-3 space-y-1"> <ResponsiveNavLink :href="route('login')"> Login </ResponsiveNavLink> </div>
+                        <div class="mt-3 space-y-1">
+                            <ResponsiveNavLink as="button" @click="goToLogin"> Login </ResponsiveNavLink>
+                        </div>
                     </div>
                     <div v-else-if="auth.user.value" class="pt-4 pb-1 border-t border-gray-200 dark:border-gray-700">
                         <div class="px-4">

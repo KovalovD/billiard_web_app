@@ -8,36 +8,73 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Middleware to ensure authenticated access to frontend routes.
+ * Handles both API requests and web requests differently.
+ */
 class EnsureFrontendRequestsAreAuthenticated
 {
+    /**
+     * Handle an incoming request.
+     *
+     * @param Request $request
+     * @param Closure $next
+     * @return Response
+     */
     public function handle(Request $request, Closure $next): Response
     {
-        Log::info('[Middleware] Running EnsureFrontendRequestsAreAuthenticated for: ' . $request->path());
+        // Check if in DEBUG mode for logging
+        $shouldLog = config('app.debug', false);
 
-        // --- ИЗМЕНЕНИЕ ЗДЕСЬ ---
-        // Используем ЯВНО гвард 'sanctum' для проверки токена, т.к. это не сессия
-        $isAuthenticated = Auth::guard('sanctum')->check();
-        // --- КОНЕЦ ИЗМЕНЕНИЯ ---
-
-        Log::info('[Middleware] Auth::guard(\'sanctum\')->check() result: ' . ($isAuthenticated ? 'Authenticated' : 'NOT Authenticated'));
-
-        if (!$isAuthenticated) {
-            Log::info('[Middleware] User is NOT Authenticated.');
-
-            // Если это API запрос (маловероятно для Inertia роутов, но на всякий случай)
-            if ($request->expectsJson() || $request->is('api/*')) { // Добавим проверку на /api/
-                Log::info('[Middleware] Request expects JSON or is API. Returning 401.');
-                return response()->json(['message' => 'Unauthenticated.'], 401);
-            }
-
-            // Иначе это веб-запрос (Inertia)
-            $loginRoute = route('login');
-            Log::info('[Middleware] Web request. Redirecting to login route: ' . $loginRoute);
-            // Используем ->guest() для редиректа неаутентифицированных
-            return redirect()->guest($loginRoute);
+        if ($shouldLog) {
+            Log::debug('[Auth Middleware] Running for path: ' . $request->path());
         }
 
-        Log::info('[Middleware] User is Authenticated. Proceeding.');
+        // Always use Sanctum guard to check auth status
+        $isAuthenticated = Auth::guard('sanctum')->check();
+
+        if ($shouldLog) {
+            Log::debug('[Auth Middleware] Authentication status: ' . ($isAuthenticated ? 'Authenticated' : 'Not Authenticated'));
+        }
+
+        if (!$isAuthenticated) {
+            // Handle unauthenticated access
+            return $this->handleUnauthenticatedRequest($request, $shouldLog);
+        }
+
+        // User is authenticated - proceed with the request
         return $next($request);
+    }
+
+    /**
+     * Handle unauthenticated requests appropriately based on request type
+     *
+     * @param Request $request
+     * @param bool $shouldLog
+     * @return Response
+     */
+    private function handleUnauthenticatedRequest(Request $request, bool $shouldLog): Response
+    {
+        // Check if this is an API request (JSON expected or under /api/)
+        if ($request->expectsJson() || $request->is('api/*')) {
+            if ($shouldLog) {
+                Log::debug('[Auth Middleware] API request - returning 401 response');
+            }
+
+            return response()->json([
+                'message' => 'Unauthenticated',
+                'status' => 'error',
+                'code' => 'unauthorized'
+            ], 401);
+        }
+
+        // This is a web request - redirect to login
+        $loginRoute = route('login');
+
+        if ($shouldLog) {
+            Log::debug('[Auth Middleware] Web request - redirecting to: ' . $loginRoute);
+        }
+
+        return redirect()->guest($loginRoute);
     }
 }
