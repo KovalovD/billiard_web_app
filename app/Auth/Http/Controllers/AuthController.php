@@ -28,7 +28,7 @@ readonly class AuthController
         $login = $this->authService->login(LoginDTO::fromRequest($request));
 
         return response()->json([
-            'data'  => new UserResource($login['user']),
+            'user'  => new UserResource($login['user']),
             'token' => $login['token'],
         ]);
     }

@@ -1,5 +1,7 @@
 <?php
 
+use App\Auth\Http\Middleware\EnsureFrontendRequestsAreAuthenticated;
+use App\Core\Http\Middleware\AdminMiddleware;
 use App\Core\Http\Middleware\HandleAppearance;
 use App\Core\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
@@ -15,8 +17,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
+        $middleware->statefulApi();
 
+        $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
+        $middleware->alias([
+            'auth.frontend' => EnsureFrontendRequestsAreAuthenticated::class,
+            'auth.admin' => AdminMiddleware::class,
+        ]);
         $middleware->web(append: [
             HandleAppearance::class,
             HandleInertiaRequests::class,

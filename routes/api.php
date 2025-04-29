@@ -6,7 +6,7 @@ use App\Leagues\Http\Controllers\PlayersController;
 
 Route::apiResource('leagues', LeaguesController::class, ['only' => ['index', 'show']]);
 Route::apiResource('leagues', LeaguesController::class,
-    ['only' => ['store', 'update', 'destroy'], 'middleware' => 'auth', AdminMiddleware::class]);
+    ['only' => ['store', 'update', 'destroy'], 'middleware' => 'auth','auth.admin']);
 Route::group(['prefix' => 'leagues/{league}'], static function () {
     Route::get('players', [LeaguesController::class, 'players']);
 
