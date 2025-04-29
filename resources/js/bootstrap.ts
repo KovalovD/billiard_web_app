@@ -2,47 +2,69 @@
 
 import axios from 'axios';
 
-// Делаем axios доступным глобально (можно и импортировать по месту)
+// Make axios available globally (can also import where needed)
 // window.axios = axios;
 
-// Устанавливаем базовый URL для API запросов, если они идут на отдельный порт/домен
-// Если API на том же домене, что и фронтенд, это может быть не нужно
-// axios.defaults.baseURL = 'http://localhost:8001'; // Укажи, если API на другом URL
+// Set base URL for API requests, if they go to a separate port/domain
+// If API is on the same domain as frontend, this may not be needed
+// axios.defaults.baseURL = 'http://localhost:8001'; // Specify if API is on different URL
 
-// ВАЖНО: Включаем передачу куки и заголовков типа CSRF
+// IMPORTANT: Enable cookie and CSRF token transmission
 axios.defaults.withCredentials = true;
-axios.defaults.withXSRFToken = true; // Использует XSRF-TOKEN куку для X-XSRF-TOKEN заголовка
+axios.defaults.withXSRFToken = true; // Uses XSRF-TOKEN cookie for X-XSRF-TOKEN header
 
-// Стандартные заголовки
+// Standard headers
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 axios.defaults.headers.common['Accept'] = 'application/json';
 
 /**
- * Функция для получения CSRF cookie. Ее нужно вызывать ПЕРЕД первым логином
- * или другими POST/PUT/DELETE запросами, если сессия еще не установлена.
- * Обычно вызывается один раз при инициализации приложения или перед формой логина.
+ * Function to fetch CSRF cookie. Must be called BEFORE first login
+ * or other POST/PUT/DELETE requests, if session not yet established.
+ * Usually called once during app initialization or before login form.
  */
 export const fetchCsrfToken = async () => {
     try {
-        // Убедись, что твой бэкенд настроен обслуживать этот роут (стандартно для Sanctum)
+        // Make sure your backend is set up to serve this route (standard for Sanctum)
         await axios.get('/sanctum/csrf-cookie');
         console.log('[Bootstrap] CSRF cookie fetched successfully.');
+        return true;
     } catch (error) {
         console.error('[Bootstrap] Failed to fetch CSRF cookie:', error);
-        // Обработай ошибку, возможно, аутентификация не будет работать
+        // Log detailed error information
+        if (axios.isAxiosError(error) && error.response) {
+            console.error(`[Bootstrap] Server response: ${error.response.status}`);
+        } else {
+            console.error('[Bootstrap] Network or other error:', error);
+        }
+        return false;
     }
 };
 
+// Add a response interceptor to handle common errors
+axios.interceptors.response.use(
+    response => response,
+    error => {
+        // Handle network errors
+        if (!error.response) {
+            console.error('[Axios] Network error:', error.message);
+        }
 
-/**
- * Echo / WebSockets (если используешь - оставь и настрой)
- */
-// import Echo from 'laravel-echo';
-// import Pusher from 'pusher-js';
-// window.Pusher = Pusher;
-// window.Echo = new Echo({ ... });
+        // Handle 419 errors (CSRF token mismatch)
+        if (error.response?.status === 419) {
+            console.error('[Axios] CSRF token mismatch. Will attempt to refresh on next request.');
+        }
+
+        return Promise.reject(error);
+    }
+);
+
+// Initialize - can fetch CSRF token when bootstrap is imported
+// Commented out to allow manual control of when to fetch CSRF token
+// (async () => {
+//   await fetchCsrfToken();
+// })();
 
 console.log('[Bootstrap] Axios configured for SPA authentication.');
 
-// Экспортируем настроенный axios для использования в других модулях
+// Export configured axios instance
 export default axios;

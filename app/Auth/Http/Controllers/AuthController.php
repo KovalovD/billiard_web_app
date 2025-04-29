@@ -10,6 +10,7 @@ use App\Auth\Services\AuthService;
 use App\Core\Http\Resources\UserResource;
 use Auth;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
 /**
  * @group Auth
@@ -25,12 +26,22 @@ readonly class AuthController
      */
     public function login(LoginRequest $request): JsonResponse
     {
-        $login = $this->authService->login(LoginDTO::fromRequest($request));
+        // Log the login attempt
+        Log::info('Login attempt', ['email' => $request->email, 'ip' => $request->ip()]);
 
-        return response()->json([
-            'user'  => new UserResource($login['user']),
-            'token' => $login['token'],
-        ]);
+        try {
+            $login = $this->authService->login(LoginDTO::fromRequest($request));
+
+            Log::info('Login successful', ['user_id' => $login['user']->id]);
+
+            return response()->json([
+                'user'  => new UserResource($login['user']),
+                'token' => $login['token'],
+            ]);
+        } catch (\Exception $e) {
+            Log::warning('Login failed', ['email' => $request->email, 'error' => $e->getMessage()]);
+            throw $e;
+        }
     }
 
     /**
@@ -39,7 +50,18 @@ readonly class AuthController
      */
     public function logout(LogoutRequest $request): JsonResponse
     {
-        return response()->json($this->authService->logout(Auth::user(), LogoutDTO::fromRequest($request)));
+        $user = Auth::user();
+
+        if (!$user) {
+            Log::warning('Logout attempt with no authenticated user');
+            return response()->json(['success' => false, 'message' => 'No authenticated user found'], 401);
+        }
+
+        Log::info('Logout', ['user_id' => $user->id, 'device' => $request->deviceName]);
+
+        $result = $this->authService->logout($user, LogoutDTO::fromRequest($request));
+
+        return response()->json($result);
     }
 
     /**
@@ -48,6 +70,15 @@ readonly class AuthController
      */
     public function user(): UserResource
     {
-        return new UserResource(Auth::user());
+        $user = Auth::user();
+
+        if (!$user) {
+            Log::warning('User endpoint accessed with no authenticated user');
+            abort(401, 'Unauthenticated');
+        }
+
+        Log::info('User info requested', ['user_id' => $user->id]);
+
+        return new UserResource($user);
     }
 }

@@ -5,36 +5,42 @@ use App\Core\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Core\Http\Middleware\AdminMiddleware;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-// use App\Http\Controllers\ProfileController; // Раскомментируй, если используешь
 
-// --- Гостевые роуты ---
+// --- Guest routes ---
 Route::middleware('guest')->group(function () {
-    Route::get('login', [AuthenticatedSessionController::class, 'create'])
+    // Explicitly define the login route with leading slash
+    Route::get('/login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
-    // POST '/login' не нужен, т.к. логин идет через API
+
+    // For guests, homepage can directly show login - no need for redirect
+    // This prevents potential redirect loops
+    Route::get('/', function () {
+        return Inertia::render('auth/Login');
+    });
 });
 
-// --- Аутентифицированные роуты ---
-// Важно: middleware('auth') здесь может не работать с Bearer токенами из коробки.
-// Тебе может понадобиться кастомный middleware, проверяющий токен через /api/auth/user,
-// или использовать Sanctum SPA аутентификацию (cookie).
-// Пока оставляем 'auth', предполагая, что ты настроишь проверку токена.
-Route::middleware('auth')->group(function () { // Используем 'auth:sanctum' для API токенов
+// --- Authenticated routes ---
+Route::middleware('auth')->group(function () {
+    // Dashboard as home for authenticated users
     Route::get('/', function () {
         return Inertia::render('Dashboard');
     })->name('dashboard');
+
+    // Explicitly define dashboard route separately to avoid conflicts
+    Route::get('/dashboard', function () {
+        return Inertia::render('Dashboard');
+    });
 
     Route::get('/profile', function() {
         return Inertia::render('Profile/Edit');
     })->name('profile.edit');
 
-    // --- Лиги ---
+    // --- Leagues ---
     Route::get('/leagues', function () {
         return Inertia::render('Leagues/Index');
     })->name('leagues.index');
 
-    // Можно добавить проверку админа через Gate или кастомный мидлвер 'admin'
-    Route::middleware(AdminMiddleware::class)->group(function() { // Пример использования мидлвера 'admin'
+    Route::middleware(AdminMiddleware::class)->group(function() {
         Route::get('/leagues/create', function () {
             return Inertia::render('Leagues/Create');
         })->name('leagues.create');
@@ -42,16 +48,14 @@ Route::middleware('auth')->group(function () { // Используем 'auth:san
         Route::get('/leagues/{league}/edit', function ($leagueId) {
             return Inertia::render('Leagues/Edit', ['leagueId' => $leagueId]);
         })->name('leagues.edit')->where('league', '[0-9]+');
-    }); // Конец группы admin
+    });
 
     Route::get('/leagues/{league}', function ($leagueId) {
         return Inertia::render('Leagues/Show', ['leagueId' => $leagueId]);
     })->name('leagues.show')->where('league', '[0-9]+');
+});
 
-
-}); // Конец группы 'auth.frontend'
-
-// Фолбэк для 404
+// Fallback for 404
 Route::fallback(function() {
     return Inertia::render('Errors/404')->toResponse(request())->setStatusCode(404);
 });
