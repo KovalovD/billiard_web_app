@@ -1,8 +1,8 @@
 <script setup>
 import { ref } from 'vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import { useAuth } from '@/composables/useAuth';
-import { Button, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, Input, Label } from '@/Components/ui';
+import { useAuth } from '@/composables/useAuth.ts';
+import { Button, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, Input, Label } from '@/Components/ui/index.ts';
 import InputError from '@/Components/InputError.vue';
 
 const auth = useAuth();

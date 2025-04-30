@@ -4,7 +4,7 @@ import { Head, Link } from '@inertiajs/vue3';
 import { useAuth } from '@/composables/useAuth';
 import { useLeagues } from '@/composables/useLeagues';
 import { computed, onMounted, ref } from 'vue';
-import type { ApiError, MatchGame, Player } from '@/types/api';
+import type { ApiError, League, MatchGame, Player, Rating } from '@/types/api';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Modal, Spinner } from '@/Components/ui';
 import PlayerList from '@/Components/PlayerList.vue';
 import ChallengeModal from '@/Components/ChallengeModal.vue';
@@ -274,3 +274,87 @@ onMounted(() => {
                                                   }">
                                                 {{ match.status === 'pending' ? 'Pending' :
                                                 match.status === 'in_progress' ? 'In Progress' : 'Completed' }}
+                                            </span>
+                                        </div>
+                                        <h3 class="font-medium mt-1">
+                                            {{ match.firstPlayer?.user?.firstname || 'Player 1' }} vs
+                                            {{ match.secondPlayer?.user?.firstname || 'Player 2' }}
+                                        </h3>
+                                        <div v-if="match.status === 'completed'" class="mt-1 font-semibold">
+                                            Score: {{ match.first_user_score }} - {{ match.second_user_score }}
+                                        </div>
+                                        <p v-if="match.details" class="text-sm text-gray-600 mt-1 dark:text-gray-400">
+                                            {{ match.details }}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <!-- Match actions based on state -->
+                                        <div v-if="match.status === 'in_progress' &&
+                                                  (match.firstPlayer?.user?.id === user?.id ||
+                                                   match.secondPlayer?.user?.id === user?.id)">
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                @click="openResultModal(match)">
+                                                Submit Result
+                                            </Button>
+                                        </div>
+                                        <div v-else-if="match.status === 'pending' && match.secondPlayer?.user?.id === user?.id">
+                                            <div class="space-y-2">
+                                                <Button
+                                                    size="sm"
+                                                    variant="default"
+                                                    @click="leagues.acceptMatch(league.id, match.id).execute()">
+                                                    Accept
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    @click="leagues.declineMatch(league.id, match.id).execute()">
+                                                    Decline
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </CardContent>
+                </Card>
+            </template>
+        </div>
+    </div>
+
+    <!-- Challenge Modal -->
+    <ChallengeModal
+        :league="league"
+        :show="showChallengeModal"
+        :targetPlayer="targetPlayerForChallenge"
+        @close="showChallengeModal = false"
+        @error="(error: ApiError) => displayError(error.message)"
+        @success="handleChallengeSuccess"
+    />
+
+    <!-- Result Modal -->
+    <ResultModal
+        :currentUser="user"
+        :matchGame="matchForResults"
+        :show="showResultModal"
+        @close="showResultModal = false"
+        @error="(error: ApiError) => displayError(error.message)"
+        @success="(message: string) => { displayError(message); fetchMatches(); }"
+    />
+
+    <!-- Generic Error/Success Modal -->
+    <Modal :show="showGenericErrorModal" @close="showGenericErrorModal = false">
+        <div class="p-6">
+            <h3 class="text-lg font-medium mb-3">Notification</h3>
+            <p>{{ genericErrorMessage }}</p>
+            <div class="mt-6 flex justify-end">
+                <Button @click="showGenericErrorModal = false">
+                    Close
+                </Button>
+            </div>
+        </div>
+    </Modal>
+</template>
