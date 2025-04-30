@@ -14,6 +14,8 @@ class Club extends Model
         'city_id',
     ];
 
+    protected $with = ['city.country'];
+
     public function city(): BelongsTo
     {
         return $this->belongsTo(City::class);

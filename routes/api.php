@@ -9,7 +9,11 @@ use Illuminate\Support\Facades\Route;
 Route::apiResource('leagues', LeaguesController::class, ['only' => ['index', 'show']]);
 
 // League players public endpoint
-Route::get('leagues/{league}/players', [LeaguesController::class, 'players']);
+
+Route::prefix('leagues/{league}')->group(function() {
+    Route::get('players', [LeaguesController::class, 'players']);
+    Route::get('games', [LeaguesController::class, 'games']);
+});
 
 // Admin-only endpoints
 Route::middleware(['auth:sanctum', AdminMiddleware::class])->group(function() {
@@ -31,7 +35,3 @@ Route::middleware('auth:sanctum')->group(function() {
         });
     });
 });
-
-// Endpoint for getting all games (for league creation/editing)
-// TODO: Implement this endpoint when you create a GamesController
-// Route::get('games', [GamesController::class, 'index']);

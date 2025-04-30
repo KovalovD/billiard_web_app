@@ -93,6 +93,12 @@
                                                                                 <li class="tocify-item level-2" data-unique="leagues-GETapi-leagues--id-">
                                 <a href="#leagues-GETapi-leagues--id-">Get league by id</a>
                             </li>
+                                                                                <li class="tocify-item level-2" data-unique="leagues-GETapi-leagues--league_id--players">
+                                <a href="#leagues-GETapi-leagues--league_id--players">Get a list of players in a league</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="leagues-GETapi-leagues--league_id--games">
+                                <a href="#leagues-GETapi-leagues--league_id--games">Get a list of games in a league</a>
+                            </li>
                                                                                 <li class="tocify-item level-2" data-unique="leagues-POSTapi-leagues">
                                 <a href="#leagues-POSTapi-leagues">Create a new league</a>
                             </li>
@@ -101,9 +107,6 @@
                             </li>
                                                                                 <li class="tocify-item level-2" data-unique="leagues-DELETEapi-leagues--id-">
                                 <a href="#leagues-DELETEapi-leagues--id-">Delete league by id</a>
-                            </li>
-                                                                                <li class="tocify-item level-2" data-unique="leagues-GETapi-leagues--league_id--players">
-                                <a href="#leagues-GETapi-leagues--league_id--players">Get a list of players in a league</a>
                             </li>
                                                                         </ul>
                             </ul>
@@ -141,7 +144,7 @@
     </ul>
 
     <ul class="toc-footer" id="last-updated">
-        <li>Last updated: April 28, 2025</li>
+        <li>Last updated: April 30, 2025</li>
     </ul>
 </div>
 
@@ -214,7 +217,8 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-access-control-allow-origin: *
+access-control-allow-origin: http://localhost:8001
+access-control-allow-credentials: true
  </code></pre></details>         <pre>
 
 <code class="language-json" style="max-height: 300px;">{
@@ -651,7 +655,8 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-access-control-allow-origin: *
+access-control-allow-origin: http://localhost:8001
+access-control-allow-credentials: true
  </code></pre></details>         <pre>
 
 <code class="language-json" style="max-height: 300px;">[
@@ -938,7 +943,8 @@ fetch(url, {
             </summary>
             <pre><code class="language-http">cache-control: no-cache, private
 content-type: application/json
-access-control-allow-origin: *
+access-control-allow-origin: http://localhost:8001
+access-control-allow-credentials: true
  </code></pre></details>         <pre>
 
 <code class="language-json" style="max-height: 300px;">{
@@ -1108,6 +1114,382 @@ You can check the Dev Tools console for debugging information.</code></pre>
             </div>
                     </form>
 
+                    <h2 id="leagues-GETapi-leagues--league_id--players">Get a list of players in a league</h2>
+
+<p>
+</p>
+
+
+
+<span id="example-requests-GETapi-leagues--league_id--players">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "http://localhost:8001/api/leagues/1/players" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost:8001/api/leagues/1/players"
+);
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-leagues--league_id--players">
+            <blockquote>
+            <p>Example response (200):</p>
+        </blockquote>
+                <details class="annotation">
+            <summary style="cursor: pointer;">
+                <small onclick="textContent = parentElement.parentElement.open ? 'Show headers' : 'Hide headers'">Show headers</small>
+            </summary>
+            <pre><code class="language-http">cache-control: no-cache, private
+content-type: application/json
+access-control-allow-origin: http://localhost:8001
+access-control-allow-credentials: true
+ </code></pre></details>         <pre>
+
+<code class="language-json" style="max-height: 300px;">[
+    {
+        &quot;id&quot;: 1,
+        &quot;player&quot;: {
+            &quot;id&quot;: 1,
+            &quot;name&quot;: &quot;Kovalov Dmytro&quot;
+        },
+        &quot;rating&quot;: 1070,
+        &quot;position&quot;: 1
+    },
+    {
+        &quot;id&quot;: 2,
+        &quot;player&quot;: {
+            &quot;id&quot;: 2,
+            &quot;name&quot;: &quot;Nudik Volodymyr&quot;
+        },
+        &quot;rating&quot;: 930,
+        &quot;position&quot;: 2
+    }
+]</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-leagues--league_id--players" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-leagues--league_id--players"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-leagues--league_id--players"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-leagues--league_id--players" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-leagues--league_id--players">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-leagues--league_id--players" data-method="GET"
+      data-path="api/leagues/{league_id}/players"
+      data-authed="0"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-leagues--league_id--players', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-GETapi-leagues--league_id--players"
+                    onclick="tryItOut('GETapi-leagues--league_id--players');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-GETapi-leagues--league_id--players"
+                    onclick="cancelTryOut('GETapi-leagues--league_id--players');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-GETapi-leagues--league_id--players"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/leagues/{league_id}/players</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-leagues--league_id--players"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-leagues--league_id--players"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>league_id</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="league_id"                data-endpoint="GETapi-leagues--league_id--players"
+               value="1"
+               data-component="url">
+    <br>
+<p>The ID of the league. Example: <code>1</code></p>
+            </div>
+                    </form>
+
+                    <h2 id="leagues-GETapi-leagues--league_id--games">Get a list of games in a league</h2>
+
+<p>
+</p>
+
+
+
+<span id="example-requests-GETapi-leagues--league_id--games">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "http://localhost:8001/api/leagues/1/games" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost:8001/api/leagues/1/games"
+);
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-leagues--league_id--games">
+            <blockquote>
+            <p>Example response (200):</p>
+        </blockquote>
+                <details class="annotation">
+            <summary style="cursor: pointer;">
+                <small onclick="textContent = parentElement.parentElement.open ? 'Show headers' : 'Hide headers'">Show headers</small>
+            </summary>
+            <pre><code class="language-http">cache-control: no-cache, private
+content-type: application/json
+access-control-allow-origin: http://localhost:8001
+access-control-allow-credentials: true
+ </code></pre></details>         <pre>
+
+<code class="language-json" style="max-height: 300px;">[
+    {
+        &quot;id&quot;: 4,
+        &quot;status&quot;: &quot;completed&quot;,
+        &quot;first_user_score&quot;: 3,
+        &quot;second_user_score&quot;: 5,
+        &quot;winner_rating_id&quot;: 1,
+        &quot;loser_rating_id&quot;: 2,
+        &quot;rating_change_for_winner&quot;: 20,
+        &quot;rating_change_for_loser&quot;: -20,
+        &quot;stream_url&quot;: &quot;http://www.bailey.biz/quos-velit-et-fugiat-sunt-nihil-accusantium-harum.html&quot;,
+        &quot;details&quot;: null,
+        &quot;invitation_sent_at&quot;: 1745843824,
+        &quot;invitation_available_till&quot;: 1746103024,
+        &quot;invitation_accepted_at&quot;: 1745843858,
+        &quot;finished_at&quot;: 1745844976,
+        &quot;created_at&quot;: &quot;2025-04-28T12:37:04.000000Z&quot;,
+        &quot;updated_at&quot;: &quot;2025-04-28T12:56:16.000000Z&quot;,
+        &quot;first_rating_id&quot;: 2,
+        &quot;second_rating_id&quot;: 1,
+        &quot;club&quot;: null,
+        &quot;firstPlayer&quot;: {
+            &quot;rating&quot;: {
+                &quot;id&quot;: 2,
+                &quot;player&quot;: {
+                    &quot;id&quot;: 2,
+                    &quot;name&quot;: &quot;Nudik Volodymyr&quot;
+                },
+                &quot;rating&quot;: 930,
+                &quot;position&quot;: 2
+            }
+        },
+        &quot;secondPlayer&quot;: {
+            &quot;rating&quot;: {
+                &quot;id&quot;: 1,
+                &quot;player&quot;: {
+                    &quot;id&quot;: 1,
+                    &quot;name&quot;: &quot;Kovalov Dmytro&quot;
+                },
+                &quot;rating&quot;: 1070,
+                &quot;position&quot;: 1
+            }
+        }
+    },
+    {
+        &quot;id&quot;: 1,
+        &quot;status&quot;: &quot;completed&quot;,
+        &quot;first_user_score&quot;: 0,
+        &quot;second_user_score&quot;: 0,
+        &quot;winner_rating_id&quot;: 2,
+        &quot;loser_rating_id&quot;: 1,
+        &quot;rating_change_for_winner&quot;: 0,
+        &quot;rating_change_for_loser&quot;: 0,
+        &quot;stream_url&quot;: null,
+        &quot;details&quot;: null,
+        &quot;invitation_sent_at&quot;: 1745842848,
+        &quot;invitation_available_till&quot;: 1746102048,
+        &quot;invitation_accepted_at&quot;: null,
+        &quot;finished_at&quot;: 1745843481,
+        &quot;created_at&quot;: &quot;2025-04-28T12:20:48.000000Z&quot;,
+        &quot;updated_at&quot;: &quot;2025-04-28T12:31:21.000000Z&quot;,
+        &quot;first_rating_id&quot;: 2,
+        &quot;second_rating_id&quot;: 1,
+        &quot;club&quot;: null,
+        &quot;firstPlayer&quot;: {
+            &quot;rating&quot;: {
+                &quot;id&quot;: 2,
+                &quot;player&quot;: {
+                    &quot;id&quot;: 2,
+                    &quot;name&quot;: &quot;Nudik Volodymyr&quot;
+                },
+                &quot;rating&quot;: 930,
+                &quot;position&quot;: 2
+            }
+        },
+        &quot;secondPlayer&quot;: {
+            &quot;rating&quot;: {
+                &quot;id&quot;: 1,
+                &quot;player&quot;: {
+                    &quot;id&quot;: 1,
+                    &quot;name&quot;: &quot;Kovalov Dmytro&quot;
+                },
+                &quot;rating&quot;: 1070,
+                &quot;position&quot;: 1
+            }
+        }
+    }
+]</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-leagues--league_id--games" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-leagues--league_id--games"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-leagues--league_id--games"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-leagues--league_id--games" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-leagues--league_id--games">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-leagues--league_id--games" data-method="GET"
+      data-path="api/leagues/{league_id}/games"
+      data-authed="0"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-leagues--league_id--games', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-GETapi-leagues--league_id--games"
+                    onclick="tryItOut('GETapi-leagues--league_id--games');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-GETapi-leagues--league_id--games"
+                    onclick="cancelTryOut('GETapi-leagues--league_id--games');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-GETapi-leagues--league_id--games"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/leagues/{league_id}/games</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-leagues--league_id--games"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-leagues--league_id--games"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>league_id</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="league_id"                data-endpoint="GETapi-leagues--league_id--games"
+               value="1"
+               data-component="url">
+    <br>
+<p>The ID of the league. Example: <code>1</code></p>
+            </div>
+                    </form>
+
                     <h2 id="leagues-POSTapi-leagues">Create a new league</h2>
 
 <p>
@@ -1128,9 +1510,9 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Accept: application/json" \
     --data "{
     \"name\": \"architecto\",
-    \"has_rating\": false,
-    \"started_at\": \"2025-04-28T13:46:17\",
-    \"finished_at\": \"2025-04-28T13:46:17\",
+    \"has_rating\": true,
+    \"started_at\": \"2025-04-30T17:16:18\",
+    \"finished_at\": \"2025-04-30T17:16:18\",
     \"start_rating\": 16,
     \"rating_change_for_winners_rule\": \"architecto\",
     \"rating_change_for_losers_rule\": \"architecto\"
@@ -1151,9 +1533,9 @@ const headers = {
 
 let body = {
     "name": "architecto",
-    "has_rating": false,
-    "started_at": "2025-04-28T13:46:17",
-    "finished_at": "2025-04-28T13:46:17",
+    "has_rating": true,
+    "started_at": "2025-04-30T17:16:18",
+    "finished_at": "2025-04-30T17:16:18",
     "start_rating": 16,
     "rating_change_for_winners_rule": "architecto",
     "rating_change_for_losers_rule": "architecto"
@@ -1313,7 +1695,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <code>false</code>
         </label>
     <br>
-<p>Example: <code>false</code></p>
+<p>Example: <code>true</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>started_at</code></b>&nbsp;&nbsp;
@@ -1321,10 +1703,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="started_at"                data-endpoint="POSTapi-leagues"
-               value="2025-04-28T13:46:17"
+               value="2025-04-30T17:16:18"
                data-component="body">
     <br>
-<p>Must be a valid date. Example: <code>2025-04-28T13:46:17</code></p>
+<p>Must be a valid date. Example: <code>2025-04-30T17:16:18</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>finished_at</code></b>&nbsp;&nbsp;
@@ -1332,10 +1714,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="finished_at"                data-endpoint="POSTapi-leagues"
-               value="2025-04-28T13:46:17"
+               value="2025-04-30T17:16:18"
                data-component="body">
     <br>
-<p>Must be a valid date. Example: <code>2025-04-28T13:46:17</code></p>
+<p>Must be a valid date. Example: <code>2025-04-30T17:16:18</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>start_rating</code></b>&nbsp;&nbsp;
@@ -1392,9 +1774,9 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Accept: application/json" \
     --data "{
     \"name\": \"architecto\",
-    \"has_rating\": false,
-    \"started_at\": \"2025-04-28T13:46:17\",
-    \"finished_at\": \"2025-04-28T13:46:17\",
+    \"has_rating\": true,
+    \"started_at\": \"2025-04-30T17:16:18\",
+    \"finished_at\": \"2025-04-30T17:16:18\",
     \"start_rating\": 16,
     \"rating_change_for_winners_rule\": \"architecto\",
     \"rating_change_for_losers_rule\": \"architecto\"
@@ -1415,9 +1797,9 @@ const headers = {
 
 let body = {
     "name": "architecto",
-    "has_rating": false,
-    "started_at": "2025-04-28T13:46:17",
-    "finished_at": "2025-04-28T13:46:17",
+    "has_rating": true,
+    "started_at": "2025-04-30T17:16:18",
+    "finished_at": "2025-04-30T17:16:18",
     "start_rating": 16,
     "rating_change_for_winners_rule": "architecto",
     "rating_change_for_losers_rule": "architecto"
@@ -1593,7 +1975,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <code>false</code>
         </label>
     <br>
-<p>Example: <code>false</code></p>
+<p>Example: <code>true</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>started_at</code></b>&nbsp;&nbsp;
@@ -1601,10 +1983,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="started_at"                data-endpoint="PUTapi-leagues--id-"
-               value="2025-04-28T13:46:17"
+               value="2025-04-30T17:16:18"
                data-component="body">
     <br>
-<p>Must be a valid date. Example: <code>2025-04-28T13:46:17</code></p>
+<p>Must be a valid date. Example: <code>2025-04-30T17:16:18</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>finished_at</code></b>&nbsp;&nbsp;
@@ -1612,10 +1994,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="finished_at"                data-endpoint="PUTapi-leagues--id-"
-               value="2025-04-28T13:46:17"
+               value="2025-04-30T17:16:18"
                data-component="body">
     <br>
-<p>Must be a valid date. Example: <code>2025-04-28T13:46:17</code></p>
+<p>Must be a valid date. Example: <code>2025-04-30T17:16:18</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>start_rating</code></b>&nbsp;&nbsp;
@@ -1779,159 +2161,6 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="id"                data-endpoint="DELETEapi-leagues--id-"
-               value="1"
-               data-component="url">
-    <br>
-<p>The ID of the league. Example: <code>1</code></p>
-            </div>
-                    </form>
-
-                    <h2 id="leagues-GETapi-leagues--league_id--players">Get a list of players in a league</h2>
-
-<p>
-</p>
-
-
-
-<span id="example-requests-GETapi-leagues--league_id--players">
-<blockquote>Example request:</blockquote>
-
-
-<div class="bash-example">
-    <pre><code class="language-bash">curl --request GET \
-    --get "http://localhost:8001/api/leagues/1/players" \
-    --header "Content-Type: application/json" \
-    --header "Accept: application/json"</code></pre></div>
-
-
-<div class="javascript-example">
-    <pre><code class="language-javascript">const url = new URL(
-    "http://localhost:8001/api/leagues/1/players"
-);
-
-const headers = {
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-};
-
-fetch(url, {
-    method: "GET",
-    headers,
-}).then(response =&gt; response.json());</code></pre></div>
-
-</span>
-
-<span id="example-responses-GETapi-leagues--league_id--players">
-            <blockquote>
-            <p>Example response (200):</p>
-        </blockquote>
-                <details class="annotation">
-            <summary style="cursor: pointer;">
-                <small onclick="textContent = parentElement.parentElement.open ? 'Show headers' : 'Hide headers'">Show headers</small>
-            </summary>
-            <pre><code class="language-http">cache-control: no-cache, private
-content-type: application/json
-access-control-allow-origin: *
- </code></pre></details>         <pre>
-
-<code class="language-json" style="max-height: 300px;">[
-    {
-        &quot;id&quot;: 1,
-        &quot;player&quot;: {
-            &quot;id&quot;: 1,
-            &quot;name&quot;: &quot;Kovalov Dmytro&quot;
-        },
-        &quot;rating&quot;: 1070,
-        &quot;position&quot;: 1
-    },
-    {
-        &quot;id&quot;: 2,
-        &quot;player&quot;: {
-            &quot;id&quot;: 2,
-            &quot;name&quot;: &quot;Nudik Volodymyr&quot;
-        },
-        &quot;rating&quot;: 930,
-        &quot;position&quot;: 2
-    }
-]</code>
- </pre>
-    </span>
-<span id="execution-results-GETapi-leagues--league_id--players" hidden>
-    <blockquote>Received response<span
-                id="execution-response-status-GETapi-leagues--league_id--players"></span>:
-    </blockquote>
-    <pre class="json"><code id="execution-response-content-GETapi-leagues--league_id--players"
-      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
-</span>
-<span id="execution-error-GETapi-leagues--league_id--players" hidden>
-    <blockquote>Request failed with error:</blockquote>
-    <pre><code id="execution-error-message-GETapi-leagues--league_id--players">
-
-Tip: Check that you&#039;re properly connected to the network.
-If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
-You can check the Dev Tools console for debugging information.</code></pre>
-</span>
-<form id="form-GETapi-leagues--league_id--players" data-method="GET"
-      data-path="api/leagues/{league_id}/players"
-      data-authed="0"
-      data-hasfiles="0"
-      data-isarraybody="0"
-      autocomplete="off"
-      onsubmit="event.preventDefault(); executeTryOut('GETapi-leagues--league_id--players', this);">
-    <h3>
-        Request&nbsp;&nbsp;&nbsp;
-                    <button type="button"
-                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-tryout-GETapi-leagues--league_id--players"
-                    onclick="tryItOut('GETapi-leagues--league_id--players');">Try it out ⚡
-            </button>
-            <button type="button"
-                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-canceltryout-GETapi-leagues--league_id--players"
-                    onclick="cancelTryOut('GETapi-leagues--league_id--players');" hidden>Cancel 🛑
-            </button>&nbsp;&nbsp;
-            <button type="submit"
-                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-executetryout-GETapi-leagues--league_id--players"
-                    data-initial-text="Send Request 💥"
-                    data-loading-text="⏱ Sending..."
-                    hidden>Send Request 💥
-            </button>
-            </h3>
-            <p>
-            <small class="badge badge-green">GET</small>
-            <b><code>api/leagues/{league_id}/players</code></b>
-        </p>
-                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="Content-Type"                data-endpoint="GETapi-leagues--league_id--players"
-               value="application/json"
-               data-component="header">
-    <br>
-<p>Example: <code>application/json</code></p>
-            </div>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="Accept"                data-endpoint="GETapi-leagues--league_id--players"
-               value="application/json"
-               data-component="header">
-    <br>
-<p>Example: <code>application/json</code></p>
-            </div>
-                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
-                    <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>league_id</code></b>&nbsp;&nbsp;
-<small>integer</small>&nbsp;
- &nbsp;
-                <input type="number" style="display: none"
-               step="any"               name="league_id"                data-endpoint="GETapi-leagues--league_id--players"
                value="1"
                data-component="url">
     <br>

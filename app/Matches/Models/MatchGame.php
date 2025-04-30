@@ -31,6 +31,8 @@ class MatchGame extends Model
         'invitation_available_till',
         'invitation_accepted_at',
         'finished_at',
+        'first_rating_before_game',
+        'second_rating_before_game',
     ];
 
     protected $casts = [

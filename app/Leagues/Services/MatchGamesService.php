@@ -42,6 +42,8 @@ readonly class MatchGamesService
                 'league_id'                 => $sendGameDTO->league->id,
                 'first_rating_id'           => $senderRating->id,
                 'second_rating_id'          => $receiverRating->id,
+                'first_rating_before_game'  => $senderRating->rating,
+                'second_rating_before_game' => $receiverRating->rating,
                 'stream_url'                => $sendGameDTO->stream_url,
                 'details'                   => $sendGameDTO->details,
                 'club_id'                   => $sendGameDTO->club_id,
