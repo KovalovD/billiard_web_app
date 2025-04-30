@@ -1,15 +1,15 @@
 <script lang="ts" setup>
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
-import {Head, Link} from '@inertiajs/vue3';
-import {useAuth} from '@/composables/useAuth';
-import {useLeagues} from '@/composables/useLeagues';
-import {computed, onMounted, ref} from 'vue';
-import type {ApiError, MatchGame, Player} from '@/types/api';
-import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Modal, Spinner} from '@/Components/ui';
+import { Head, Link } from '@inertiajs/vue3';
+import { useAuth } from '@/composables/useAuth';
+import { useLeagues } from '@/composables/useLeagues';
+import { computed, onMounted, ref } from 'vue';
+import type { ApiError, MatchGame, Player } from '@/types/api';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Modal, Spinner } from '@/Components/ui';
 import PlayerList from '@/Components/PlayerList.vue';
 import ChallengeModal from '@/Components/ChallengeModal.vue';
 import ResultModal from '@/Components/ResultModal.vue';
-import {ArrowLeftIcon, LogOutIcon, PencilIcon, UserPlusIcon} from 'lucide-vue-next';
+import { ArrowLeftIcon, LogOutIcon, PencilIcon, UserPlusIcon } from 'lucide-vue-next';
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -55,10 +55,13 @@ const {
     error: leaveError
 } = leagues.leaveLeague(props.leagueId);
 
-// Matches (would be integrated with real data)
-const matches = ref<MatchGame[]>([]);
-const isLoadingMatches = ref(false);
-const matchesError = ref<ApiError | null>(null);
+// Matches
+const {
+    data: matches,
+    isLoading: isLoadingMatches,
+    error: matchesError,
+    execute: fetchMatches
+} = leagues.fetchLeagueMatches(props.leagueId);
 
 // Check if current user is in the league
 const isCurrentUserInLeague = computed(() => {
@@ -112,11 +115,16 @@ const handleChallengeSuccess = (message: string) => {
     displayError(message); // Using error modal as a success modal too
 };
 
+const openResultModal = (match: MatchGame) => {
+    matchForResults.value = match;
+    showResultModal.value = true;
+};
+
 // Initialize data
 onMounted(() => {
     fetchLeague();
     fetchPlayers();
-    // Would fetch matches here too
+    fetchMatches();
 });
 </script>
 
@@ -247,51 +255,22 @@ onMounted(() => {
                             Error loading matches: {{ matchesError.message }}
                         </div>
 
-                        <div v-else-if="matches.length === 0" class="text-gray-500 text-center py-4">
+                        <div v-else-if="!matches || matches.length === 0" class="text-gray-500 text-center py-4">
                             No matches found for this league.
                         </div>
 
                         <ul v-else class="space-y-3">
-                            <!-- Matches would be listed here -->
-                        </ul>
-                    </CardContent>
-                </Card>
-            </template>
-
-            <!-- Not Found State -->
-            <div v-else-if="!isLoadingLeague" class="text-gray-500 p-10 text-center">
-                League not found.
-            </div>
-        </div>
-
-        <!-- Modals -->
-        <ChallengeModal
-            :league="league"
-            :show="showChallengeModal"
-            :targetPlayer="targetPlayerForChallenge"
-            @close="showChallengeModal = false"
-            @error="(err: ApiError) => displayError(`Challenge error: ${err.message || 'Unknown error'}`)"
-            @success="handleChallengeSuccess"
-        />
-
-        <ResultModal
-            :currentUser="user"
-            :matchGame="matchForResults"
-            :show="showResultModal"
-            @close="showResultModal = false"
-            @error="(err: ApiError) => displayError(`Result error: ${err.message || 'Unknown error'}`)"
-            @success="() => displayError('Result submitted successfully!')"
-        />
-
-        <Modal
-            :show="showGenericErrorModal"
-            title="Message"
-            @close="showGenericErrorModal = false"
-        >
-            <p class="py-2">{{ genericErrorMessage }}</p>
-            <template #footer>
-                <Button @click="showGenericErrorModal = false">Close</Button>
-            </template>
-        </Modal>
-    </div>
-</template>
+                            <li v-for="match in matches" :key="match.id"
+                                class="border p-4 rounded-lg hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800/50">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <div class="flex items-center space-x-2">
+                                            <span class="text-sm text-gray-500">{{ new Date(match.created_at).toLocaleDateString() }}</span>
+                                            <span class="px-2 py-0.5 text-xs rounded-full"
+                                                  :class="{
+                                                    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300': match.status === 'pending',
+                                                    'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300': match.status === 'in_progress',
+                                                    'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300': match.status === 'completed',
+                                                  }">
+                                                {{ match.status === 'pending' ? 'Pending' :
+                                                match.status === 'in_progress' ? 'In Progress' : 'Completed' }}

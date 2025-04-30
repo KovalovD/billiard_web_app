@@ -1,8 +1,8 @@
 <script lang="ts" setup>
-import {computed, reactive, ref, watch} from 'vue';
-import {apiClient} from '@/lib/apiClient';
-import type {ApiError, MatchGame, SendResultPayload, User} from '@/Types/api';
-import {Button, Input, Label, Modal, Spinner} from '@/Components/ui';
+import { computed, reactive, ref, watch } from 'vue';
+import { apiClient } from '@/lib/apiClient';
+import type { ApiError, MatchGame, SendResultPayload, User } from '@/Types/api';
+import { Button, Input, Label, Modal, Spinner } from '@/Components/ui';
 import InputError from '@/Components/InputError.vue';
 
 interface Props {
@@ -84,7 +84,6 @@ const submitResult = async () => {
         emit('close');
     } catch (error) {
         const apiError = error as ApiError;
-        console.error("Failed to send result:", apiError);
 
         if (apiError.data?.errors) {
             formErrors.value = apiError.data.errors;
@@ -102,8 +101,7 @@ const submitResult = async () => {
 <template>
     <Modal :show="show" title="Submit Match Result" @close="$emit('close')">
         <form class="space-y-4" @submit.prevent="submitResult">
-            <div v-if="generalError"
-                 class="text-red-600 text-sm bg-red-100 p-3 rounded dark:bg-red-900/30 dark:text-red-400">
+            <div v-if="generalError" class="text-red-600 text-sm bg-red-100 p-3 rounded dark:bg-red-900/30 dark:text-red-400">
                 {{ generalError }}
             </div>
 
@@ -124,7 +122,7 @@ const submitResult = async () => {
                         required
                         type="number"
                     />
-                    <InputError :message="formErrors.first_user_score?.join(', ')" class="mt-1"/>
+                    <InputError :message="formErrors.first_user_score?.join(', ')" class="mt-1" />
                 </div>
                 <div>
                     <Label :for="`second_score_${matchGame?.id}`">{{ secondPlayer?.name || 'Player 2' }} Score</Label>
@@ -137,7 +135,7 @@ const submitResult = async () => {
                         required
                         type="number"
                     />
-                    <InputError :message="formErrors.second_user_score?.join(', ')" class="mt-1"/>
+                    <InputError :message="formErrors.second_user_score?.join(', ')" class="mt-1" />
                 </div>
             </div>
 
@@ -146,7 +144,7 @@ const submitResult = async () => {
                     Cancel
                 </Button>
                 <Button :disabled="isLoading" type="submit">
-                    <Spinner v-if="isLoading" class="w-4 h-4 mr-2"/>
+                    <Spinner v-if="isLoading" class="w-4 h-4 mr-2" />
                     Submit Result
                 </Button>
             </div>

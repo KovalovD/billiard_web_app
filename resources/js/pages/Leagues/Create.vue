@@ -1,42 +1,38 @@
 <script lang="ts" setup>
-import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue'; // Импорт для defineOptions
-import {Head, Link, router} from '@inertiajs/vue3';
-import {useAuth} from '@/composables/useAuth';
-import LeagueForm from '@/Components/LeagueForm.vue'; // Импортируем компонент формы
-import {Button} from '@/Components/ui';
-import {ArrowLeftIcon} from 'lucide-vue-next';
-import type {ApiError, League} from '@/types/api';
-import {watchEffect} from 'vue'; // Для проверки админа
+import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue'; // Import for defineOptions
+import { Head, Link, router } from '@inertiajs/vue3';
+import { useAuth } from '@/composables/useAuth';
+import LeagueForm from '@/Components/LeagueForm.vue'; // Import form component
+import { Button } from '@/Components/ui';
+import { ArrowLeftIcon } from 'lucide-vue-next';
+import type { ApiError, League } from '@/types/api';
+import { watchEffect } from 'vue'; // For checking admin status
 
-// --- ПРИМЕНЯЕМ ЛЕЙАУТ ТОЛЬКО ЗДЕСЬ ---
+// --- Apply the layout ---
 defineOptions({layout: AuthenticatedLayout});
-// ------------------------------------
+// ------------------------
 
 defineProps<{ header?: string }>();
 
 const {isAdmin} = useAuth();
 
-// Редирект, если пользователь не админ (лучше делать на бэкенде через мидлвер)
+// Redirect if user is not admin (better to do this on backend via middleware)
 watchEffect(() => {
-    if (isAdmin.value === false) { // Явная проверка на false, т.к. null возможен при инициализации
+    if (isAdmin.value === false) { // Explicit check against false to account for null during initialization
         console.warn('Non-admin user tried to access Create League page. Redirecting.');
         router.visit(route('leagues.index'), {replace: true});
     }
 });
 
 const handleSuccess = (createdLeague: League) => {
-    console.log('League created:', createdLeague);
-    // alert('League created successfully!'); // Замени на систему уведомлений
-    // Переходим на страницу созданной лиги
+    // Navigate to the newly created league
     router.visit(route('leagues.show', {league: createdLeague.id}));
 };
 
 const handleError = (error: ApiError) => {
+    // Form validation errors are handled within the LeagueForm component
     console.error('Failed to create league:', error);
-    // Ошибки валидации отображаются внутри LeagueForm
-    // Можно добавить общее уведомление об ошибке здесь при необходимости
 };
-
 </script>
 
 <template>

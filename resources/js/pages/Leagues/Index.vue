@@ -1,12 +1,12 @@
 <script lang="ts" setup>
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
-import {Head, Link} from '@inertiajs/vue3';
-import {useAuth} from '@/composables/useAuth';
-import {useLeagues} from '@/composables/useLeagues';
-import type {ApiError, League} from '@/types/api';
-import {Button, Card, CardContent, CardHeader, CardTitle, Spinner} from '@/Components/ui';
-import {EyeIcon, PencilIcon, PlusIcon} from 'lucide-vue-next';
-import {onMounted, ref} from 'vue';
+import { Head, Link } from '@inertiajs/vue3';
+import { useAuth } from '@/composables/useAuth';
+import { useLeagues } from '@/composables/useLeagues';
+import type { ApiError, League } from '@/types/api';
+import { Button, Card, CardContent, CardHeader, CardTitle, Spinner } from '@/Components/ui';
+import { EyeIcon, PencilIcon, PlusIcon } from 'lucide-vue-next';
+import { onMounted, ref } from 'vue';
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -36,6 +36,7 @@ const fetchLeagues = async () => {
 onMounted(() => {
     fetchLeagues();
 });
+
 // Safer url generation for route params
 const getLeagueUrl = (routeName: 'leagues.show' | 'leagues.edit', leagueId: number | undefined | null): string | null => {
     if (typeof leagueId !== 'number') return null;
@@ -47,7 +48,6 @@ const getLeagueUrl = (routeName: 'leagues.show' | 'leagues.edit', leagueId: numb
         return null;
     }
 };
-
 </script>
 
 <template>

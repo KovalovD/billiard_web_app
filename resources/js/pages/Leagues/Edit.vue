@@ -1,27 +1,26 @@
 <script lang="ts" setup>
-import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue'; // Импорт для defineOptions
-import {Head, Link, router} from '@inertiajs/vue3';
-import {useAuth} from '@/composables/useAuth';
-import {useApi} from '@/composables/useApi';
-import {apiClient} from '@/lib/apiClient';
-import type {ApiError, ApiItemResponse, League} from '@/types/api'; // ApiItemResponse, если API оборачивает в data
-import LeagueForm from '@/Components/LeagueForm.vue'; // Импортируем компонент формы
-import {Button, Spinner} from '@/Components/ui';
-import {ArrowLeftIcon} from 'lucide-vue-next';
-import {computed, onMounted, watchEffect} from 'vue'; // Добавляем watchEffect
+import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+import { useAuth } from '@/composables/useAuth';
+import { useApi } from '@/composables/useApi';
+import { apiClient } from '@/lib/apiClient';
+import type { ApiError, ApiItemResponse, League } from '@/types/api';
+import LeagueForm from '@/Components/LeagueForm.vue';
+import { Button, Spinner } from '@/Components/ui';
+import { ArrowLeftIcon } from 'lucide-vue-next';
+import { computed, onMounted, watchEffect } from 'vue';
 
-// --- ПРИМЕНЯЕМ ЛЕЙАУТ ТОЛЬКО ЗДЕСЬ ---
+// Apply the layout
 defineOptions({layout: AuthenticatedLayout});
-// ------------------------------------
 
 const props = defineProps<{
-    leagueId: number | string; // ID лиги из роута
-    header?: string; // Заголовок из пропсов (не используется)
+    leagueId: number | string; // ID of the league to edit
+    header?: string; // Header from props (not used)
 }>();
 
 const {isAdmin} = useAuth();
 
-// Редирект, если пользователь не админ
+// Redirect if user is not admin
 watchEffect(() => {
     if (isAdmin.value === false) {
         console.warn('Non-admin user tried to access Edit League page. Redirecting.');
@@ -29,41 +28,35 @@ watchEffect(() => {
     }
 });
 
-// Загрузка данных лиги
-// Проверяем, возвращает ли /api/leagues/{id} объект напрямую или обернутый в data
-// LeaguesController::show использует `new LeagueResource($league)`, что обычно оборачивает в data
-const fetchLeagueFn = () => apiClient<ApiItemResponse<League>>(`/api/leagues/${props.leagueId}`);
+// Load league data
+// Check if API returns object directly or wrapped in data property
+const fetchLeagueFn = () => apiClient<League>(`/api/leagues/${props.leagueId}`);
 const {
-    data: leagueResponse,
+    data: league,
     isLoading,
     error: loadingError,
     execute: fetchLeague
-} = useApi<ApiItemResponse<League>>(fetchLeagueFn);
-
-// Извлекаем лигу из обертки data
-const league = computed(() => leagueResponse.value?.data || null);
+} = useApi<League>(fetchLeagueFn);
 
 onMounted(() => {
-    // Загружаем только если пользователь админ (доп. проверка)
+    // Load only if user is admin (extra check)
     if (isAdmin.value === true) {
         fetchLeague();
     }
 });
 
 const handleSuccess = (updatedLeague: League) => {
-    console.log('League updated:', updatedLeague);
-    // alert('League updated successfully!'); // Уведомление
+    // Navigate to the updated league view
     router.visit(route('leagues.show', {league: updatedLeague.id}));
 };
 
 const handleError = (error: ApiError) => {
+    // Form validation errors are handled within the LeagueForm component
     console.error('Failed to update league:', error);
-    // Ошибки формы обрабатываются внутри LeagueForm
 };
 
-// Динамический заголовок страницы
+// Dynamic page title
 const pageTitle = computed(() => league.value ? `Edit ${league.value.name}` : 'Edit League');
-
 </script>
 
 <template>
@@ -85,7 +78,7 @@ const pageTitle = computed(() => league.value ? `Edit ${league.value.name}` : 'E
             <div v-if="isAdmin">
                 <div v-if="isLoading" class="text-center p-10">
                     <Spinner class="w-8 h-8 text-primary mx-auto"/>
-                    Loading league data...
+                    <p class="mt-4 text-gray-500">Loading league data...</p>
                 </div>
                 <div v-else-if="loadingError" class="text-center text-red-600 bg-red-100 p-4 rounded">
                     Error loading league data: {{ loadingError.message }}
