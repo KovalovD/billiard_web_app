@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { reactive, ref, watch } from 'vue';
 import { apiClient } from '@/lib/apiClient';
-import type { ApiError, League, Player, SendGamePayload } from '@/Types/api';
+import type { ApiError, League, Player, SendGamePayload } from '@/types/api';
 import { Button, Input, Label, Modal, Spinner, Textarea } from '@/Components/ui';
 import InputError from '@/Components/InputError.vue';
 

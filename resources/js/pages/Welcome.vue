@@ -19,7 +19,7 @@ import {Link} from '@inertiajs/vue3';
                 <Link
                     v-else
                     class="inline-block rounded-sm border border-transparent px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#19140035] dark:text-[#EDEDEC] dark:hover:border-[#3E3E3A]"
-                    href="/login"
+                    href="/Auth/Login"
                 >
                     Log in
                 </Link>
@@ -50,7 +50,7 @@ import {Link} from '@inertiajs/vue3';
                     <div class="flex gap-3 text-sm leading-normal">
                         <Link
                             class="inline-block rounded-sm border border-black bg-[#1b1b18] px-5 py-1.5 text-sm leading-normal text-white hover:border-black hover:bg-black dark:border-[#eeeeec] dark:bg-[#eeeeec] dark:text-[#1C1C1A] dark:hover:border-white dark:hover:bg-white"
-                            href="/login"
+                            href="/Auth/Login"
                         >
                             Get Started
                         </Link>
