@@ -1,6 +1,13 @@
-<script setup lang="ts">
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { Link } from '@inertiajs/vue3';
+<script lang="ts" setup>
+import {
+    Breadcrumb,
+    BreadcrumbItem,
+    BreadcrumbLink,
+    BreadcrumbList,
+    BreadcrumbPage,
+    BreadcrumbSeparator
+} from '@/components/ui/breadcrumb';
+import {Link} from '@inertiajs/vue3';
 
 interface BreadcrumbItem {
     title: string;
@@ -26,7 +33,7 @@ defineProps<{
                         </BreadcrumbLink>
                     </template>
                 </BreadcrumbItem>
-                <BreadcrumbSeparator v-if="index !== breadcrumbs.length - 1" />
+                <BreadcrumbSeparator v-if="index !== breadcrumbs.length - 1"/>
             </template>
         </BreadcrumbList>
     </Breadcrumb>

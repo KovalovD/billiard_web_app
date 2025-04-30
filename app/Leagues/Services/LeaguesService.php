@@ -54,6 +54,7 @@ class LeaguesService
             ->whereIn('status', [GameStatus::IN_PROGRESS, GameStatus::COMPLETED])
             ->orderBy('finished_at', 'desc')
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->get()
+        ;
     }
 }

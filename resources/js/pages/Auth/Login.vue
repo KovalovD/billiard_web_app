@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import {ref} from 'vue';
 import axios from 'axios';
 
 // Direct imports, no dynamic UI components
@@ -54,12 +54,12 @@ async function submit() {
                         Email
                     </label>
                     <input
-                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                         id="email"
-                        type="email"
-                        placeholder="Email"
                         v-model="form.email"
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        placeholder="Email"
                         required
+                        type="email"
                     >
                 </div>
 
@@ -68,12 +68,12 @@ async function submit() {
                         Password
                     </label>
                     <input
-                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                         id="password"
-                        type="password"
-                        placeholder="Password"
                         v-model="form.password"
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        placeholder="Password"
                         required
+                        type="password"
                     >
                 </div>
 
@@ -83,9 +83,9 @@ async function submit() {
 
                 <div class="flex items-center justify-between">
                     <button
+                        :disabled="processing"
                         class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
                         type="submit"
-                        :disabled="processing"
                     >
                         {{ processing ? 'Logging in...' : 'Log In' }}
                     </button>

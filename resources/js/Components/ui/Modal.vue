@@ -1,11 +1,10 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 // --- ДОБАВЛЯЕМ computed В ИМПОРТ ---
-import { ref, watchEffect, computed } from 'vue';
+import {computed, watchEffect} from 'vue';
 // ------------------------------------
-import { XIcon } from 'lucide-vue-next';
+import {XIcon} from 'lucide-vue-next';
 // Используем импорт из index.ts, если он настроен, или прямой путь
-import { Button } from '@/Components/ui'; // Предполагаем, что index.ts работает
-import { cn } from '@/lib/utils';
+import {Button} from '@/Components/ui'; // Предполагаем, что index.ts работает
 
 interface Props {
     show: boolean;
@@ -66,7 +65,9 @@ const maxWidthClass = computed(() => {
 <template>
     <teleport to="body">
         <transition leave-active-class="duration-200">
-            <div v-show="show" class="fixed inset-0 overflow-y-auto px-4 py-6 sm:px-0 z-50 flex items-center justify-center" scroll-region>
+            <div v-show="show"
+                 class="fixed inset-0 overflow-y-auto px-4 py-6 sm:px-0 z-50 flex items-center justify-center"
+                 scroll-region>
                 <transition
                     enter-active-class="ease-out duration-300"
                     enter-from-class="opacity-0"
@@ -76,7 +77,7 @@ const maxWidthClass = computed(() => {
                     leave-to-class="opacity-0"
                 >
                     <div v-show="show" class="fixed inset-0 transform transition-all" @click="closeModal">
-                        <div class="absolute inset-0 bg-gray-500 dark:bg-gray-900/80 opacity-75" />
+                        <div class="absolute inset-0 bg-gray-500 dark:bg-gray-900/80 opacity-75"/>
                     </div>
                 </transition>
 
@@ -91,22 +92,28 @@ const maxWidthClass = computed(() => {
                     <div
                         v-show="show"
                         :class="[props.modalWrapperClass, maxWidthClass]"
-                        class="relative" >
-                        <div v-if="title || closeable" class="flex justify-between items-center p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
-                            <h3 v-if="title" class="text-lg font-semibold text-gray-900 dark:text-gray-100" id="modal-title">{{ title }}</h3>
+                        class="relative">
+                        <div v-if="title || closeable"
+                             class="flex justify-between items-center p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
+                            <h3 v-if="title" id="modal-title"
+                                class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ title }}</h3>
                             <div v-else></div>
-                            <Button v-if="closeable" variant="ghost" size="icon" @click="closeModal" class="-m-2 p-2 text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400">
-                                <XIcon class="h-5 w-5" />
+                            <Button v-if="closeable"
+                                    class="-m-2 p-2 text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400"
+                                    size="icon" variant="ghost"
+                                    @click="closeModal">
+                                <XIcon class="h-5 w-5"/>
                                 <span class="sr-only">Close modal</span>
                             </Button>
                         </div>
 
                         <div class="p-4 sm:p-6">
-                            <slot />
+                            <slot/>
                         </div>
 
-                        <div v-if="$slots.footer" class="px-4 sm:px-6 py-4 bg-gray-50 dark:bg-gray-700/50 flex justify-end space-x-3 border-t border-gray-200 dark:border-gray-600">
-                            <slot name="footer" />
+                        <div v-if="$slots.footer"
+                             class="px-4 sm:px-6 py-4 bg-gray-50 dark:bg-gray-700/50 flex justify-end space-x-3 border-t border-gray-200 dark:border-gray-600">
+                            <slot name="footer"/>
                         </div>
                     </div>
                 </transition>

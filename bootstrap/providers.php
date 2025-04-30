@@ -1,7 +1,11 @@
 <?php
 
+use App\Auth\Providers\AuthServiceProvider;
+use App\Core\Providers\AppServiceProvider;
+use App\Core\Providers\RouteServiceProvider;
+
 return [
-    \App\Core\Providers\AppServiceProvider::class,
-    \App\Auth\Providers\AuthServiceProvider::class,
-    \App\Core\Providers\RouteServiceProvider::class, // Ensure the RouteServiceProvider is included
+    AppServiceProvider::class,
+    AuthServiceProvider::class,
+    RouteServiceProvider::class, // Ensure the RouteServiceProvider is included
 ];

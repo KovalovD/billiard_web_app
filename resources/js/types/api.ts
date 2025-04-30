@@ -1,6 +1,6 @@
 // resources/js/Types/api.ts - Improved version
 
-import type { AxiosResponse } from 'axios';
+import type {AxiosResponse} from 'axios';
 
 // --- Auth Types ---
 export interface User {

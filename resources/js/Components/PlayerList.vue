@@ -1,5 +1,5 @@
-<script setup lang="ts">
-import type { Rating } from '@/Types/api';
+<script lang="ts" setup>
+import type {Rating} from '@/Types/api';
 import PlayerListItem from './PlayerListItem.vue';
 
 interface Props {
@@ -8,6 +8,7 @@ interface Props {
     currentUserId: number | null;
     isAuthenticated: boolean; // <--- ADDED PROP
 }
+
 defineProps<Props>();
 
 const emit = defineEmits(['challenge']);
@@ -21,10 +22,10 @@ const emit = defineEmits(['challenge']);
         <PlayerListItem
             v-for="playerRating in players"
             :key="playerRating.id"
-            :playerRating="playerRating"
-            :leagueId="leagueId"
-            :isCurrentUser="playerRating.player.id === currentUserId"
             :isAuthenticated="isAuthenticated"
+            :isCurrentUser="playerRating.player.id === currentUserId"
+            :leagueId="leagueId"
+            :playerRating="playerRating"
             @challenge="$emit('challenge', playerRating.player)"
         />
     </ul>

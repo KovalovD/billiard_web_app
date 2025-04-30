@@ -1,7 +1,7 @@
-<script setup lang="ts">
-import { cn } from '@/lib/utils';
+<script lang="ts" setup>
+import {cn} from '@/lib/utils';
 import * as icons from 'lucide-vue-next';
-import { computed } from 'vue';
+import {computed} from 'vue';
 
 interface Props {
     name: string;
@@ -26,5 +26,5 @@ const icon = computed(() => {
 </script>
 
 <template>
-    <component :is="icon" :class="className" :size="size" :stroke-width="strokeWidth" :color="color" />
+    <component :is="icon" :class="className" :color="color" :size="size" :stroke-width="strokeWidth"/>
 </template>

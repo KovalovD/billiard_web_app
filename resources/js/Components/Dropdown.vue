@@ -1,5 +1,5 @@
-<script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+<script lang="ts" setup>
+import {computed, onMounted, onUnmounted, ref} from 'vue';
 
 interface Props {
     align?: 'left' | 'right';
@@ -39,7 +39,7 @@ const alignmentClasses = computed(() => {
 <template>
     <div class="relative">
         <div :class="triggerClasses" @click="open = !open">
-            <slot name="trigger" />
+            <slot name="trigger"/>
         </div>
 
         <div v-show="open" class="fixed inset-0 z-40" @click="open = false"></div>
@@ -54,13 +54,13 @@ const alignmentClasses = computed(() => {
         >
             <div
                 v-show="open"
-                class="absolute z-50 mt-2 rounded-md shadow-lg"
                 :class="[widthClass, alignmentClasses]"
+                class="absolute z-50 mt-2 rounded-md shadow-lg"
                 style="display: none"
                 @click="open = false"
             >
-                <div class="rounded-md ring-1 ring-black ring-opacity-5" :class="contentClasses">
-                    <slot name="content" />
+                <div :class="contentClasses" class="rounded-md ring-1 ring-black ring-opacity-5">
+                    <slot name="content"/>
                 </div>
             </div>
         </transition>

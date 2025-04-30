@@ -1,8 +1,8 @@
-<script setup lang="ts">
-import { ref, reactive, watch, computed } from 'vue';
-import { apiClient } from '@/lib/apiClient';
-import type { MatchGame, SendResultPayload, ApiError, User, Player } from '@/Types/api';
-import { Modal, Button, Input, Label, Spinner } from '@/Components/ui';
+<script lang="ts" setup>
+import {computed, reactive, ref, watch} from 'vue';
+import {apiClient} from '@/lib/apiClient';
+import type {ApiError, MatchGame, SendResultPayload, User} from '@/Types/api';
+import {Button, Input, Label, Modal, Spinner} from '@/Components/ui';
 import InputError from '@/Components/InputError.vue';
 
 interface Props {
@@ -10,6 +10,7 @@ interface Props {
     matchGame: MatchGame | null;
     currentUser: User | null;
 }
+
 const props = defineProps<Props>();
 const emit = defineEmits(['close', 'success', 'error']);
 
@@ -35,7 +36,7 @@ const firstPlayer = computed(() => {
     }
 
     // Fallback to basic info
-    return { id: props.matchGame.first_rating_id, name: `Player ${props.matchGame.first_rating_id}` };
+    return {id: props.matchGame.first_rating_id, name: `Player ${props.matchGame.first_rating_id}`};
 });
 
 const secondPlayer = computed(() => {
@@ -50,7 +51,7 @@ const secondPlayer = computed(() => {
     }
 
     // Fallback to basic info
-    return { id: props.matchGame.second_rating_id, name: `Player ${props.matchGame.second_rating_id}` };
+    return {id: props.matchGame.second_rating_id, name: `Player ${props.matchGame.second_rating_id}`};
 });
 
 // Reset form when the modal is opened
@@ -100,8 +101,9 @@ const submitResult = async () => {
 
 <template>
     <Modal :show="show" title="Submit Match Result" @close="$emit('close')">
-        <form @submit.prevent="submitResult" class="space-y-4">
-            <div v-if="generalError" class="text-red-600 text-sm bg-red-100 p-3 rounded dark:bg-red-900/30 dark:text-red-400">
+        <form class="space-y-4" @submit.prevent="submitResult">
+            <div v-if="generalError"
+                 class="text-red-600 text-sm bg-red-100 p-3 rounded dark:bg-red-900/30 dark:text-red-400">
                 {{ generalError }}
             </div>
 
@@ -115,36 +117,36 @@ const submitResult = async () => {
                     <Label :for="`first_score_${matchGame?.id}`">{{ firstPlayer?.name || 'Player 1' }} Score</Label>
                     <Input
                         :id="`first_score_${matchGame?.id}`"
-                        class="mt-1"
-                        type="number"
-                        min="0"
                         v-model.number="form.first_user_score"
-                        required
                         :disabled="isLoading"
+                        class="mt-1"
+                        min="0"
+                        required
+                        type="number"
                     />
-                    <InputError :message="formErrors.first_user_score?.join(', ')" class="mt-1" />
+                    <InputError :message="formErrors.first_user_score?.join(', ')" class="mt-1"/>
                 </div>
                 <div>
                     <Label :for="`second_score_${matchGame?.id}`">{{ secondPlayer?.name || 'Player 2' }} Score</Label>
                     <Input
                         :id="`second_score_${matchGame?.id}`"
-                        class="mt-1"
-                        type="number"
-                        min="0"
                         v-model.number="form.second_user_score"
-                        required
                         :disabled="isLoading"
+                        class="mt-1"
+                        min="0"
+                        required
+                        type="number"
                     />
-                    <InputError :message="formErrors.second_user_score?.join(', ')" class="mt-1" />
+                    <InputError :message="formErrors.second_user_score?.join(', ')" class="mt-1"/>
                 </div>
             </div>
 
             <div class="pt-4 flex justify-end space-x-3">
-                <Button type="button" variant="outline" @click="$emit('close')" :disabled="isLoading">
+                <Button :disabled="isLoading" type="button" variant="outline" @click="$emit('close')">
                     Cancel
                 </Button>
-                <Button type="submit" :disabled="isLoading">
-                    <Spinner v-if="isLoading" class="w-4 h-4 mr-2" />
+                <Button :disabled="isLoading" type="submit">
+                    <Spinner v-if="isLoading" class="w-4 h-4 mr-2"/>
                     Submit Result
                 </Button>
             </div>

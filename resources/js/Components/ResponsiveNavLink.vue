@@ -1,6 +1,6 @@
-<script setup lang="ts">
-import { computed } from 'vue';
-import { Link } from '@inertiajs/vue3';
+<script lang="ts" setup>
+import {computed} from 'vue';
+import {Link} from '@inertiajs/vue3';
 
 interface Props {
     active?: boolean;
@@ -22,15 +22,15 @@ const classes = computed(() =>
 <template>
     <div>
         <button v-if="as === 'button'" :class="classes" class="w-full text-left">
-            <slot />
+            <slot/>
         </button>
 
-        <a v-else-if="as === 'a'" :href="href" :class="classes">
-            <slot />
+        <a v-else-if="as === 'a'" :class="classes" :href="href">
+            <slot/>
         </a>
 
-        <Link v-else :href="href || '#'" :class="classes">
-            <slot />
+        <Link v-else :class="classes" :href="href || '#'">
+            <slot/>
         </Link>
     </div>
 </template>

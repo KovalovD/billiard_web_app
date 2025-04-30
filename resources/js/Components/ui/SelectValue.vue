@@ -1,7 +1,8 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 interface Props {
     placeholder?: string;
 }
+
 defineProps<Props>();
 // Этот компонент обычно используется внутри Select для отображения
 // выбранного значения. Логика отображения будет в родительском Select.
@@ -9,5 +10,5 @@ defineProps<Props>();
 
 <template>
   <span>
-    <slot /> </span>
+    <slot/> </span>
 </template>

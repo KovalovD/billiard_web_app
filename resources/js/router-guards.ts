@@ -1,8 +1,7 @@
 // resources/js/router-guards.ts
 // This is a new file to add route protection logic
 
-import { useAuth } from '@/composables/useAuth';
-import { router } from '@inertiajs/vue3';
+import {useAuth} from '@/composables/useAuth';
 
 /**
  * Guards admin routes to ensure user has admin permission
@@ -19,6 +18,6 @@ export async function guardAdminRoute(
     redirectTo: string = 'dashboard',
     options: { silent?: boolean } = {}
 ): Promise<boolean> {
-    const { isAuthInitialized, isAdmin } = useAuth();
+    const {isAuthInitialized, isAdmin} = useAuth();
 
 // Wait for auth

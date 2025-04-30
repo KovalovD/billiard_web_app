@@ -1,7 +1,7 @@
-<script setup lang="ts">
-import { computed } from 'vue';
-import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '@/lib/utils';
+<script lang="ts" setup>
+import {computed} from 'vue';
+import {cva} from 'class-variance-authority';
+import {cn} from '@/lib/utils';
 
 const labelVariants = cva(
     'text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
@@ -24,6 +24,6 @@ const computedClasses = computed(() => cn(labelVariants(), props.class));
 
 <template>
     <label :class="computedClasses" :for="for">
-        <slot />
+        <slot/>
     </label>
 </template>

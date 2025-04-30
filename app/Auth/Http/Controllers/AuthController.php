@@ -45,22 +45,22 @@ readonly class AuthController
 
             return response()->json([
                 'message' => 'Invalid credentials',
-                'errors' => [
+                'errors'  => [
                     'email' => ['These credentials do not match our records.'],
-                ]
+                ],
             ], 422);
         } catch (Exception $e) {
             Log::error('Login failed - unexpected error', [
                 'email' => $request->email,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'message' => 'An unexpected error occurred during login. Please try again.',
-                'errors' => [
+                'errors'  => [
                     'server' => ['Server error occurred. Please try again later.'],
-                ]
+                ],
             ], 500);
         }
     }

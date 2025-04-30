@@ -1,6 +1,6 @@
-<script setup lang="ts">
-import { cn } from '@/lib/utils';
-import { CheckIcon } from 'lucide-vue-next';
+<script lang="ts" setup>
+import {cn} from '@/lib/utils';
+import {CheckIcon} from 'lucide-vue-next';
 
 interface Props {
     class?: string;
@@ -8,6 +8,7 @@ interface Props {
     disabled?: boolean;
     isSelected?: boolean; // Флаг, выбран ли этот пункт
 }
+
 const props = defineProps<Props>();
 const emit = defineEmits(['select']);
 
@@ -20,7 +21,6 @@ const handleClick = () => {
 
 <template>
     <div
-        @click="handleClick"
         :class="cn(
       'relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
       props.disabled && 'opacity-50 cursor-not-allowed',
@@ -28,9 +28,11 @@ const handleClick = () => {
       props.class
     )"
         :data-disabled="disabled ? '' : undefined"
+        @click="handleClick"
     >
     <span v-if="isSelected" class="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
-        <CheckIcon class="h-4 w-4" />
+        <CheckIcon class="h-4 w-4"/>
     </span>
-        <slot /> </div>
+        <slot/>
+    </div>
 </template>

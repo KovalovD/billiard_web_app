@@ -1,7 +1,7 @@
 <script setup>
-import { onMounted, ref } from 'vue';
-import { Head } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import {ref} from 'vue';
+import {Head} from '@inertiajs/vue3';
+import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 
 // Use the authenticated layout
 defineOptions({
@@ -22,7 +22,7 @@ const user = ref(props.auth?.user || null);
 </script>
 
 <template>
-    <Head title="Dashboard" />
+    <Head title="Dashboard"/>
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
@@ -34,23 +34,23 @@ const user = ref(props.auth?.user || null);
 
                     <div class="mt-6 space-x-4">
                         <a
-                            href="/leagues"
                             class="inline-flex items-center px-4 py-2 bg-gray-200 rounded-md font-semibold text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                            href="/leagues"
                         >
                             View Leagues
                         </a>
 
                         <a
-                            href="/profile/edit"
                             class="inline-flex items-center px-4 py-2 bg-gray-200 rounded-md font-semibold text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                            href="/profile/edit"
                         >
                             My Profile
                         </a>
 
                         <a
                             v-if="user?.is_admin"
-                            href="/leagues/create"
                             class="inline-flex items-center px-4 py-2 bg-blue-600 rounded-md font-semibold text-white hover:bg-blue-700"
+                            href="/leagues/create"
                         >
                             Create New League
                         </a>
