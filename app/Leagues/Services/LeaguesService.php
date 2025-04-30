@@ -4,6 +4,8 @@ namespace App\Leagues\Services;
 
 use App\Leagues\DataTransferObjects\PutLeagueDTO;
 use App\Leagues\Models\League;
+use App\Matches\Enums\GameStatus;
+use App\Matches\Models\MatchGame;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -39,5 +41,19 @@ class LeaguesService
     public function destroy(League $league): void
     {
         $league->delete();
+    }
+
+    /**
+     * @return Collection<MatchGame>
+     */
+    public function games(League $league): Collection
+    {
+        return MatchGame::query()
+            ->with('firstRating.user', 'secondRating.user', 'game', 'club')
+            ->where('league_id', $league->id)
+            ->whereIn('status', [GameStatus::IN_PROGRESS, GameStatus::COMPLETED])
+            ->orderBy('finished_at', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get();
     }
 }

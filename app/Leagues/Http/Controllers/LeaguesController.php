@@ -5,6 +5,7 @@ namespace App\Leagues\Http\Controllers;
 use App\Leagues\DataTransferObjects\PutLeagueDTO;
 use App\Leagues\Http\Requests\PutLeagueRequest;
 use App\Leagues\Http\Resources\LeagueResource;
+use App\Leagues\Http\Resources\MatchGameResource;
 use App\Leagues\Http\Resources\RatingResource;
 use App\Leagues\Models\League;
 use App\Leagues\Services\LeaguesService;
@@ -84,6 +85,16 @@ readonly class LeaguesController
     {
         return RatingResource::collection(
             $this->ratingService->getRatingsWithUsers($league),
+        );
+    }
+
+    /**
+     * Get a list of games in a league
+     */
+    public function games(League $league): AnonymousResourceCollection
+    {
+        return MatchGameResource::collection(
+            $this->leaguesService->games($league)
         );
     }
 }

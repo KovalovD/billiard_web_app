@@ -26,6 +26,8 @@ return new class extends Migration {
             $table->foreignIdFor(Rating::class, 'loser_rating_id')->nullable();
             $table->integer('rating_change_for_winner')->default('+0');
             $table->integer('rating_change_for_loser')->default('-0');
+            $table->integer('first_rating_before_game')->default(1000);
+            $table->integer('second_rating_before_game')->default(1000);
             $table->string('stream_url')->nullable();
             $table->string('details')->nullable();
             $table->timestamp('invitation_sent_at');
