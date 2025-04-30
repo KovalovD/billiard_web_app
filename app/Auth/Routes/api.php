@@ -3,7 +3,6 @@
 use App\Auth\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
-
 Route::group(['prefix' => 'auth'], static function () {
     Route::group(['middleware' => 'auth:sanctum'], static function () {
         Route::get('/user', [AuthController::class, 'user'])->name('auth.user');
@@ -12,4 +11,3 @@ Route::group(['prefix' => 'auth'], static function () {
 
     Route::post('/login', [AuthController::class, 'login'])->name('auth.login');
 });
-

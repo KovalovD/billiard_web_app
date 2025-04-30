@@ -49,36 +49,65 @@ async function fetchUser(): Promise<boolean> {
  * Performs login via API (/api/auth/login), gets and saves token/deviceName.
  */
 async function login(credentials: { email: string; password: string }) {
-    isActing.value = true; error.value = null; const deviceName = `web-${Date.now()}`;
+    isActing.value = true;
+    error.value = null;
+    const deviceName = `web-${Date.now()}`;
+
     try {
         console.log('[useAuth] Attempting login (API token auth)...');
-        // Expect response { user: User, token: string }
+
+        // Make the API call to /api/auth/login
         const response = await apiClient<LoginResponse>('/api/auth/login', {
             method: 'post',
             data: { ...credentials, deviceName },
         });
-        // Check structure { user: ..., token: ... }
-        if (response.token && response.user) {
-            console.log('[useAuth] Login successful');
-            // Save token and deviceName via setToken
-            setToken(response.token, deviceName);
-            user.value = response.user; // Set user
-            isAuthInitialized.value = true; // Set flag
-            console.log(`[useAuth] State after login: User set, Initialized=${isAuthInitialized.value}, Authenticated=${isAuthenticated.value}`);
-            console.log('[useAuth] Redirecting after login...');
-            try {
-                const dashboardUrl = route('dashboard');
-                router.visit(dashboardUrl, { replace: true });
-                console.log('[useAuth] router.visit(dashboard) called.');
-            } catch (e) { console.error('[useAuth] Error during route generation or router.visit:', e); }
-        } else { throw new Error('Login response from API has unexpected structure.'); }
+
+        // Validate response format contains both token and user
+        if (!response || !response.token || !response.user) {
+            throw new Error('Login response from API has unexpected structure.');
+        }
+
+        console.log('[useAuth] Login successful');
+
+        // Save token and deviceName
+        setToken(response.token, deviceName);
+
+        // Update state
+        user.value = response.user;
+        isAuthInitialized.value = true;
+
+        console.log(`[useAuth] State after login: User=${!!user.value}, Initialized=${isAuthInitialized.value}, Authenticated=${isAuthenticated.value}`);
+
+        // Redirect to dashboard after successful login
+        console.log('[useAuth] Redirecting after login...');
+
+        try {
+            // Use window.location for a hard redirect rather than Inertia
+            // This ensures a clean state after login
+            window.location.href = route('dashboard');
+            console.log('[useAuth] Hard redirect to dashboard initiated');
+        } catch (e) {
+            console.error('[useAuth] Error during route generation or redirect:', e);
+            // Fallback to direct URL if route() fails
+            window.location.href = '/dashboard';
+        }
+
+        return response;
     } catch (err) {
         console.error("[useAuth] Login failed:", err);
-        error.value = (err as ApiError).data?.message || (err as ApiError).message || 'Login failed.';
-        setToken(null, null); user.value = null; isAuthInitialized.value = false; throw err;
-    } finally { isActing.value = false; }
-}
 
+        // Clear state on error
+        error.value = (err as ApiError).data?.message || (err as ApiError).message || 'Login failed.';
+        setToken(null, null);
+        user.value = null;
+        isAuthInitialized.value = false;
+
+        // Re-throw for component-level handling
+        throw err;
+    } finally {
+        isActing.value = false;
+    }
+}
 /**
  * Performs logout via API (/api/auth/logout), removing the token.
  */
@@ -107,16 +136,14 @@ async function logout() {
 
     isActing.value = false;
 
-    // IMPORTANT CHANGE: Try to visit login page with a query param to avoid redirect loops
+    // THIS IS THE IMPORTANT CHANGE - Use window.location instead of router.visit
     try {
-        // Add a timestamp to prevent redirect loops due to cached auth state
-        const timestamp = new Date().getTime();
-        const loginUrl = `/login?t=${timestamp}`;
+        const loginUrl = route('login');
         console.log('[useAuth] Redirecting to login after logout using window.location:', loginUrl);
-        window.location.href = loginUrl;
+        window.location.href = loginUrl; // Hard navigation for reliable state reset
     } catch (e) {
-        console.error('[useAuth] Error redirecting to login, using fallback', e);
-        window.location.href = '/login';
+        console.error('[useAuth] Error getting login route, using fallback', e);
+        window.location.href = '/login'; // Fallback if route() fails
     }
 }
 
@@ -127,8 +154,14 @@ async function initializeAuth() {
     console.log('[useAuth] Initializing authentication state (API token auth)...');
     isAuthInitialized.value = false; error.value = null;
     try {
-        // Check token that might already be loaded from localStorage in apiClient
-        if (apiToken.value) {
+        // Check if we're on the login page to prevent redirect loops
+        const isLoginPage = window.location.pathname === '/login' ||
+            window.location.pathname === '/' && !document.cookie.includes('laravel_session');
+
+        if (isLoginPage) {
+            console.log('[useAuth] On login page, skipping auto-redirect');
+            user.value = null;
+        } else if (apiToken.value) {
             console.log('[useAuth] Token found in apiClient ref. Verifying...');
             // Set header in axios in case it's not set yet
             axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${apiToken.value}`;
@@ -151,9 +184,16 @@ async function initializeAuth() {
 
 export function useAuth() {
     return {
-        user: readonly(user), isLoading: readonly(isLoading), isActing: readonly(isActing),
-        error: readonly(error), isAuthInitialized: readonly(isAuthInitialized),
+        user: readonly(user),
+        isLoading: readonly(isLoading),
+        isActing: readonly(isActing),
+        error: readonly(error),
+        isAuthInitialized: readonly(isAuthInitialized),
         isAuthenticated, // Use updated computed
-        isAdmin, login, logout, fetchUser, initializeAuth
+        isAdmin,
+        login,
+        logout,
+        fetchUser,
+        initializeAuth
     };
 }

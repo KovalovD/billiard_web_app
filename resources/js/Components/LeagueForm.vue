@@ -2,11 +2,11 @@
 import { ref, reactive, onMounted, watch } from 'vue';
 import { apiClient } from '@/lib/apiClient';
 import type { LeaguePayload, League, Game, ApiError } from '@/Types/api';
-import { Button, Input, Label, Select, Textarea, Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/Components/ui';
+import { Button, Input, Label, Select, Textarea, Card, CardHeader, CardTitle, CardContent, CardFooter, Spinner } from '@/Components/ui';
 import InputError from '@/Components/InputError.vue';
 
 interface Props {
-    league?: League | null; // Передаем существующую лигу для редактирования
+    league?: League | null; // Passed league for editing
     isEditMode: boolean;
 }
 
@@ -17,6 +17,21 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits(['submitted', 'error']);
 
+// Default rating rules in JSON format
+const defaultWinnerRules = JSON.stringify([
+    { range: [0, 50], strong: 25, weak: 25 },
+    { range: [51, 100], strong: 20, weak: 30 },
+    { range: [101, 200], strong: 15, weak: 35 },
+    { range: [201, 1000000], strong: 10, weak: 40 }
+], null, 2);
+
+const defaultLoserRules = JSON.stringify([
+    { range: [0, 50], strong: -25, weak: -25 },
+    { range: [51, 100], strong: -20, weak: -30 },
+    { range: [101, 200], strong: -15, weak: -35 },
+    { range: [201, 1000000], strong: -10, weak: -40 }
+], null, 2);
+
 const form = reactive<LeaguePayload>({
     name: '',
     game_id: null,
@@ -24,47 +39,51 @@ const form = reactive<LeaguePayload>({
     has_rating: true,
     started_at: null,
     finished_at: null,
-    start_rating: 1000, // Дефолт из factory
-    // Правила храним как JSON строки для простоты Textarea
-    rating_change_for_winners_rule: props.isEditMode ? JSON.stringify(props.league?.rating_change_for_winners_rule || [], null, 2) : JSON.stringify([
-        { range: [0, 50], strong: 25, weak: 25 }, { range: [51, 100], strong: 20, weak: 30 },
-        { range: [101, 200], strong: 15, weak: 35 }, { range: [201, 1000000], strong: 10, weak: 40 }
-    ], null, 2),
-    rating_change_for_losers_rule: props.isEditMode ? JSON.stringify(props.league?.rating_change_for_losers_rule || [], null, 2) : JSON.stringify([
-        { range: [0, 50], strong: -25, weak: -25 }, { range: [51, 100], strong: -20, weak: -30 },
-        { range: [101, 200], strong: -15, weak: -35 }, { range: [201, 1000000], strong: -10, weak: -40 }
-    ], null, 2),
-    picture: null, // Поле picture требует отдельной обработки (загрузка файла)
+    start_rating: 1000, // Default
+    rating_change_for_winners_rule: defaultWinnerRules,
+    rating_change_for_losers_rule: defaultLoserRules,
+    picture: null, // Would require file upload handling
 });
 
 const games = ref<Game[]>([]);
 const isLoading = ref(false);
-const formErrors = ref<Record<string, string[]>>({}); // Ошибки валидации
+const formErrors = ref<Record<string, string[]>>({});
 
-// Загружаем список игр для выпадающего списка
+// Helper to format date for datetime-local inputs
+const formatDateForInput = (dateString: string | null): string | null => {
+    if (!dateString) return null;
+
+    try {
+        const date = new Date(dateString);
+        return date.toISOString().slice(0, 16); // Format as YYYY-MM-DDTHH:MM
+    } catch (e) {
+        console.warn('Invalid date format:', dateString, e);
+        return null;
+    }
+};
+
+// Load games for dropdown
 async function fetchGames() {
     try {
-        // TODO: Нужен API эндпоинт для получения списка игр, например GET /api/games
-        // Пока что оставим пустым или захардкодим
-        // games.value = await apiClient<Game[]>('/games');
+        // TODO: Replace with real API endpoint when available
         console.warn('API endpoint for fetching games is missing. Using hardcoded data.');
-        games.value = [ // Пример данных
+        games.value = [
             { id: 1, name: 'Пул 10', type: 'Pool' },
             { id: 2, name: 'Пул 9', type: 'Pool' },
             { id: 3, name: 'Пул 8', type: 'Pool' },
             { id: 5, name: 'Killer pool', type: 'Pool', is_multiplayer: true },
         ];
-        // Устанавливаем дефолтную игру, если не режим редактирования
-        if (!props.isEditMode && games.value.length > 0) {
+
+        // Set default game if not in edit mode
+        if (!props.isEditMode && games.value.length > 0 && !form.game_id) {
             form.game_id = games.value[0].id;
         }
-
     } catch (error) {
         console.error("Failed to fetch games:", error);
     }
 }
 
-// Заполняем форму данными лиги при редактировании
+// Initialize form data when editing
 watch(() => props.league, (newLeague) => {
     if (newLeague && props.isEditMode) {
         form.name = newLeague.name;
@@ -72,12 +91,14 @@ watch(() => props.league, (newLeague) => {
         form.details = newLeague.details;
         form.has_rating = newLeague.has_rating;
         form.start_rating = newLeague.start_rating;
-        // TODO: Преобразовать даты в нужный формат для input[type=datetime-local]
-        form.started_at = newLeague.started_at;
-        form.finished_at = newLeague.finished_at;
+
+        // Format dates if present
+        form.started_at = formatDateForInput(newLeague.started_at);
+        form.finished_at = formatDateForInput(newLeague.finished_at);
+
+        // Format rating rules as JSON strings for editing
         form.rating_change_for_winners_rule = JSON.stringify(newLeague.rating_change_for_winners_rule || [], null, 2);
         form.rating_change_for_losers_rule = JSON.stringify(newLeague.rating_change_for_losers_rule || [], null, 2);
-        // form.picture = newLeague.picture; // Обработка картинки сложнее
     }
 }, { immediate: true });
 
@@ -86,43 +107,52 @@ onMounted(fetchGames);
 const submit = async () => {
     isLoading.value = true;
     formErrors.value = {};
+
     try {
-        let response: League;
+        // Prepare the payload
         const payload = { ...form };
 
-        // Проверяем валидность JSON перед отправкой
+        // Validate JSON before submitting
         try {
-            JSON.parse(payload.rating_change_for_winners_rule || '[]');
-            JSON.parse(payload.rating_change_for_losers_rule || '[]');
+            JSON.parse(payload.rating_change_for_winners_rule as string || '[]');
+            JSON.parse(payload.rating_change_for_losers_rule as string || '[]');
         } catch(e) {
-            formErrors.value = { rating_rules: ["Invalid JSON format in rating rules."] };
+            formErrors.value = {
+                rating_rules: ["Invalid JSON format in rating rules."]
+            };
             throw new Error("Invalid JSON format");
         }
 
+        let response: League;
+
         if (props.isEditMode && props.league) {
-            // Путь: /api/leagues/{league_id} (PUT)
-            response = await apiClient<League>(`/leagues/${props.league.id}`, {
+            // Update existing league
+            response = await apiClient<League>(`/api/leagues/${props.league.id}`, {
                 method: 'PUT',
-                body: JSON.stringify(payload),
+                data: payload,
             });
         } else {
-            // Путь: /api/leagues (POST)
-            response = await apiClient<League>('/leagues', {
+            // Create new league
+            response = await apiClient<League>('/api/leagues', {
                 method: 'POST',
-                body: JSON.stringify(payload),
+                data: payload,
             });
         }
-        emit('submitted', response); // Успешная отправка
+
+        emit('submitted', response);
     } catch (error) {
         const apiError = error as ApiError;
         console.error("League form submission error:", apiError);
+
         if (apiError.data?.errors) {
-            formErrors.value = apiError.data.errors; // Ошибки валидации от Laravel
+            formErrors.value = apiError.data.errors;
         } else {
-            // Общая ошибка
-            formErrors.value = { form: [apiError.message || 'An unknown error occurred.'] };
+            formErrors.value = {
+                form: [apiError.message || 'An unknown error occurred.']
+            };
         }
-        emit('error', apiError); // Сообщаем об ошибке
+
+        emit('error', apiError);
     } finally {
         isLoading.value = false;
     }
@@ -136,7 +166,7 @@ const submit = async () => {
         </CardHeader>
         <form @submit.prevent="submit">
             <CardContent class="space-y-4">
-                <div v-if="formErrors.form" class="text-red-600 text-sm bg-red-100 p-3 rounded">
+                <div v-if="formErrors.form" class="text-red-600 text-sm bg-red-100 p-3 rounded dark:bg-red-900/30 dark:text-red-400">
                     {{ formErrors.form.join(', ') }}
                 </div>
 
@@ -162,7 +192,13 @@ const submit = async () => {
                 </div>
 
                 <div class="flex items-center space-x-2">
-                    <input type="checkbox" id="has_rating" v-model="form.has_rating" :disabled="isLoading" class="rounded border-gray-300 text-primary shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50"/>
+                    <input
+                        type="checkbox"
+                        id="has_rating"
+                        v-model="form.has_rating"
+                        :disabled="isLoading"
+                        class="rounded border-gray-300 text-primary shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50"
+                    />
                     <Label for="has_rating">Enable Rating System</Label>
                     <InputError :message="formErrors.has_rating?.join(', ')" />
                 </div>
@@ -178,27 +214,38 @@ const submit = async () => {
                     <Input id="started_at" type="datetime-local" v-model="form.started_at" :disabled="isLoading" />
                     <InputError :message="formErrors.started_at?.join(', ')" />
                 </div>
+
                 <div>
                     <Label for="finished_at">End Date (Optional)</Label>
                     <Input id="finished_at" type="datetime-local" v-model="form.finished_at" :disabled="isLoading" />
                     <InputError :message="formErrors.finished_at?.join(', ')" />
                 </div>
 
-
                 <div>
                     <Label for="winners_rule">Rating Rule for Winners (JSON)</Label>
-                    <Textarea id="winners_rule" v-model="form.rating_change_for_winners_rule" rows="6" :disabled="isLoading || !form.has_rating" />
+                    <Textarea
+                        id="winners_rule"
+                        v-model="form.rating_change_for_winners_rule"
+                        rows="6"
+                        :disabled="isLoading || !form.has_rating"
+                    />
                     <InputError :message="(formErrors.rating_change_for_winners_rule || formErrors.rating_rules)?.join(', ')" />
                     <p class="text-xs text-gray-500 mt-1">Format: [{"range":[min, max],"strong":points,"weak":points}, ...]</p>
                 </div>
+
                 <div>
                     <Label for="losers_rule">Rating Rule for Losers (JSON)</Label>
-                    <Textarea id="losers_rule" v-model="form.rating_change_for_losers_rule" rows="6" :disabled="isLoading || !form.has_rating" />
+                    <Textarea
+                        id="losers_rule"
+                        v-model="form.rating_change_for_losers_rule"
+                        rows="6"
+                        :disabled="isLoading || !form.has_rating"
+                    />
                     <InputError :message="(formErrors.rating_change_for_losers_rule || formErrors.rating_rules)?.join(', ')" />
                     <p class="text-xs text-gray-500 mt-1">Format: [{"range":[min, max],"strong":points,"weak":points}, ...]</p>
                 </div>
-
             </CardContent>
+
             <CardFooter>
                 <Button type="submit" :disabled="isLoading">
                     <Spinner v-if="isLoading" class="w-4 h-4 mr-2" />
