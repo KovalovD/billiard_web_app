@@ -1,6 +1,6 @@
-// resources/js/Types/api.ts - Improved version
+// resources/js/types/api.ts
 
-import type {AxiosResponse} from 'axios';
+import type { AxiosResponse } from 'axios';
 
 // --- Auth Types ---
 export interface User {
@@ -137,6 +137,8 @@ export interface MatchGame {
     // Relations
     firstRating?: Rating;
     secondRating?: Rating;
+    firstPlayer?: { user: User; rating: Rating };
+    secondPlayer?: { user: User; rating: Rating };
     game?: Game;
     league?: League;
 }

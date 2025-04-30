@@ -16,8 +16,7 @@ class LogoutRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'deviceName' => $this->header('User-Agent'),
+            'deviceName' => $this->deviceName ?? $this->header('User-Agent'),
         ]);
     }
-
 }

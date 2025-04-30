@@ -1,89 +1,134 @@
 // resources/js/composables/useAuth.ts
-import {computed, ref} from 'vue';
-import axios from 'axios';
+import { computed, ref } from 'vue';
+import { apiClient, setToken } from '@/lib/apiClient';
+import type { User } from '@/types/api';
+import { usePage } from '@inertiajs/vue3';
+import type { SharedData } from '@/types';
 
-// State management
-const user = ref(null);
-const isAuthInitialized = ref(false);
+// State
+const user = ref<User | null>(null);
 const isLoading = ref(false);
-const error = ref(null);
+const error = ref<string | null>(null);
+const isAuthInitialized = ref(false);
 
-// Computed properties
-const isAuthenticated = computed(() => isAuthInitialized.value && !!user.value);
-const isAdmin = computed(() => isAuthenticated.value && user.value?.is_admin);
+// Get initial user from Inertia shared props if available
+const initFromPage = () => {
+    try {
+        const page = usePage<SharedData>();
+        if (page.props.auth?.user) {
+            user.value = page.props.auth.user as unknown as User;
+            isAuthInitialized.value = true;
+            return true;
+        }
+    } catch (e) {
+        // Failed to get from page props, will try API
+    }
+    return false;
+};
 
-/**
- * Simple login function using direct axios calls
- */
-async function login(credentials) {
+// Fetch the current user from API
+const fetchUser = async (): Promise<boolean> => {
+    if (user.value) return true; // Already have user
+    if (initFromPage()) return true; // Got from Inertia props
+
+    const token = localStorage.getItem('authToken');
+    if (!token) return false; // No token, not authenticated
+
+    isLoading.value = true;
+    error.value = null;
+
+    try {
+        // Set authorization header
+        setToken(token, localStorage.getItem('authDeviceName'));
+
+        // Fetch user
+        user.value = await apiClient<User>('/api/auth/user');
+        isAuthInitialized.value = true;
+        return true;
+    } catch (err: any) {
+        error.value = err.message || 'Failed to fetch user';
+        setToken(null, null); // Clear invalid token
+        return false;
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+// Login the user
+const login = async (credentials: { email: string; password: string }) => {
     isLoading.value = true;
     error.value = null;
 
     try {
         // Get CSRF cookie first
-        await axios.get('/sanctum/csrf-cookie');
+        await apiClient('/sanctum/csrf-cookie');
 
-        // Attempt login
-        const response = await axios.post('/api/auth/login', {
-            ...credentials,
-            deviceName: `web-${Date.now()}`
+        // Login request
+        const response = await apiClient<{ user: User; token: string }>('/api/auth/login', {
+            method: 'post',
+            data: {
+                ...credentials,
+                deviceName: `web-${Date.now()}`
+            }
         });
 
         // Store user and token
-        if (response.data.user && response.data.token) {
-            user.value = response.data.user;
-            localStorage.setItem('authToken', response.data.token);
-            localStorage.setItem('authDeviceName', `web-${Date.now()}`);
-            axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
-        }
-
+        user.value = response.user;
+        setToken(response.token, `web-${Date.now()}`);
         isAuthInitialized.value = true;
-        return response.data;
-    } catch (err) {
-        error.value = err.response?.data?.message || 'Login failed';
+
+        return response;
+    } catch (err: any) {
+        error.value = err.message || 'Login failed';
         throw err;
     } finally {
         isLoading.value = false;
     }
-}
+};
 
-/**
- * Simple logout function
- */
-async function logout() {
+// Logout the user
+const logout = async () => {
     isLoading.value = true;
 
     try {
-        // Try to call API for logout
+        const deviceName = localStorage.getItem('authDeviceName');
         if (localStorage.getItem('authToken')) {
-            await axios.post('/api/auth/logout', {
-                deviceName: localStorage.getItem('authDeviceName')
+            await apiClient('/api/auth/logout', {
+                method: 'post',
+                data: { deviceName }
             });
         }
     } catch (err) {
-        console.error('Logout API call failed:', err);
+        // Continue with logout even if API call fails
     } finally {
-        // Always clear state regardless of API result
+        // Always clear state
         user.value = null;
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('authDeviceName');
-        delete axios.defaults.headers.common['Authorization'];
+        setToken(null, null);
         isLoading.value = false;
 
         // Hard navigation to login
         window.location.href = '/login';
     }
-}
+};
 
-// Simple export without complex circular references
+// Computed properties
+const isAuthenticated = computed(() => isAuthInitialized.value && !!user.value);
+const isAdmin = computed(() => isAuthenticated.value && !!user.value?.is_admin);
+
 export function useAuth() {
     return {
+        // State
         user,
         isLoading,
         error,
         isAuthInitialized,
+
+        // Computed
         isAuthenticated,
         isAdmin,
+
+        // Methods
+        fetchUser,
         login,
         logout
     };

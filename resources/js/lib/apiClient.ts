@@ -1,8 +1,8 @@
 // resources/js/lib/apiClient.ts
 
-import axiosInstance from '@/bootstrap';
-import type {ApiError} from '@/types/api';
-import {ref} from 'vue';
+import axios from '@/bootstrap';
+import type { ApiError } from '@/types/api';
+import { ref } from 'vue';
 
 // Token and deviceName management with reactivity
 export const apiToken = ref<string | null>(localStorage.getItem('authToken'));
@@ -13,20 +13,17 @@ export const loggedInDeviceName = ref<string | null>(localStorage.getItem('authD
  * Updates Authorization header in axios.
  */
 export function setToken(newToken: string | null, deviceName: string | null) {
-    console.log('[apiClient] Setting token and deviceName:', {hasToken: !!newToken, deviceName});
     apiToken.value = newToken;
     loggedInDeviceName.value = deviceName;
 
     if (newToken && deviceName) {
         localStorage.setItem('authToken', newToken);
         localStorage.setItem('authDeviceName', deviceName);
-        axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
-        console.log('[apiClient] Authorization header set in axios.');
+        axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
     } else {
         localStorage.removeItem('authToken');
         localStorage.removeItem('authDeviceName');
-        delete axiosInstance.defaults.headers.common['Authorization'];
-        console.log('[apiClient] Authorization header removed from axios.');
+        delete axios.defaults.headers.common['Authorization'];
     }
 }
 
@@ -63,11 +60,10 @@ export async function apiClient<T>(
             ...options,
         };
 
-        const response = await axiosInstance.request<T>(config);
+        const response = await axios.request<T>(config);
         return response.data;
 
     } catch (error: any) {
-        console.error('API Client Error:', error);
         const apiError: ApiError = new Error(error.response?.data?.message || error.message || 'API error') as ApiError;
         apiError.response = error.response;
         apiError.data = error.response?.data;
@@ -75,7 +71,6 @@ export async function apiClient<T>(
 
         // Handle 401 Unauthorized - Reset token
         if (error.response?.status === 401 && apiToken.value) {
-            console.error('[apiClient] Unauthorized (401). Clearing token.');
             setToken(null, null);
         }
 

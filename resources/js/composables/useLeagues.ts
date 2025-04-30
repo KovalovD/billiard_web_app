@@ -1,8 +1,7 @@
-// resources/js/composables/useLeagues.ts - New domain-specific composable
-
-import {del, get, post, put} from '@/lib/apiClient';
-import {useApi, useApiAction} from '@/composables/useApi';
-import type {League, LeaguePayload, Rating} from '@/types/api';
+// resources/js/composables/useLeagues.ts
+import { get, post, put, del } from '@/lib/apiClient';
+import { useApi, useApiAction } from '@/composables/useApi';
+import type { League, LeaguePayload, MatchGame, Rating } from '@/types/api';
 
 /**
  * Composable for working with Leagues API endpoints.
@@ -37,6 +36,11 @@ export function useLeagues() {
     // Fetch players/ratings for a league
     const fetchLeaguePlayers = (leagueId: number | string) => {
         return useApi<Rating[]>(() => get(`/api/leagues/${leagueId}/players`));
+    };
+
+    // Fetch matches for a league
+    const fetchLeagueMatches = (leagueId: number | string) => {
+        return useApi<MatchGame[]>(() => get(`/api/leagues/${leagueId}/games`));
     };
 
     // Join a league as a player
@@ -83,6 +87,7 @@ export function useLeagues() {
         updateLeague,
         deleteLeague,
         fetchLeaguePlayers,
+        fetchLeagueMatches,
         joinLeague,
         leaveLeague,
         sendChallenge,

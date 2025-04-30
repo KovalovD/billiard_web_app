@@ -1,8 +1,8 @@
 <script lang="ts" setup>
-import {reactive, ref, watch} from 'vue';
-import {apiClient} from '@/lib/apiClient';
-import type {ApiError, League, Player, SendGamePayload} from '@/Types/api';
-import {Button, Input, Label, Modal, Spinner, Textarea} from '@/Components/ui';
+import { reactive, ref, watch } from 'vue';
+import { apiClient } from '@/lib/apiClient';
+import type { ApiError, League, Player, SendGamePayload } from '@/Types/api';
+import { Button, Input, Label, Modal, Spinner, Textarea } from '@/Components/ui';
 import InputError from '@/Components/InputError.vue';
 
 interface Props {
@@ -56,7 +56,6 @@ const submitChallenge = async () => {
         emit('close');
     } catch (error) {
         const apiError = error as ApiError;
-        console.error("Failed to send challenge:", apiError);
         if (apiError.data?.errors) {
             formErrors.value = apiError.data.errors;
         } else {
@@ -72,23 +71,20 @@ const submitChallenge = async () => {
 <template>
     <Modal :show="show" :title="`Challenge ${targetPlayer?.name ?? 'Player'}`" @close="$emit('close')">
         <form class="space-y-4" @submit.prevent="submitChallenge">
-            <div v-if="generalError"
-                 class="text-red-600 text-sm bg-red-100 p-3 rounded dark:bg-red-900/30 dark:text-red-400">
+            <div v-if="generalError" class="text-red-600 text-sm bg-red-100 p-3 rounded dark:bg-red-900/30 dark:text-red-400">
                 {{ generalError }}
             </div>
 
             <div>
                 <Label for="challenge_stream_url">Stream URL (Optional)</Label>
-                <Input id="challenge_stream_url" v-model="form.stream_url" :disabled="isLoading" class="mt-1"
-                       placeholder="https://twitch.tv/..." type="url"/>
-                <InputError :message="formErrors.stream_url?.join(', ')" class="mt-1"/>
+                <Input id="challenge_stream_url" v-model="form.stream_url" :disabled="isLoading" class="mt-1" placeholder="https://twitch.tv/..." type="url" />
+                <InputError :message="formErrors.stream_url?.join(', ')" class="mt-1" />
             </div>
 
             <div>
                 <Label for="challenge_details">Details (Optional)</Label>
-                <Textarea id="challenge_details" v-model="form.details" :disabled="isLoading"
-                          class="mt-1" placeholder="Any specific challenge details..." rows="3"/>
-                <InputError :message="formErrors.details?.join(', ')" class="mt-1"/>
+                <Textarea id="challenge_details" v-model="form.details" :disabled="isLoading" class="mt-1" placeholder="Any specific challenge details..." rows="3" />
+                <InputError :message="formErrors.details?.join(', ')" class="mt-1" />
             </div>
 
             <div class="pt-4 flex justify-end space-x-3">
@@ -96,7 +92,7 @@ const submitChallenge = async () => {
                     Cancel
                 </Button>
                 <Button :disabled="isLoading" type="submit">
-                    <Spinner v-if="isLoading" class="w-4 h-4 mr-2"/>
+                    <Spinner v-if="isLoading" class="w-4 h-4 mr-2" />
                     Send Challenge
                 </Button>
             </div>

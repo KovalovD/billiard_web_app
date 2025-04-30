@@ -1,12 +1,12 @@
 <script lang="ts" setup>
-import type {Rating} from '@/Types/api';
+import type { Rating } from '@/Types/api';
 import PlayerListItem from './PlayerListItem.vue';
 
 interface Props {
     players: Rating[];
     leagueId: number;
     currentUserId: number | null;
-    isAuthenticated: boolean; // <--- ADDED PROP
+    isAuthenticated: boolean;
 }
 
 defineProps<Props>();
