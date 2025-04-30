@@ -1,4 +1,3 @@
-//import './bootstrap';
 import '../css/app.css'; // Tailwind styles
 
 import { createApp, h, DefineComponent } from 'vue';
@@ -6,41 +5,66 @@ import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { ZiggyVue } from 'ziggy-js';
 import { useAuth } from '@/composables/useAuth';
-
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+import { Ziggy } from './ziggy';
 
 // Get initialization function from useAuth
 const { initializeAuth } = useAuth();
 
+// Make route globally available
+declare global {
+    interface Window {
+        route: any;
+        Ziggy: any;
+    }
+}
+
 createInertiaApp({
-    title: (title) => `${title} - ${appName}`,
-    resolve: (name) => resolvePageComponent(`./Pages/${name}.vue`, import.meta.glob<DefineComponent>('./Pages/**/*.vue')),
+    title: (title) => `${title} - B2B League`,
+    resolve: (name) => resolvePageComponent(`./pages/${name}.vue`, import.meta.glob<DefineComponent>('./pages/**/*.vue')),
     async setup({ el, App, props, plugin }) {
-        // If we're on the login page, create the app without checking auth
-        // This prevents redirect loops
+        // Check if we're on the login page to prevent auth redirect loops
         const isLoginPage = window.location.pathname === '/login' ||
             window.location.pathname === '/' && !document.cookie.includes('laravel_session');
 
+        // Ensure we have the route data available
+        const ziggyData = {
+            ...Ziggy,
+            ...(window.Ziggy || {}),
+            location: window.location.origin,
+        };
+
+        // Create Vue app
         const vueApp = createApp({ render: () => h(App, props) });
+
+        // Register global properties
+        vueApp.config.globalProperties.route = (name: string, params?: any, absolute?: boolean) => {
+            try {
+                return window.route(name, params, absolute, ziggyData);
+            } catch (error) {
+                console.warn(`Route error for ${name}:`, error);
+                // Return fallback URL if route can't be generated
+                return name === 'login' ? '/login' :
+                    name === 'dashboard' ? '/dashboard' :
+                        name === 'register' ? '/register' : '/';
+            }
+        };
 
         // Apply plugins
         vueApp.use(plugin)
-            .use(ZiggyVue);
+            .use(ZiggyVue, ziggyData);
 
         if (!isLoginPage) {
             try {
-                // Initialize auth BEFORE mounting app (but only if not on login page)
+                // Initialize auth before mounting app, but only if not on login page
                 console.log('[App] Initializing auth before app mount');
                 await initializeAuth();
-                console.log('[App] Auth initialized successfully. Authenticated:',
-                    useAuth().isAuthenticated.value);
+                console.log('[App] Auth initialized successfully');
             } catch (error) {
                 // Log error but continue with app mount
                 console.error('[App] Error during auth initialization:', error);
-                console.log('[App] Continuing with app mount despite auth error');
             }
         } else {
-            console.log('[App] Skipping auth initialization on login page to prevent loops');
+            console.log('[App] Skipping auth initialization on login page');
         }
 
         // Mount the app

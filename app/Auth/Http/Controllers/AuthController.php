@@ -26,7 +26,7 @@ readonly class AuthController
      */
     public function login(LoginRequest $request): JsonResponse
     {
-        // Log the login attempt
+        // Log the login attempt (with sanitized data)
         Log::info('Login attempt', ['email' => $request->email, 'ip' => $request->ip()]);
 
         try {
@@ -40,7 +40,13 @@ readonly class AuthController
             ]);
         } catch (\Exception $e) {
             Log::warning('Login failed', ['email' => $request->email, 'error' => $e->getMessage()]);
-            throw $e;
+
+            return response()->json([
+                'message' => $e->getMessage(),
+                'errors' => [
+                    'email' => ['These credentials do not match our records.'],
+                ]
+            ], 422);
         }
     }
 
@@ -68,17 +74,17 @@ readonly class AuthController
      * Get authenticated user
      * @authenticated
      */
-    public function user(): UserResource
+    public function user(): JsonResponse
     {
         $user = Auth::user();
 
         if (!$user) {
             Log::warning('User endpoint accessed with no authenticated user');
-            abort(401, 'Unauthenticated');
+            return response()->json(['error' => 'Unauthenticated'], 401);
         }
 
         Log::info('User info requested', ['user_id' => $user->id]);
 
-        return new UserResource($user);
+        return response()->json(new UserResource($user));
     }
 }

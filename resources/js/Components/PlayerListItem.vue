@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Rating, Player } from '@/Types/api';
+import type { Rating } from '@/Types/api';
 import { Button } from '@/Components/ui';
 import { SwordsIcon } from 'lucide-vue-next';
 
@@ -7,13 +7,13 @@ interface Props {
     playerRating: Rating;
     leagueId: number;
     isCurrentUser: boolean;
-    isAuthenticated: boolean; // <--- ДОБАВЛЯЕМ ПРОПС
+    isAuthenticated: boolean; // <--- ADDED PROP
 }
 const props = defineProps<Props>();
 const emit = defineEmits(['challenge']);
 
 const handleChallenge = () => {
-    // Проверка аутентификации перед вызовом события (хотя кнопка и так скрыта)
+    // Check authentication before emitting the event
     if (props.isAuthenticated) {
         emit('challenge', props.playerRating.player);
     }

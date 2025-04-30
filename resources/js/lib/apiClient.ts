@@ -48,13 +48,25 @@ export async function apiClient<T>(
     options: import('axios').AxiosRequestConfig = {}
 ): Promise<T> {
     try {
-        const config: import('axios').AxiosRequestConfig = {
-            method: options.method || 'get',
-            url: endpoint, // Make sure endpoint starts with /api or baseURL in bootstrap.ts is set to /api
-            ...options,
-            // Authorization header will be added by axios if it exists in defaults
+        // Ensure auth header is set for this specific request if we have a token
+        const headers: Record<string, string> = {
+            ...options.headers
         };
 
+        if (apiToken.value) {
+            headers['Authorization'] = `Bearer ${apiToken.value}`;
+            console.log(`[apiClient] Adding auth token to request: ${endpoint}`);
+        }
+
+        const config: import('axios').AxiosRequestConfig = {
+            method: options.method || 'get',
+            url: endpoint,
+            headers,
+            withCredentials: true, // Important for CSRF protection
+            ...options,
+        };
+
+        console.log(`[apiClient] Making ${config.method?.toUpperCase()} request to: ${endpoint}`);
         const response = await axiosInstance.request<T>(config);
         return response.data;
 
@@ -66,11 +78,9 @@ export async function apiClient<T>(
         apiError.status = error.response?.status;
 
         // Handle 401 Unauthorized - Reset token
-        if (error.response?.status === 401 && apiToken.value) { // Only reset if token WAS present
+        if (error.response?.status === 401 && apiToken.value) {
             console.error('[apiClient] Unauthorized (401). Clearing token.');
             setToken(null, null); // Reset token and deviceName
-            // Redirect to login is better done from useAuth or component
-            // to avoid loops or unexpected redirects
         }
 
         // Handle validation errors (422)
@@ -88,7 +98,6 @@ export async function apiClient<T>(
         throw apiError;
     }
 }
-
 // Helper functions for common methods
 export function get<T>(endpoint: string, params?: object): Promise<T> {
     return apiClient<T>(endpoint, { method: 'get', params });

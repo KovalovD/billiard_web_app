@@ -2,7 +2,6 @@
 import { ref, reactive, watch } from 'vue';
 import { apiClient } from '@/lib/apiClient';
 import type { Player, League, SendGamePayload, ApiError } from '@/Types/api';
-// Импортируем нужные компоненты UI
 import { Modal, Button, Input, Label, Textarea, Spinner } from '@/Components/ui';
 import InputError from '@/Components/InputError.vue';
 
@@ -17,14 +16,14 @@ const emit = defineEmits(['close', 'success', 'error']);
 const form = reactive<SendGamePayload>({
     stream_url: '',
     details: '',
-    club_id: null, // TODO: Поле для выбора клуба
+    club_id: null,
 });
 
 const isLoading = ref(false);
 const formErrors = ref<Record<string, string[]>>({});
 const generalError = ref<string | null>(null);
 
-// Сброс формы при открытии/смене игрока
+// Reset form when the modal is opened or player changes
 watch(() => props.show, (newVal) => {
     if (newVal) {
         form.stream_url = '';
@@ -48,7 +47,6 @@ const submitChallenge = async () => {
     if (form.club_id) payload.club_id = form.club_id;
 
     try {
-        // Используем axios из apiClient
         await apiClient<boolean>(`/api/leagues/${props.league.id}/players/${props.targetPlayer.id}/send-match-game`, {
             method: 'post',
             data: payload
@@ -68,7 +66,6 @@ const submitChallenge = async () => {
         isLoading.value = false;
     }
 }
-
 </script>
 
 <template>
@@ -99,5 +96,6 @@ const submitChallenge = async () => {
                     Send Challenge
                 </Button>
             </div>
-        </form> </Modal>
+        </form>
+    </Modal>
 </template>

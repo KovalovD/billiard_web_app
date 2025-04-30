@@ -6,7 +6,7 @@ interface Props {
     players: Rating[];
     leagueId: number;
     currentUserId: number | null;
-    isAuthenticated: boolean; // <--- ДОБАВЛЯЕМ ПРОПС
+    isAuthenticated: boolean; // <--- ADDED PROP
 }
 defineProps<Props>();
 
@@ -24,7 +24,8 @@ const emit = defineEmits(['challenge']);
             :playerRating="playerRating"
             :leagueId="leagueId"
             :isCurrentUser="playerRating.player.id === currentUserId"
-            :isAuthenticated="isAuthenticated" @challenge="$emit('challenge', playerRating.player)"
+            :isAuthenticated="isAuthenticated"
+            @challenge="$emit('challenge', playerRating.player)"
         />
     </ul>
 </template>

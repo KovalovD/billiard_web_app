@@ -10,9 +10,9 @@ import axios from 'axios';
 // axios.defaults.baseURL = 'http://localhost:8001'; // Specify if API is on different URL
 
 // IMPORTANT: Enable cookie and CSRF token transmission
-axios.defaults.withCredentials = true;
+axios.defaults.withCredentials = true; // Required for CSRF to work - sends cookies with requests
 axios.defaults.withXSRFToken = true; // Uses XSRF-TOKEN cookie for X-XSRF-TOKEN header
-
+axios.defaults.headers.common['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 // Standard headers
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 axios.defaults.headers.common['Accept'] = 'application/json';
