@@ -94,7 +94,7 @@ readonly class LeaguesController
     public function games(League $league): AnonymousResourceCollection
     {
         return MatchGameResource::collection(
-            $this->leaguesService->games($league)
+            $this->leaguesService->games($league),
         );
     }
 }

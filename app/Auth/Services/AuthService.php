@@ -6,11 +6,11 @@ use App\Auth\DataTransferObjects\LoginDTO;
 use App\Auth\DataTransferObjects\LogoutDTO;
 use App\Auth\Repositories\AuthRepository;
 use App\Core\Models\User;
+use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\ValidationException;
-use Exception;
 
 /**
  * Service for handling authentication operations
@@ -18,7 +18,7 @@ use Exception;
 readonly class AuthService
 {
     /**
-     * @param AuthRepository $repository
+     * @param  AuthRepository  $repository
      */
     public function __construct(private AuthRepository $repository)
     {
@@ -27,7 +27,7 @@ readonly class AuthService
     /**
      * Authenticate a user and create a new API token
      *
-     * @param LoginDTO $loginDTO
+     * @param  LoginDTO  $loginDTO
      * @return array{user: User, token: string}
      * @throws ValidationException|Exception
      */
@@ -35,7 +35,7 @@ readonly class AuthService
     {
         // Attempt authentication
         if (!Auth::attempt(['email' => $loginDTO->email, 'password' => $loginDTO->password], true)) {
-            Log::info('Failed login attempt for email: ' . $loginDTO->email);
+            Log::info('Failed login attempt for email: '.$loginDTO->email);
 
             throw ValidationException::withMessages([
                 'email' => ['These credentials do not match our records.'],
@@ -47,7 +47,7 @@ readonly class AuthService
         if (!$user) {
             // This should rarely happen, but just in case
             Log::error('Auth::attempt succeeded but user is null', [
-                'email' => $loginDTO->email
+                'email' => $loginDTO->email,
             ]);
 
             throw new Exception('Authentication system error. Please try again.');
@@ -66,8 +66,8 @@ readonly class AuthService
         } catch (Exception $e) {
             Log::error('Failed to create token', [
                 'user_id' => $user->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'error'   => $e->getMessage(),
+                'trace'   => $e->getTraceAsString(),
             ]);
 
             throw new Exception('Failed to create authentication token. Please try again.');
@@ -77,8 +77,8 @@ readonly class AuthService
     /**
      * Logout a user by invalidating their token for the specified device
      *
-     * @param User $user
-     * @param LogoutDTO $logoutDTO
+     * @param  User  $user
+     * @param  LogoutDTO  $logoutDTO
      * @return array{success: bool, message: string}
      */
     public function logout(User $user, LogoutDTO $logoutDTO): array
@@ -102,17 +102,17 @@ readonly class AuthService
 
             return [
                 'success' => true,
-                'message' => 'Successfully logged out.'
+                'message' => 'Successfully logged out.',
             ];
         } catch (Exception $e) {
             Log::warning("Error during logout for user {$user->id}", [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return [
                 'success' => false,
-                'message' => 'An error occurred during logout, but your session has been terminated.'
+                'message' => 'An error occurred during logout, but your session has been terminated.',
             ];
         }
     }

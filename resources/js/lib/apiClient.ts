@@ -1,8 +1,8 @@
 // resources/js/lib/apiClient.ts
 
 import axiosInstance from '@/bootstrap';
-import type { ApiError } from '@/Types/api';
-import { ref } from 'vue';
+import type {ApiError} from '@/types/api';
+import {ref} from 'vue';
 
 // Token and deviceName management with reactivity
 export const apiToken = ref<string | null>(localStorage.getItem('authToken'));
@@ -13,7 +13,7 @@ export const loggedInDeviceName = ref<string | null>(localStorage.getItem('authD
  * Updates Authorization header in axios.
  */
 export function setToken(newToken: string | null, deviceName: string | null) {
-    console.log('[apiClient] Setting token and deviceName:', { hasToken: !!newToken, deviceName });
+    console.log('[apiClient] Setting token and deviceName:', {hasToken: !!newToken, deviceName});
     apiToken.value = newToken;
     loggedInDeviceName.value = deviceName;
 
@@ -85,17 +85,17 @@ export async function apiClient<T>(
 
 // Helper functions for common methods
 export function get<T>(endpoint: string, params?: object): Promise<T> {
-    return apiClient<T>(endpoint, { method: 'get', params });
+    return apiClient<T>(endpoint, {method: 'get', params});
 }
 
 export function post<T>(endpoint: string, data?: object): Promise<T> {
-    return apiClient<T>(endpoint, { method: 'post', data });
+    return apiClient<T>(endpoint, {method: 'post', data});
 }
 
 export function put<T>(endpoint: string, data?: object): Promise<T> {
-    return apiClient<T>(endpoint, { method: 'put', data });
+    return apiClient<T>(endpoint, {method: 'put', data});
 }
 
 export function del<T>(endpoint: string): Promise<T> {
-    return apiClient<T>(endpoint, { method: 'delete' });
+    return apiClient<T>(endpoint, {method: 'delete'});
 }

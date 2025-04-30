@@ -1,17 +1,17 @@
-<script setup lang="ts">
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'; // Импорт для defineOptions
-import { Head, Link, router } from '@inertiajs/vue3';
-import { useAuth } from '@/composables/useAuth';
-import { useApi } from '@/composables/useApi';
-import { apiClient } from '@/lib/apiClient';
-import type { League, ApiError, ApiItemResponse } from '@/Types/api'; // ApiItemResponse, если API оборачивает в data
+<script lang="ts" setup>
+import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue'; // Импорт для defineOptions
+import {Head, Link, router} from '@inertiajs/vue3';
+import {useAuth} from '@/composables/useAuth';
+import {useApi} from '@/composables/useApi';
+import {apiClient} from '@/lib/apiClient';
+import type {ApiError, ApiItemResponse, League} from '@/types/api'; // ApiItemResponse, если API оборачивает в data
 import LeagueForm from '@/Components/LeagueForm.vue'; // Импортируем компонент формы
-import { Button, Spinner } from '@/Components/ui';
-import { ArrowLeftIcon } from 'lucide-vue-next';
-import { onMounted, computed, watchEffect } from 'vue'; // Добавляем watchEffect
+import {Button, Spinner} from '@/Components/ui';
+import {ArrowLeftIcon} from 'lucide-vue-next';
+import {computed, onMounted, watchEffect} from 'vue'; // Добавляем watchEffect
 
 // --- ПРИМЕНЯЕМ ЛЕЙАУТ ТОЛЬКО ЗДЕСЬ ---
-defineOptions({ layout: AuthenticatedLayout });
+defineOptions({layout: AuthenticatedLayout});
 // ------------------------------------
 
 const props = defineProps<{
@@ -19,13 +19,13 @@ const props = defineProps<{
     header?: string; // Заголовок из пропсов (не используется)
 }>();
 
-const { isAdmin } = useAuth();
+const {isAdmin} = useAuth();
 
 // Редирект, если пользователь не админ
 watchEffect(() => {
     if (isAdmin.value === false) {
         console.warn('Non-admin user tried to access Edit League page. Redirecting.');
-        router.visit(route('leagues.index'), { replace: true });
+        router.visit(route('leagues.index'), {replace: true});
     }
 });
 
@@ -33,7 +33,12 @@ watchEffect(() => {
 // Проверяем, возвращает ли /api/leagues/{id} объект напрямую или обернутый в data
 // LeaguesController::show использует `new LeagueResource($league)`, что обычно оборачивает в data
 const fetchLeagueFn = () => apiClient<ApiItemResponse<League>>(`/api/leagues/${props.leagueId}`);
-const { data: leagueResponse, isLoading, error: loadingError, execute: fetchLeague } = useApi<ApiItemResponse<League>>(fetchLeagueFn);
+const {
+    data: leagueResponse,
+    isLoading,
+    error: loadingError,
+    execute: fetchLeague
+} = useApi<ApiItemResponse<League>>(fetchLeagueFn);
 
 // Извлекаем лигу из обертки data
 const league = computed(() => leagueResponse.value?.data || null);
@@ -48,7 +53,7 @@ onMounted(() => {
 const handleSuccess = (updatedLeague: League) => {
     console.log('League updated:', updatedLeague);
     // alert('League updated successfully!'); // Уведомление
-    router.visit(route('leagues.show', { league: updatedLeague.id }));
+    router.visit(route('leagues.show', {league: updatedLeague.id}));
 };
 
 const handleError = (error: ApiError) => {
@@ -62,7 +67,7 @@ const pageTitle = computed(() => league.value ? `Edit ${league.value.name}` : 'E
 </script>
 
 <template>
-    <Head :title="pageTitle" />
+    <Head :title="pageTitle"/>
     <div class="py-12">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
             <div class="mb-6">
@@ -79,17 +84,18 @@ const pageTitle = computed(() => league.value ? `Edit ${league.value.name}` : 'E
 
             <div v-if="isAdmin">
                 <div v-if="isLoading" class="text-center p-10">
-                    <Spinner class="w-8 h-8 text-primary mx-auto" /> Loading league data...
+                    <Spinner class="w-8 h-8 text-primary mx-auto"/>
+                    Loading league data...
                 </div>
                 <div v-else-if="loadingError" class="text-center text-red-600 bg-red-100 p-4 rounded">
                     Error loading league data: {{ loadingError.message }}
                 </div>
                 <LeagueForm
                     v-else-if="league"
-                    :league="league"
                     :is-edit-mode="true"
-                    @submitted="handleSuccess"
+                    :league="league"
                     @error="handleError"
+                    @submitted="handleSuccess"
                 />
                 <div v-else class="text-center text-gray-500 p-10">
                     League not found or failed to load.

@@ -1,12 +1,13 @@
-<script setup lang="ts">
-import { cn } from '@/lib/utils'
-import { ref } from 'vue';
+<script lang="ts" setup>
+import {cn} from '@/lib/utils'
+import {ref} from 'vue';
 
 interface Props {
     class?: string;
     // Позиционирование можно добавить через пропсы или классы Tailwind
     position?: 'item-aligned' | 'popper';
 }
+
 const props = withDefaults(defineProps<Props>(), {
     position: 'popper',
 });
@@ -28,6 +29,8 @@ const isOpen = ref(true); // Для примера, должна управля�
       props.class
    )"
     >
-        <div class="p-1"> <slot /> </div>
+        <div class="p-1">
+            <slot/>
+        </div>
     </div>
 </template>

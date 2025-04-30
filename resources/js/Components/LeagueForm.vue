@@ -1,8 +1,20 @@
-<script setup lang="ts">
-import { ref, reactive, onMounted, watch } from 'vue';
-import { apiClient } from '@/lib/apiClient';
-import type { LeaguePayload, League, Game, ApiError } from '@/Types/api';
-import { Button, Input, Label, Select, Textarea, Card, CardHeader, CardTitle, CardContent, CardFooter, Spinner } from '@/Components/ui';
+<script lang="ts" setup>
+import {onMounted, reactive, ref, watch} from 'vue';
+import {apiClient} from '@/lib/apiClient';
+import type {ApiError, Game, League, LeaguePayload} from '@/Types/api';
+import {
+    Button,
+    Card,
+    CardContent,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+    Input,
+    Label,
+    Select,
+    Spinner,
+    Textarea
+} from '@/Components/ui';
 import InputError from '@/Components/InputError.vue';
 
 interface Props {
@@ -19,17 +31,17 @@ const emit = defineEmits(['submitted', 'error']);
 
 // Default rating rules in JSON format
 const defaultWinnerRules = JSON.stringify([
-    { range: [0, 50], strong: 25, weak: 25 },
-    { range: [51, 100], strong: 20, weak: 30 },
-    { range: [101, 200], strong: 15, weak: 35 },
-    { range: [201, 1000000], strong: 10, weak: 40 }
+    {range: [0, 50], strong: 25, weak: 25},
+    {range: [51, 100], strong: 20, weak: 30},
+    {range: [101, 200], strong: 15, weak: 35},
+    {range: [201, 1000000], strong: 10, weak: 40}
 ], null, 2);
 
 const defaultLoserRules = JSON.stringify([
-    { range: [0, 50], strong: -25, weak: -25 },
-    { range: [51, 100], strong: -20, weak: -30 },
-    { range: [101, 200], strong: -15, weak: -35 },
-    { range: [201, 1000000], strong: -10, weak: -40 }
+    {range: [0, 50], strong: -25, weak: -25},
+    {range: [51, 100], strong: -20, weak: -30},
+    {range: [101, 200], strong: -15, weak: -35},
+    {range: [201, 1000000], strong: -10, weak: -40}
 ], null, 2);
 
 const form = reactive<LeaguePayload>({
@@ -68,10 +80,10 @@ async function fetchGames() {
         // TODO: Replace with real API endpoint when available
         console.warn('API endpoint for fetching games is missing. Using hardcoded data.');
         games.value = [
-            { id: 1, name: 'Пул 10', type: 'Pool' },
-            { id: 2, name: 'Пул 9', type: 'Pool' },
-            { id: 3, name: 'Пул 8', type: 'Pool' },
-            { id: 5, name: 'Killer pool', type: 'Pool', is_multiplayer: true },
+            {id: 1, name: 'Пул 10', type: 'Pool'},
+            {id: 2, name: 'Пул 9', type: 'Pool'},
+            {id: 3, name: 'Пул 8', type: 'Pool'},
+            {id: 5, name: 'Killer pool', type: 'Pool', is_multiplayer: true},
         ];
 
         // Set default game if not in edit mode
@@ -100,7 +112,7 @@ watch(() => props.league, (newLeague) => {
         form.rating_change_for_winners_rule = JSON.stringify(newLeague.rating_change_for_winners_rule || [], null, 2);
         form.rating_change_for_losers_rule = JSON.stringify(newLeague.rating_change_for_losers_rule || [], null, 2);
     }
-}, { immediate: true });
+}, {immediate: true});
 
 onMounted(fetchGames);
 
@@ -110,13 +122,13 @@ const submit = async () => {
 
     try {
         // Prepare the payload
-        const payload = { ...form };
+        const payload = {...form};
 
         // Validate JSON before submitting
         try {
             JSON.parse(payload.rating_change_for_winners_rule as string || '[]');
             JSON.parse(payload.rating_change_for_losers_rule as string || '[]');
-        } catch(e) {
+        } catch (e) {
             formErrors.value = {
                 rating_rules: ["Invalid JSON format in rating rules."]
             };
@@ -166,59 +178,61 @@ const submit = async () => {
         </CardHeader>
         <form @submit.prevent="submit">
             <CardContent class="space-y-4">
-                <div v-if="formErrors.form" class="text-red-600 text-sm bg-red-100 p-3 rounded dark:bg-red-900/30 dark:text-red-400">
+                <div v-if="formErrors.form"
+                     class="text-red-600 text-sm bg-red-100 p-3 rounded dark:bg-red-900/30 dark:text-red-400">
                     {{ formErrors.form.join(', ') }}
                 </div>
 
                 <div>
                     <Label for="name">League Name</Label>
-                    <Input id="name" v-model="form.name" required :disabled="isLoading" />
-                    <InputError :message="formErrors.name?.join(', ')" />
+                    <Input id="name" v-model="form.name" :disabled="isLoading" required/>
+                    <InputError :message="formErrors.name?.join(', ')"/>
                 </div>
 
                 <div>
                     <Label for="game_id">Game</Label>
-                    <Select id="game_id" v-model="form.game_id" required :disabled="isLoading">
+                    <Select id="game_id" v-model="form.game_id" :disabled="isLoading" required>
                         <option :value="null" disabled>-- Select Game --</option>
                         <option v-for="game in games" :key="game.id" :value="game.id">{{ game.name }}</option>
                     </Select>
-                    <InputError :message="formErrors.game_id?.join(', ')" />
+                    <InputError :message="formErrors.game_id?.join(', ')"/>
                 </div>
 
                 <div>
                     <Label for="start_rating">Starting Rating</Label>
-                    <Input id="start_rating" type="number" v-model.number="form.start_rating" required :disabled="isLoading" />
-                    <InputError :message="formErrors.start_rating?.join(', ')" />
+                    <Input id="start_rating" v-model.number="form.start_rating" :disabled="isLoading" required
+                           type="number"/>
+                    <InputError :message="formErrors.start_rating?.join(', ')"/>
                 </div>
 
                 <div class="flex items-center space-x-2">
                     <input
-                        type="checkbox"
                         id="has_rating"
                         v-model="form.has_rating"
                         :disabled="isLoading"
                         class="rounded border-gray-300 text-primary shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50"
+                        type="checkbox"
                     />
                     <Label for="has_rating">Enable Rating System</Label>
-                    <InputError :message="formErrors.has_rating?.join(', ')" />
+                    <InputError :message="formErrors.has_rating?.join(', ')"/>
                 </div>
 
                 <div>
                     <Label for="details">Details (Optional)</Label>
-                    <Textarea id="details" v-model="form.details" :disabled="isLoading" />
-                    <InputError :message="formErrors.details?.join(', ')" />
+                    <Textarea id="details" v-model="form.details" :disabled="isLoading"/>
+                    <InputError :message="formErrors.details?.join(', ')"/>
                 </div>
 
                 <div>
                     <Label for="started_at">Start Date (Optional)</Label>
-                    <Input id="started_at" type="datetime-local" v-model="form.started_at" :disabled="isLoading" />
-                    <InputError :message="formErrors.started_at?.join(', ')" />
+                    <Input id="started_at" v-model="form.started_at" :disabled="isLoading" type="datetime-local"/>
+                    <InputError :message="formErrors.started_at?.join(', ')"/>
                 </div>
 
                 <div>
                     <Label for="finished_at">End Date (Optional)</Label>
-                    <Input id="finished_at" type="datetime-local" v-model="form.finished_at" :disabled="isLoading" />
-                    <InputError :message="formErrors.finished_at?.join(', ')" />
+                    <Input id="finished_at" v-model="form.finished_at" :disabled="isLoading" type="datetime-local"/>
+                    <InputError :message="formErrors.finished_at?.join(', ')"/>
                 </div>
 
                 <div>
@@ -226,11 +240,13 @@ const submit = async () => {
                     <Textarea
                         id="winners_rule"
                         v-model="form.rating_change_for_winners_rule"
-                        rows="6"
                         :disabled="isLoading || !form.has_rating"
+                        rows="6"
                     />
-                    <InputError :message="(formErrors.rating_change_for_winners_rule || formErrors.rating_rules)?.join(', ')" />
-                    <p class="text-xs text-gray-500 mt-1">Format: [{"range":[min, max],"strong":points,"weak":points}, ...]</p>
+                    <InputError
+                        :message="(formErrors.rating_change_for_winners_rule || formErrors.rating_rules)?.join(', ')"/>
+                    <p class="text-xs text-gray-500 mt-1">Format: [{"range":[min, max],"strong":points,"weak":points},
+                        ...]</p>
                 </div>
 
                 <div>
@@ -238,17 +254,19 @@ const submit = async () => {
                     <Textarea
                         id="losers_rule"
                         v-model="form.rating_change_for_losers_rule"
-                        rows="6"
                         :disabled="isLoading || !form.has_rating"
+                        rows="6"
                     />
-                    <InputError :message="(formErrors.rating_change_for_losers_rule || formErrors.rating_rules)?.join(', ')" />
-                    <p class="text-xs text-gray-500 mt-1">Format: [{"range":[min, max],"strong":points,"weak":points}, ...]</p>
+                    <InputError
+                        :message="(formErrors.rating_change_for_losers_rule || formErrors.rating_rules)?.join(', ')"/>
+                    <p class="text-xs text-gray-500 mt-1">Format: [{"range":[min, max],"strong":points,"weak":points},
+                        ...]</p>
                 </div>
             </CardContent>
 
             <CardFooter>
-                <Button type="submit" :disabled="isLoading">
-                    <Spinner v-if="isLoading" class="w-4 h-4 mr-2" />
+                <Button :disabled="isLoading" type="submit">
+                    <Spinner v-if="isLoading" class="w-4 h-4 mr-2"/>
                     {{ isEditMode ? 'Save Changes' : 'Create League' }}
                 </Button>
             </CardFooter>

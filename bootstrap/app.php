@@ -22,7 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
         $middleware->alias([
             'auth.frontend' => EnsureFrontendRequestsAreAuthenticated::class,
-            'auth.admin' => AdminMiddleware::class,
+            'auth.admin'    => AdminMiddleware::class,
         ]);
         $middleware->web(append: [
             HandleAppearance::class,
@@ -32,4 +32,5 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
-    })->create();
+    })->create()
+;

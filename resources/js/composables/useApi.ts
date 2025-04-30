@@ -1,7 +1,6 @@
 // resources/js/composables/useApi.ts
-import { ref, Ref } from 'vue';
-import { apiClient } from '@/lib/apiClient';
-import type { ApiError } from '@/Types/api';
+import {ref, Ref} from 'vue';
+import type {ApiError} from '@/types/api';
 
 /**
  * Generic composable for handling API data fetching with loading and error states

@@ -1,5 +1,5 @@
-<script setup lang="ts">
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+<script lang="ts" setup>
+import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {Head} from '@inertiajs/vue3';
 import {useAuth} from '@/composables/useAuth';
 import {Card, CardContent, CardHeader, CardTitle} from '@/Components/ui';

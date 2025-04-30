@@ -17,8 +17,8 @@ class EnsureFrontendRequestsAreAuthenticated
     /**
      * Handle an incoming request.
      *
-     * @param Request $request
-     * @param Closure $next
+     * @param  Request  $request
+     * @param  Closure  $next
      * @return Response
      */
     public function handle(Request $request, Closure $next): Response
@@ -27,14 +27,14 @@ class EnsureFrontendRequestsAreAuthenticated
         $shouldLog = config('app.debug', false);
 
         if ($shouldLog) {
-            Log::debug('[Auth Middleware] Running for path: ' . $request->path());
+            Log::debug('[Auth Middleware] Running for path: '.$request->path());
         }
 
         // Always use Sanctum guard to check auth status
         $isAuthenticated = Auth::guard('sanctum')->check();
 
         if ($shouldLog) {
-            Log::debug('[Auth Middleware] Authentication status: ' . ($isAuthenticated ? 'Authenticated' : 'Not Authenticated'));
+            Log::debug('[Auth Middleware] Authentication status: '.($isAuthenticated ? 'Authenticated' : 'Not Authenticated'));
         }
 
         if (!$isAuthenticated) {
@@ -49,8 +49,8 @@ class EnsureFrontendRequestsAreAuthenticated
     /**
      * Handle unauthenticated requests appropriately based on request type
      *
-     * @param Request $request
-     * @param bool $shouldLog
+     * @param  Request  $request
+     * @param  bool  $shouldLog
      * @return Response
      */
     private function handleUnauthenticatedRequest(Request $request, bool $shouldLog): Response
@@ -63,8 +63,8 @@ class EnsureFrontendRequestsAreAuthenticated
 
             return response()->json([
                 'message' => 'Unauthenticated',
-                'status' => 'error',
-                'code' => 'unauthorized'
+                'status'  => 'error',
+                'code'    => 'unauthorized',
             ], 401);
         }
 
@@ -72,7 +72,7 @@ class EnsureFrontendRequestsAreAuthenticated
         $loginRoute = route('login');
 
         if ($shouldLog) {
-            Log::debug('[Auth Middleware] Web request - redirecting to: ' . $loginRoute);
+            Log::debug('[Auth Middleware] Web request - redirecting to: '.$loginRoute);
         }
 
         return redirect()->guest($loginRoute);

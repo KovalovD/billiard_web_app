@@ -1,11 +1,10 @@
 // resources/js/app.ts
 import '../css/app.css'; // Tailwind styles
-
-import { createApp, h, DefineComponent } from 'vue';
-import { createInertiaApp } from '@inertiajs/vue3';
-import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
-import { ZiggyVue } from 'ziggy-js';
-import { Ziggy } from './ziggy';
+import {createApp, DefineComponent, h} from 'vue';
+import {createInertiaApp} from '@inertiajs/vue3';
+import {resolvePageComponent} from 'laravel-vite-plugin/inertia-helpers';
+import {ZiggyVue} from 'ziggy-js';
+import {Ziggy} from './ziggy';
 import axios from 'axios';
 
 // Simple auth token management
@@ -71,7 +70,7 @@ createInertiaApp({
         import.meta.glob<DefineComponent>('./pages/**/*.vue')
     ),
 
-    setup({ el, App, props, plugin }) {
+    setup({el, App, props, plugin}) {
         // Ensure we have the route data available
         const ziggyData = {
             ...Ziggy,
@@ -80,7 +79,7 @@ createInertiaApp({
         };
 
         // Create Vue app
-        const vueApp = createApp({ render: () => h(App, props) });
+        const vueApp = createApp({render: () => h(App, props)});
 
         // Register global properties
         vueApp.config.globalProperties.route = (name: string, params?: any, absolute?: boolean) => {

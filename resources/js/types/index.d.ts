@@ -1,6 +1,6 @@
-import type { PageProps } from '@inertiajs/core';
-import type { LucideIcon } from 'lucide-vue-next';
-import type { Config } from 'ziggy-js';
+import type {PageProps} from '@inertiajs/core';
+import type {LucideIcon} from 'lucide-vue-next';
+import type {Config} from 'ziggy-js';
 
 export interface Auth {
     user: User;

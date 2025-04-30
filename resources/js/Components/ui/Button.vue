@@ -1,8 +1,8 @@
 <!-- resources/js/Components/ui/Button.vue -->
-<script setup lang="ts">
-import { computed } from 'vue';
-import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '@/lib/utils';
+<script lang="ts" setup>
+import {computed} from 'vue';
+import {cva, type VariantProps} from 'class-variance-authority';
+import {cn} from '@/lib/utils';
 
 const buttonVariants = cva(
     'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
@@ -42,7 +42,7 @@ const props = withDefaults(defineProps<Props>(), {
     as: 'button',
 });
 
-const computedClasses = computed(() => cn(buttonVariants({ variant: props.variant, size: props.size })));
+const computedClasses = computed(() => cn(buttonVariants({variant: props.variant, size: props.size})));
 
 // Add default export to ensure component can be imported correctly
 defineOptions({
@@ -52,6 +52,6 @@ defineOptions({
 
 <template>
     <component :is="as" :class="computedClasses">
-        <slot />
+        <slot/>
     </component>
 </template>

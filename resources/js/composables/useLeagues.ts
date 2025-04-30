@@ -1,9 +1,8 @@
 // resources/js/composables/useLeagues.ts - New domain-specific composable
 
-import { ref, readonly, computed } from 'vue';
-import { apiClient, get, post, put, del } from '@/lib/apiClient';
-import { useApi, useApiAction } from '@/composables/useApi';
-import type { League, LeaguePayload, Rating, Player, MatchGame, ApiError } from '@/Types/api';
+import {del, get, post, put} from '@/lib/apiClient';
+import {useApi, useApiAction} from '@/composables/useApi';
+import type {League, LeaguePayload, Rating} from '@/types/api';
 
 /**
  * Composable for working with Leagues API endpoints.

@@ -1,6 +1,6 @@
-<script setup lang="ts">
-import { useAttrs } from 'vue'
-import { cn } from '@/lib/utils'
+<script lang="ts" setup>
+import {useAttrs} from 'vue'
+import {cn} from '@/lib/utils'
 
 defineOptions({
     inheritAttrs: false,
@@ -8,7 +8,7 @@ defineOptions({
 
 const modelValue = defineModel<string | number>()
 
-const { class: className, ...restAttrs } = useAttrs()
+const {class: className, ...restAttrs} = useAttrs()
 </script>
 
 <template>

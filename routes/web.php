@@ -1,6 +1,5 @@
 <?php
 
-use App\Auth\Http\Middleware\EnsureFrontendRequestsAreAuthenticated;
 use App\Core\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Core\Http\Middleware\AdminMiddleware;
 use Illuminate\Support\Facades\Route;
@@ -10,10 +9,11 @@ use Inertia\Inertia;
 Route::middleware('guest')->group(function () {
     // Explicitly define the login route with leading slash
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])
-        ->name('login');
+        ->name('login')
+    ;
 
     // Registration routes
-    Route::get('/register', function() {
+    Route::get('/register', function () {
         return Inertia::render('auth/Register');
     })->name('register');
 
@@ -28,20 +28,20 @@ Route::middleware('auth')->group(function () {
     // Dashboard as home for authenticated users
     Route::get('/dashboard', function () {
         return Inertia::render('Dashboard', [
-            'header' => 'Dashboard'
+            'header' => 'Dashboard',
         ]);
     })->name('dashboard');
 
-    Route::get('/profile', function() {
+    Route::get('/profile', function () {
         return Inertia::render('Profile/Edit', [
-            'header' => 'Profile Settings'
+            'header' => 'Profile Settings',
         ]);
     })->name('profile.edit');
 
     // --- Leagues ---
     Route::get('/leagues', function () {
         return Inertia::render('Leagues/Index', [
-            'header' => 'Leagues'
+            'header' => 'Leagues',
         ]);
     })->name('leagues.index');
 
@@ -52,23 +52,23 @@ Route::middleware('auth')->group(function () {
     })->name('leagues.show')->where('league', '[0-9]+');
 
     // --- Admin routes ---
-    Route::middleware(AdminMiddleware::class)->group(function() {
+    Route::middleware(AdminMiddleware::class)->group(function () {
         Route::get('/leagues/create', function () {
             return Inertia::render('Leagues/Create', [
-                'header' => 'Create League'
+                'header' => 'Create League',
             ]);
         })->name('leagues.create');
 
         Route::get('/leagues/{league}/edit', function ($leagueId) {
             return Inertia::render('Leagues/Edit', [
                 'leagueId' => $leagueId,
-                'header' => 'Edit League'
+                'header'   => 'Edit League',
             ]);
         })->name('leagues.edit')->where('league', '[0-9]+');
     });
 });
 
 // Fallback for 404
-Route::fallback(function() {
+Route::fallback(function () {
     return Inertia::render('Errors/404')->toResponse(request())->setStatusCode(404);
 });
