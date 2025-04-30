@@ -8,9 +8,9 @@ use App\Auth\Repositories\AuthRepository;
 use App\Core\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\ValidationException;
 use Exception;
-use RuntimeException;
 
 /**
  * Service for handling authentication operations
@@ -50,7 +50,7 @@ readonly class AuthService
                 'email' => $loginDTO->email
             ]);
 
-            throw new RuntimeException('Authentication system error. Please try again.');
+            throw new Exception('Authentication system error. Please try again.');
         }
 
         try {
@@ -70,7 +70,7 @@ readonly class AuthService
                 'trace' => $e->getTraceAsString()
             ]);
 
-            throw new RuntimeException('Failed to create authentication token. Please try again.');
+            throw new Exception('Failed to create authentication token. Please try again.');
         }
     }
 
@@ -86,6 +86,17 @@ readonly class AuthService
         try {
             // Use repository to invalidate token
             $this->repository->invalidateToken($user, $logoutDTO->deviceName);
+
+            // Invalidate all tokens when logging out from the web
+            if ($logoutDTO->deviceName === 'web' || strpos($logoutDTO->deviceName, 'web-') === 0) {
+                // Revoke all tokens for security
+                $user->tokens()->delete();
+
+                // Logout from web guard and invalidate session
+                Auth::guard('web')->logout();
+                Session::invalidate();
+                Session::regenerateToken();
+            }
 
             Log::info("User {$user->id} logged out from device: {$logoutDTO->deviceName}");
 
