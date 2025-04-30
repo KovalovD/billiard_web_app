@@ -1,199 +1,90 @@
 // resources/js/composables/useAuth.ts
+import { ref, computed } from 'vue';
+import axios from 'axios';
 
-import { ref, computed, readonly } from 'vue';
-import { apiClient, setToken, apiToken, getDeviceName } from '@/lib/apiClient';
-import type { User, LoginResponse, ApiError } from '@/Types/api';
-import { router } from '@inertiajs/vue3';
-import axiosInstance from '@/bootstrap';
-
-const user = ref<User | null>(null);
-const isLoading = ref(false);
-const isActing = ref(false);
-const error = ref<string | null>(null);
+// State management
+const user = ref(null);
 const isAuthInitialized = ref(false);
+const isLoading = ref(false);
+const error = ref(null);
 
-// isAuthenticated depends on both initialization flag and user.value
+// Computed properties
 const isAuthenticated = computed(() => isAuthInitialized.value && !!user.value);
-const isAdmin = computed(() => isAuthenticated.value && !!user.value?.is_admin);
+const isAdmin = computed(() => isAuthenticated.value && user.value?.is_admin);
 
 /**
- * Loads user data via API (/api/auth/user), using Bearer token from apiClient.
+ * Simple login function using direct axios calls
  */
-async function fetchUser(): Promise<boolean> {
-    // Check token via ref from apiClient
-    if (!apiToken.value) {
-        console.log('[useAuth] fetchUser: No token found in apiClient ref.');
-        user.value = null;
-        return false;
-    }
-    isLoading.value = true; error.value = null;
-    try {
-        console.log('[useAuth] Fetching user data (API token auth)...');
-        // apiClient automatically adds Authorization header
-        const fetchedUser = await apiClient<User>('/api/auth/user');
-        user.value = fetchedUser;
-        console.log('[useAuth] User data fetched successfully:', user.value);
-        return true;
-    } catch (err) {
-        console.error("[useAuth] Failed to fetch user:", err);
-        user.value = null; // Reset on error
-        // If error is 401, token is already reset in apiClient
-        if ((err as ApiError).response?.status !== 401) {
-            error.value = (err as ApiError).message || 'Failed fetch user.';
-        }
-        return false;
-    } finally { isLoading.value = false; }
-}
-
-/**
- * Performs login via API (/api/auth/login), gets and saves token/deviceName.
- */
-async function login(credentials: { email: string; password: string }) {
-    isActing.value = true;
+async function login(credentials) {
+    isLoading.value = true;
     error.value = null;
-    const deviceName = `web-${Date.now()}`;
 
     try {
-        console.log('[useAuth] Attempting login (API token auth)...');
+        // Get CSRF cookie first
+        await axios.get('/sanctum/csrf-cookie');
 
-        // Make the API call to /api/auth/login
-        const response = await apiClient<LoginResponse>('/api/auth/login', {
-            method: 'post',
-            data: { ...credentials, deviceName },
+        // Attempt login
+        const response = await axios.post('/api/auth/login', {
+            ...credentials,
+            deviceName: `web-${Date.now()}`
         });
 
-        // Validate response format contains both token and user
-        if (!response || !response.token || !response.user) {
-            throw new Error('Login response from API has unexpected structure.');
+        // Store user and token
+        if (response.data.user && response.data.token) {
+            user.value = response.data.user;
+            localStorage.setItem('authToken', response.data.token);
+            localStorage.setItem('authDeviceName', `web-${Date.now()}`);
+            axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
         }
 
-        console.log('[useAuth] Login successful');
-
-        // Save token and deviceName
-        setToken(response.token, deviceName);
-
-        // Update state
-        user.value = response.user;
         isAuthInitialized.value = true;
-
-        console.log(`[useAuth] State after login: User=${!!user.value}, Initialized=${isAuthInitialized.value}, Authenticated=${isAuthenticated.value}`);
-
-        // Redirect to dashboard after successful login
-        console.log('[useAuth] Redirecting after login...');
-
-        try {
-            // Use window.location for a hard redirect rather than Inertia
-            // This ensures a clean state after login
-            window.location.href = route('dashboard');
-            console.log('[useAuth] Hard redirect to dashboard initiated');
-        } catch (e) {
-            console.error('[useAuth] Error during route generation or redirect:', e);
-            // Fallback to direct URL if route() fails
-            window.location.href = '/dashboard';
-        }
-
-        return response;
+        return response.data;
     } catch (err) {
-        console.error("[useAuth] Login failed:", err);
-
-        // Clear state on error
-        error.value = (err as ApiError).data?.message || (err as ApiError).message || 'Login failed.';
-        setToken(null, null);
-        user.value = null;
-        isAuthInitialized.value = false;
-
-        // Re-throw for component-level handling
+        error.value = err.response?.data?.message || 'Login failed';
         throw err;
     } finally {
-        isActing.value = false;
+        isLoading.value = false;
     }
 }
+
 /**
- * Performs logout via API (/api/auth/logout), removing the token.
+ * Simple logout function
  */
 async function logout() {
-    isActing.value = true; error.value = null;
-    const currentDeviceName = getDeviceName(); // Get deviceName from apiClient
+    isLoading.value = true;
 
-    // Always reset frontend state immediately
-    console.log('[useAuth] Clearing local state for logout...');
-    setToken(null, null); // Removes token/deviceName from ref, localStorage and axios headers
-    user.value = null;    // Clears user
-    isAuthInitialized.value = true; // We know the state - user is null
-    console.log(`[useAuth] State after local clear: Initialized=${isAuthInitialized.value}, Authenticated=${isAuthenticated.value}`);
-
-    // Try to call API if we had deviceName
-    if (currentDeviceName) {
-        try {
-            console.log(`[useAuth] Attempting API logout for device: ${currentDeviceName}...`);
-            await apiClient<void>('/api/auth/logout', { // Call API logout
-                method: 'post',
-                data: { deviceName: currentDeviceName } // Pass deviceName
+    try {
+        // Try to call API for logout
+        if (localStorage.getItem('authToken')) {
+            await axios.post('/api/auth/logout', {
+                deviceName: localStorage.getItem('authDeviceName')
             });
-            console.log('[useAuth] API logout successful.');
-        } catch (err: any) { console.error("[useAuth] Logout API call failed:", err); error.value = (err as ApiError).message || 'Logout failed on server.'; }
-    } else { console.warn("[useAuth] Cannot perform API logout: device name not found."); }
-
-    isActing.value = false;
-
-    // THIS IS THE IMPORTANT CHANGE - Use window.location instead of router.visit
-    try {
-        const loginUrl = route('login');
-        console.log('[useAuth] Redirecting to login after logout using window.location:', loginUrl);
-        window.location.href = loginUrl; // Hard navigation for reliable state reset
-    } catch (e) {
-        console.error('[useAuth] Error getting login route, using fallback', e);
-        window.location.href = '/login'; // Fallback if route() fails
-    }
-}
-
-/**
- * Initialization: check token in apiClient and load user.
- */
-async function initializeAuth() {
-    console.log('[useAuth] Initializing authentication state (API token auth)...');
-    isAuthInitialized.value = false; error.value = null;
-    try {
-        // Check if we're on the login page to prevent redirect loops
-        const isLoginPage = window.location.pathname === '/login' ||
-            window.location.pathname === '/' && !document.cookie.includes('laravel_session');
-
-        if (isLoginPage) {
-            console.log('[useAuth] On login page, skipping auto-redirect');
-            user.value = null;
-        } else if (apiToken.value) {
-            console.log('[useAuth] Token found in apiClient ref. Verifying...');
-            // Set header in axios in case it's not set yet
-            axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${apiToken.value}`;
-            await fetchUser(); // Try to load user with this token
-        } else {
-            console.log('[useAuth] No token found in apiClient ref.');
-            user.value = null;
         }
-    } catch (initializationError) {
-        console.error('[useAuth] Error during authentication initialization:', initializationError);
-        error.value = 'Failed init state.';
+    } catch (err) {
+        console.error('Logout API call failed:', err);
+    } finally {
+        // Always clear state regardless of API result
         user.value = null;
-        setToken(null, null);
-    }
-    finally {
-        isAuthInitialized.value = true;
-        console.log('[useAuth] Authentication initialized. Final state - User:', !!user.value, 'Initialized:', isAuthInitialized.value, 'Authenticated:', isAuthenticated.value);
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('authDeviceName');
+        delete axios.defaults.headers.common['Authorization'];
+        isLoading.value = false;
+
+        // Hard navigation to login
+        window.location.href = '/login';
     }
 }
 
+// Simple export without complex circular references
 export function useAuth() {
     return {
-        user: readonly(user),
-        isLoading: readonly(isLoading),
-        isActing: readonly(isActing),
-        error: readonly(error),
-        isAuthInitialized: readonly(isAuthInitialized),
-        isAuthenticated, // Use updated computed
+        user,
+        isLoading,
+        error,
+        isAuthInitialized,
+        isAuthenticated,
         isAdmin,
         login,
-        logout,
-        fetchUser,
-        initializeAuth
+        logout
     };
 }

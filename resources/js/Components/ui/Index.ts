@@ -1,14 +1,48 @@
-// Re-export all UI components for easier import
-export { default as Button } from './Button.vue';
-export { default as Input } from './Input.vue';
-export { default as Label } from './Label.vue';
-export { default as Card } from './Card.vue';
-export { default as CardHeader } from './CardHeader.vue';
-export { default as CardTitle } from './CardTitle.vue';
-export { default as CardDescription } from './CardDescription.vue';
-export { default as CardContent } from './CardContent.vue';
-export { default as CardFooter } from './CardFooter.vue';
-export { default as Modal } from './Modal.vue';
-export { default as Select } from './Select.vue';
-export { default as Textarea } from './Textarea.vue';
-export { default as Spinner } from './Spinner.vue';
+// resources/js/Components/ui/Index.ts
+import Button from './Button.vue';
+import Input from './Input.vue';
+import Label from './Label.vue';
+import Card from './Card.vue';
+import CardHeader from './CardHeader.vue';
+import CardTitle from './CardTitle.vue';
+import CardDescription from './CardDescription.vue';
+import CardContent from './CardContent.vue';
+import CardFooter from './CardFooter.vue';
+import Modal from './Modal.vue';
+import Select from './Select.vue';
+import Textarea from './Textarea.vue';
+import Spinner from './Spinner.vue';
+
+// Export both as default and named exports to support both import styles
+export {
+    Button,
+    Input,
+    Label,
+    Card,
+    CardHeader,
+    CardTitle,
+    CardDescription,
+    CardContent,
+    CardFooter,
+    Modal,
+    Select,
+    Textarea,
+    Spinner
+};
+
+// Also provide default export for flexibility
+export default {
+    Button,
+    Input,
+    Label,
+    Card,
+    CardHeader,
+    CardTitle,
+    CardDescription,
+    CardContent,
+    CardFooter,
+    Modal,
+    Select,
+    Textarea,
+    Spinner
+};

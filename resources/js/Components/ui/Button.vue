@@ -1,3 +1,4 @@
+<!-- resources/js/Components/ui/Button.vue -->
 <script setup lang="ts">
 import { computed } from 'vue';
 import { cva, type VariantProps } from 'class-variance-authority';
@@ -43,6 +44,10 @@ const props = withDefaults(defineProps<Props>(), {
 
 const computedClasses = computed(() => cn(buttonVariants({ variant: props.variant, size: props.size })));
 
+// Add default export to ensure component can be imported correctly
+defineOptions({
+    name: 'Button'
+})
 </script>
 
 <template>

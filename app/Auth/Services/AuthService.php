@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Exception;
+use RuntimeException;
 
 /**
  * Service for handling authentication operations
@@ -28,7 +29,7 @@ readonly class AuthService
      *
      * @param LoginDTO $loginDTO
      * @return array{user: User, token: string}
-     * @throws ValidationException
+     * @throws ValidationException|Exception
      */
     public function login(LoginDTO $loginDTO): array
     {
@@ -45,10 +46,11 @@ readonly class AuthService
 
         if (!$user) {
             // This should rarely happen, but just in case
-            Log::error('Auth::attempt succeeded but user is null');
-            throw ValidationException::withMessages([
-                'email' => ['Authentication error occurred. Please try again.'],
+            Log::error('Auth::attempt succeeded but user is null', [
+                'email' => $loginDTO->email
             ]);
+
+            throw new RuntimeException('Authentication system error. Please try again.');
         }
 
         try {
@@ -62,11 +64,13 @@ readonly class AuthService
                 'token' => $token,
             ];
         } catch (Exception $e) {
-            Log::error('Failed to create token: ' . $e->getMessage());
-
-            throw ValidationException::withMessages([
-                'email' => ['Failed to create authentication token. Please try again.'],
+            Log::error('Failed to create token', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
+
+            throw new RuntimeException('Failed to create authentication token. Please try again.');
         }
     }
 
@@ -90,7 +94,10 @@ readonly class AuthService
                 'message' => 'Successfully logged out.'
             ];
         } catch (Exception $e) {
-            Log::warning("Error during logout for user {$user->id}: " . $e->getMessage());
+            Log::warning("Error during logout for user {$user->id}", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
 
             return [
                 'success' => false,
