@@ -1,114 +1,95 @@
-<script setup lang="ts">
+<script setup>
 import { ref } from 'vue';
-import { useAuth } from '@/composables/useAuth';
-import { fetchCsrfToken } from '@/bootstrap';
-import { Head } from '@inertiajs/vue3';
-import InputError from '@/Components/InputError.vue';
-import { Button } from '@/Components/ui/Button.vue';
-import { Input } from '@/Components/ui/Input.vue';
-import { Label } from '@/Components/ui/Label.vue';
-import GuestLayout from '@/Layouts/GuestLayout.vue';
+import axios from 'axios';
 
-// Use GuestLayout specifically for login page
-defineOptions({ layout: GuestLayout });
-
-const { login, isActing, error: authError } = useAuth();
-
+// Direct imports, no dynamic UI components
 const form = ref({
     email: '',
-    password: '',
+    password: ''
 });
 
-// Form-specific errors
-const formError = ref<string | null>(null);
+const error = ref('');
+const processing = ref(false);
 
-const submit = async (e: Event) => {
-    // Prevent default form submission which would cause a page reload
-    e.preventDefault();
-
-    formError.value = null;
-
-    // Basic frontend validation
-    if (!form.value.email) {
-        formError.value = 'Email is required';
-        return;
-    }
-
-    if (!form.value.password) {
-        formError.value = 'Password is required';
-        return;
-    }
+async function submit() {
+    processing.value = true;
+    error.value = '';
 
     try {
-        console.log('[Login] Getting CSRF token first');
-        // Fetch CSRF token before attempting login
-        await fetchCsrfToken();
+        // Get CSRF token
+        await axios.get('/sanctum/csrf-cookie');
 
-        console.log('[Login] Submitting login form');
-        await login({
+        // Basic login
+        const res = await axios.post('/api/auth/login', {
             email: form.value.email,
-            password: form.value.password
+            password: form.value.password,
+            deviceName: 'web-browser'
         });
-        // Redirect happens inside login() in useAuth composable
-    } catch (err: any) {
-        console.error('Login component caught error:', err);
 
-        // Check for validation errors from API
-        if (err.data?.errors) {
-            // Handle Laravel validation errors if present
-            const errorMessages = Object.values(err.data.errors).flat();
-            formError.value = errorMessages.join(', ');
-        } else {
-            // Use general error from useAuth
-            formError.value = authError.value || 'Login failed. Please try again.';
+        // Store token
+        if (res.data.token) {
+            localStorage.setItem('authToken', res.data.token);
+            localStorage.setItem('authDeviceName', 'web-browser');
+
+            // Hard navigation to avoid SPA issues
+            window.location.href = '/dashboard';
         }
+    } catch (err) {
+        console.error('Login error:', err);
+        error.value = err.response?.data?.message || 'Login failed';
+    } finally {
+        processing.value = false;
     }
-};
+}
 </script>
 
 <template>
-    <Head title="Log in" />
+    <div class="min-h-screen flex flex-col justify-center items-center pt-6 sm:pt-0 bg-gray-100">
+        <div class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white shadow-md overflow-hidden sm:rounded-lg">
+            <h1 class="text-2xl font-bold mb-6 text-center">Log in</h1>
 
-    <div class="flex items-center justify-center">
-        <div class="w-full max-w-md px-6 py-8 bg-white shadow-md overflow-hidden sm:rounded-lg dark:bg-gray-800">
-            <h1 class="text-2xl font-bold mb-6 text-center">Log in to your account</h1>
-
-            <form @submit.prevent="submit" class="space-y-6">
-                <div>
-                    <Label for="email">Email</Label>
-                    <Input
+            <form @submit.prevent="submit">
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="email">
+                        Email
+                    </label>
+                    <input
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                         id="email"
                         type="email"
+                        placeholder="Email"
                         v-model="form.email"
                         required
-                        autofocus
-                        :disabled="isActing"
-                        placeholder="name@example.com"
-                        class="mt-1 block w-full"
-                    />
+                    >
                 </div>
 
-                <div>
-                    <Label for="password">Password</Label>
-                    <Input
+                <div class="mb-6">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="password">
+                        Password
+                    </label>
+                    <input
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                         id="password"
                         type="password"
+                        placeholder="Password"
                         v-model="form.password"
                         required
-                        :disabled="isActing"
-                        placeholder="Your password"
-                        class="mt-1 block w-full"
-                    />
+                    >
                 </div>
 
-                <div v-if="formError" class="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-3 rounded">
-                    {{ formError }}
+                <div v-if="error" class="mb-4 text-red-500">
+                    {{ error }}
                 </div>
 
-                <Button type="submit" class="w-full justify-center" :disabled="isActing">
-                    <span v-if="isActing" class="mr-2">Logging in...</span>
-                    <span v-else>Log in</span>
-                </Button>
+                <div class="flex items-center justify-between">
+                    <button
+                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                        type="submit"
+                        :disabled="processing"
+                    >
+                        {{ processing ? 'Logging in...' : 'Log In' }}
+                    </button>
+                </div>
             </form>
         </div>
     </div>

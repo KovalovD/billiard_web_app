@@ -1,77 +1,63 @@
-import '../css/app.css'; // Tailwind styles
-
-import { createApp, h, DefineComponent } from 'vue';
+// resources/js/app.ts
+import '../css/app.css';
+import { createApp, h } from 'vue';
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { ZiggyVue } from 'ziggy-js';
-import { useAuth } from '@/composables/useAuth';
-import { Ziggy } from './ziggy';
+import axios from 'axios';
 
-// Get initialization function from useAuth
-const { initializeAuth } = useAuth();
+// Simple token retrieval
+const getStoredToken = () => localStorage.getItem('authToken');
 
-// Make route globally available
-declare global {
-    interface Window {
-        route: any;
-        Ziggy: any;
+// Simple auth setup - no composables to avoid circular deps
+const setupAuth = () => {
+    const token = getStoredToken();
+    if (token) {
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        return true;
     }
-}
+    return false;
+};
 
 createInertiaApp({
     title: (title) => `${title} - B2B League`,
-    resolve: (name) => resolvePageComponent(`./pages/${name}.vue`, import.meta.glob<DefineComponent>('./pages/**/*.vue')),
-    async setup({ el, App, props, plugin }) {
-        // Check if we're on the login page to prevent auth redirect loops
-        const isLoginPage = window.location.pathname === '/login' ||
-            window.location.pathname === '/' && !document.cookie.includes('laravel_session');
 
-        // Ensure we have the route data available
-        const ziggyData = {
-            ...Ziggy,
-            ...(window.Ziggy || {}),
-            location: window.location.origin,
-        };
+    resolve: (name) => {
+        // Simple component resolution without complex handling
+        return resolvePageComponent(`./pages/${name}.vue`, import.meta.glob('./pages/**/*.vue'));
+    },
 
-        // Create Vue app
-        const vueApp = createApp({ render: () => h(App, props) });
-
-        // Register global properties
-        vueApp.config.globalProperties.route = (name: string, params?: any, absolute?: boolean) => {
-            try {
-                return window.route(name, params, absolute, ziggyData);
-            } catch (error) {
-                console.warn(`Route error for ${name}:`, error);
-                // Return fallback URL if route can't be generated
-                return name === 'login' ? '/login' :
-                    name === 'dashboard' ? '/dashboard' :
-                        name === 'register' ? '/register' : '/';
-            }
-        };
+    setup({ el, App, props, plugin }) {
+        // Create the app first
+        const app = createApp({ render: () => h(App, props) });
 
         // Apply plugins
-        vueApp.use(plugin)
-            .use(ZiggyVue, ziggyData);
+        app.use(plugin);
+        app.use(ZiggyVue);
 
-        if (!isLoginPage) {
+        // Configure global route function
+        app.config.globalProperties.route = function(name, params, absolute) {
             try {
-                // Initialize auth before mounting app, but only if not on login page
-                console.log('[App] Initializing auth before app mount');
-                await initializeAuth();
-                console.log('[App] Auth initialized successfully');
-            } catch (error) {
-                // Log error but continue with app mount
-                console.error('[App] Error during auth initialization:', error);
+                return window.route(name, params, absolute);
+            } catch (e) {
+                console.warn('Route error:', e);
+                // Simple fallbacks
+                return name === 'login' ? '/login' :
+                    name === 'dashboard' ? '/dashboard' :
+                        `/${name}`;
             }
-        } else {
-            console.log('[App] Skipping auth initialization on login page');
-        }
+        };
 
-        // Mount the app
-        vueApp.mount(el);
-        console.log('[App] App mounted');
+        // Setup auth headers
+        setupAuth();
+
+        // Mount without delays or complex conditionals
+        app.mount(el);
+        console.log('[App] Mounted');
     },
+
     progress: {
         color: '#4B5563',
+        showSpinner: true,
     },
 });
