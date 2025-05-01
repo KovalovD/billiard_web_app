@@ -25,6 +25,8 @@ class LeagueResource extends JsonResource
             'created_at'                     => $this->created_at,
             'updated_at'                     => $this->updated_at,
             'matches_count'                  => $this->matches_count,
+            'max_players' => $this->max_players,
+            'max_score'   => $this->max_score,
 
             'game' => $this->game->name,
         ];

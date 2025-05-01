@@ -23,7 +23,7 @@ class RatingService
         return Rating::query()
             ->where('league_id', $league->id)
             ->where('is_active', true)
-            ->with('user')
+            ->with('user', 'ongoingMatchesAsFirstPlayer', 'ongoingMatchesAsSecondPlayer')
             ->orderBy('position')
             ->get()
         ;
