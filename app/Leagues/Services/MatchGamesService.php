@@ -14,7 +14,6 @@ use Throwable;
 
 readonly class MatchGamesService
 {
-
     public function __construct(private RatingService $ratingService)
     {
         //todo prepare statistic for profile
@@ -95,8 +94,9 @@ readonly class MatchGamesService
     {
         $userRating = $this->ratingService->getActiveRatingForUserLeague($user, $matchGame->league);
 
-        $isNotExpire = $matchGame->invitation_available_till !== null || $matchGame->invitation_available_till->gt($matchGame->invitation_sent_at);
-        $isParticipate = $userRating && in_array($userRating, $matchGame->getRatings());
+        $isNotExpire = $matchGame->invitation_available_till === null || $matchGame->invitation_available_till->gt(now());
+        $isParticipate = $userRating && in_array($userRating->id,
+                [$matchGame->first_rating_id, $matchGame->second_rating_id], true);
 
         return $isNotExpire && $isParticipate;
     }
@@ -136,45 +136,143 @@ readonly class MatchGamesService
     }
 
     /**
+     * Handle sending match results with confirmation system
      * @throws Throwable
      */
     public function sendResult(User $user, SendResultDTO $resultDTO): bool
     {
-        //todo result accepting logic.
+        // Basic validations - no ties allowed, user must have access, status must be valid
         if (
-            $resultDTO->matchGame->status !== GameStatus::IN_PROGRESS
-            || $resultDTO->first_user_score === $resultDTO->second_user_score
+            $resultDTO->first_user_score === $resultDTO->second_user_score
             || !$this->haveAccessToGame($user, $resultDTO->matchGame)
+            || !in_array($resultDTO->matchGame->status, [GameStatus::IN_PROGRESS, GameStatus::MUST_BE_CONFIRMED], true)
         ) {
             return false;
         }
 
-        $winnerRating = $resultDTO->first_user_score > $resultDTO->second_user_score
-            ? $resultDTO->matchGame->firstRating
-            : $resultDTO->matchGame->secondRating;
-        $winnerRatingInt = $winnerRating->rating;
-
-        $loserRating = $winnerRating === $resultDTO->matchGame->firstRating
-            ? $resultDTO->matchGame->secondRating
-            : $resultDTO->matchGame->firstRating;
-        $loserRatingInt = $loserRating->rating;
-
-        $newRatings = $this->ratingService->updateRatings($resultDTO->matchGame, $winnerRating->user_id);
-
-        $league = $resultDTO->matchGame->league;
-
-        if (!$resultDTO->matchGame->game->is_multiplayer) {
-            $resultDTO->matchGame->update([
-                'status'                   => GameStatus::COMPLETED,
-                'first_user_score'         => $league->max_score < $resultDTO->first_user_score ? $league->max_score : $resultDTO->first_user_score,
-                'second_user_score'        => $league->max_score < $resultDTO->second_user_score ? $league->max_score : $resultDTO->second_user_score,
-                'finished_at'              => now(),
-                'winner_rating_id'         => $winnerRating->id,
-                'loser_rating_id'          => $loserRating->id,
-                'rating_change_for_winner' => $newRatings[$winnerRating->id] - $winnerRatingInt,
-                'rating_change_for_loser'  => $newRatings[$loserRating->id] - $loserRatingInt,
-            ]);
+        // Determine which player is submitting the result
+        $userRating = $this->ratingService->getActiveRatingForUserLeague($user, $resultDTO->matchGame->league);
+        if (!$userRating) {
+            return false;
         }
+
+        // Determine the winner and loser based on submitted scores
+        $firstPlayerWins = $resultDTO->first_user_score > $resultDTO->second_user_score;
+        $winnerRatingId = $firstPlayerWins ? $resultDTO->matchGame->first_rating_id : $resultDTO->matchGame->second_rating_id;
+        $loserRatingId = $firstPlayerWins ? $resultDTO->matchGame->second_rating_id : $resultDTO->matchGame->first_rating_id;
+
+        // Create a result signature for comparison (format: "first_score-second_score")
+        $resultSignature = "$resultDTO->first_user_score-$resultDTO->second_user_score";
+
+        // First submission or disagreement case - store this user's result
+        if (
+            $resultDTO->matchGame->status === GameStatus::IN_PROGRESS ||
+            $resultDTO->matchGame->result_confirmed === null
+        ) {
+            // First player submitting result
+            $resultDTO->matchGame->update([
+                'status'            => GameStatus::MUST_BE_CONFIRMED,
+                'first_user_score'  => $resultDTO->first_user_score,
+                'second_user_score' => $resultDTO->second_user_score,
+                'winner_rating_id'  => $winnerRatingId,
+                'loser_rating_id'   => $loserRatingId,
+                'result_confirmed'  => [
+                    [
+                        'key'   => $userRating->id,
+                        'score' => $resultSignature,
+                    ],
+                ],
+            ]);
+
+            return true;
+        }
+
+        // Check if this is the second player submitting and if results match
+        $confirmedResults = $resultDTO->matchGame->result_confirmed;
+
+        // Get the other player's rating ID
+        $otherRatingId = $userRating->id === $resultDTO->matchGame->first_rating_id
+            ? $resultDTO->matchGame->second_rating_id
+            : $resultDTO->matchGame->first_rating_id;
+
+        // Find if other player has already submitted a result
+        $otherPlayerResult = null;
+
+        foreach ($confirmedResults as $confirmation) {
+            if ($confirmation['key'] === $otherRatingId) {
+                $otherPlayerResult = $confirmation['score'];
+                break;
+            }
+        }
+
+        // If other player already submitted a result
+        if ($otherPlayerResult !== null) {
+            // Results match - complete the match
+            if ($otherPlayerResult === $resultSignature) {
+                // Get the ratings to calculate changes
+                $winnerRating = $winnerRatingId === $resultDTO->matchGame->first_rating_id
+                    ? $resultDTO->matchGame->firstRating
+                    : $resultDTO->matchGame->secondRating;
+
+                $loserRating = $loserRatingId === $resultDTO->matchGame->first_rating_id
+                    ? $resultDTO->matchGame->firstRating
+                    : $resultDTO->matchGame->secondRating;
+
+                // Calculate rating changes
+                $winnerRatingBefore = $winnerRating->rating;
+                $loserRatingBefore = $loserRating->rating;
+                $newRatings = $this->ratingService->updateRatings($resultDTO->matchGame, $winnerRating->user_id);
+
+                // Complete the match with agreed results
+                $resultDTO->matchGame->update([
+                    'status'                   => GameStatus::COMPLETED,
+                    'finished_at'              => now(),
+                    'result_confirmed'         => [
+                        [
+                            'key'   => $otherRatingId,
+                            'score' => $resultSignature,
+                        ],
+                        [
+                            'key'   => $userRating->id,
+                            'score' => $resultSignature,
+                        ],
+                    ],
+                    'rating_change_for_winner' => $newRatings[$winnerRating->id] - $winnerRatingBefore,
+                    'rating_change_for_loser'  => $newRatings[$loserRating->id] - $loserRatingBefore,
+                ]);
+
+                return true;
+            }
+            // Results don't match - store this player's result, overwriting previous one
+
+            $confirmedResults = [
+                [
+                    'key'   => $userRating->id,
+                    'score' => $resultSignature,
+                ],
+            ];
+
+            $resultDTO->matchGame->update([
+                'status'            => GameStatus::MUST_BE_CONFIRMED,
+                'first_user_score'  => $resultDTO->first_user_score,
+                'second_user_score' => $resultDTO->second_user_score,
+                'winner_rating_id'  => $winnerRatingId,
+                'loser_rating_id'   => $loserRatingId,
+                'result_confirmed'  => $confirmedResults,
+            ]);
+
+            return true;
+        }
+
+        // Add this player's result to existing confirmations
+        $confirmedResults[] = [
+            'key'   => $userRating->id,
+            'score' => $resultSignature,
+        ];
+
+        $resultDTO->matchGame->update([
+            'result_confirmed' => $confirmedResults,
+        ]);
 
         return true;
     }

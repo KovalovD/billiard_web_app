@@ -23,17 +23,41 @@ const form = reactive<SendResultPayload>({
 const isLoading = ref(false);
 const formErrors = ref<Record<string, string[]>>({});
 const generalError = ref<string | null>(null);
+const isConfirmationNeeded = ref(false);
+const isUserConfirmed = ref(false); // Track if the current user has confirmed
 
-// Get first and second player info for display
-// Function to format player name as "Lastname F."
-const formatPlayerName = (player: { user: User; rating: Rating }) => {
-    if (!player?.user) return null;
+// Helper to find a user confirmation in the array
+const findUserConfirmation = (ratingId: number) => {
+    if (!props.matchGame?.result_confirmed || !Array.isArray(props.matchGame.result_confirmed)) {
+        return null;
+    }
 
-    const firstname = player.user.firstname || '';
-    const lastname = player.user.lastname || '';
-    const firstInitial = firstname.charAt(0);
+    return props.matchGame.result_confirmed.find(
+        confirmation => confirmation && typeof confirmation === 'object' && confirmation.key === ratingId
+    );
+}
 
-    return `${lastname} ${firstInitial}.`;
+// Determine if the current user has already submitted a result
+const hasUserSubmittedResult = computed(() => {
+    if (!props.matchGame?.result_confirmed || !props.currentUser) return false;
+
+    const userRatingId = getUserRatingId();
+    if (!userRatingId) return false;
+
+    return !!findUserConfirmation(userRatingId);
+});
+
+// Get the current user's rating ID for this match
+const getUserRatingId = (): number | null => {
+    if (!props.matchGame || !props.currentUser) return null;
+
+    if (props.matchGame.firstPlayer?.user?.id === props.currentUser.id) {
+        return props.matchGame.first_rating_id;
+    } else if (props.matchGame.secondPlayer?.user?.id === props.currentUser.id) {
+        return props.matchGame.second_rating_id;
+    }
+
+    return null;
 };
 
 const firstPlayer = computed(() => {
@@ -66,13 +90,62 @@ const secondPlayer = computed(() => {
     return {id: props.matchGame.second_rating_id, name: `Player ${props.matchGame.second_rating_id}`};
 });
 
+// Get the other player's rating ID
+const getOtherPlayerRatingId = (): number | null => {
+    if (!props.matchGame || !props.currentUser) return null;
+
+    const userRatingId = getUserRatingId();
+    if (!userRatingId) return null;
+
+    return userRatingId === props.matchGame.first_rating_id
+        ? props.matchGame.second_rating_id
+        : props.matchGame.first_rating_id;
+};
+
+// Function to format player name as "Lastname F."
+const formatPlayerName = (player: { user: User; rating: Rating }) => {
+    if (!player?.user) return null;
+
+    const firstname = player.user.firstname || '';
+    const lastname = player.user.lastname || '';
+    const firstInitial = firstname.charAt(0);
+
+    return `${lastname} ${firstInitial}.`;
+};
+
+// Check if the other player has already submitted a result
+const otherPlayerSubmission = computed(() => {
+    if (!props.matchGame?.result_confirmed) return null;
+
+    const otherRatingId = getOtherPlayerRatingId();
+    if (!otherRatingId) return null;
+
+    const otherConfirmation = findUserConfirmation(otherRatingId);
+    if (!otherConfirmation || !otherConfirmation.score) return null;
+
+    const scoreStr = otherConfirmation.score;
+    if (!scoreStr.includes('-')) return null;
+
+    const [firstScore, secondScore] = scoreStr.split('-').map(Number);
+    return {first_user_score: firstScore, second_user_score: secondScore};
+});
+
 // Reset form when the modal is opened
 watch(() => props.show, (newVal) => {
     if (newVal && props.matchGame) {
+        // Use existing scores if available
         form.first_user_score = props.matchGame.first_user_score ?? 0;
         form.second_user_score = props.matchGame.second_user_score ?? 0;
         formErrors.value = {};
         generalError.value = null;
+
+        // Check if current user has confirmed
+        isUserConfirmed.value = hasUserSubmittedResult.value;
+
+        // Check if we need to show confirmation UI
+        isConfirmationNeeded.value = props.matchGame.status === 'must_be_confirmed' &&
+            !isUserConfirmed.value &&
+            otherPlayerSubmission.value !== null;
     }
 });
 
@@ -92,7 +165,15 @@ const submitResult = async () => {
             }
         });
 
-        emit('success', `Result submitted successfully!`);
+        // Update local state to reflect that this user has confirmed the result
+        isUserConfirmed.value = true;
+
+        // Handle different message based on state
+        const message = props.matchGame.status === 'must_be_confirmed' ?
+            'Result confirmed! Game completed.' :
+            'Result submitted. Waiting for opponent to confirm.';
+
+        emit('success', message);
         emit('close');
     } catch (error) {
         const apiError = error as ApiError;
@@ -108,57 +189,138 @@ const submitResult = async () => {
         isLoading.value = false;
     }
 }
+
+// Handle accepting the other player's result
+const acceptOtherPlayerResult = async () => {
+    if (!props.matchGame || !otherPlayerSubmission.value) return;
+
+    // Copy the other player's submission
+    form.first_user_score = otherPlayerSubmission.value.first_user_score;
+    form.second_user_score = otherPlayerSubmission.value.second_user_score;
+
+    // Update local state to reflect that this user has confirmed the result
+    isUserConfirmed.value = true;
+
+    // Submit the form with the accepted result
+    await submitResult();
+}
+
+// Clear confirmation UI state
+const rejectOtherPlayerResult = () => {
+    isConfirmationNeeded.value = false;
+}
 </script>
 
 <template>
     <Modal :show="show" title="Submit Match Result" @close="$emit('close')">
         <form class="space-y-4" @submit.prevent="submitResult">
-            <div v-if="generalError" class="text-red-600 text-sm bg-red-100 p-3 rounded dark:bg-red-900/30 dark:text-red-400">
+            <div v-if="generalError"
+                 class="text-red-600 text-sm bg-red-100 p-3 rounded dark:bg-red-900/30 dark:text-red-400">
                 {{ generalError }}
             </div>
 
-            <p class="text-sm text-gray-600 dark:text-gray-400">Enter the final score for the match between
-                <strong class="text-gray-800 dark:text-gray-200">{{ firstPlayer?.name || 'Player 1' }}</strong> and
-                <strong class="text-gray-800 dark:text-gray-200">{{ secondPlayer?.name || 'Player 2' }}</strong>.
-            </p>
+            <!-- If user has already confirmed, show this message -->
+            <div v-if="isUserConfirmed" class="bg-green-50 p-4 rounded-md mb-4 dark:bg-green-900/20">
+                <h3 class="font-medium text-green-800 dark:text-green-300 mb-2">Your Result Has Been Submitted</h3>
+                <p class="text-sm text-green-700 dark:text-green-400 mb-3">
+                    You've already submitted your score for this match. Waiting for your opponent to confirm
+                    or the match to be completed.
+                </p>
+            </div>
 
-            <div class="grid grid-cols-2 gap-4 items-start">
-                <div>
-                    <Label :for="`first_score_${matchGame?.id}`">{{ firstPlayer?.name || 'Player 1' }} Score</Label>
-                    <Input
-                        :id="`first_score_${matchGame?.id}`"
-                        v-model.number="form.first_user_score"
-                        :disabled="isLoading"
-                        class="mt-1"
-                        min="0"
-                        :max="maxScore"
-                        required
-                        type="number"
-                    />
-                    <InputError :message="formErrors.first_user_score?.join(', ')" class="mt-1" />
-                </div>
-                <div>
-                    <Label :for="`second_score_${matchGame?.id}`">{{ secondPlayer?.name || 'Player 2' }} Score</Label>
-                    <Input
-                        :id="`second_score_${matchGame?.id}`"
-                        v-model.number="form.second_user_score"
-                        :disabled="isLoading"
-                        class="mt-1"
-                        min="0"
-                        :max="maxScore"
-                        required
-                        type="number"
-                    />
-                    <InputError :message="formErrors.second_user_score?.join(', ')" class="mt-1" />
+            <!-- Show confirmation dialog if needed -->
+            <div v-else-if="isConfirmationNeeded && otherPlayerSubmission"
+                 class="bg-blue-50 p-4 rounded-md mb-4 dark:bg-blue-900/20">
+                <h3 class="font-medium text-blue-800 dark:text-blue-300 mb-2">Confirm Opponent's Result</h3>
+                <p class="text-sm text-blue-700 dark:text-blue-400 mb-3">
+                    Your opponent has submitted a result:
+                </p>
+                <p class="text-sm text-blue-700 dark:text-blue-400 mb-3">
+                    {{ firstPlayer?.name }} <strong>{{ otherPlayerSubmission.first_user_score }} -
+                    {{ otherPlayerSubmission.second_user_score }}</strong> {{ secondPlayer?.name }}</p>
+                <p class="text-sm text-blue-700 dark:text-blue-400 mb-3">
+                    Do you confirm this result?</p>
+                <div class="flex gap-3 mt-4">
+                    <Button
+                        class="border-red-300 text-red-600 hover:bg-red-50"
+                        type="button"
+                        variant="outline"
+                        @click="rejectOtherPlayerResult"
+                    >
+                        Reject
+                    </Button>
+                    <Button
+                        type="button"
+                        @click="acceptOtherPlayerResult"
+                    >
+                        Confirm Result
+                    </Button>
                 </div>
             </div>
 
+            <!-- Hide form input when waiting for confirmation or already submitted -->
+            <div v-if="!isConfirmationNeeded && !isUserConfirmed">
+                <p class="text-sm text-gray-600 dark:text-gray-400">Enter the final score for the match between
+                    <strong class="text-gray-800 dark:text-gray-200">{{ firstPlayer?.name || 'Player 1' }}</strong> and
+                    <strong class="text-gray-800 dark:text-gray-200">{{ secondPlayer?.name || 'Player 2' }}</strong>.
+                </p>
+
+                <div class="grid grid-cols-2 gap-4 items-start mt-4">
+                    <div>
+                        <Label :for="`first_score_${matchGame?.id}`">{{ firstPlayer?.name || 'Player 1' }} Score</Label>
+                        <Input
+                            :id="`first_score_${matchGame?.id}`"
+                            v-model.number="form.first_user_score"
+                            :disabled="isLoading"
+                            :max="maxScore"
+                            class="mt-1"
+                            min="0"
+                            required
+                            type="number"
+                        />
+                        <InputError :message="formErrors.first_user_score?.join(', ')" class="mt-1"/>
+                    </div>
+                    <div>
+                        <Label :for="`second_score_${matchGame?.id}`">{{ secondPlayer?.name || 'Player 2' }}
+                            Score</Label>
+                        <Input
+                            :id="`second_score_${matchGame?.id}`"
+                            v-model.number="form.second_user_score"
+                            :disabled="isLoading"
+                            :max="maxScore"
+                            class="mt-1"
+                            min="0"
+                            required
+                            type="number"
+                        />
+                        <InputError :message="formErrors.second_user_score?.join(', ')" class="mt-1"/>
+                    </div>
+                </div>
+
+                <!-- Show warning about tie games -->
+                <div v-if="form.first_user_score === form.second_user_score"
+                     class="mt-3 p-2 bg-yellow-50 text-yellow-700 text-sm rounded-md dark:bg-yellow-900/20 dark:text-yellow-400">
+                    Tie games are not allowed. One player must have a higher score.
+                </div>
+
+                <!-- Show warning about status -->
+                <div v-if="matchGame?.status === 'must_be_confirmed' && otherPlayerSubmission"
+                     class="mt-3 p-2 bg-amber-50 text-amber-700 text-sm rounded-md dark:bg-amber-900/20 dark:text-amber-400">
+                    Your opponent submitted a different result. If you submit this, their result will be discarded.
+                </div>
+            </div>
+
+            <!-- Footer buttons -->
             <div class="pt-4 flex justify-end space-x-3">
                 <Button :disabled="isLoading" type="button" variant="outline" @click="$emit('close')">
-                    Cancel
+                    Close
                 </Button>
-                <Button :disabled="isLoading" type="submit">
-                    <Spinner v-if="isLoading" class="w-4 h-4 mr-2" />
+                <Button
+                    v-if="!isConfirmationNeeded && !isUserConfirmed"
+                    :disabled="isLoading || form.first_user_score === form.second_user_score"
+                    type="submit"
+                >
+                    <Spinner v-if="isLoading" class="w-4 h-4 mr-2"/>
                     Submit Result
                 </Button>
             </div>

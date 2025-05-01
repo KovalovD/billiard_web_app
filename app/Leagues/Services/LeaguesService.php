@@ -58,8 +58,12 @@ class LeaguesService
                 'club',
             ])
             ->where('league_id', $league->id)
-            ->whereIn('status', [GameStatus::IN_PROGRESS, GameStatus::COMPLETED])
-            ->orderByRaw("CASE WHEN status = 'in_progress' THEN 0 ELSE 1 END")  // Order IN_PROGRESS first
+            ->whereIn('status', [GameStatus::MUST_BE_CONFIRMED, GameStatus::IN_PROGRESS, GameStatus::COMPLETED])
+            ->orderByRaw("CASE
+                WHEN status = 'must_be_confirmed' THEN 0
+                WHEN status = 'in_progress' THEN 1
+                ELSE 2
+             END")  // Order by priority: MUST_BE_CONFIRMED first, then IN_PROGRESS, then COMPLETED
             ->orderBy('finished_at', 'desc')
             ->orderBy('created_at', 'desc')
             ->get()

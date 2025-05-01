@@ -27,7 +27,7 @@ const activeMatches = computed(() => {
     Object.values(leagues.value).forEach(leagueData => {
         // Filter for in_progress matches where user is involved
         const inProgressMatches = leagueData.activeMatches.filter(match =>
-            match.status === 'in_progress');
+            match.status === 'in_progress' || match.status === 'must_be_confirmed');
 
         matches.push(...inProgressMatches);
     });
