@@ -16,7 +16,6 @@ readonly class MatchGamesService
 {
     public function __construct(private RatingService $ratingService)
     {
-        //todo prepare statistic for profile
     }
 
     public function send(SendGameDTO $sendGameDTO): bool

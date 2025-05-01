@@ -214,3 +214,25 @@ export interface PaginationParams {
     sort_dir?: 'asc' | 'desc';
     search?: string;
 }
+
+// Add these interfaces to your existing api.ts file
+
+export interface UserStats {
+    total_matches: number;
+    completed_matches: number;
+    wins: number;
+    losses: number;
+    win_rate: number;
+    leagues_count: number;
+    highest_rating: number;
+    average_rating: number;
+}
+
+export interface GameTypeStats {
+    [key: string]: {
+        matches: number;
+        wins: number;
+        losses: number;
+        win_rate: number;
+    }
+}

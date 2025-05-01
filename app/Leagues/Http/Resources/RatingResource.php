@@ -19,10 +19,18 @@ class RatingResource extends JsonResource
             ],
             'rating'            => $this->rating,
             'position'          => $this->position,
+            'is_active'     => $this->is_active,
+            'league_id'     => $this->league_id,
+            'user_id'       => $this->user_id,
             'hasOngoingMatches' => $this->ongoingMatches()->count() > 0,
             'matches_count' => $this->matches()->count(),
             'wins_count'    => $this->wins()->count(),
             'loses_count'   => $this->loses()->count(),
+
+            // Include the league object with its relationships
+            'league'        => $this->whenLoaded('league', function () {
+                return new LeagueResource($this->league);
+            }),
         ];
     }
 }

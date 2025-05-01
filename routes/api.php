@@ -4,6 +4,7 @@ use App\Core\Http\Middleware\AdminMiddleware;
 use App\Leagues\Http\Controllers\LeaguesController;
 use App\Leagues\Http\Controllers\PlayersController;
 use App\Matches\Http\Controllers\MatchGamesController;
+use App\User\Http\Controllers\UserStatsController;
 use Illuminate\Support\Facades\Route;
 
 // Public endpoints
@@ -18,6 +19,13 @@ Route::middleware(['auth:sanctum', AdminMiddleware::class])->group(function () {
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('my-leagues-and-challenges', [LeaguesController::class, 'myLeaguesAndChallenges']);
+
+    Route::prefix('user')->group(function () {
+        Route::get('ratings', [UserStatsController::class, 'ratings']);
+        Route::get('matches', [UserStatsController::class, 'matches']);
+        Route::get('stats', [UserStatsController::class, 'stats']);
+        Route::get('game-type-stats', [UserStatsController::class, 'gameTypeStats']);
+    });
 
     Route::prefix('leagues/{league}')->group(function () {
         Route::get('players', [LeaguesController::class, 'players']);
