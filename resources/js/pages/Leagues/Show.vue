@@ -3,12 +3,13 @@ import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {Head, Link} from '@inertiajs/vue3';
 import {useAuth} from '@/composables/useAuth';
 import {useLeagues} from '@/composables/useLeagues';
-import {computed, onMounted, ref} from 'vue';
+import {computed, onMounted, ref, watch} from 'vue';
 import type {ApiError, MatchGame, Player} from '@/types/api';
 import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Modal, Spinner} from '@/Components/ui';
 import PlayerList from '@/Components/PlayerList.vue';
 import ChallengeModal from '@/Components/ChallengeModal.vue';
 import ResultModal from '@/Components/ResultModal.vue';
+import {apiClient} from '@/lib/apiClient';
 import {ArrowLeftIcon, LogOutIcon, PencilIcon, UserPlusIcon} from 'lucide-vue-next';
 
 defineOptions({layout: AuthenticatedLayout});
@@ -23,10 +24,14 @@ const leagues = useLeagues();
 // State for modals
 const showChallengeModal = ref(false);
 const showResultModal = ref(false);
-const showGenericErrorModal = ref(false);
-const genericErrorMessage = ref('');
+const showGenericModal = ref(false);
+const genericModalMessage = ref('');
 const targetPlayerForChallenge = ref<Player | null>(null);
 const matchForResults = ref<MatchGame | null>(null);
+const isProcessingAction = ref(false);
+
+// Check for matched route query params
+const routeMatchId = ref<string | null>(null);
 
 // Get API functionality from useLeagues
 const {
@@ -74,16 +79,27 @@ const pageTitle = computed(() =>
     league.value ? `League: ${league.value.name}` : 'League Details'
 );
 
-// Utility function to display errors
-const displayError = (message: string) => {
-    genericErrorMessage.value = message;
-    showGenericErrorModal.value = true;
+// Find an active match by ID from query params
+const findMatchById = (id: string): MatchGame | null => {
+    if (!matches.value) return null;
+    return matches.value.find(m => m.id.toString() === id) || null;
+};
+
+// Utility function to display messages
+const displayMessage = (message: string) => {
+    genericModalMessage.value = message;
+    showGenericModal.value = true;
+};
+
+// Check if user is the sender of the match
+const isMatchSender = (match: MatchGame): boolean => {
+    return match.firstPlayer?.user?.id === user.value?.id;
 };
 
 // Actions
 const handleJoinLeague = async () => {
     if (!isAuthenticated.value) {
-        displayError('You must be logged in to join this league.');
+        displayMessage('You must be logged in to join this league.');
         return;
     }
 
@@ -91,7 +107,7 @@ const handleJoinLeague = async () => {
     if (success) {
         await fetchPlayers();
     } else if (joinError.value) {
-        displayError(`Failed to join league: ${joinError.value.message || 'Unknown error'}`);
+        displayMessage(`Failed to join league: ${joinError.value.message || 'Unknown error'}`);
     }
 };
 
@@ -102,7 +118,7 @@ const handleLeaveLeague = async () => {
     if (success) {
         await fetchPlayers();
     } else if (leaveError.value) {
-        displayError(`Failed to leave league: ${leaveError.value.message || 'Unknown error'}`);
+        displayMessage(`Failed to leave league: ${leaveError.value.message || 'Unknown error'}`);
     }
 };
 
@@ -112,7 +128,7 @@ const openChallengeModal = (player: Player) => {
 };
 
 const handleChallengeSuccess = (message: string) => {
-    displayError(message); // Using error modal as a success modal too
+    displayMessage(message);
     fetchMatches();
     fetchPlayers();
 };
@@ -122,12 +138,52 @@ const openResultModal = (match: MatchGame) => {
     showResultModal.value = true;
 };
 
+// Decline match function
+const declineMatch = async (match: MatchGame) => {
+    if (isProcessingAction.value || !match.id) return;
+
+    isProcessingAction.value = true;
+    try {
+        await apiClient(`/api/leagues/${props.leagueId}/players/match-games/${match.id}/decline`, {
+            method: 'post'
+        });
+        displayMessage('Match declined successfully.');
+        // Refresh data
+        await fetchMatches();
+        await fetchPlayers();
+    } catch (error: any) {
+        displayMessage(`Failed to decline match: ${error.message || 'Unknown error'}`);
+    } finally {
+        isProcessingAction.value = false;
+    }
+};
+
 // Initialize data
 onMounted(() => {
     fetchLeague();
     fetchPlayers();
     fetchMatches();
+
+    // Check URL query params for matchId
+    const url = new URL(window.location.href);
+    routeMatchId.value = url.searchParams.get('matchId');
 });
+
+// Watch for matches to be loaded, then check for routeMatchId
+watch([matches, routeMatchId], ([currentMatches, currentMatchId]) => {
+    if (currentMatches && currentMatchId) {
+        const matchToOpen = findMatchById(currentMatchId);
+        if (matchToOpen) {
+            matchForResults.value = matchToOpen;
+            showResultModal.value = true;
+            // Clear the query params without refreshing page
+            const url = new URL(window.location.href);
+            url.searchParams.delete('matchId');
+            window.history.replaceState({}, document.title, url);
+            routeMatchId.value = null;
+        }
+    }
+}, {immediate: true});
 </script>
 
 <template>
@@ -270,41 +326,40 @@ onMounted(() => {
                                             <span class="text-sm text-gray-500">{{ new Date(match.created_at).toLocaleDateString() }}</span>
                                             <span class="px-2 py-0.5 text-xs rounded-full"
                                                   :class="{
-                            'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300': match.status === 'pending',
-                            'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300': match.status === 'in_progress',
-                            'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300': match.status === 'completed',
-                          }">
-                        {{
-                                                    match.status === 'pending' ? 'Pending' :
-                                                match.status === 'in_progress' ? 'In Progress' : 'Completed' }}
-                    </span>
+                                                    'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300': match.status === 'in_progress',
+                                                    'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300': match.status === 'completed',
+                                                  }">
+                                                {{
+                                                    match.status === 'in_progress' ? 'In Progress' : 'Completed'
+                                                }}
+                                            </span>
                                         </div>
                                         <h3 class="font-medium mt-1">
-                    <span :class="{ 'text-red-600 dark:text-red-400': match.status === 'completed' && match.winner_rating_id !== match.first_rating_id,
-                                   'text-green-600 dark:text-green-400': match.status === 'completed' && match.winner_rating_id === match.first_rating_id }">
-                        <span v-if="match.status === 'completed'" class="font-semibold">
-                            ({{
-                                match.winner_rating_id === match.first_rating_id ? '+' + match.rating_change_for_winner : match.rating_change_for_loser
-                            }})
-                        </span>
-                        {{
-                            match.firstPlayer?.user?.lastname + ' ' + match.firstPlayer?.user?.firstname.charAt(0) + '.' || 'Player 1'
-                        }}
-                    </span>
+                                            <span :class="{ 'text-red-600 dark:text-red-400': match.status === 'completed' && match.winner_rating_id !== match.first_rating_id,
+                                                           'text-green-600 dark:text-green-400': match.status === 'completed' && match.winner_rating_id === match.first_rating_id }">
+                                                <span v-if="match.status === 'completed'" class="font-semibold">
+                                                    ({{
+                                                        match.winner_rating_id === match.first_rating_id ? '+' + match.rating_change_for_winner : match.rating_change_for_loser
+                                                    }})
+                                                </span>
+                                                {{
+                                                    match.firstPlayer?.user?.lastname + ' ' + match.firstPlayer?.user?.firstname.charAt(0) + '.' || 'Player 1'
+                                                }}
+                                            </span>
                                             <span class="mx-2 font-semibold">{{
                                                     match.first_user_score || 0
                                                 }} VS {{ match.second_user_score || 0 }}</span>
                                             <span :class="{ 'text-red-600 dark:text-red-400': match.status === 'completed' && match.winner_rating_id !== match.second_rating_id,
-                                   'text-green-600 dark:text-green-400': match.status === 'completed' && match.winner_rating_id === match.second_rating_id }">
-                        {{
+                                                           'text-green-600 dark:text-green-400': match.status === 'completed' && match.winner_rating_id === match.second_rating_id }">
+                                                {{
                                                     match.secondPlayer?.user?.lastname + ' ' + match.secondPlayer?.user?.firstname.charAt(0) + '.' || 'Player 2'
                                                 }}
-                        <span v-if="match.status === 'completed'" class="font-semibold">
-                            ({{
-                                match.winner_rating_id === match.second_rating_id ? '+' + match.rating_change_for_winner : match.rating_change_for_loser
-                            }})
-                        </span>
-                    </span>
+                                                <span v-if="match.status === 'completed'" class="font-semibold">
+                                                    ({{
+                                                        match.winner_rating_id === match.second_rating_id ? '+' + match.rating_change_for_winner : match.rating_change_for_loser
+                                                    }})
+                                                </span>
+                                            </span>
                                         </h3>
 
                                         <p v-if="match.details" class="text-sm text-gray-600 mt-1 dark:text-gray-400">
@@ -314,30 +369,26 @@ onMounted(() => {
                                     <div>
                                         <!-- Match actions based on state -->
                                         <div v-if="match.status === 'in_progress' &&
-                          (match.firstPlayer?.user?.id === user?.id ||
-                           match.secondPlayer?.user?.id === user?.id)">
+                                            (match.firstPlayer?.user?.id === user?.id ||
+                                             match.secondPlayer?.user?.id === user?.id)"
+                                             class="space-y-2">
                                             <Button
                                                 size="sm"
                                                 variant="outline"
                                                 @click="openResultModal(match)">
                                                 Submit Result
                                             </Button>
-                                        </div>
-                                        <div v-else-if="match.status === 'pending' && match.secondPlayer?.user?.id === user?.id">
-                                            <div class="space-y-2">
-                                                <Button
-                                                    size="sm"
-                                                    variant="default"
-                                                    @click="leagues.acceptMatch(league.id, match.id).execute()">
-                                                    Accept
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    @click="leagues.declineMatch(league.id, match.id).execute()">
-                                                    Decline
-                                                </Button>
-                                            </div>
+
+                                            <!-- Only receivers can decline -->
+                                            <Button
+                                                v-if="!isMatchSender(match)"
+                                                :disabled="isProcessingAction"
+                                                class="text-red-600 border-red-300 hover:bg-red-50 ml-2"
+                                                size="sm"
+                                                variant="outline"
+                                                @click="declineMatch(match)">
+                                                {{ isProcessingAction ? 'Processing...' : 'Decline' }}
+                                            </Button>
                                         </div>
                                     </div>
                                 </div>
@@ -355,7 +406,7 @@ onMounted(() => {
         :show="showChallengeModal"
         :targetPlayer="targetPlayerForChallenge"
         @close="showChallengeModal = false"
-        @error="(error: ApiError) => displayError(error.message)"
+        @error="(error: ApiError) => displayMessage(error.message)"
         @success="handleChallengeSuccess"
     />
 
@@ -366,17 +417,17 @@ onMounted(() => {
         :show="showResultModal"
         :max-score="league?.max_score"
         @close="showResultModal = false"
-        @error="(error: ApiError) => displayError(error.message)"
-        @success="(message: string) => { displayError(message); fetchMatches(); fetchPlayers(); }"
+        @error="(error: ApiError) => displayMessage(error.message)"
+        @success="(message: string) => { displayMessage(message); fetchMatches(); fetchPlayers(); }"
     />
 
-    <!-- Generic Error/Success Modal -->
-    <Modal :show="showGenericErrorModal" @close="showGenericErrorModal = false">
+    <!-- Generic Message Modal -->
+    <Modal :show="showGenericModal" @close="showGenericModal = false">
         <div class="p-6">
             <h3 class="text-lg font-medium mb-3">Notification</h3>
-            <p>{{ genericErrorMessage }}</p>
+            <p>{{ genericModalMessage }}</p>
             <div class="mt-6 flex justify-end">
-                <Button @click="showGenericErrorModal = false">
+                <Button @click="showGenericModal = false">
                     Close
                 </Button>
             </div>

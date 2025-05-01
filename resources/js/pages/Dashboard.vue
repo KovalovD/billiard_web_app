@@ -5,6 +5,9 @@ import {useAuth} from '@/composables/useAuth';
 import {useLeagues} from '@/composables/useLeagues';
 import {onMounted, ref} from 'vue';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/Components/ui';
+import UserLeaguesCard from '@/Components/UserLeaguesCard.vue';
+import ActiveMatchesModal from '@/Components/ActiveMatchesModal.vue';
+import type {MatchGame} from '@/types/api';
 
 defineOptions({
     layout: AuthenticatedLayout
@@ -13,8 +16,27 @@ defineOptions({
 const { user } = useAuth();
 const leagues = useLeagues();
 const recentLeagues = ref([]);
-const yourLeagues = ref([]);
 const isLoadingLeagues = ref(false);
+
+// Active matches modal state
+const showActiveMatchesModal = ref(false);
+const activeMatches = ref<MatchGame[]>([]);
+const userLeaguesRef = ref<InstanceType<typeof UserLeaguesCard> | null>(null);
+
+// Handle active matches found in user leagues
+const handleActiveMatchesFound = (matches: MatchGame[]) => {
+    activeMatches.value = matches;
+    if (matches.length > 0) {
+        showActiveMatchesModal.value = true;
+    }
+};
+
+// Handle match declined - simply refresh the leagues card
+const handleMatchDeclined = () => {
+    if (userLeaguesRef.value) {
+        userLeaguesRef.value.refreshData();
+    }
+};
 
 onMounted(async () => {
     isLoadingLeagues.value = true;
@@ -24,16 +46,6 @@ onMounted(async () => {
 
         if (data.value) {
             recentLeagues.value = data.value.slice(0, 5); // Get 5 most recent leagues
-
-            // If user is authenticated, filter their leagues
-            if (user.value?.id) {
-                // This is a placeholder - in reality, you'd need a dedicated API endpoint
-                // to fetch leagues the user is a member of
-                yourLeagues.value = data.value.filter(league =>
-                    // This is a placeholder condition - would need proper implementation
-                    league.player_ids?.includes(user.value.id)
-                ).slice(0, 3);
-            }
         }
     } catch (error) {
         console.error("Failed to load leagues:", error);
@@ -67,13 +79,15 @@ onMounted(async () => {
                         <div class="bg-amber-50 rounded-lg p-6 dark:bg-amber-900/30">
                             <h3 class="text-lg font-medium text-amber-800 dark:text-amber-300 mb-2">Track Progress</h3>
                             <p class="text-amber-600 dark:text-amber-400 mb-4">Monitor your performance, rating changes, and match history over time.</p>
-                            <Link href="/profile" class="text-amber-700 dark:text-amber-300 font-medium hover:underline">View Profile →</Link>
+                            <Link class="text-amber-700 dark:text-amber-300 font-medium hover:underline"
+                                  href="/profile/stats">View Stats →
+                            </Link>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Recent Leagues -->
+            <!-- Recent Leagues and Your Leagues -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <Card>
                     <CardHeader>
@@ -103,37 +117,11 @@ onMounted(async () => {
                     </CardContent>
                 </Card>
 
-                <!-- Your Leagues -->
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Your Leagues</CardTitle>
-                        <CardDescription>Leagues you've joined and are active in</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div v-if="isLoadingLeagues" class="py-4 text-center text-gray-500 dark:text-gray-400">
-                            Loading your leagues...
-                        </div>
-                        <div v-else-if="yourLeagues.length === 0" class="py-4 text-center text-gray-500 dark:text-gray-400">
-                            You haven't joined any leagues yet.
-                            <Link href="/leagues" class="block mt-2 text-blue-600 dark:text-blue-400 hover:underline">Browse leagues to join</Link>
-                        </div>
-                        <ul v-else class="divide-y divide-gray-200 dark:divide-gray-700">
-                            <li v-for="league in yourLeagues" :key="league.id" class="py-3">
-                                <div class="flex justify-between items-center">
-                                    <div>
-                                        <h4 class="font-medium text-gray-900 dark:text-white">{{ league.name }}</h4>
-                                        <p class="text-sm text-gray-500 dark:text-gray-400">
-                                            Your Rating: <span class="font-semibold">{{ league.your_rating || 'N/A' }}</span>
-                                        </p>
-                                    </div>
-                                    <Link :href="`/leagues/${league.id}`" class="text-sm text-blue-600 hover:underline dark:text-blue-400">
-                                        View
-                                    </Link>
-                                </div>
-                            </li>
-                        </ul>
-                    </CardContent>
-                </Card>
+                <!-- Your Leagues - Now emits event when active matches are found -->
+                <UserLeaguesCard
+                    ref="userLeaguesRef"
+                    @active-matches-found="handleActiveMatchesFound"
+                />
             </div>
 
             <!-- Admin Actions (if admin) -->
@@ -155,4 +143,12 @@ onMounted(async () => {
             </Card>
         </div>
     </div>
+
+    <!-- Active Matches Modal -->
+    <ActiveMatchesModal
+        :active-matches="activeMatches"
+        :show="showActiveMatchesModal"
+        @close="showActiveMatchesModal = false"
+        @declined="handleMatchDeclined"
+    />
 </template>

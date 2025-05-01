@@ -33,9 +33,9 @@ class DatabaseSeeder extends Seeder
         ]);
 
         User::create([
-            'email'             => 'nudik@b2bleague.com',
+            'email'    => 'nudyk@b2bleague.com',
             'firstname'         => 'Volodymyr',
-            'lastname'          => 'Nudik',
+            'lastname' => 'Nudyk',
             'email_verified_at' => now(),
             'phone'             => '+380984438204',
             'password'          => bcrypt('koval_number_one'),

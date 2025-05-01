@@ -37,10 +37,10 @@ class MatchGame extends Model
 
     protected $casts = [
         'status'                    => GameStatus::class,
-        'invitation_sent_at'        => 'timestamp',
-        'invitation_available_till' => 'timestamp',
-        'invitation_accepted_at'    => 'timestamp',
-        'finished_at'               => 'timestamp',
+        'invitation_sent_at'        => 'datetime',
+        'invitation_available_till' => 'datetime',
+        'invitation_accepted_at'    => 'datetime',
+        'finished_at'               => 'datetime',
     ];
 
     public function game(): BelongsTo
