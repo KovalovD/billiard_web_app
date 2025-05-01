@@ -4,6 +4,7 @@ namespace App\Leagues\Services;
 
 use App\Core\Models\User;
 use App\Leagues\DataTransferObjects\PutLeagueDTO;
+use App\Leagues\Http\Resources\MatchGameResource;
 use App\Leagues\Models\League;
 use App\Matches\Enums\GameStatus;
 use App\Matches\Models\MatchGame;
@@ -71,10 +72,11 @@ class LeaguesService
 
         $myLeagues = [];
 
-        foreach ($user->activeRatings() as $activeRating) {
-            $myLeagues[$activeRating->league->id] = [
+        foreach ($user->activeRatings as $activeRating) {
+            $myLeagues[$activeRating->league_id] = [
                 'league'        => $activeRating->league,
-                'activeMatches' => $activeRating->ongoingMatches(),
+                'activeMatches' => MatchGameResource::collection($activeRating->ongoingMatches()),
+                'rating'        => $activeRating,
             ];
         }
 

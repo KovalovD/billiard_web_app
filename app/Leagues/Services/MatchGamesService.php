@@ -17,10 +17,12 @@ readonly class MatchGamesService
 
     public function __construct(private RatingService $ratingService)
     {
+        //todo prepare statistic for profile
     }
 
     public function send(SendGameDTO $sendGameDTO): bool
     {
+        //sending vailable for +10 and -10 positions in a leaderboard
         $senderRating = $this->ratingService->getActiveRatingForUserLeague(
             $sendGameDTO->sender,
             $sendGameDTO->league,
@@ -47,7 +49,7 @@ readonly class MatchGamesService
                 'stream_url'                => $sendGameDTO->stream_url,
                 'details'                   => $sendGameDTO->details,
                 'club_id'                   => $sendGameDTO->club_id,
-                'status'                    => GameStatus::PENDING,
+                'status' => GameStatus::IN_PROGRESS,
                 'invitation_sent_at'        => now(),
                 'invitation_available_till' => now()->addDays($sendGameDTO->league->invite_days_expire),
             ]);
@@ -106,14 +108,15 @@ readonly class MatchGamesService
     {
         if (
             $user->id === $matchGame->firstRating->user_id
-            || $matchGame->status !== GameStatus::PENDING
             || !$this->haveAccessToGame($user, $matchGame)
         ) {
             return false;
         }
 
         $firstRating = $matchGame->firstRating;
+        $winnerRatingInt = $firstRating->rating;
         $secondRating = $matchGame->secondRating;
+        $loserRatingInt = $secondRating->rating;
 
         $newRatings = $this->ratingService->updateRatings($matchGame, $matchGame->firstRating->user_id);
 
@@ -124,8 +127,8 @@ readonly class MatchGamesService
                 'finished_at'              => now(),
                 'winner_rating_id'         => $matchGame->first_rating_id,
                 'loser_rating_id'          => $matchGame->second_rating_id,
-                'rating_change_for_winner' => $newRatings[$firstRating->id] - $firstRating->rating,
-                'rating_change_for_loser'  => $newRatings[$secondRating->id] - $secondRating->rating,
+                'rating_change_for_winner' => $newRatings[$firstRating->id] - $winnerRatingInt,
+                'rating_change_for_loser'  => $newRatings[$secondRating->id] - $loserRatingInt,
             ]);
         }
 
@@ -137,6 +140,7 @@ readonly class MatchGamesService
      */
     public function sendResult(User $user, SendResultDTO $resultDTO): bool
     {
+        //todo result accepting logic.
         if (
             $resultDTO->matchGame->status !== GameStatus::IN_PROGRESS
             || $resultDTO->first_user_score === $resultDTO->second_user_score

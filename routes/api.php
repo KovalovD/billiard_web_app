@@ -12,7 +12,8 @@ Route::apiResource('leagues', LeaguesController::class, ['only' => ['index', 'sh
 // Admin-only endpoints
 Route::middleware(['auth:sanctum', AdminMiddleware::class])->group(function () {
     Route::apiResource('leagues', LeaguesController::class,
-        ['only' => ['store', 'update', 'destroy']]);
+        ['only' => ['store', 'update', 'destroy']],
+    );
 });
 
 Route::middleware('auth:sanctum')->group(function () {

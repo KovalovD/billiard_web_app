@@ -20,6 +20,9 @@ class RatingResource extends JsonResource
             'rating'            => $this->rating,
             'position'          => $this->position,
             'hasOngoingMatches' => $this->ongoingMatches()->count() > 0,
+            'matches_count' => $this->matches()->count(),
+            'wins_count'    => $this->wins()->count(),
+            'loses_count'   => $this->loses()->count(),
         ];
     }
 }

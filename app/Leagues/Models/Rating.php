@@ -31,7 +31,9 @@ class Rating extends Model
 
     protected $with = [
         'ongoingMatchesAsFirstPlayer',
+        'matchesAsFirstPlayer',
         'ongoingMatchesAsSecondPlayer',
+        'matchesAsSecondPlayer',
     ];
 
     public static function newFactory(): RatingFactory|Factory
@@ -52,7 +54,7 @@ class Rating extends Model
     public function ongoingMatchesAsFirstPlayer(): HasMany
     {
         return $this
-            ->hasMany(MatchGame::class, 'first_rating_id')
+            ->matchesAsFirstPlayer()
             ->whereIn('status', GameStatus::notAllowedToInviteStatuses())
         ;
     }
@@ -60,13 +62,50 @@ class Rating extends Model
     public function ongoingMatchesAsSecondPlayer(): HasMany
     {
         return $this
-            ->hasMany(MatchGame::class, 'second_rating_id')
+            ->matchesAsSecondPlayer()
             ->whereIn('status', GameStatus::notAllowedToInviteStatuses())
         ;
     }
 
+    /**
+     * @return Collection<MatchGame>
+     */
     public function ongoingMatches(): Collection
     {
         return $this->ongoingMatchesAsFirstPlayer->merge($this->ongoingMatchesAsSecondPlayer);
+    }
+
+    public function matchesAsFirstPlayer(): HasMany
+    {
+        return $this->hasMany(MatchGame::class, 'first_rating_id')->with('league');
+    }
+
+    public function matchesAsSecondPlayer(): HasMany
+    {
+        return $this->hasMany(MatchGame::class, 'second_rating_id')->with('league');
+    }
+
+    /**
+     * @return Collection<MatchGame>
+     */
+    public function matches(): Collection
+    {
+        return $this->matchesAsFirstPlayer->merge($this->matchesAsSecondPlayer);
+    }
+
+    /**
+     * @return Collection<MatchGame>
+     */
+    public function wins(): Collection
+    {
+        return $this->matches()->where('winner_rating_id', $this->id);
+    }
+
+    /**
+     * @return Collection<MatchGame>
+     */
+    public function loses(): Collection
+    {
+        return $this->matches()->where('loser_rating_id', $this->id);
     }
 }
