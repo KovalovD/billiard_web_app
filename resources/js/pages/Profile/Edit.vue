@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
-import { Head, useForm } from '@inertiajs/vue3';
-import { useAuth } from '@/composables/useAuth';
-import { ref } from 'vue';
-import { Button, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, Input, Label } from '@/Components/ui';
+import {Head, useForm} from '@inertiajs/vue3';
+import {useAuth} from '@/composables/useAuth';
+import {ref} from 'vue';
+import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label} from '@/Components/ui';
 import InputError from '@/Components/InputError.vue';
 
 defineOptions({ layout: AuthenticatedLayout });

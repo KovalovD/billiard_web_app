@@ -5,7 +5,6 @@ import {createInertiaApp} from '@inertiajs/vue3';
 import {resolvePageComponent} from 'laravel-vite-plugin/inertia-helpers';
 import {ZiggyVue} from 'ziggy-js';
 import {Ziggy} from './ziggy';
-import axios from '@/bootstrap'; // Axios уже настроен в bootstrap.ts
 
 // Make route globally available
 declare global {

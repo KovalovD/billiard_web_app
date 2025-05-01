@@ -11,7 +11,6 @@ interface Props {
 
 defineProps<Props>();
 
-const emit = defineEmits(['challenge']);
 </script>
 
 <template>

@@ -1,8 +1,20 @@
 <script lang="ts" setup>
-import { onMounted, reactive, ref, watch } from 'vue';
-import { apiClient } from '@/lib/apiClient';
-import type { ApiError, Game, League, LeaguePayload } from '@/Types/api';
-import { Button, Card, CardContent, CardFooter, CardHeader, CardTitle, Input, Label, Select, Spinner, Textarea } from '@/Components/ui';
+import {onMounted, reactive, ref, watch} from 'vue';
+import {apiClient} from '@/lib/apiClient';
+import type {ApiError, Game, League, LeaguePayload} from '@/types/api';
+import {
+    Button,
+    Card,
+    CardContent,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+    Input,
+    Label,
+    Select,
+    Spinner,
+    Textarea
+} from '@/Components/ui';
 import InputError from '@/Components/InputError.vue';
 
 interface Props {
@@ -56,6 +68,7 @@ const formatDateForInput = (dateString: string | null): string | null => {
     try {
         const date = new Date(dateString);
         return date.toISOString().slice(0, 16); // Format as YYYY-MM-DDTHH:MM
+        // eslint-disable-next-line
     } catch (e) {
         return null;
     }
@@ -66,6 +79,7 @@ async function fetchGames() {
     try {
         // Fetch games from API when endpoint is available
         games.value = await apiClient<Game[]>('/api/games');
+        // eslint-disable-next-line
     } catch (error) {
         // Fallback to hardcoded data if API fails
         games.value = [
@@ -115,6 +129,7 @@ const submit = async () => {
         try {
             JSON.parse(payload.rating_change_for_winners_rule as string || '[]');
             JSON.parse(payload.rating_change_for_losers_rule as string || '[]');
+            // eslint-disable-next-line
         } catch (e) {
             formErrors.value = {
                 rating_rules: ["Invalid JSON format in rating rules."]

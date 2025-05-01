@@ -1,14 +1,14 @@
 <script lang="ts" setup>
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
-import { Head, Link, router } from '@inertiajs/vue3';
-import { useAuth } from '@/composables/useAuth';
-import { useApi } from '@/composables/useApi';
-import { apiClient } from '@/lib/apiClient';
-import type { ApiError, ApiItemResponse, League } from '@/types/api';
+import {Head, Link, router} from '@inertiajs/vue3';
+import {useAuth} from '@/composables/useAuth';
+import {useApi} from '@/composables/useApi';
+import {apiClient} from '@/lib/apiClient';
+import type {ApiError, League} from '@/types/api';
 import LeagueForm from '@/Components/LeagueForm.vue';
-import { Button, Spinner } from '@/Components/ui';
-import { ArrowLeftIcon } from 'lucide-vue-next';
-import { computed, onMounted, watchEffect } from 'vue';
+import {Button, Spinner} from '@/Components/ui';
+import {ArrowLeftIcon} from 'lucide-vue-next';
+import {computed, onMounted, watchEffect} from 'vue';
 
 // Apply the layout
 defineOptions({layout: AuthenticatedLayout});
