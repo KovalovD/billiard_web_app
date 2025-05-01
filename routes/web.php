@@ -25,6 +25,19 @@ Route::middleware('guest')->group(function () {
 
 // --- Authenticated routes ---
 Route::middleware('auth')->group(function () {
+    Route::get('/profile/edit', function () {
+        return Inertia::render('Profile/Edit', [
+            'header' => 'Edit',
+        ]);
+    })->name('profile.edit');
+
+    Route::get('/profile/stats', function () {
+        return Inertia::render('Profile/Stats', [
+            'header' => 'Statistics',
+        ]);
+    })->name('profile.stats');
+
+
     // Dashboard as home for authenticated users
     Route::get('/dashboard', function () {
         return Inertia::render('Dashboard', [
