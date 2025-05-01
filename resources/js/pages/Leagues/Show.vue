@@ -1,15 +1,15 @@
 <script lang="ts" setup>
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
-import { Head, Link } from '@inertiajs/vue3';
-import { useAuth } from '@/composables/useAuth';
-import { useLeagues } from '@/composables/useLeagues';
-import { computed, onMounted, ref } from 'vue';
-import type { ApiError, League, MatchGame, Player, Rating } from '@/types/api';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Modal, Spinner } from '@/Components/ui';
+import {Head, Link} from '@inertiajs/vue3';
+import {useAuth} from '@/composables/useAuth';
+import {useLeagues} from '@/composables/useLeagues';
+import {computed, onMounted, ref} from 'vue';
+import type {ApiError, MatchGame, Player} from '@/types/api';
+import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Modal, Spinner} from '@/Components/ui';
 import PlayerList from '@/Components/PlayerList.vue';
 import ChallengeModal from '@/Components/ChallengeModal.vue';
 import ResultModal from '@/Components/ResultModal.vue';
-import { ArrowLeftIcon, LogOutIcon, PencilIcon, UserPlusIcon } from 'lucide-vue-next';
+import {ArrowLeftIcon, LogOutIcon, PencilIcon, UserPlusIcon} from 'lucide-vue-next';
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -113,6 +113,8 @@ const openChallengeModal = (player: Player) => {
 
 const handleChallengeSuccess = (message: string) => {
     displayError(message); // Using error modal as a success modal too
+    fetchMatches();
+    fetchPlayers();
 };
 
 const openResultModal = (match: MatchGame) => {
@@ -268,21 +270,43 @@ onMounted(() => {
                                             <span class="text-sm text-gray-500">{{ new Date(match.created_at).toLocaleDateString() }}</span>
                                             <span class="px-2 py-0.5 text-xs rounded-full"
                                                   :class="{
-                                                    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300': match.status === 'pending',
-                                                    'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300': match.status === 'in_progress',
-                                                    'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300': match.status === 'completed',
-                                                  }">
-                                                {{ match.status === 'pending' ? 'Pending' :
+                            'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300': match.status === 'pending',
+                            'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300': match.status === 'in_progress',
+                            'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300': match.status === 'completed',
+                          }">
+                        {{
+                                                    match.status === 'pending' ? 'Pending' :
                                                 match.status === 'in_progress' ? 'In Progress' : 'Completed' }}
-                                            </span>
+                    </span>
                                         </div>
                                         <h3 class="font-medium mt-1">
-                                            {{ match.firstPlayer?.user?.firstname || 'Player 1' }} vs
-                                            {{ match.secondPlayer?.user?.firstname || 'Player 2' }}
+                    <span :class="{ 'text-red-600 dark:text-red-400': match.status === 'completed' && match.winner_rating_id !== match.first_rating_id,
+                                   'text-green-600 dark:text-green-400': match.status === 'completed' && match.winner_rating_id === match.first_rating_id }">
+                        <span v-if="match.status === 'completed'" class="font-semibold">
+                            ({{
+                                match.winner_rating_id === match.first_rating_id ? '+' + match.rating_change_for_winner : match.rating_change_for_loser
+                            }})
+                        </span>
+                        {{
+                            match.firstPlayer?.user?.lastname + ' ' + match.firstPlayer?.user?.firstname.charAt(0) + '.' || 'Player 1'
+                        }}
+                    </span>
+                                            <span class="mx-2 font-semibold">{{
+                                                    match.first_user_score || 0
+                                                }} VS {{ match.second_user_score || 0 }}</span>
+                                            <span :class="{ 'text-red-600 dark:text-red-400': match.status === 'completed' && match.winner_rating_id !== match.second_rating_id,
+                                   'text-green-600 dark:text-green-400': match.status === 'completed' && match.winner_rating_id === match.second_rating_id }">
+                        {{
+                                                    match.secondPlayer?.user?.lastname + ' ' + match.secondPlayer?.user?.firstname.charAt(0) + '.' || 'Player 2'
+                                                }}
+                        <span v-if="match.status === 'completed'" class="font-semibold">
+                            ({{
+                                match.winner_rating_id === match.second_rating_id ? '+' + match.rating_change_for_winner : match.rating_change_for_loser
+                            }})
+                        </span>
+                    </span>
                                         </h3>
-                                        <div v-if="match.status === 'completed'" class="mt-1 font-semibold">
-                                            Score: {{ match.first_user_score }} - {{ match.second_user_score }}
-                                        </div>
+
                                         <p v-if="match.details" class="text-sm text-gray-600 mt-1 dark:text-gray-400">
                                             {{ match.details }}
                                         </p>
@@ -290,8 +314,8 @@ onMounted(() => {
                                     <div>
                                         <!-- Match actions based on state -->
                                         <div v-if="match.status === 'in_progress' &&
-                                                  (match.firstPlayer?.user?.id === user?.id ||
-                                                   match.secondPlayer?.user?.id === user?.id)">
+                          (match.firstPlayer?.user?.id === user?.id ||
+                           match.secondPlayer?.user?.id === user?.id)">
                                             <Button
                                                 size="sm"
                                                 variant="outline"
@@ -340,9 +364,10 @@ onMounted(() => {
         :currentUser="user"
         :matchGame="matchForResults"
         :show="showResultModal"
+        :max-score="league?.max_score"
         @close="showResultModal = false"
         @error="(error: ApiError) => displayError(error.message)"
-        @success="(message: string) => { displayError(message); fetchMatches(); }"
+        @success="(message: string) => { displayError(message); fetchMatches(); fetchPlayers(); }"
     />
 
     <!-- Generic Error/Success Modal -->

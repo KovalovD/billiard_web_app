@@ -1,14 +1,15 @@
 <script lang="ts" setup>
-import { computed, reactive, ref, watch } from 'vue';
-import { apiClient } from '@/lib/apiClient';
-import type { ApiError, MatchGame, SendResultPayload, User } from '@/Types/api';
-import { Button, Input, Label, Modal, Spinner } from '@/Components/ui';
+import {computed, reactive, ref, watch} from 'vue';
+import {apiClient} from '@/lib/apiClient';
+import type {ApiError, MatchGame, Rating, SendResultPayload, User} from '@/types/api';
+import {Button, Input, Label, Modal, Spinner} from '@/Components/ui';
 import InputError from '@/Components/InputError.vue';
 
 interface Props {
     show: boolean;
     matchGame: MatchGame | null;
     currentUser: User | null;
+    maxScore: number | null | undefined;
 }
 
 const props = defineProps<Props>();
@@ -24,14 +25,25 @@ const formErrors = ref<Record<string, string[]>>({});
 const generalError = ref<string | null>(null);
 
 // Get first and second player info for display
+// Function to format player name as "Lastname F."
+const formatPlayerName = (player: { user: User; rating: Rating }) => {
+    if (!player?.user) return null;
+
+    const firstname = player.user.firstname || '';
+    const lastname = player.user.lastname || '';
+    const firstInitial = firstname.charAt(0);
+
+    return `${lastname} ${firstInitial}.`;
+};
+
 const firstPlayer = computed(() => {
     if (!props.matchGame) return null;
 
     // Try to get from firstRating if available
-    if (props.matchGame.firstRating?.user) {
+    if (props.matchGame.firstPlayer?.user) {
         return {
-            id: props.matchGame.firstRating.user.id,
-            name: `${props.matchGame.firstRating.user.firstname} ${props.matchGame.firstRating.user.lastname}`
+            id: props.matchGame.firstPlayer.user.id,
+            name: formatPlayerName(props.matchGame.firstPlayer)
         };
     }
 
@@ -43,10 +55,10 @@ const secondPlayer = computed(() => {
     if (!props.matchGame) return null;
 
     // Try to get from secondRating if available
-    if (props.matchGame.secondRating?.user) {
+    if (props.matchGame.secondPlayer?.user) {
         return {
-            id: props.matchGame.secondRating.user.id,
-            name: `${props.matchGame.secondRating.user.firstname} ${props.matchGame.secondRating.user.lastname}`
+            id: props.matchGame.secondPlayer.user.id,
+            name: formatPlayerName(props.matchGame.secondPlayer)
         };
     }
 
@@ -119,6 +131,7 @@ const submitResult = async () => {
                         :disabled="isLoading"
                         class="mt-1"
                         min="0"
+                        :max="maxScore"
                         required
                         type="number"
                     />
@@ -132,6 +145,7 @@ const submitResult = async () => {
                         :disabled="isLoading"
                         class="mt-1"
                         min="0"
+                        :max="maxScore"
                         required
                         type="number"
                     />

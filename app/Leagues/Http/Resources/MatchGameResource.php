@@ -16,9 +16,9 @@ class MatchGameResource extends JsonResource
             'id'     => $this->id,
             'status' => $this->status,
 
+            'league_id' => $this->league_id,
             'stream_url' => $this->stream_url,
             'details'    => $this->details,
-
 
             'first_rating_id'   => $this->first_rating_id,
             'second_rating_id'  => $this->second_rating_id,
@@ -39,14 +39,15 @@ class MatchGameResource extends JsonResource
             'created_at'                => $this->created_at,
             'updated_at'                => $this->updated_at,
 
-            'club'         => new ClubResource($this->whenLoaded('club')),
+            'club'   => new ClubResource($this->whenLoaded('club')),
+            'league' => new LeagueResource($this->whenLoaded('league')),
+
             'firstPlayer'  => [
-                'user'   => new UserResource($this->whenLoaded('firstRating.user')),
+                'user' => new UserResource($this->firstRating?->user),
                 'rating' => new RatingResource($this->whenLoaded('firstRating')),
             ],
-            'league'       => new LeagueResource($this->whenLoaded('league')),
             'secondPlayer' => [
-                'user'   => new UserResource($this->whenLoaded('secondRating.user')),
+                'user' => new UserResource($this->secondRating?->user),
                 'rating' => new RatingResource($this->whenLoaded('secondRating')),
             ],
         ];

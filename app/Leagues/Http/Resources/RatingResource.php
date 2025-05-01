@@ -12,13 +12,14 @@ class RatingResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'       => $this->id,
-            'player'   => [
+            'id'                => $this->id,
+            'player'            => [
                 'id'   => $this->user->id,
                 'name' => $this->user->full_name,
             ],
-            'rating'   => $this->rating,
-            'position' => $this->position,
+            'rating'            => $this->rating,
+            'position'          => $this->position,
+            'hasOngoingMatches' => $this->ongoingMatches()->count() > 0,
         ];
     }
 }

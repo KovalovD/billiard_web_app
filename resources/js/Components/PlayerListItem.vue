@@ -1,7 +1,7 @@
 <script lang="ts" setup>
-import type { Rating } from '@/Types/api';
-import { Button } from '@/Components/ui';
-import { SwordsIcon } from 'lucide-vue-next';
+import type {Rating} from '@/types/api';
+import {Button} from '@/Components/ui';
+import {SwordsIcon} from 'lucide-vue-next';
 
 interface Props {
     playerRating: Rating;
@@ -30,7 +30,7 @@ const handleChallenge = () => {
         <div class="flex items-center space-x-3">
             <span class="text-sm font-bold text-indigo-600 dark:text-indigo-400">{{ playerRating.rating }}</span>
             <Button
-                v-if="isAuthenticated && !isCurrentUser"
+                v-if="isAuthenticated && !isCurrentUser && !playerRating.hasOngoingMatches"
                 size="sm"
                 title="Challenge this player"
                 variant="outline"

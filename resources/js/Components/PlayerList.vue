@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { Rating } from '@/Types/api';
+import type {Rating} from '@/types/api';
 import PlayerListItem from './PlayerListItem.vue';
 
 interface Props {

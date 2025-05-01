@@ -1,6 +1,6 @@
 // resources/js/types/api.ts
 
-import type { AxiosResponse } from 'axios';
+import type {AxiosResponse} from 'axios';
 
 // --- Auth Types ---
 export interface User {
@@ -60,8 +60,8 @@ export interface League {
     game: string | null; // Game name
     game_id: number | null;
     rating_type?: string;
-    max_players?: number;
-    max_score?: number;
+    max_players: number;
+    max_score: number;
     invite_days_expire?: number;
 }
 
@@ -74,6 +74,8 @@ export interface LeaguePayload {
     started_at?: string | null;
     finished_at?: string | null;
     start_rating: number;
+    max_players: number;
+    max_score: number;
     rating_change_for_winners_rule?: string | RatingRuleItem[];
     rating_change_for_losers_rule?: string | RatingRuleItem[];
 }
@@ -102,6 +104,7 @@ export interface Rating {
     losses_count?: number;
     created_at?: string;
     updated_at?: string;
+    hasOngoingMatches: boolean;
 }
 
 // --- Match Types ---

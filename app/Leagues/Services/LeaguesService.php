@@ -49,9 +49,15 @@ class LeaguesService
     public function games(League $league): Collection
     {
         return MatchGame::query()
-            ->with('firstRating.user', 'secondRating.user', 'game', 'club')
+            ->with([
+                'firstRating.user',
+                'secondRating.user',
+                'game',
+                'club',
+            ])
             ->where('league_id', $league->id)
             ->whereIn('status', [GameStatus::IN_PROGRESS, GameStatus::COMPLETED])
+            ->orderByRaw("CASE WHEN status = 'in_progress' THEN 0 ELSE 1 END")  // Order IN_PROGRESS first
             ->orderBy('finished_at', 'desc')
             ->orderBy('created_at', 'desc')
             ->get()
