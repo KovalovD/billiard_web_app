@@ -2,33 +2,22 @@
 import {onMounted, ref} from 'vue';
 import {Head, Link} from '@inertiajs/vue3';
 import axios from 'axios';
-import ApplicationLogo from '@/components/ApplicationLogo.vue';
-import Dropdown from '@/components/Dropdown.vue';
-import DropdownLink from '@/components/DropdownLink.vue';
-import NavLink from '@/components/NavLink.vue';
-import ResponsiveNavLink from '@/components/ResponsiveNavLink.vue';
+import ApplicationLogo from '@/Components/ApplicationLogo.vue';
+import Dropdown from '@/Components/Dropdown.vue';
+import DropdownLink from '@/Components/DropdownLink.vue';
+import NavLink from '@/Components/NavLink.vue';
+import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
+import {useAuth} from "@/composables/useAuth";
 
 // Simple local state management
-const user = ref(null);
+const { user } = useAuth();
 const isLoading = ref(true);
 const showingNavigationDropdown = ref(false);
 
 // Get auth status directly from localStorage/API
 const getUser = async () => {
-    const token = localStorage.getItem('authToken');
-
-    if (!token) {
-        console.log('[Layout] No token found, redirecting to login');
-        window.location.href = '/login';
-        return;
-    }
-
     try {
-        // Set auth header
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        // Get user data
-        const response = await axios.get('/api/auth/user');
-        user.value = response.data;
+        await useAuth().initializeAuth();
         isLoading.value = false;
     } catch (error) {
         console.error('[Layout] Error fetching user:', error);
@@ -77,7 +66,7 @@ const performFullLogout = () => {
     // This will properly invalidate the Laravel session
     const form = document.createElement('form');
     form.method = 'POST';
-    form.action = '/logout';
+    form.action = '/api/logout';
 
     // Add CSRF token
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
@@ -143,6 +132,7 @@ onMounted(() => {
                                     </template>
                                     <template #content>
                                         <DropdownLink :href="'/profile/edit'"> Profile</DropdownLink>
+                                        <DropdownLink :href="'/profile/stats'"> Statistic</DropdownLink>
                                         <div class="border-t border-gray-200 dark:border-gray-600"/>
                                         <DropdownLink as="button" @click.prevent="handleLogout"> Log Out</DropdownLink>
                                     </template>

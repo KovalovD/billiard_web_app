@@ -12,14 +12,14 @@ import {Link} from '@inertiajs/vue3';
                 <Link
                     v-if="$page.props.auth && $page.props.auth.user"
                     class="inline-block rounded-sm border border-[#19140035] px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#1915014a] dark:border-[#3E3E3A] dark:text-[#EDEDEC] dark:hover:border-[#62605b]"
-                    href="/dashboard"
+                    :href="route('dashboard')"
                 >
                     Dashboard
                 </Link>
                 <Link
                     v-else
                     class="inline-block rounded-sm border border-transparent px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#19140035] dark:text-[#EDEDEC] dark:hover:border-[#3E3E3A]"
-                    href="/Auth/Login"
+                    :href="route('login')"
                 >
                     Log in
                 </Link>
@@ -50,7 +50,7 @@ import {Link} from '@inertiajs/vue3';
                     <div class="flex gap-3 text-sm leading-normal">
                         <Link
                             class="inline-block rounded-sm border border-black bg-[#1b1b18] px-5 py-1.5 text-sm leading-normal text-white hover:border-black hover:bg-black dark:border-[#eeeeec] dark:bg-[#eeeeec] dark:text-[#1C1C1A] dark:hover:border-white dark:hover:bg-white"
-                            href="/Auth/Login"
+                            :href="route('login')"
                         >
                             Get Started
                         </Link>

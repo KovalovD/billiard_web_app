@@ -14,12 +14,5 @@
 </head>
 <body class="font-sans antialiased">
 @inertia
-
-<!-- Debug info for troubleshooting -->
-@if (app()->environment('local'))
-    <script>
-        console.log('Available routes:', @json(array_keys(app('router')->getRoutes()->getRoutesByName())));
-    </script>
-@endif
 </body>
 </html>
