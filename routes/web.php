@@ -1,6 +1,7 @@
 <?php
 
 use App\Core\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Core\Http\Controllers\ErrorController;
 use App\Core\Http\Middleware\AdminMiddleware;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -81,7 +82,17 @@ Route::middleware('auth')->group(function () {
     });
 });
 
-// Fallback for 404
-Route::fallback(function () {
-    return Inertia::render('Errors/404')->toResponse(request())->setStatusCode(404);
-});
+// --- Error routes ---
+// These can be used programmatically by redirecting to them by name
+Route::get('/404', [ErrorController::class, 'notFound'])->name('error.404');
+Route::get('/403', [ErrorController::class, 'forbidden'])->name('error.403');
+Route::get('/500', [ErrorController::class, 'serverError'])->name('error.500');
+
+// Custom error route that accepts status parameter
+Route::get('/error/{status}', [ErrorController::class, 'show'])
+    ->where('status', '[0-9]+')
+    ->name('error.custom')
+;
+
+// Fallback route for handling 404s
+Route::fallback([ErrorController::class, 'notFound']);

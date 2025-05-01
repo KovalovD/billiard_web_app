@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import { Head, Link } from '@inertiajs/vue3';
-import { Button } from '@/Components/ui';
+import {Head, Link} from '@inertiajs/vue3';
+import {Button} from '@/Components/ui';
 
 const props = defineProps<{
     status: number;
@@ -80,15 +80,6 @@ const description = props.description || errorInfo[props.status as keyof typeof 
                     Go Back
                 </Button>
             </div>
-        </div>
-
-        <!-- Technical details for developers in development environment -->
-        <div
-            v-if="props.message && import.meta.env.DEV"
-            class="mt-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-lg w-full text-left"
-        >
-            <h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2">Technical Details:</h3>
-            <pre class="text-xs bg-gray-100 dark:bg-gray-900 p-3 rounded overflow-auto max-h-40">{{ props.message }}</pre>
         </div>
     </div>
 </template>
