@@ -2,6 +2,7 @@
 
 namespace App\Leagues\Services;
 
+use App\Core\Models\User;
 use App\Leagues\DataTransferObjects\PutLeagueDTO;
 use App\Leagues\Models\League;
 use App\Matches\Enums\GameStatus;
@@ -62,5 +63,21 @@ class LeaguesService
             ->orderBy('created_at', 'desc')
             ->get()
         ;
+    }
+
+    public function myLeaguesAndChallenges(User $user): array
+    {
+        $user->load('activeRatings.league');
+
+        $myLeagues = [];
+
+        foreach ($user->activeRatings() as $activeRating) {
+            $myLeagues[$activeRating->league->id] = [
+                'league'        => $activeRating->league,
+                'activeMatches' => $activeRating->ongoingMatches(),
+            ];
+        }
+
+        return $myLeagues;
     }
 }
