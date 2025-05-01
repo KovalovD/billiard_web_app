@@ -3,9 +3,11 @@
 namespace App\Core\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Leagues\Models\Rating;
 use database\factories\UserFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -63,5 +65,10 @@ class User extends Authenticatable
         return Attribute::make(
             get: fn($value) => $this->lastname.' '.$this->firstname,
         );
+    }
+
+    public function activeRatings(): HasMany
+    {
+        return $this->hasMany(Rating::class)->where('is_active', true);
     }
 }

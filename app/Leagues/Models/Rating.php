@@ -51,14 +51,18 @@ class Rating extends Model
 
     public function ongoingMatchesAsFirstPlayer(): HasMany
     {
-        return $this->hasMany(MatchGame::class, 'first_rating_id')->whereIn('status',
-            GameStatus::notAllowedToInviteStatuses());
+        return $this
+            ->hasMany(MatchGame::class, 'first_rating_id')
+            ->whereIn('status', GameStatus::notAllowedToInviteStatuses())
+        ;
     }
 
     public function ongoingMatchesAsSecondPlayer(): HasMany
     {
-        return $this->hasMany(MatchGame::class, 'second_rating_id')->whereIn('status',
-            GameStatus::notAllowedToInviteStatuses());
+        return $this
+            ->hasMany(MatchGame::class, 'second_rating_id')
+            ->whereIn('status', GameStatus::notAllowedToInviteStatuses())
+        ;
     }
 
     public function ongoingMatches(): Collection

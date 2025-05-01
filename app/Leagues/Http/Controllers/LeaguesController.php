@@ -10,6 +10,8 @@ use App\Leagues\Http\Resources\RatingResource;
 use App\Leagues\Models\League;
 use App\Leagues\Services\LeaguesService;
 use App\Leagues\Services\RatingService;
+use Auth;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 
@@ -95,6 +97,16 @@ readonly class LeaguesController
     {
         return MatchGameResource::collection(
             $this->leaguesService->games($league),
+        );
+    }
+
+    /**
+     * Load leagues and challenges for logged user
+     */
+    public function myLeaguesAndChallenges(): JsonResponse
+    {
+        return response()->json(
+            $this->leaguesService->myLeaguesAndChallenges(Auth::user()),
         );
     }
 }
