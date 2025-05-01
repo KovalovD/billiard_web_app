@@ -48,6 +48,7 @@ const props = withDefaults(defineProps<Props>(), {
 const computedClasses = computed(() => cn(buttonVariants({variant: props.variant, size: props.size})));
 
 defineOptions({
+    // eslint-disable-next-line
     name: 'Button'
 })
 </script>

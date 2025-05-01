@@ -1,8 +1,8 @@
 // resources/js/composables/useAuth.ts
-import {computed, ref, onMounted} from 'vue';
-import {apiClient, setToken, getDeviceName} from '@/lib/apiClient'; // Use apiClient for requests
+import {computed, ref} from 'vue';
+import {apiClient, getDeviceName, setToken} from '@/lib/apiClient'; // Use apiClient for requests
 import {fetchCsrfToken} from '@/bootstrap'; // Import CSRF fetcher
-import type {User, LoginResponse, ApiError} from '@/types/api';
+import type {ApiError, LoginResponse, User} from '@/types/api';
 import {usePage} from '@inertiajs/vue3';
 import type {SharedData} from '@/types';
 
@@ -180,8 +180,8 @@ const logout = async () => {
 };
 
 // --- Computed Properties ---
-const isAuthenticated = computed(() => !!user);
-const isAdmin = computed(() => isAuthenticated && user.is_admin);
+const isAuthenticated = computed(() => !!user.value);
+const isAdmin = computed(() => isAuthenticated.value && user.value.is_admin);
 
 // --- Singleton instance ---
 // We don't strictly need a singleton instance variable here anymore,

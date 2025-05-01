@@ -1,10 +1,10 @@
-<script setup>
-import { Head, Link } from '@inertiajs/vue3';
+<script lang="ts" setup>
+import {Head, Link} from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
-import { useAuth } from '@/composables/useAuth';
-import { useLeagues } from '@/composables/useLeagues';
-import { onMounted, ref } from 'vue';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui';
+import {useAuth} from '@/composables/useAuth';
+import {useLeagues} from '@/composables/useLeagues';
+import {onMounted, ref} from 'vue';
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/Components/ui';
 
 defineOptions({
     layout: AuthenticatedLayout

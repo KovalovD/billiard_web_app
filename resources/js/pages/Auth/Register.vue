@@ -1,7 +1,17 @@
-<script setup>
-import { Head, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
-import { Button, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, Input, Label } from '@/Components/ui';
+<script lang="ts" setup>
+import {Head, useForm} from '@inertiajs/vue3';
+import {ref} from 'vue';
+import {
+    Button,
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+    Input,
+    Label
+} from '@/Components/ui';
 import InputError from '@/Components/InputError.vue';
 
 const form = useForm({

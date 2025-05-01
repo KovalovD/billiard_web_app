@@ -1,4 +1,4 @@
-<script setup>
+<script lang="ts" setup>
 // Minimal imports to avoid circular dependencies
 import {Link} from '@inertiajs/vue3';
 // No composition API usage to prevent reactivity issues
