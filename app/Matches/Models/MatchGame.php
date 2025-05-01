@@ -33,6 +33,7 @@ class MatchGame extends Model
         'finished_at',
         'first_rating_before_game',
         'second_rating_before_game',
+        'result_confirmed',
     ];
 
     protected $casts = [
@@ -41,6 +42,7 @@ class MatchGame extends Model
         'invitation_available_till' => 'datetime',
         'invitation_accepted_at'    => 'datetime',
         'finished_at'               => 'datetime',
+        'result_confirmed' => 'array',
     ];
 
     public function game(): BelongsTo

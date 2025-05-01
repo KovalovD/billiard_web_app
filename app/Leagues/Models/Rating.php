@@ -72,7 +72,21 @@ class Rating extends Model
      */
     public function ongoingMatches(): Collection
     {
-        return $this->ongoingMatchesAsFirstPlayer->merge($this->ongoingMatchesAsSecondPlayer);
+        $matches = $this->ongoingMatchesAsFirstPlayer->merge($this->ongoingMatchesAsSecondPlayer);
+
+        // Sort matches: MUST_BE_CONFIRMED first, then IN_PROGRESS, then PENDING
+        return $matches->sort(function (MatchGame $a, MatchGame $b) {
+            $order = [
+                GameStatus::MUST_BE_CONFIRMED->value => 0,
+                GameStatus::IN_PROGRESS->value       => 1,
+                GameStatus::PENDING->value           => 2,
+            ];
+
+            $aOrder = $order[$a->status->value] ?? 3;
+            $bOrder = $order[$b->status->value] ?? 3;
+
+            return $aOrder <=> $bOrder;
+        });
     }
 
     public function matchesAsFirstPlayer(): HasMany

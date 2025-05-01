@@ -1,3 +1,4 @@
+//resources/js/Components/ActiveMatchesModal.vue
 <script lang="ts" setup>
 import {computed, ref} from 'vue';
 import {Button, Modal} from '@/Components/ui';
@@ -49,6 +50,42 @@ const isChallengeSender = (match: MatchGame) => {
     return match.firstPlayer?.user?.id === user.value?.id;
 };
 
+// Check if a match needs confirmation from the current user
+const needsConfirmation = (match: MatchGame): boolean => {
+    if (!user.value || match.status !== 'must_be_confirmed' || !match.result_confirmed || !Array.isArray(match.result_confirmed)) return false;
+
+    // Get current user's rating ID
+    let userRatingId: number | null = null;
+    if (match.firstPlayer?.user?.id === user.value.id) {
+        userRatingId = match.first_rating_id;
+    } else if (match.secondPlayer?.user?.id === user.value.id) {
+        userRatingId = match.second_rating_id;
+    }
+
+    if (!userRatingId) return false;
+
+    // Check if user has NOT confirmed yet (not found in result_confirmed array)
+    const userConfirmation = match.result_confirmed.find(
+        confirmation => confirmation && typeof confirmation === 'object' && confirmation.key === userRatingId
+    );
+
+    return !userConfirmation;
+};
+
+// Get match status display text
+const getMatchStatusDisplay = (status: string): string => {
+    switch (status) {
+        case 'in_progress':
+            return 'In Progress';
+        case 'completed':
+            return 'Completed';
+        case 'must_be_confirmed':
+            return 'Needs Confirmation';
+        default:
+            return status;
+    }
+};
+
 // Decline a challenge
 const declineChallenge = async (match: MatchGame) => {
     if (!match || !match.league_id || isProcessing.value) return;
@@ -78,7 +115,10 @@ const declineChallenge = async (match: MatchGame) => {
 
             <div v-else class="space-y-6">
                 <div v-for="match in activeMatches" :key="match.id"
-                     class="border rounded-lg p-5 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                     :class="[
+                         'border rounded-lg p-5 dark:border-gray-700 bg-gray-50 dark:bg-gray-800',
+                         needsConfirmation(match) ? 'border-2 border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20 shadow-md animate-pulse-slow' : ''
+                     ]">
                     <div class="flex justify-between items-start mb-5">
                         <h3 class="font-medium text-lg">
                             {{ isChallengeSender(match) ? 'Your challenge to' : 'Challenge from' }}
@@ -87,6 +127,12 @@ const declineChallenge = async (match: MatchGame) => {
                                     ? formatPlayerName(match.secondPlayer?.user)
                                     : formatPlayerName(match.firstPlayer?.user)
                             }}
+                            <span v-if="match.status === 'must_be_confirmed'"
+                                  class="ml-2 px-2 py-0.5 text-xs bg-amber-100 text-amber-800 rounded-full dark:bg-amber-900/30 dark:text-amber-300">
+                                {{
+                                    needsConfirmation(match) ? 'Needs your confirmation' : getMatchStatusDisplay(match.status)
+                                }}
+                            </span>
                         </h3>
 
                         <div class="text-right">
@@ -163,6 +209,27 @@ const declineChallenge = async (match: MatchGame) => {
                         </div>
                     </div>
 
+                    <!-- Current Score (if match has scores) -->
+                    <div v-if="match.first_user_score !== null && match.second_user_score !== null"
+                         class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md mb-5">
+                        <h4 class="font-medium text-blue-800 dark:text-blue-300 mb-2">Current Score</h4>
+                        <div class="flex justify-center items-center text-xl font-bold">
+                            <span
+                                :class="{'text-green-600 dark:text-green-400': match.first_user_score > match.second_user_score}">
+                                {{ match.first_user_score }}
+                            </span>
+                            <span class="mx-2 text-gray-600 dark:text-gray-400">-</span>
+                            <span
+                                :class="{'text-green-600 dark:text-green-400': match.second_user_score > match.first_user_score}">
+                                {{ match.second_user_score }}
+                            </span>
+                        </div>
+                        <p v-if="match.status === 'must_be_confirmed' && needsConfirmation(match)"
+                           class="text-center text-sm text-amber-700 dark:text-amber-400 mt-2">
+                            This score needs your confirmation
+                        </p>
+                    </div>
+
                     <!-- Match Analysis -->
                     <div class="bg-gray-100 dark:bg-gray-700/50 p-3 rounded-md mb-5">
                         <div class="flex flex-wrap justify-between">
@@ -214,9 +281,9 @@ const declineChallenge = async (match: MatchGame) => {
                             </Button>
                         </Link>
 
-                        <!-- Receiver-only: Decline button -->
+                        <!-- Receiver-only: Decline button (only for in_progress status) -->
                         <Button
-                            v-if="!isChallengeSender(match)"
+                            v-if="!isChallengeSender(match) && match.status === 'in_progress'"
                             :disabled="isProcessing"
                             class="border border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
                             variant="outline"
@@ -227,8 +294,9 @@ const declineChallenge = async (match: MatchGame) => {
 
                         <!-- Both sender and receiver: Submit Result -->
                         <Link :href="`/leagues/${match.league_id}?matchId=${match.id}`">
-                            <Button class="bg-black text-white dark:bg-white dark:text-black">
-                                Submit Result
+                            <Button :class="{'animate-pulse bg-amber-500 hover:bg-amber-600': needsConfirmation(match)}"
+                                    class="bg-black text-white dark:bg-white dark:text-black">
+                                {{ needsConfirmation(match) ? 'Confirm Result' : 'Submit Result' }}
                             </Button>
                         </Link>
                     </div>

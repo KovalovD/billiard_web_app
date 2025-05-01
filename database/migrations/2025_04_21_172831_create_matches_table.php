@@ -34,6 +34,7 @@ return new class extends Migration {
             $table->timestamp('invitation_available_till')->nullable();
             $table->timestamp('invitation_accepted_at')->nullable();
             $table->timestamp('finished_at')->nullable();
+            $table->json('result_confirmed')->nullable();
             $table->timestamps();
         });
     }

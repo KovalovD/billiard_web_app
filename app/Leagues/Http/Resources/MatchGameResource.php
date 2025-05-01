@@ -26,6 +26,7 @@ class MatchGameResource extends JsonResource
             'second_user_score' => $this->second_user_score,
             'winner_rating_id'  => $this->winner_rating_id,
             'loser_rating_id'   => $this->loser_rating_id,
+            'result_confirmed' => $this->result_confirmed,
 
             'rating_change_for_winner'  => $this->rating_change_for_winner,
             'rating_change_for_loser'   => $this->rating_change_for_loser,

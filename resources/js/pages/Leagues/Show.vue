@@ -1,3 +1,4 @@
+//resources/js/pages/Leagues/Show.vue
 <script lang="ts" setup>
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {Head, Link} from '@inertiajs/vue3';
@@ -85,6 +86,56 @@ const findMatchById = (id: string): MatchGame | null => {
     return matches.value.find(m => m.id.toString() === id) || null;
 };
 
+// Get match status display text
+const getMatchStatusDisplay = (status: string): string => {
+    switch (status) {
+        case 'in_progress':
+            return 'In Progress';
+        case 'completed':
+            return 'Completed';
+        case 'must_be_confirmed':
+            return 'Needs Confirmation';
+        default:
+            return status;
+    }
+};
+
+// Get appropriate status class based on status
+const getMatchStatusClass = (status: string): string => {
+    switch (status) {
+        case 'in_progress':
+            return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
+        case 'completed':
+            return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
+        case 'must_be_confirmed':
+            return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300';
+        default:
+            return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+    }
+};
+
+// Check if current user needs to confirm a result
+const needsConfirmation = (match: MatchGame): boolean => {
+    if (!user.value || match.status !== 'must_be_confirmed' || !match.result_confirmed || !Array.isArray(match.result_confirmed)) return false;
+
+    // Get current user's rating ID
+    let userRatingId: number | null = null;
+    if (match.firstPlayer?.user?.id === user.value.id) {
+        userRatingId = match.first_rating_id;
+    } else if (match.secondPlayer?.user?.id === user.value.id) {
+        userRatingId = match.second_rating_id;
+    }
+
+    if (!userRatingId) return false;
+
+    // Check if user has NOT confirmed yet (not found in result_confirmed array)
+    const userConfirmation = match.result_confirmed.find(
+        confirmation => confirmation && typeof confirmation === 'object' && confirmation.key === userRatingId
+    );
+
+    return !userConfirmation;
+};
+
 // Utility function to display messages
 const displayMessage = (message: string) => {
     genericModalMessage.value = message;
@@ -156,6 +207,75 @@ const declineMatch = async (match: MatchGame) => {
     } finally {
         isProcessingAction.value = false;
     }
+};
+
+const handleResultSuccess = (message: string) => {
+    displayMessage(message);
+
+    // If the match was in the matchForResults value, update its state locally
+    if (matchForResults.value) {
+        // Get user's rating ID
+        let userRatingId: number | null = null;
+        if (matchForResults.value.firstPlayer?.user?.id === user.value?.id) {
+            userRatingId = matchForResults.value.first_rating_id;
+        } else if (matchForResults.value.secondPlayer?.user?.id === user.value?.id) {
+            userRatingId = matchForResults.value.second_rating_id;
+        }
+
+        // If we have a valid user rating ID, mark it as confirmed in the local state
+        if (userRatingId) {
+            // Create a confirmation signature based on the current scores
+            const confirmSignature = `${matchForResults.value.first_user_score}-${matchForResults.value.second_user_score}`;
+
+            // Ensure the result_confirmed array exists
+            if (!matchForResults.value.result_confirmed) {
+                matchForResults.value.result_confirmed = [];
+            }
+
+            // Check if this user already has a confirmation
+            const existingConfirmIndex = matchForResults.value.result_confirmed.findIndex(
+                conf => conf && typeof conf === 'object' && conf.key === userRatingId
+            );
+
+            // Either update existing or add new confirmation
+            const userConfirmation = {
+                key: userRatingId,
+                score: confirmSignature
+            };
+
+            if (existingConfirmIndex >= 0) {
+                matchForResults.value.result_confirmed[existingConfirmIndex] = userConfirmation;
+            } else {
+                matchForResults.value.result_confirmed.push(userConfirmation);
+            }
+
+            // Also update this match in the matches list if it exists there
+            if (matches.value) {
+                const matchInList = matches.value.find(m => m.id === matchForResults.value?.id);
+                if (matchInList) {
+                    if (!matchInList.result_confirmed) {
+                        matchInList.result_confirmed = [];
+                    }
+
+                    // Check if this user already has a confirmation in the list match
+                    const listConfirmIndex = matchInList.result_confirmed.findIndex(
+                        conf => conf && typeof conf === 'object' && conf.key === userRatingId
+                    );
+
+                    // Either update existing or add new confirmation to the list match
+                    if (listConfirmIndex >= 0) {
+                        matchInList.result_confirmed[listConfirmIndex] = userConfirmation;
+                    } else {
+                        matchInList.result_confirmed.push(userConfirmation);
+                    }
+                }
+            }
+        }
+    }
+
+    // Then fetch updated data from server
+    fetchMatches();
+    fetchPlayers();
 };
 
 // Initialize data
@@ -319,19 +439,25 @@ watch([matches, routeMatchId], ([currentMatches, currentMatchId]) => {
 
                         <ul v-else class="space-y-3">
                             <li v-for="match in matches" :key="match.id"
+                                :class="needsConfirmation(match) ? 'border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20' : ''"
                                 class="border p-4 rounded-lg hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800/50">
                                 <div class="flex justify-between items-start">
                                     <div>
                                         <div class="flex items-center space-x-2">
                                             <span class="text-sm text-gray-500">{{ new Date(match.created_at).toLocaleDateString() }}</span>
                                             <span class="px-2 py-0.5 text-xs rounded-full"
-                                                  :class="{
-                                                    'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300': match.status === 'in_progress',
-                                                    'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300': match.status === 'completed',
-                                                  }">
-                                                {{
-                                                    match.status === 'in_progress' ? 'In Progress' : 'Completed'
-                                                }}
+                                                  :class="getMatchStatusClass(match.status)">
+                                                {{ getMatchStatusDisplay(match.status) }}
+                                            </span>
+                                            <span
+                                                v-if="match.status === 'must_be_confirmed' && needsConfirmation(match)"
+                                                class="px-2 py-0.5 text-xs rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                                                Needs your confirmation
+                                            </span>
+                                            <span v-else-if="match.status === 'must_be_confirmed' && !needsConfirmation(match) &&
+                                                (match.firstPlayer?.user?.id === user?.id || match.secondPlayer?.user?.id === user?.id)"
+                                                  class="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                                                Waiting for opponent to confirm
                                             </span>
                                         </div>
                                         <h3 class="font-medium mt-1">
@@ -368,20 +494,21 @@ watch([matches, routeMatchId], ([currentMatches, currentMatchId]) => {
                                     </div>
                                     <div>
                                         <!-- Match actions based on state -->
-                                        <div v-if="match.status === 'in_progress' &&
+                                        <div v-if="match.status === 'in_progress' || match.status === 'must_be_confirmed' &&
                                             (match.firstPlayer?.user?.id === user?.id ||
                                              match.secondPlayer?.user?.id === user?.id)"
                                              class="space-y-2">
                                             <Button
                                                 size="sm"
                                                 variant="outline"
+                                                :class="needsConfirmation(match) ? 'animate-pulse bg-amber-100 border-amber-300 hover:bg-amber-200' : ''"
                                                 @click="openResultModal(match)">
-                                                Submit Result
+                                                {{ needsConfirmation(match) ? 'Confirm Result' : 'Submit Result' }}
                                             </Button>
 
                                             <!-- Only receivers can decline -->
                                             <Button
-                                                v-if="!isMatchSender(match)"
+                                                v-if="!isMatchSender(match) && match.status === 'in_progress'"
                                                 :disabled="isProcessingAction"
                                                 class="text-red-600 border-red-300 hover:bg-red-50 ml-2"
                                                 size="sm"
@@ -418,7 +545,7 @@ watch([matches, routeMatchId], ([currentMatches, currentMatchId]) => {
         :max-score="league?.max_score"
         @close="showResultModal = false"
         @error="(error: ApiError) => displayMessage(error.message)"
-        @success="(message: string) => { displayMessage(message); fetchMatches(); fetchPlayers(); }"
+        @success="handleResultSuccess"
     />
 
     <!-- Generic Message Modal -->

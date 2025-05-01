@@ -111,8 +111,11 @@ export interface Rating {
 export enum MatchStatus {
     PENDING = 'pending',
     IN_PROGRESS = 'in_progress',
+    MUST_BE_CONFIRMED = 'must_be_confirmed',
     COMPLETED = 'completed'
 }
+
+// Update the MatchGame interface in resources/js/types/api.ts
 
 export interface MatchGame {
     id: number;
@@ -136,6 +139,12 @@ export interface MatchGame {
     updated_at?: string;
     rating_change_for_winner?: number;
     rating_change_for_loser?: number;
+
+    // New format for result_confirmed as an array of objects
+    result_confirmed?: Array<{
+        key: number;
+        score: string;
+    }>;
 
     // Relations
     firstRating?: Rating;
