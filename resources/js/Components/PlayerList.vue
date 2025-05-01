@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type {Rating} from '@/types/api';
 import PlayerListItem from './PlayerListItem.vue';
+import {computed} from 'vue';
 
 interface Props {
     players: Rating[];
@@ -9,8 +10,18 @@ interface Props {
     isAuthenticated: boolean;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
 
+// Find the current user's position
+const currentUserPosition = computed((): number | null => {
+    if (!props.currentUserId) return null;
+
+    const currentUserRating = props.players.find(
+        rating => rating.player.id === props.currentUserId
+    );
+
+    return currentUserRating ? currentUserRating.position : null;
+});
 </script>
 
 <template>
@@ -25,6 +36,7 @@ defineProps<Props>();
             :isCurrentUser="playerRating.player.id === currentUserId"
             :leagueId="leagueId"
             :playerRating="playerRating"
+            :currentUserPosition="currentUserPosition"
             @challenge="$emit('challenge', playerRating.player)"
         />
     </ul>

@@ -21,7 +21,7 @@ readonly class MatchGamesService
 
     public function send(SendGameDTO $sendGameDTO): bool
     {
-        //sending vailable for +10 and -10 positions in a leaderboard
+        // Get both players' ratings
         $senderRating = $this->ratingService->getActiveRatingForUserLeague(
             $sendGameDTO->sender,
             $sendGameDTO->league,
@@ -31,32 +31,54 @@ readonly class MatchGamesService
             $sendGameDTO->league,
         );
 
+        // Check if both players are active and different
         if (
-            $senderRating
-            && $receiverRating
-            && $senderRating->id !== $receiverRating->id
-            && $this->checkAvailability($receiverRating, $sendGameDTO->league)
-            && $this->checkAvailability($senderRating, $sendGameDTO->league)
+            !$senderRating
+            || !$receiverRating
+            || $senderRating->id === $receiverRating->id
         ) {
-            MatchGame::create([
-                'game_id'                   => $sendGameDTO->league->game_id,
-                'league_id'                 => $sendGameDTO->league->id,
-                'first_rating_id'           => $senderRating->id,
-                'second_rating_id'          => $receiverRating->id,
-                'first_rating_before_game'  => $senderRating->rating,
-                'second_rating_before_game' => $receiverRating->rating,
-                'stream_url'                => $sendGameDTO->stream_url,
-                'details'                   => $sendGameDTO->details,
-                'club_id'                   => $sendGameDTO->club_id,
-                'status' => GameStatus::IN_PROGRESS,
-                'invitation_sent_at'        => now(),
-                'invitation_available_till' => now()->addDays($sendGameDTO->league->invite_days_expire),
-            ]);
-
-            return true;
+            return false;
         }
 
-        return false;
+        // Check if both players are available (no ongoing matches)
+        if (
+            !$this->checkAvailability($receiverRating, $sendGameDTO->league)
+            || !$this->checkAvailability($senderRating, $sendGameDTO->league)
+        ) {
+            return false;
+        }
+
+        // Check if players are within ±10 positions of each other
+        if (!$this->isWithinChallengeRange($senderRating, $receiverRating)) {
+            return false;
+        }
+
+        // Create the match
+        MatchGame::create([
+            'game_id'                   => $sendGameDTO->league->game_id,
+            'league_id'                 => $sendGameDTO->league->id,
+            'first_rating_id'           => $senderRating->id,
+            'second_rating_id'          => $receiverRating->id,
+            'first_rating_before_game'  => $senderRating->rating,
+            'second_rating_before_game' => $receiverRating->rating,
+            'stream_url'                => $sendGameDTO->stream_url,
+            'details'                   => $sendGameDTO->details,
+            'club_id'                   => $sendGameDTO->club_id,
+            'status'                    => GameStatus::IN_PROGRESS,
+            'invitation_sent_at'        => now(),
+            'invitation_available_till' => now()->addDays($sendGameDTO->league->invite_days_expire),
+        ]);
+
+        return true;
+    }
+
+    /**
+     * Check if the two players are within challenge range (±10 positions)
+     */
+    private function isWithinChallengeRange(Rating $senderRating, Rating $receiverRating): bool
+    {
+        $positionDifference = abs($senderRating->position - $receiverRating->position);
+        return $positionDifference <= 10;
     }
 
     private function checkAvailability(Rating $rating, League $league): bool

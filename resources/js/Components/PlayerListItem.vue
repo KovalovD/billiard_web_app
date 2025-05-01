@@ -8,6 +8,7 @@ interface Props {
     leagueId: number;
     isCurrentUser: boolean;
     isAuthenticated: boolean;
+    currentUserPosition: number | null;
 }
 
 const props = defineProps<Props>();
@@ -17,6 +18,14 @@ const handleChallenge = () => {
     if (props.isAuthenticated) {
         emit('challenge', props.playerRating.player);
     }
+}
+
+// Check if player is within challenge range (±10 positions)
+const isWithinChallengeRange = (): boolean => {
+    if (!props.currentUserPosition) return false;
+
+    const positionDiff = Math.abs(props.playerRating.position - props.currentUserPosition);
+    return positionDiff <= 10;
 }
 </script>
 
@@ -30,7 +39,7 @@ const handleChallenge = () => {
         <div class="flex items-center space-x-3">
             <span class="text-sm font-bold text-indigo-600 dark:text-indigo-400">{{ playerRating.rating }}</span>
             <Button
-                v-if="isAuthenticated && !isCurrentUser && !playerRating.hasOngoingMatches"
+                v-if="isAuthenticated && !isCurrentUser && !playerRating.hasOngoingMatches && isWithinChallengeRange()"
                 size="sm"
                 title="Challenge this player"
                 variant="outline"
@@ -39,6 +48,12 @@ const handleChallenge = () => {
                 <SwordsIcon class="w-4 h-4 mr-1" />
                 Challenge
             </Button>
+            <span
+                v-else-if="isAuthenticated && !isCurrentUser && !playerRating.hasOngoingMatches && !isWithinChallengeRange()"
+                class="text-xs text-gray-500 dark:text-gray-400"
+            >
+                Not in challenge range
+            </span>
         </div>
     </li>
 </template>
