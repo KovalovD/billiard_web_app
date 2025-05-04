@@ -7,21 +7,9 @@ use Illuminate\Http\JsonResponse;
 
 abstract class BaseApiException extends Exception
 {
-    protected int $statusCode = 500 {
-        get: int {
-            return $this->statusCode;
-        }
-    }
-    protected string $errorCode = 'SERVER_ERROR' {
-        get: string {
-            return $this->errorCode;
-        }
-    }
-    protected array $extras = [] {
-        get: array {
-            return $this->extras;
-        }
-    }
+    protected int $statusCode = 500;
+    protected string $errorCode = 'SERVER_ERROR';
+    protected array $extras = [];
 
     public function render(): JsonResponse
     {
@@ -32,5 +20,20 @@ abstract class BaseApiException extends Exception
                 'extras'  => $this->extras,
             ],
         ], $this->statusCode);
+    }
+
+    public function getStatusCode(): int
+    {
+        return $this->statusCode;
+    }
+
+    public function getErrorCode(): string
+    {
+        return $this->errorCode;
+    }
+
+    public function getExtras(): array
+    {
+        return $this->extras;
     }
 }
