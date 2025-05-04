@@ -12,10 +12,15 @@ import {
     Input,
     Label,
     Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
     Spinner,
     Textarea
 } from '@/Components/ui';
 import InputError from '@/Components/InputError.vue';
+import RatingRuleEditor from '@/Components/RatingRuleEditor.vue';
 
 interface Props {
     league?: League | null; // Passed league for editing
@@ -47,6 +52,7 @@ const defaultLoserRules = JSON.stringify([
 const form = reactive<LeaguePayload>({
     name: '',
     game_id: null,
+    picture: null,
     details: null,
     has_rating: true,
     started_at: null,
@@ -54,7 +60,9 @@ const form = reactive<LeaguePayload>({
     start_rating: 1000, // Default
     rating_change_for_winners_rule: defaultWinnerRules,
     rating_change_for_losers_rule: defaultLoserRules,
-    picture: null, // Would require file upload handling
+    max_players: 0, // 0 means unlimited
+    max_score: 9, // Default score for 9-ball
+    invite_days_expire: 3, // Default expiration days
 });
 
 const games = ref<Game[]>([]);
@@ -79,7 +87,7 @@ async function fetchGames() {
     try {
         // Fetch games from API when endpoint is available
         games.value = await apiClient<Game[]>('/api/games');
-        // eslint-disable-next-line
+// eslint-disable-next-line
     } catch (error) {
         // Fallback to hardcoded data if API fails
         games.value = [
@@ -101,9 +109,13 @@ watch(() => props.league, (newLeague) => {
     if (newLeague && props.isEditMode) {
         form.name = newLeague.name;
         form.game_id = newLeague.game_id;
+        form.picture = newLeague.picture;
         form.details = newLeague.details;
         form.has_rating = newLeague.has_rating;
         form.start_rating = newLeague.start_rating;
+        form.max_players = newLeague.max_players || 0;
+        form.max_score = newLeague.max_score || 9;
+        form.invite_days_expire = newLeague.invite_days_expire || 3;
 
         // Format dates if present
         form.started_at = formatDateForInput(newLeague.started_at);
@@ -129,7 +141,7 @@ const submit = async () => {
         try {
             JSON.parse(payload.rating_change_for_winners_rule as string || '[]');
             JSON.parse(payload.rating_change_for_losers_rule as string || '[]');
-            // eslint-disable-next-line
+// eslint-disable-next-line
         } catch (e) {
             formErrors.value = {
                 rating_rules: ["Invalid JSON format in rating rules."]
@@ -191,11 +203,32 @@ const submit = async () => {
 
                 <div>
                     <Label for="game_id">Game</Label>
-                    <Select id="game_id" v-model="form.game_id" :disabled="isLoading" required>
-                        <option :value="null" disabled>-- Select Game --</option>
-                        <option v-for="game in games" :key="game.id" :value="game.id">{{ game.name }}</option>
+                    <Select
+                        id="game_id"
+                        v-model="form.game_id"
+                        :disabled="isLoading"
+                        required
+                    >
+                        <SelectTrigger id="game_id">
+                            <SelectValue
+                                :placeholder="league?.game || '-- Select Game --'"
+                            />
+
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="">-- Select Game --</SelectItem>
+                            <SelectItem v-for="game in games" :key="game.id" :value="game.id">
+                                {{ game.name }}
+                            </SelectItem>
+                        </SelectContent>
                     </Select>
                     <InputError :message="formErrors.game_id?.join(', ')" />
+                </div>
+
+                <div>
+                    <Label for="picture">Picture URL</Label>
+                    <Input id="picture" v-model="form.picture" :disabled="isLoading" placeholder="https://" type="url"/>
+                    <InputError :message="formErrors.picture?.join(', ')"/>
                 </div>
 
                 <div>
@@ -222,6 +255,30 @@ const submit = async () => {
                     <InputError :message="formErrors.details?.join(', ')" />
                 </div>
 
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <Label for="max_players">Maximum Players</Label>
+                        <Input id="max_players" v-model.number="form.max_players" :disabled="isLoading" min="0" required
+                               type="number"/>
+                        <InputError :message="formErrors.max_players?.join(', ')"/>
+                        <p class="text-xs text-gray-500 mt-1">0 = unlimited</p>
+                    </div>
+
+                    <div>
+                        <Label for="max_score">Maximum Score</Label>
+                        <Input id="max_score" v-model.number="form.max_score" :disabled="isLoading" min="1" required
+                               type="number"/>
+                        <InputError :message="formErrors.max_score?.join(', ')"/>
+                    </div>
+
+                    <div>
+                        <Label for="invite_days_expire">Invite Expiry (Days)</Label>
+                        <Input id="invite_days_expire" v-model.number="form.invite_days_expire" :disabled="isLoading"
+                               min="1" required type="number"/>
+                        <InputError :message="formErrors.invite_days_expire?.join(', ')"/>
+                    </div>
+                </div>
+
                 <div>
                     <Label for="started_at">Start Date (Optional)</Label>
                     <Input id="started_at" v-model="form.started_at" :disabled="isLoading" type="datetime-local" />
@@ -234,29 +291,24 @@ const submit = async () => {
                     <InputError :message="formErrors.finished_at?.join(', ')" />
                 </div>
 
-                <div>
-                    <Label for="winners_rule">Rating Rule for Winners (JSON)</Label>
-                    <Textarea
-                        id="winners_rule"
+                <div v-if="form.has_rating" class="space-y-6">
+                    <RatingRuleEditor
                         v-model="form.rating_change_for_winners_rule"
-                        :disabled="isLoading || !form.has_rating"
-                        rows="6"
+                        :disabled="isLoading"
+                        :is-winners="true"
                     />
-                    <InputError :message="(formErrors.rating_change_for_winners_rule || formErrors.rating_rules)?.join(', ')" />
-                    <p class="text-xs text-gray-500 mt-1">Format: [{"range":[min, max],"strong":points,"weak":points}, ...]</p>
+
+                    <RatingRuleEditor
+                        v-model="form.rating_change_for_losers_rule"
+                        :disabled="isLoading"
+                        :is-winners="false"
+                    />
                 </div>
 
-                <div>
-                    <Label for="losers_rule">Rating Rule for Losers (JSON)</Label>
-                    <Textarea
-                        id="losers_rule"
-                        v-model="form.rating_change_for_losers_rule"
-                        :disabled="isLoading || !form.has_rating"
-                        rows="6"
-                    />
-                    <InputError :message="(formErrors.rating_change_for_losers_rule || formErrors.rating_rules)?.join(', ')" />
-                    <p class="text-xs text-gray-500 mt-1">Format: [{"range":[min, max],"strong":points,"weak":points}, ...]</p>
-                </div>
+                <!-- Show error messages for rating rules -->
+                <InputError
+                    v-if="formErrors.rating_change_for_winners_rule || formErrors.rating_change_for_losers_rule || formErrors.rating_rules"
+                    :message="(formErrors.rating_change_for_winners_rule || formErrors.rating_change_for_losers_rule || formErrors.rating_rules)?.join(', ')"/>
             </CardContent>
 
             <CardFooter>

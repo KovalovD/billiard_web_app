@@ -11,7 +11,8 @@ import PlayerList from '@/Components/PlayerList.vue';
 import ChallengeModal from '@/Components/ChallengeModal.vue';
 import ResultModal from '@/Components/ResultModal.vue';
 import {apiClient} from '@/lib/apiClient';
-import {ArrowLeftIcon, LogOutIcon, PencilIcon, UserPlusIcon} from 'lucide-vue-next';
+import {ArrowLeftIcon, LogOutIcon, PencilIcon, SmileIcon, TrophyIcon, UserPlusIcon, UsersIcon} from 'lucide-vue-next';
+import {useLeagueStatus} from '@/composables/useLeagueStatus';
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -21,6 +22,7 @@ const props = defineProps<{
 
 const {user, isAuthenticated, isAdmin} = useAuth();
 const leagues = useLeagues();
+const {getLeagueStatus, canJoinLeague, getJoinErrorMessage} = useLeagueStatus();
 
 // State for modals
 const showChallengeModal = ref(false);
@@ -76,9 +78,23 @@ const isCurrentUserInLeague = computed(() => {
 });
 
 // Page title
-const pageTitle = computed(() =>
-    league.value ? `League: ${league.value.name}` : 'League Details'
-);
+const pageTitle = computed(() => {
+    if (!league.value) return 'League Details';
+
+    const status = getLeagueStatus(league.value);
+    const suffix = status ? ` (${status.text})` : '';
+
+    return `League: ${league.value.name}${suffix}`;
+});
+
+// Update the status computed property:
+const leagueStatus = computed(() => getLeagueStatus(league.value));
+
+// Update the can join check:
+const canUserJoinLeague = computed(() => canJoinLeague(league.value));
+
+// Update the error message:
+const joinErrorMessage = computed(() => getJoinErrorMessage(league.value));
 
 // Find an active match by ID from query params
 const findMatchById = (id: string): MatchGame | null => {
@@ -346,40 +362,89 @@ watch([matches, routeMatchId], ([currentMatches, currentMatchId]) => {
                 <!-- League Info Card -->
                 <Card class="mb-8">
                     <CardHeader>
-                        <CardTitle>{{ league.name }}</CardTitle>
-                        <CardDescription>
-                            Game: {{ league.game ?? 'N/A' }} |
-                            Rating: {{ league.has_rating ? `Enabled (${league.start_rating})` : 'Disabled' }}
-                        </CardDescription>
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <CardTitle class="flex items-center gap-2">
+                                    {{ league.name }}
+                                    <span v-if="leagueStatus"
+                                          :class="['px-2 py-1 text-xs rounded-full font-semibold', leagueStatus.class]">
+                                          <component :is="leagueStatus.icon" class="w-3 h-3 inline mr-1"/>
+                                          {{ leagueStatus.text }}
+                                    </span>
+                                </CardTitle>
+                                <CardDescription class="mt-2">
+                                    <div class="flex flex-wrap gap-4 mt-2">
+                                        <span class="flex items-center gap-1">
+                                            <TrophyIcon class="w-4 h-4"/>
+                                            Game: {{ league.game ?? 'N/A' }}
+                                        </span>
+                                        <span class="flex items-center gap-1">
+                                            <UsersIcon class="w-4 h-4"/>
+                                            Players: {{
+                                                league.active_players ?? 0
+                                            }}{{ league.max_players ? `/${league.max_players}` : '' }}
+                                        </span>
+                                        <span class="flex items-center gap-1">
+                                            <SmileIcon class="w-4 h-4"/>
+                                            Rating: {{
+                                                league.has_rating ? `Enabled (${league.start_rating})` : 'Disabled'
+                                            }}
+                                        </span>
+                                    </div>
+                                </CardDescription>
+                            </div>
+                            <div v-if="league.picture" class="hidden sm:block">
+                                <img :alt="league.name" :src="league.picture"
+                                     class="w-24 h-24 object-cover rounded-lg"/>
+                            </div>
+                        </div>
                     </CardHeader>
                     <CardContent>
-                        <p v-if="league.details" class="mb-4">{{ league.details }}</p>
+                        <p v-if="league.details" class="mb-4 whitespace-pre-wrap">{{ league.details }}</p>
                         <p v-else class="italic text-gray-500 mb-4">No details provided for this league.</p>
 
-                        <div class="mt-4 text-sm text-gray-500 space-x-4">
-                            <span v-if="league.started_at">
-                                Starts: {{ new Date(league.started_at).toLocaleDateString() }}
-                            </span>
-                            <span v-if="league.finished_at">
-                                Ends: {{ new Date(league.finished_at).toLocaleDateString() }}
-                            </span>
+                        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                            <div v-if="league.started_at" class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                                <span class="font-medium text-gray-600 dark:text-gray-400">Start Date</span>
+                                <p class="text-gray-900 dark:text-gray-200">
+                                    {{ new Date(league.started_at).toLocaleDateString() }}</p>
+                            </div>
+                            <div v-if="league.finished_at" class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                                <span class="font-medium text-gray-600 dark:text-gray-400">End Date</span>
+                                <p class="text-gray-900 dark:text-gray-200">
+                                    {{ new Date(league.finished_at).toLocaleDateString() }}</p>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                                <span class="font-medium text-gray-600 dark:text-gray-400">Max Score</span>
+                                <p class="text-gray-900 dark:text-gray-200">{{ league.max_score || 'N/A' }}</p>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                                <span class="font-medium text-gray-600 dark:text-gray-400">Invite Expiry</span>
+                                <p class="text-gray-900 dark:text-gray-200">{{ league.invite_days_expire || 'N/A' }}
+                                    days</p>
+                            </div>
                         </div>
 
                         <!-- Join/Leave Actions -->
                         <div v-if="isAuthenticated" class="mt-6">
-                            <Button
-                                v-if="!isCurrentUserInLeague"
-                                :disabled="isJoining || !league.has_rating"
-                                @click="handleJoinLeague"
-                            >
-                                <Spinner v-if="isJoining" class="w-4 h-4 mr-2"/>
-                                <UserPlusIcon v-else class="w-4 h-4 mr-2"/>
-                                Join League
-                            </Button>
+                            <template v-if="!isCurrentUserInLeague">
+                                <Button
+                                    v-if="canUserJoinLeague"
+                                    :disabled="isJoining"
+                                    @click="handleJoinLeague"
+                                >
+                                    <Spinner v-if="isJoining" class="w-4 h-4 mr-2"/>
+                                    <UserPlusIcon v-else class="w-4 h-4 mr-2"/>
+                                    Join League
+                                </Button>
+                                <div v-else class="text-sm text-gray-500 dark:text-gray-400">
+                                    {{ joinErrorMessage }}
+                                </div>
+                            </template>
 
                             <Button
                                 v-else
-                                :disabled="isLeaving || !league.has_rating"
+                                :disabled="isLeaving"
                                 variant="secondary"
                                 @click="handleLeaveLeague"
                             >

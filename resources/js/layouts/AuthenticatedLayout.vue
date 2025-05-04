@@ -24,9 +24,6 @@ const getUser = async () => {
         // Clear localStorage
         localStorage.removeItem('authToken');
         localStorage.removeItem('authDeviceName');
-
-        // Ensure we also clear any session cookies by performing a full reload
-        performFullLogout();
     }
 };
 
@@ -51,36 +48,7 @@ const handleLogout = async () => {
         }
     }
 
-    // Perform full logout that resets session
-    performFullLogout();
-};
-
-// Full logout with session reset
-const performFullLogout = () => {
-    console.log('[Layout] Performing full logout with session reset');
-
-    // Clear axios auth header
-    delete axios.defaults.headers.common['Authorization'];
-
-    // Create a form to submit a POST request to the Laravel logout route
-    // This will properly invalidate the Laravel session
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = '/api/logout';
-
-    // Add CSRF token
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-    if (csrfToken) {
-        const csrfInput = document.createElement('input');
-        csrfInput.type = 'hidden';
-        csrfInput.name = '_token';
-        csrfInput.value = csrfToken;
-        form.appendChild(csrfInput);
-    }
-
-    // Submit the form
-    document.body.appendChild(form);
-    form.submit();
+    location.href = '/';
 };
 
 // Load user on component mount

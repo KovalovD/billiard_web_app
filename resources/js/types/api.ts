@@ -76,7 +76,7 @@ export interface League {
     created_at: string | null;
     updated_at: string | null;
     matches_count?: number;
-    game: string | null; // Game name
+    game: Game
     game_id: number | null;
     rating_type?: string;
     max_players: number;
@@ -96,6 +96,7 @@ export interface LeaguePayload {
     start_rating: number;
     max_players: number;
     max_score: number;
+    invite_days_expire: number;
     rating_change_for_winners_rule?: string | RatingRuleItem[];
     rating_change_for_losers_rule?: string | RatingRuleItem[];
 }
