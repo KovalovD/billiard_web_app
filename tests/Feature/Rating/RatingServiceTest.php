@@ -79,7 +79,7 @@ it('updates ratings and reorders positions for 5 users with strict positions', f
     ;
 
     $expectedOrder = [
-        $u5->id, // 1050
+        $u5->id, // 1060
         $u3->id, // 1050
         $u1->id, // 1010
         $u2->id, // 1000

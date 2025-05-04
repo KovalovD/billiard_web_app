@@ -4,7 +4,6 @@ import {Link} from '@inertiajs/vue3';
 import {apiClient} from '@/lib/apiClient';
 import type {League, MatchGame, Rating} from '@/types/api';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle, Spinner} from '@/Components/ui';
-import {useAuth} from '@/composables/useAuth';
 
 interface LeagueWithMatches {
     league: League;
@@ -15,8 +14,6 @@ interface LeagueWithMatches {
 const leagues = ref<Record<string, LeagueWithMatches>>({});
 const isLoading = ref(true);
 const error = ref<string | null>(null);
-
-const {user} = useAuth();
 
 const emit = defineEmits(['activeMatchesFound']);
 
@@ -40,11 +37,9 @@ const fetchUserLeagues = async () => {
     error.value = null;
 
     try {
-        const response = await apiClient<Record<string, LeagueWithMatches>>('/api/my-leagues-and-challenges', {
+        leagues.value = await apiClient<Record<string, LeagueWithMatches>>('/api/my-leagues-and-challenges', {
             method: 'post'
         });
-
-        leagues.value = response;
 
         // Emit if we have active matches
         if (activeMatches.value.length > 0) {
@@ -93,7 +88,8 @@ onMounted(fetchUserLeagues);
             <div v-else-if="Object.keys(leagues).length === 0"
                  class="py-4 text-center text-gray-500 dark:text-gray-400">
                 <p>You haven't joined any leagues yet.</p>
-                <Link class="block mt-2 text-blue-600 dark:text-blue-400 hover:underline" href="/leagues">
+                <Link :href="route('leagues.index')"
+                      class="block mt-2 text-blue-600 dark:text-blue-400 hover:underline">
                     Browse leagues to join
                 </Link>
             </div>

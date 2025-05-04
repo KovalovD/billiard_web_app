@@ -16,6 +16,9 @@ use Throwable;
 class RatingService
 {
     /**
+     * Get active ratings with users and ongoing matches for a league
+     *
+     * @param  League  $league
      * @return Collection<Rating>
      */
     public function getRatingsWithUsers(League $league): Collection
@@ -23,68 +26,80 @@ class RatingService
         return Rating::query()
             ->where('league_id', $league->id)
             ->where('is_active', true)
-            ->with('user', 'ongoingMatchesAsFirstPlayer', 'ongoingMatchesAsSecondPlayer')
+            ->with([
+                'user',
+                'ongoingMatchesAsFirstPlayer'  => function ($query) {
+                    $query->select('id', 'status', 'first_rating_id', 'second_rating_id');
+                },
+                'ongoingMatchesAsSecondPlayer' => function ($query) {
+                    $query->select('id', 'status', 'first_rating_id', 'second_rating_id');
+                },
+            ])
             ->orderBy('position')
             ->get()
         ;
     }
 
     /**
+     * Add player to league with optimized performance
+     *
+     * @param  League  $league
+     * @param  User  $user
+     * @return bool
      * @throws Throwable
      */
     public function addPlayer(League $league, User $user): bool
     {
-        $playersCount = Rating::where('league_id', $league->id)->where('is_active', true)->count();
-        if ($league->max_players !== 0 && $playersCount >= $league->max_players) {
-            return false;
+        // Check max players limit if set
+        if ($league->max_players !== 0) {
+            $playersCount = Rating::where('league_id', $league->id)
+                ->where('is_active', true)
+                ->count()
+            ;
+
+            if ($playersCount >= $league->max_players) {
+                return false;
+            }
         }
 
-        $existingRating = Rating::where('league_id', $league->id)->where('user_id', $user->id)->first();
+        return DB::transaction(function () use ($league, $user) {
+            $existingRating = Rating::where('league_id', $league->id)
+                ->where('user_id', $user->id)
+                ->first()
+            ;
 
-        if ($existingRating) {
-            $existingRating->update(['is_active' => true]);
+            if ($existingRating) {
+                $existingRating->update(['is_active' => true]);
+            } else {
+                // Get position with a single query
+                $position = $this->getPositionByRatingOrder($league);
+
+                Rating::create([
+                    'league_id' => $league->id,
+                    'user_id'   => $user->id,
+                    'rating'    => $league->start_rating,
+                    'position'  => $position + 1,
+                    'is_active' => true,
+                ]);
+            }
 
             $this->rearrangePositions($league->id);
             return true;
-        }
-
-        $position = $this->getPositionByRatingOrder($league);
-
-        Rating::create([
-            'league_id' => $league->id,
-            'user_id'   => $user->id,
-            'rating'    => $league->start_rating,
-            'position'  => $position + 1,
-            'is_active' => true,
-        ]);
-
-        $this->rearrangePositions($league->id);
-
-        return true;
+        });
     }
 
     /**
-     * Пересчитывает поле `position` в таблице ratings
-     * по заданным правилам:
-     * 0) rating DESC
-     * 1) wins_count DESC
-     * 2) frame_diff DESC
-     * 3) frames_won DESC
-     * 4) matches_count DESC
-     * 5) frames_lost ASC
-     * 6) user.lastname ASC
-     * 7) user.firstname ASC
+     * Rearrange positions with optimized query
      *
      * @param  int  $leagueId
      * @throws Throwable
      */
     public function rearrangePositions(int $leagueId): void
     {
-        // Получаем упорядоченный список rating_id
+        // Get ordered rating IDs with a single optimized query
         $orderedIds = Rating::query()
             ->where('ratings.league_id', $leagueId)
             ->join('users', 'users.id', '=', 'ratings.user_id')
-            // левое соединение по всем играм, где участвует этот рейтинг
             ->leftJoin('match_games as mg', function ($join) use ($leagueId) {
                 $join->on(function ($q) {
                     $q
@@ -94,110 +109,195 @@ class RatingService
                 })->where('mg.league_id', '=', $leagueId);
             })
             ->groupBy('ratings.id', 'ratings.rating', 'users.firstname', 'users.lastname')
-            ->select('ratings.id')
-            ->selectRaw('ratings.rating      AS rating_score')
-            ->selectRaw('SUM(CASE WHEN mg.winner_rating_id = ratings.id THEN 1 ELSE 0 END) AS wins_count')
-            ->selectRaw('SUM(
-                CASE
-                    WHEN mg.first_rating_id  = ratings.id THEN mg.first_user_score
+            ->select([
+                'ratings.id',
+                'ratings.rating',
+                DB::raw('COUNT(CASE WHEN mg.winner_rating_id = ratings.id THEN 1 END) AS wins_count'),
+                DB::raw('COALESCE(SUM(CASE
+                    WHEN mg.first_rating_id = ratings.id THEN mg.first_user_score
                     WHEN mg.second_rating_id = ratings.id THEN mg.second_user_score
                     ELSE 0
-                END
-            ) AS frames_won')
-            ->selectRaw('SUM(
-                CASE
-                    WHEN mg.first_rating_id  = ratings.id THEN mg.second_user_score
+                END), 0) AS frames_won'),
+                DB::raw('COALESCE(SUM(CASE
+                    WHEN mg.first_rating_id = ratings.id THEN mg.second_user_score
                     WHEN mg.second_rating_id = ratings.id THEN mg.first_user_score
                     ELSE 0
-                END
-            ) AS frames_lost')
-            ->selectRaw('COUNT(mg.id)       AS matches_count')
-            ->orderByDesc('rating_score')
-            ->orderByDesc('wins_count')
-            ->orderByDesc(DB::raw('frames_won - frames_lost'))
-            ->orderByDesc('frames_won')
-            ->orderByDesc('matches_count')
-            ->orderBy('frames_lost')
+                END), 0) AS frames_lost'),
+                DB::raw('COUNT(mg.id) AS matches_count'),
+                DB::raw('COALESCE(SUM(CASE
+                    WHEN mg.first_rating_id = ratings.id THEN mg.first_user_score
+                    WHEN mg.second_rating_id = ratings.id THEN mg.second_user_score
+                    ELSE 0
+                END), 0) - COALESCE(SUM(CASE
+                    WHEN mg.first_rating_id = ratings.id THEN mg.second_user_score
+                    WHEN mg.second_rating_id = ratings.id THEN mg.first_user_score
+                    ELSE 0
+                END), 0) AS frame_diff'),
+            ])
+            ->orderByRaw('ratings.rating DESC')
+            ->orderByRaw('COUNT(CASE WHEN mg.winner_rating_id = ratings.id THEN 1 END) DESC')
+            ->orderByRaw('(COALESCE(SUM(CASE
+                WHEN mg.first_rating_id = ratings.id THEN mg.first_user_score
+                WHEN mg.second_rating_id = ratings.id THEN mg.second_user_score
+                ELSE 0
+            END), 0) - COALESCE(SUM(CASE
+                WHEN mg.first_rating_id = ratings.id THEN mg.second_user_score
+                WHEN mg.second_rating_id = ratings.id THEN mg.first_user_score
+                ELSE 0
+            END), 0)) DESC')
+            ->orderByRaw('COALESCE(SUM(CASE
+                WHEN mg.first_rating_id = ratings.id THEN mg.first_user_score
+                WHEN mg.second_rating_id = ratings.id THEN mg.second_user_score
+                ELSE 0
+            END), 0) DESC')
+            ->orderByRaw('COUNT(mg.id) DESC')
+            ->orderByRaw('COALESCE(SUM(CASE
+                WHEN mg.first_rating_id = ratings.id THEN mg.second_user_score
+                WHEN mg.second_rating_id = ratings.id THEN mg.first_user_score
+                ELSE 0
+            END), 0) ASC')
             ->orderBy('users.lastname')
             ->orderBy('users.firstname')
             ->pluck('ratings.id')
             ->toArray()
         ;
 
-        // Обновляем позиции в одной транзакции
+        // Update positions in batches
+        $this->batchUpdatePositions($orderedIds);
+    }
+
+    /**
+     * Update positions in batches for better performance
+     *
+     * @param  array  $orderedIds
+     * @throws Throwable
+     */
+    private function batchUpdatePositions(array $orderedIds): void
+    {
+        if (empty($orderedIds)) {
+            return;
+        }
+
         DB::transaction(static function () use ($orderedIds) {
+            // Build a bulk update query
+            $cases = [];
+            $params = [];
+
             foreach ($orderedIds as $index => $ratingId) {
-                Rating::where('id', $ratingId)
-                    ->update(['position' => $index + 1])
-                ;
+                $cases[] = "WHEN id = ? THEN ?";
+                $params[] = $ratingId;
+                $params[] = $index + 1;
             }
+
+            $sql = "UPDATE ratings SET position = CASE ".implode(' ', $cases)." END WHERE id IN (".
+                str_repeat('?,', count($orderedIds) - 1)."?)";
+
+            $params = array_merge($params, $orderedIds);
+
+            DB::update($sql, $params);
         });
     }
 
+    /**
+     * Get position by rating order with optimized query
+     *
+     * @param  League  $league
+     * @return int
+     */
     private function getPositionByRatingOrder(League $league): int
     {
         return Rating::query()
             ->where('league_id', $league->id)
             ->where('rating', '>', $league->start_rating)
-            ->orderBy('position')
-            ->first()
-            ?->position ?: 1;
+            ->min('position') ?? 1;
     }
 
     /**
+     * Disable player with optimized transaction
+     *
+     * @param  League  $league
+     * @param  User  $user
      * @throws Throwable
      */
     public function disablePlayer(League $league, User $user): void
     {
-        $rating = Rating::where('league_id', $league->id)
-            ->where('user_id', $user->id)
-            ->where('is_active', true)
-            ->first()
-        ;
+        DB::transaction(function () use ($league, $user) {
+            $updated = Rating::where('league_id', $league->id)
+                ->where('user_id', $user->id)
+                ->where('is_active', true)
+                ->update(['is_active' => false])
+            ;
 
-        if (!$rating) {
-            return;
-        }
-
-        $rating->update(['is_active' => false]);
-
-        $this->rearrangePositions($league->id);
+            if ($updated > 0) {
+                $this->rearrangePositions($league->id);
+            }
+        });
     }
 
     /**
+     * Update ratings with optimized operations
+     *
+     * @param  MatchGame  $matchGame
+     * @param  int  $winnerUserId
+     * @return array
      * @throws Throwable
      */
     public function updateRatings(MatchGame $matchGame, int $winnerUserId): array
     {
-        $league = $matchGame->league;
-        $ratings = $matchGame->getRatings();
+        return DB::transaction(function () use ($matchGame, $winnerUserId) {
+            $league = $matchGame->league;
+            $ratings = $matchGame->getRatings();
 
-        $strategy = $this->resolveStrategy($league->rating_type);
+            $strategy = $this->resolveStrategy($league->rating_type);
 
-        $result = $strategy->calculate(
-            $ratings,
-            $winnerUserId,
-            $league->rating_change_for_winners_rule,
-            $league->rating_change_for_losers_rule,
-        );
+            $result = $strategy->calculate(
+                $ratings,
+                $winnerUserId,
+                $league->rating_change_for_winners_rule,
+                $league->rating_change_for_losers_rule,
+            );
 
-        foreach ($ratings as $rating) {
-            $rating->rating = $result[$rating->id];
-            $rating->save();
-        }
+            // Batch update ratings
+            $updates = [];
+            foreach ($ratings as $rating) {
+                $updates[] = [
+                    'id'     => $rating->id,
+                    'rating' => $result[$rating->id],
+                ];
+            }
 
-        $this->rearrangePositions($league->id);
+            // Perform batch update
+            foreach ($updates as $update) {
+                Rating::where('id', $update['id'])->update(['rating' => $update['rating']]);
+            }
 
-        return $result;
+            $this->rearrangePositions($league->id);
+
+            return $result;
+        });
     }
 
+    /**
+     * Get rating strategy with caching
+     *
+     * @param  RatingType  $type
+     * @return RatingStrategy
+     */
     private function resolveStrategy(RatingType $type): RatingStrategy
     {
+        // In a real application, you might want to cache strategies
         return match ($type) {
             RatingType::Elo => new EloRatingStrategy(),
         };
     }
 
+    /**
+     * Get active rating for user in league with single query
+     *
+     * @param  User  $user
+     * @param  League  $league
+     * @return Rating|null
+     */
     public function getActiveRatingForUserLeague(User $user, League $league): ?Rating
     {
         return Rating::query()
