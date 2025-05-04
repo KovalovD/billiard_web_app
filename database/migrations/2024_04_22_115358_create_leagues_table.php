@@ -11,7 +11,7 @@ return new class extends Migration {
         Schema::create('leagues', static function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->foreignIdFor(Game::class)->nullable();
+            $table->foreignIdFor(Game::class)->nullable()->constrained();
             $table->string('picture')->nullable();
             $table->text('details')->nullable();
             $table->string('rating_type')->default('elo');
