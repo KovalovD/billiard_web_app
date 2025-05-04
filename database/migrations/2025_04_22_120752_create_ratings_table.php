@@ -11,8 +11,8 @@ return new class extends Migration {
     {
         Schema::create('ratings', static function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(User::class);
-            $table->foreignIdFor(League::class);
+            $table->foreignIdFor(User::class)->constrained();
+            $table->foreignIdFor(League::class)->constrained();
             $table->integer('rating');
             $table->integer('position');
             $table->boolean('is_active')->default(true);

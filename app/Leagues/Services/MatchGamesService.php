@@ -52,6 +52,11 @@ readonly class MatchGamesService
             return false;
         }
 
+        // Check if last match wasn't with the same opponent
+        if ($this->wasLastMatchWithSameOpponent($senderRating, $receiverRating, $sendGameDTO->league)) {
+            return false;
+        }
+
         // Create the match
         MatchGame::create([
             'game_id'                   => $sendGameDTO->league->game_id,
@@ -69,6 +74,32 @@ readonly class MatchGamesService
         ]);
 
         return true;
+    }
+
+    /**
+     * Check if the sender's last match was with the same opponent
+     */
+    private function wasLastMatchWithSameOpponent(Rating $senderRating, Rating $receiverRating, League $league): bool
+    {
+        $lastMatch = MatchGame::where('league_id', $league->id)
+            ->where('status', GameStatus::COMPLETED)
+            ->where(function ($query) use ($senderRating) {
+                $query
+                    ->where('first_rating_id', $senderRating->id)
+                    ->orWhere('second_rating_id', $senderRating->id)
+                ;
+            })
+            ->orderBy('finished_at', 'desc')
+            ->first()
+        ;
+
+        if (!$lastMatch) {
+            return false;
+        }
+
+        // Check if the last match was with the intended receiver
+        return ($lastMatch->first_rating_id === $receiverRating->id && $lastMatch->second_rating_id === $senderRating->id)
+            || ($lastMatch->first_rating_id === $senderRating->id && $lastMatch->second_rating_id === $receiverRating->id);
     }
 
     /**

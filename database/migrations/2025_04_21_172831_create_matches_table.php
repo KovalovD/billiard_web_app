@@ -15,15 +15,15 @@ return new class extends Migration {
         Schema::create('match_games', static function (Blueprint $table) {
             $table->id();
             $table->string('status')->default(GameStatus::PENDING->value);
-            $table->foreignIdFor(Club::class)->nullable();
-            $table->foreignIdFor(Game::class)->nullable();
-            $table->foreignIdFor(League::class);
-            $table->foreignIdFor(Rating::class, 'first_rating_id');
-            $table->foreignIdFor(Rating::class, 'second_rating_id');
+            $table->foreignIdFor(Club::class)->nullable()->constrained();
+            $table->foreignIdFor(Game::class)->nullable()->constrained();
+            $table->foreignIdFor(League::class)->constrained();
+            $table->foreignIdFor(Rating::class, 'first_rating_id')->constrained();
+            $table->foreignIdFor(Rating::class, 'second_rating_id')->constrained();
             $table->smallInteger('first_user_score')->default(0);
             $table->smallInteger('second_user_score')->default(0);
-            $table->foreignIdFor(Rating::class, 'winner_rating_id')->nullable();
-            $table->foreignIdFor(Rating::class, 'loser_rating_id')->nullable();
+            $table->foreignIdFor(Rating::class, 'winner_rating_id')->nullable()->constrained();
+            $table->foreignIdFor(Rating::class, 'loser_rating_id')->nullable()->constrained();
             $table->integer('rating_change_for_winner')->default('+0');
             $table->integer('rating_change_for_loser')->default('-0');
             $table->integer('first_rating_before_game')->default(1000);
