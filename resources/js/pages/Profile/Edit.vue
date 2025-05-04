@@ -1,7 +1,7 @@
 //resources/js/pages/Profile/Edit.vue
 <script lang="ts" setup>
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
-import {Head} from '@inertiajs/vue3';
+import {Head, Link} from '@inertiajs/vue3';
 import {onMounted, ref} from 'vue';
 import {apiClient} from '@/lib/apiClient';
 import {
@@ -220,6 +220,26 @@ onMounted(() => {
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+            <!-- Profile Navigation -->
+            <div class="flex space-x-4 mb-6">
+                <Link :href="route('profile.edit')">
+                    <Button
+                        class="bg-primary text-primary-foreground"
+                        variant="outline"
+                    >
+                        Edit Profile
+                    </Button>
+                </Link>
+                <Link :href="route('profile.stats')">
+                    <Button
+                        class="bg-gray-100 dark:bg-gray-800"
+                        variant="outline"
+                    >
+                        Statistics
+                    </Button>
+                </Link>
+            </div>
+
             <!-- Loading state -->
             <div v-if="isLoadingUser" class="flex justify-center py-8">
                 <Spinner class="w-8 h-8 text-primary"/>

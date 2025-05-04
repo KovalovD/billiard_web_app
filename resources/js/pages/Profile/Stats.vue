@@ -313,7 +313,7 @@ onMounted(() => {
             <div class="flex space-x-4 mb-6">
                 <Link :href="route('profile.edit')">
                     <Button
-                        :class="{ 'bg-gray-100 dark:bg-gray-800': !route().current('profile.stats') }"
+                        class="bg-gray-100 dark:bg-gray-800"
                         variant="outline"
                     >
                         Edit Profile
@@ -321,7 +321,7 @@ onMounted(() => {
                 </Link>
                 <Link :href="route('profile.stats')">
                     <Button
-                        :class="{ 'bg-primary text-primary-foreground': route().current('profile.stats') }"
+                        class="bg-primary text-primary-foreground"
                         variant="outline"
                     >
                         Statistics
