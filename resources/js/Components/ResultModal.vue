@@ -130,6 +130,33 @@ const otherPlayerSubmission = computed(() => {
     return {first_user_score: firstScore, second_user_score: secondScore};
 });
 
+// Validate scores
+const validateScores = (): boolean => {
+    let isValid = true;
+    const newErrors: Record<string, string[]> = {};
+
+    // Check tie game
+    if (form.first_user_score === form.second_user_score) {
+        newErrors.general = ['Tie games are not allowed. One player must have a higher score.'];
+        isValid = false;
+    }
+
+    // Check max score if defined
+    if (props.maxScore !== null && props.maxScore !== undefined) {
+        if (form.first_user_score > props.maxScore) {
+            newErrors.first_user_score = [`Maximum score is ${props.maxScore}`];
+            isValid = false;
+        }
+        if (form.second_user_score > props.maxScore) {
+            newErrors.second_user_score = [`Maximum score is ${props.maxScore}`];
+            isValid = false;
+        }
+    }
+
+    formErrors.value = newErrors;
+    return isValid;
+};
+
 // Reset form when the modal is opened
 watch(() => props.show, (newVal) => {
     if (newVal && props.matchGame) {
@@ -149,8 +176,20 @@ watch(() => props.show, (newVal) => {
     }
 });
 
+// Watch for input changes to validate in real-time
+watch([() => form.first_user_score, () => form.second_user_score], () => {
+    if (!isConfirmationNeeded.value && !isUserConfirmed.value) {
+        validateScores();
+    }
+});
+
 const submitResult = async () => {
     if (!props.matchGame) return;
+
+    // Validate before submitting
+    if (!validateScores()) {
+        return;
+    }
 
     isLoading.value = true;
     formErrors.value = {};
@@ -272,7 +311,7 @@ const rejectOtherPlayerResult = () => {
                             :id="`first_score_${matchGame?.id}`"
                             v-model.number="form.first_user_score"
                             :disabled="isLoading"
-                            :max="maxScore"
+                            :max="maxScore || undefined"
                             class="mt-1"
                             min="0"
                             required
@@ -287,7 +326,7 @@ const rejectOtherPlayerResult = () => {
                             :id="`second_score_${matchGame?.id}`"
                             v-model.number="form.second_user_score"
                             :disabled="isLoading"
-                            :max="maxScore"
+                            :max="maxScore || undefined"
                             class="mt-1"
                             min="0"
                             required
@@ -301,6 +340,12 @@ const rejectOtherPlayerResult = () => {
                 <div v-if="form.first_user_score === form.second_user_score"
                      class="mt-3 p-2 bg-yellow-50 text-yellow-700 text-sm rounded-md dark:bg-yellow-900/20 dark:text-yellow-400">
                     Tie games are not allowed. One player must have a higher score.
+                </div>
+
+                <!-- Show warning about max score -->
+                <div v-if="maxScore && (form.first_user_score > maxScore || form.second_user_score > maxScore)"
+                     class="mt-3 p-2 bg-red-50 text-red-700 text-sm rounded-md dark:bg-red-900/20 dark:text-red-400">
+                    Maximum score for this league is {{ maxScore }}.
                 </div>
 
                 <!-- Show warning about status -->

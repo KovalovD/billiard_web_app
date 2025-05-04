@@ -1,12 +1,12 @@
 <script lang="ts" setup>
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
-import {Head} from '@inertiajs/vue3';
+import {Head, Link} from '@inertiajs/vue3';
 import {useAuth} from '@/composables/useAuth';
 import {computed, onMounted, ref} from 'vue';
 import {apiClient} from '@/lib/apiClient';
 // Убедись, что User тип импортирован и соответствует структуре UserResource
 import type {GameTypeStats, MatchGame, Rating, User, UserStats} from '@/types/api';
-import {Card, CardContent, CardDescription, CardHeader, CardTitle, Spinner} from '@/Components/ui';
+import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Spinner} from '@/Components/ui';
 import {
     ActivityIcon,
     AwardIcon,
@@ -79,7 +79,7 @@ const getOpponentName = (match: MatchGame): string => {
     if (!user.value) return 'Error: User not loaded'; // Защитная проверка
 
     const userIsP1 = isUserFirstPlayer(match);
-    let opponentUser: User | null | undefined = null; // Используем тип User
+    let opponentUser: User | null | undefined;
 
     if (userIsP1) {
         // Если текущий юзер - P1, оппонент - P2
@@ -309,6 +309,27 @@ onMounted(() => {
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+            <!-- Profile Navigation -->
+            <div class="flex space-x-4 mb-6">
+                <Link :href="route('profile.edit')">
+                    <Button
+                        :class="{ 'bg-gray-100 dark:bg-gray-800': !route().current('profile.stats') }"
+                        variant="outline"
+                    >
+                        Edit Profile
+                    </Button>
+                </Link>
+                <Link :href="route('profile.stats')">
+                    <Button
+                        :class="{ 'bg-primary text-primary-foreground': route().current('profile.stats') }"
+                        variant="outline"
+                    >
+                        Statistics
+                    </Button>
+                </Link>
+            </div>
+
+            <!-- Error message section, keep it as is -->
             <div v-if="errorMessage"
                  class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative dark:bg-red-900/30 dark:text-red-400 dark:border-red-600"
                  role="alert">

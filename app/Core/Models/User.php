@@ -7,6 +7,7 @@ use App\Leagues\Models\Rating;
 use database\factories\UserFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -29,6 +30,8 @@ class User extends Authenticatable
         'password',
         'phone',
         'is_admin',
+        'home_city_id',
+        'home_club_id',
     ];
 
     /**
@@ -45,6 +48,8 @@ class User extends Authenticatable
     {
         return UserFactory::new();
     }
+
+    protected $with = ['homeCity', 'homeClub'];
 
     /**
      * Get the attributes that should be cast.
@@ -70,5 +75,15 @@ class User extends Authenticatable
     public function activeRatings(): HasMany
     {
         return $this->hasMany(Rating::class)->where('is_active', true);
+    }
+
+    public function homeCity(): BelongsTo
+    {
+        return $this->belongsTo(City::class);
+    }
+
+    public function homeClub(): BelongsTo
+    {
+        return $this->belongsTo(Club::class);
     }
 }

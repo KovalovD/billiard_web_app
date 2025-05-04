@@ -28,11 +28,11 @@ class RatingService
             ->where('is_active', true)
             ->with([
                 'user',
-                'ongoingMatchesAsFirstPlayer'  => function ($query) {
-                    $query->select('id', 'status', 'first_rating_id', 'second_rating_id');
+                'ongoingMatchesAsFirstPlayer'  => function ($query) use ($league) {
+                    $query->where('league_id', $league->id);
                 },
-                'ongoingMatchesAsSecondPlayer' => function ($query) {
-                    $query->select('id', 'status', 'first_rating_id', 'second_rating_id');
+                'ongoingMatchesAsSecondPlayer' => function ($query) use ($league) {
+                    $query->where('league_id', $league->id);
                 },
             ])
             ->orderBy('position')

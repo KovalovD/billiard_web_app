@@ -8,12 +8,31 @@ export interface User {
     firstname: string;
     lastname: string;
     email: string;
-    phone?: string | null;
+    phone: string;
     email_verified_at?: string | null;
     is_admin?: boolean;
     name?: string; // Combined name field if provided by backend
     created_at?: string;
     updated_at?: string;
+    home_city?: City;
+    home_club?: Club;
+}
+
+// New interfaces to support cities and clubs
+export interface City {
+    id: number;
+    name: string;
+    country: {
+        id: number;
+        name: string;
+    };
+}
+
+export interface Club {
+    id: number;
+    name: string;
+    city?: string;
+    country?: string;
 }
 
 export interface LoginResponse {

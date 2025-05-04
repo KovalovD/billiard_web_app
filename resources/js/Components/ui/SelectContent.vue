@@ -1,30 +1,29 @@
 <script lang="ts" setup>
-import {cn} from '@/lib/utils'
-import {ref} from 'vue';
+import {computed, inject} from 'vue';
+import {cn} from '@/lib/utils';
 
 interface Props {
     class?: string;
-    // Позиционирование можно добавить через пропсы или классы Tailwind
-    position?: 'item-aligned' | 'popper';
 }
 
-const props = withDefaults(defineProps<Props>(), {
-    position: 'popper',
+const props = defineProps<Props>();
+
+const select = inject<{
+    isOpen: { value: boolean };
+}>('select', {
+    isOpen: computed(() => false),
 });
-
-const isOpen = ref(true); // Для примера, должна управляться извне
-
 </script>
 
 <template>
     <div
-        v-if="isOpen"
+        v-if="select.isOpen.value"
         :class="cn(
-      'relative z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md animate-in fade-in-80', // Базовые стили shadcn
-      // Доп. классы для позиционирования
-      props.position === 'popper' ? 'translate-y-1' : '',
-      props.class
-   )"
+            'absolute z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md',
+            'animate-in data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
+            props.class
+        )"
+        role="listbox"
     >
         <div class="p-1">
             <slot/>
