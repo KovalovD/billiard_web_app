@@ -88,7 +88,7 @@ readonly class AuthService
                 'success' => true,
                 'message' => 'Successfully logged out.',
             ];
-        } catch (Exception $e) {
+        } catch (Exception) {
             return [
                 'success' => false,
                 'message' => 'An error occurred during logout, but your session has been terminated.',
