@@ -1,3 +1,4 @@
+//resources/js/Components/ui/SelectItem.vue
 <script lang="ts" setup>
 import {computed, inject} from 'vue';
 import {cn} from '@/lib/utils';
@@ -14,18 +15,14 @@ const props = defineProps<Props>();
 const select = inject<{
     select: (value: string | number) => void;
     selectedValue: { value: string | number | null };
-}>('select', {
-    select: () => {
-    },
-    selectedValue: computed(() => null),
-});
+}>('select');
 
 const isSelected = computed(() => {
-    return props.value?.toString() === select.selectedValue.value?.toString();
+    return String(props.value) === String(select?.selectedValue?.value);
 });
 
 const handleClick = () => {
-    if (!props.disabled) {
+    if (!props.disabled && select) {
         select.select(props.value);
     }
 };
@@ -39,15 +36,11 @@ const handleClick = () => {
             !props.disabled && 'cursor-pointer hover:bg-accent',
             props.class
         )"
-        :data-disabled="disabled || undefined"
         :data-value="value"
         role="option"
         @click="handleClick"
     >
-        <span
-            v-if="isSelected"
-            class="absolute left-2 flex h-3.5 w-3.5 items-center justify-center"
-        >
+        <span v-if="isSelected" class="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
             <CheckIcon class="h-4 w-4"/>
         </span>
         <slot/>

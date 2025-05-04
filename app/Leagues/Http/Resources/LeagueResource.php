@@ -25,15 +25,16 @@ class LeagueResource extends JsonResource
             'created_at'                     => $this->created_at,
             'updated_at'                     => $this->updated_at,
             'matches_count'                  => $this->matches_count,
-            'max_players' => $this->max_players,
-            'max_score'   => $this->max_score,
+            'max_players'    => $this->max_players,
+            'max_score'      => $this->max_score,
+            'active_players' => $this->active_ratings_count,
 
             // Game info - optimized to avoid redundancy
-            'game_id'     => $this->game_id,
-            'game'        => $this->whenLoaded('game', function () {
+            'game_id'        => $this->game_id,
+            'game'           => $this->whenLoaded('game', function () {
                 return $this->game->name;
             }),
-            'game_type'   => $this->whenLoaded('game', function () {
+            'game_type'      => $this->whenLoaded('game', function () {
                 return $this->game->type;
             }),
         ];

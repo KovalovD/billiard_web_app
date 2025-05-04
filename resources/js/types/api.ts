@@ -82,6 +82,7 @@ export interface League {
     max_players: number;
     max_score: number;
     invite_days_expire?: number;
+    active_players: number;
 }
 
 export interface LeaguePayload {

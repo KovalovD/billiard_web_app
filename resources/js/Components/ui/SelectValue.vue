@@ -1,5 +1,6 @@
+//resources/js/Components/ui/SelectValue.vue
 <script lang="ts" setup>
-import {computed, inject, onMounted, onUnmounted, ref, watch} from 'vue';
+import {computed, inject} from 'vue';
 
 interface Props {
     placeholder?: string;
@@ -9,54 +10,28 @@ const props = defineProps<Props>();
 
 const select = inject<{
     selectedValue: { value: string | number | null };
-}>('select', {
-    selectedValue: computed(() => null),
-});
+}>('select');
 
-const selectedContent = ref<string>('');
+const displayText = computed(() => {
+    const value = select?.selectedValue?.value;
 
-const updateContent = () => {
-    const value = select.selectedValue.value;
-
-    if (value === null || value === 'null') {
-        selectedContent.value = '';
-        return;
+    if (!value || value === '') {
+        return props.placeholder || '';
     }
 
-    // Find all options
-    const options = document.querySelectorAll('[role="option"]');
-    for (const option of options) {
-        const dataValue = option.getAttribute('data-value');
-        if (dataValue === String(value)) {
-            selectedContent.value = option.textContent?.trim() || '';
-            return;
-        }
+    // Find the DOM element with matching data-value
+    const element = document.querySelector(`[data-value="${value}"]`);
+
+    // Extract text content (city/club name)
+    if (element && element.textContent) {
+        return element.textContent.trim();
     }
 
-    selectedContent.value = '';
-};
-
-const observer = new MutationObserver(() => {
-    updateContent();
-});
-
-watch(() => select.selectedValue.value, () => {
-    updateContent();
-}, {immediate: true});
-
-onMounted(() => {
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true
-    });
-    updateContent();
-});
-
-onUnmounted(() => {
-    observer.disconnect();
+    // Fallback to placeholder if can't find element
+    return props.placeholder || String(value);
 });
 </script>
 
 <template>
-    <span>{{ selectedContent || props.placeholder }}</span>
+    <span class="pointer-events-none">{{ displayText }}</span>
 </template>

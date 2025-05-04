@@ -1,12 +1,12 @@
 <script lang="ts" setup>
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
-import { Head, Link } from '@inertiajs/vue3';
-import { useAuth } from '@/composables/useAuth';
-import { useLeagues } from '@/composables/useLeagues';
-import type { ApiError, League } from '@/types/api';
-import { Button, Card, CardContent, CardHeader, CardTitle, Spinner } from '@/Components/ui';
-import { EyeIcon, PencilIcon, PlusIcon } from 'lucide-vue-next';
-import { onMounted, ref } from 'vue';
+import {Head, Link} from '@inertiajs/vue3';
+import {useAuth} from '@/composables/useAuth';
+import {useLeagues} from '@/composables/useLeagues';
+import type {ApiError, League} from '@/types/api';
+import {Button, Card, CardContent, CardHeader, CardTitle, Spinner} from '@/Components/ui';
+import {EyeIcon, PencilIcon, PlusIcon} from 'lucide-vue-next';
+import {onMounted, ref} from 'vue';
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -97,6 +97,9 @@ const getLeagueUrl = (routeName: 'leagues.show' | 'leagues.edit', leagueId: numb
                                 <h2 class="text-lg font-semibold text-blue-700 dark:text-blue-400">
                                     {{ league.name ?? 'Unnamed League' }}</h2>
                                 <p class="text-sm text-gray-600 dark:text-gray-400">Game: {{ league.game ?? 'N/A' }}</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">
+                                    Players: {{ league.active_players ?? 0 }}
+                                </p>
                                 <p class="text-sm text-gray-600 dark:text-gray-400">Matches Played:
                                     {{ league.matches_count ?? 0 }}</p>
                                 <p class="text-sm text-gray-600 dark:text-gray-400">
