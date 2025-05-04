@@ -4,11 +4,18 @@ use App\Core\Http\Middleware\AdminMiddleware;
 use App\Leagues\Http\Controllers\LeaguesController;
 use App\Leagues\Http\Controllers\PlayersController;
 use App\Matches\Http\Controllers\MatchGamesController;
+use App\User\Http\Controllers\CitiesController;
+use App\User\Http\Controllers\ClubsController;
+use App\User\Http\Controllers\ProfileController;
 use App\User\Http\Controllers\UserStatsController;
 use Illuminate\Support\Facades\Route;
 
 // Public endpoints
 Route::apiResource('leagues', LeaguesController::class, ['only' => ['index', 'show']]);
+
+// Cities and clubs are publicly accessible
+Route::get('cities', [CitiesController::class, 'index']);
+Route::get('clubs', [ClubsController::class, 'index']);
 
 // Admin-only endpoints
 Route::middleware(['auth:sanctum', AdminMiddleware::class])->group(function () {
@@ -19,6 +26,12 @@ Route::middleware(['auth:sanctum', AdminMiddleware::class])->group(function () {
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('my-leagues-and-challenges', [LeaguesController::class, 'myLeaguesAndChallenges']);
+
+    Route::prefix('profile')->group(function () {
+        Route::put('/', [ProfileController::class, 'update']);
+        Route::put('/password', [ProfileController::class, 'updatePassword']);
+        Route::delete('/', [ProfileController::class, 'destroy']);
+    });
 
     Route::prefix('user')->group(function () {
         Route::get('ratings', [UserStatsController::class, 'ratings']);

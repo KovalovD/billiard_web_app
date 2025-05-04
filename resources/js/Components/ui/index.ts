@@ -1,4 +1,4 @@
-// resources/js/Components/ui/Index.ts
+// resources/js/Components/ui/index.ts
 import Button from './Button.vue';
 import Input from './Input.vue';
 import Label from './Label.vue';
@@ -10,6 +10,10 @@ import CardContent from './CardContent.vue';
 import CardFooter from './CardFooter.vue';
 import Modal from './Modal.vue';
 import Select from './Select.vue';
+import SelectContent from './SelectContent.vue';
+import SelectItem from './SelectItem.vue';
+import SelectTrigger from './SelectTrigger.vue';
+import SelectValue from './SelectValue.vue';
 import Textarea from './Textarea.vue';
 import Spinner from './Spinner.vue';
 
@@ -26,6 +30,10 @@ export {
     CardFooter,
     Modal,
     Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
     Textarea,
     Spinner
 };
@@ -43,6 +51,10 @@ export default {
     CardFooter,
     Modal,
     Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
     Textarea,
     Spinner
 };
