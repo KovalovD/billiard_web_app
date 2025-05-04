@@ -3,22 +3,41 @@ import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {Head, Link} from '@inertiajs/vue3';
 import {useAuth} from '@/composables/useAuth';
 import {useLeagues} from '@/composables/useLeagues';
+import {useLeagueStatus} from '@/composables/useLeagueStatus';
 import type {ApiError, League} from '@/types/api';
 import {Button, Card, CardContent, CardHeader, CardTitle, Spinner} from '@/Components/ui';
-import {EyeIcon, PencilIcon, PlusIcon} from 'lucide-vue-next';
-import {onMounted, ref} from 'vue';
+import {EyeIcon, PencilIcon, PlusIcon, TrophyIcon} from 'lucide-vue-next';
+import {computed, onMounted, ref} from 'vue';
 
 defineOptions({layout: AuthenticatedLayout});
 
 const {isAdmin} = useAuth();
 const leagues = useLeagues();
+const {getLeagueStatus, getPlayersText} = useLeagueStatus();
 
-// Создаем переменные для хранения данных
 const leaguesData = ref<League[]>([]);
 const isLoading = ref(false);
 const loadingError = ref<ApiError | null>(null);
 
-// Функция для загрузки лиг
+// Sort leagues by status
+const sortedLeagues = computed(() => {
+    if (!leaguesData.value) return [];
+
+    return [...leaguesData.value].sort((a, b) => {
+        const statusA = getLeagueStatus(a);
+        const statusB = getLeagueStatus(b);
+
+        // Priority: Active > Upcoming > Ended
+        if (statusA?.text === 'Active' && statusB?.text !== 'Active') return -1;
+        if (statusB?.text === 'Active' && statusA?.text !== 'Active') return 1;
+        if (statusA?.text === 'Upcoming' && statusB?.text !== 'Upcoming') return -1;
+        if (statusB?.text === 'Upcoming' && statusA?.text !== 'Upcoming') return 1;
+
+        // Sort by name within same status
+        return a.name.localeCompare(b.name);
+    });
+});
+
 const fetchLeagues = async () => {
     isLoading.value = true;
     try {
@@ -32,12 +51,10 @@ const fetchLeagues = async () => {
     }
 };
 
-// Load leagues on component mount
 onMounted(() => {
     fetchLeagues();
 });
 
-// Safer url generation for route params
 const getLeagueUrl = (routeName: 'leagues.show' | 'leagues.edit', leagueId: number | undefined | null): string | null => {
     if (typeof leagueId !== 'number') return null;
 
@@ -88,46 +105,61 @@ const getLeagueUrl = (routeName: 'leagues.show' | 'leagues.edit', leagueId: numb
                         <span v-if="isAdmin"> Start by creating one!</span>
                     </div>
 
-                    <!-- League List -->
-                    <ul v-else class="space-y-4">
-                        <li v-for="league in leaguesData" :key="league.id"
-                            class="border dark:border-gray-700 rounded-lg p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
+                    <!-- League Grid -->
+                    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div v-for="league in sortedLeagues" :key="league.id"
+                             class="border dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition">
 
-                            <div class="mb-4 sm:mb-0">
-                                <h2 class="text-lg font-semibold text-blue-700 dark:text-blue-400">
-                                    {{ league.name ?? 'Unnamed League' }}</h2>
-                                <p class="text-sm text-gray-600 dark:text-gray-400">Game: {{ league.game ?? 'N/A' }}</p>
-                                <p class="text-sm text-gray-600 dark:text-gray-400">
-                                    Players: {{ league.active_players ?? 0 }}
-                                </p>
-                                <p class="text-sm text-gray-600 dark:text-gray-400">Matches Played:
-                                    {{ league.matches_count ?? 0 }}</p>
-                                <p class="text-sm text-gray-600 dark:text-gray-400">
-                                    Rating Enabled:
-                                    <span
-                                        :class="league.has_rating ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
-                                        {{ league.has_rating ? 'Yes' : 'No' }}
-                                    </span>
-                                </p>
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="flex-1">
+                                    <h2 class="text-lg font-semibold text-blue-700 dark:text-blue-400 flex items-center gap-2">
+                                        {{ league.name ?? 'Unnamed League' }}
+                                        <span v-if="getLeagueStatus(league)"
+                                              :class="['px-2 py-1 text-xs rounded-full font-semibold', getLeagueStatus(league)?.class]">
+                                              {{ getLeagueStatus(league)?.text }}
+                                        </span>
+                                    </h2>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1 mt-1">
+                                        <TrophyIcon class="w-3 h-3"/>
+                                        {{ league.game ?? 'N/A' }}
+                                    </p>
+                                </div>
                             </div>
 
-                            <div class="flex space-x-2 flex-shrink-0">
+                            <div class="space-y-2 mb-4">
+                                <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                                    <component :is="getLeagueStatus(league)?.icon" class="w-3 h-3"/>
+                                    <span>{{ getPlayersText(league) }}</span>
+                                </div>
+
+                                <div v-if="league.started_at"
+                                     class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                                    <component :is="getLeagueStatus(league)?.icon" class="w-3 h-3"/>
+                                    <span>Starts: {{ new Date(league.started_at).toLocaleDateString() }}</span>
+                                </div>
+                            </div>
+
+                            <div class="flex space-x-2">
                                 <Link v-if="getLeagueUrl('leagues.show', league.id)"
-                                      :href="getLeagueUrl('leagues.show', league.id)!" title="View Details">
-                                    <Button size="icon" variant="outline">
-                                        <EyeIcon class="w-4 h-4"/>
+                                      :href="getLeagueUrl('leagues.show', league.id)!" class="flex-1"
+                                      title="View Details">
+                                    <Button class="w-full" size="sm" variant="outline">
+                                        <EyeIcon class="w-4 h-4 mr-2"/>
+                                        View
                                     </Button>
                                 </Link>
 
                                 <Link v-if="isAdmin && getLeagueUrl('leagues.edit', league.id)"
-                                      :href="getLeagueUrl('leagues.edit', league.id)!" title="Edit League">
-                                    <Button size="icon" variant="outline">
-                                        <PencilIcon class="w-4 h-4"/>
+                                      :href="getLeagueUrl('leagues.edit', league.id)!" class="flex-1"
+                                      title="Edit League">
+                                    <Button class="w-full" size="sm" variant="outline">
+                                        <PencilIcon class="w-4 h-4 mr-2"/>
+                                        Edit
                                     </Button>
                                 </Link>
                             </div>
-                        </li>
-                    </ul>
+                        </div>
+                    </div>
                 </CardContent>
             </Card>
         </div>

@@ -2,6 +2,7 @@
 
 namespace App\Leagues\Http\Controllers;
 
+use App\Core\Models\Game;
 use App\Leagues\DataTransferObjects\PutLeagueDTO;
 use App\Leagues\Http\Requests\PutLeagueRequest;
 use App\Leagues\Http\Resources\LeagueResource;
@@ -107,6 +108,13 @@ readonly class LeaguesController
     {
         return response()->json(
             $this->leaguesService->myLeaguesAndChallenges(Auth::user()),
+        );
+    }
+
+    public function availableGames(): JsonResponse
+    {
+        return response()->json(
+            Game::all(),
         );
     }
 }

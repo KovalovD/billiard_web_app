@@ -26,6 +26,7 @@ Route::middleware(['auth:sanctum', AdminMiddleware::class])->group(function () {
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('my-leagues-and-challenges', [LeaguesController::class, 'myLeaguesAndChallenges']);
+    Route::get('games', [LeaguesController::class, 'availableGames']);
 
     Route::prefix('profile')->group(function () {
         Route::put('/', [ProfileController::class, 'update']);

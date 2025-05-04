@@ -28,16 +28,43 @@ class LeaguesService
 
     public function store(PutLeagueDTO $leagueDTO): League
     {
-        return League::create(
-            $leagueDTO->toArray(),
-        );
+        return League::create([
+            'name'                           => $leagueDTO->name,
+            'game_id'                        => $leagueDTO->game_id,
+            'picture'                        => $leagueDTO->picture,
+            'details'                        => $leagueDTO->details,
+            'has_rating'                     => $leagueDTO->has_rating,
+            'started_at'                     => $leagueDTO->started_at,
+            'finished_at'                    => $leagueDTO->finished_at,
+            'start_rating'                   => $leagueDTO->start_rating,
+            'rating_change_for_winners_rule' => $leagueDTO->rating_change_for_winners_rule,
+            'rating_change_for_losers_rule'  => $leagueDTO->rating_change_for_losers_rule,
+            'max_players'                    => $leagueDTO->max_players,
+            'max_score'                      => $leagueDTO->max_score,
+            'invite_days_expire'             => $leagueDTO->invite_days_expire,
+            'rating_type'                    => 'elo', // Default rating type
+        ]);
     }
 
     public function update(PutLeagueDTO $leagueDTO, League $league): League
     {
-        $league->update($leagueDTO->toArray());
+        $league->update([
+            'name'                           => $leagueDTO->name,
+            'game_id'                        => $leagueDTO->game_id,
+            'picture'                        => $leagueDTO->picture,
+            'details'                        => $leagueDTO->details,
+            'has_rating'                     => $leagueDTO->has_rating,
+            'started_at'                     => $leagueDTO->started_at,
+            'finished_at'                    => $leagueDTO->finished_at,
+            'start_rating'                   => $leagueDTO->start_rating,
+            'rating_change_for_winners_rule' => $leagueDTO->rating_change_for_winners_rule,
+            'rating_change_for_losers_rule'  => $leagueDTO->rating_change_for_losers_rule,
+            'max_players'                    => $leagueDTO->max_players,
+            'max_score'                      => $leagueDTO->max_score,
+            'invite_days_expire'             => $leagueDTO->invite_days_expire,
+        ]);
 
-        return League::find($league->id);
+        return $league->fresh();
     }
 
     public function destroy(League $league): void
