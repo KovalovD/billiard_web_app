@@ -98,6 +98,7 @@ export function useUserStats() {
                 fetchGameTypeStats()
             ]);
             return true;
+            // eslint-disable-next-line
         } catch (error) {
             return false;
         }
