@@ -3,7 +3,6 @@
 namespace App\Leagues\Models;
 
 use App\Core\Models\Game;
-use App\Core\Models\User;
 use App\Leagues\Enums\RatingType;
 use App\Matches\Models\MatchGame;
 use database\factories\LeagueFactory;
@@ -12,7 +11,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class League extends Model
@@ -23,7 +21,7 @@ class League extends Model
     public $timestamps = false;
 
     protected $with = ['game'];
-    protected $withCount = ['matches'];
+    protected $withCount = ['matches', 'activeRatings'];
     protected $fillable = [
         'name',
         'picture',
@@ -68,8 +66,8 @@ class League extends Model
         return $this->hasMany(Rating::class);
     }
 
-    public function players(): HasManyThrough
+    public function activeRatings(): HasMany
     {
-        return $this->hasManyThrough(User::class, Rating::class);
+        return $this->ratings()->where('is_active', true);
     }
 }

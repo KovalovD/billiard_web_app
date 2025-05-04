@@ -1,7 +1,8 @@
+//resources/js/pages/Profile/Edit.vue
 <script lang="ts" setup>
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {Head} from '@inertiajs/vue3';
-import {onMounted, ref, watch} from 'vue';
+import {onMounted, ref} from 'vue';
 import {apiClient} from '@/lib/apiClient';
 import {
     Button,
@@ -37,8 +38,8 @@ const profileForm = ref({
     lastname: '',
     email: '',
     phone: '',
-    home_city_id: null as number | null,
-    home_club_id: null as number | null,
+    home_city_id: null as number | string | null,
+    home_club_id: null as number | string | null,
 });
 
 const passwordForm = ref({
@@ -76,8 +77,8 @@ const loadUser = async () => {
         };
 
         // Load clubs if initial city is set
-        if (user.value?.home_city?.id) {
-            await loadClubs(user.value.home_city.id);
+        if (response.home_city?.id) {
+            await loadClubs(response.home_city.id);
         }
 
     } catch (error) {
@@ -100,22 +101,26 @@ const loadCities = async () => {
 
 const loadClubs = async (cityId?: number) => {
     isLoadingClubs.value = true;
+    clubs.value = []; // Clear clubs
     try {
-        const params = cityId ? `?city_id=${cityId}` : '';
-        clubs.value = await apiClient<Club[]>(`/api/clubs${params}`);
+        if (cityId) {
+            const params = `?city_id=${cityId}`;
+            clubs.value = await apiClient<Club[]>(`/api/clubs${params}`);
+        } else {
+            clubs.value = [];
+        }
     } catch (error) {
         console.error('Failed to load clubs:', error);
+        clubs.value = [];
     } finally {
         isLoadingClubs.value = false;
     }
 };
 
 const onCityChange = (value: string | number) => {
-    const cityId = value === '' || value === 'null' ? null : Number(value);
-
-    // Explicitly set the form values
+    const cityId = value ? Number(value) : null;
     profileForm.value.home_city_id = cityId;
-    profileForm.value.home_club_id = null; // This needs to be properly reset
+    profileForm.value.home_club_id = null;
 
     if (cityId) {
         loadClubs(cityId);
@@ -125,15 +130,8 @@ const onCityChange = (value: string | number) => {
 };
 
 const onClubChange = (value: string | number) => {
-    profileForm.value.home_club_id = value === '' || value === 'null' ? null : Number(value);
+    profileForm.value.home_club_id = value ? Number(value) : null;
 };
-
-// Add a watcher to ensure the club is properly reset when city changes
-watch(() => profileForm.value.home_city_id, (newCityId, oldCityId) => {
-    if (newCityId !== oldCityId) {
-        profileForm.value.home_club_id = null;
-    }
-});
 
 const updateProfile = async () => {
     profileSuccess.value = false;
@@ -294,16 +292,17 @@ onMounted(() => {
                                 <Label for="home_city">Hometown</Label>
                                 <Select
                                     :disabled="isProcessingProfile || isLoadingCities"
-                                    :modelValue="profileForm.home_city_id ? profileForm.home_city_id.toString() : ''"
+                                    :modelValue="profileForm.home_city_id"
                                     @update:modelValue="onCityChange"
                                 >
                                     <SelectTrigger id="home_city">
                                         <SelectValue
-                                            :placeholder="isLoadingCities ? 'Loading cities...' : 'Select city'"/>
+                                            :placeholder="isLoadingCities ? 'Loading cities...' : user?.home_city?.name || 'Select city'"
+                                        />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="">None</SelectItem>
-                                        <SelectItem v-for="city in cities" :key="city.id" :value="city.id.toString()">
+                                        <SelectItem v-for="city in cities" :key="city.id" :value="city.id">
                                             {{ city.name }} ({{ city.country.name }})
                                         </SelectItem>
                                     </SelectContent>
@@ -315,16 +314,17 @@ onMounted(() => {
                                 <Label for="home_club">Home Club</Label>
                                 <Select
                                     :disabled="isProcessingProfile || isLoadingClubs || !profileForm.home_city_id"
-                                    :modelValue="profileForm.home_club_id ? profileForm.home_club_id.toString() : ''"
+                                    :modelValue="profileForm.home_club_id"
                                     @update:modelValue="onClubChange"
                                 >
                                     <SelectTrigger id="home_club">
                                         <SelectValue
-                                            :placeholder="isLoadingClubs ? 'Loading clubs...' : 'Select club'"/>
+                                            :placeholder="isLoadingClubs ? 'Loading clubs...' : user?.home_club?.name || 'Select club'"
+                                        />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="">None</SelectItem>
-                                        <SelectItem v-for="club in clubs" :key="club.id" :value="club.id.toString()">
+                                        <SelectItem v-for="club in clubs" :key="club.id" :value="club.id">
                                             {{ club.name }}
                                         </SelectItem>
                                     </SelectContent>
