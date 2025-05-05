@@ -4,6 +4,7 @@ namespace App\User\Http\Requests;
 
 use App\Core\Http\Requests\BaseFormRequest;
 use App\Core\Models\User;
+use App\Rules\PhoneNumber;
 use Illuminate\Validation\Rule;
 
 class UpdateProfileRequest extends BaseFormRequest
@@ -24,6 +25,7 @@ class UpdateProfileRequest extends BaseFormRequest
                 'string',
                 'max:15',
                 Rule::unique(User::class)->ignore($this->user()->id),
+                new PhoneNumber(),
             ],
             'home_city_id' => ['nullable', 'exists:cities,id'],
             'home_club_id' => ['nullable', 'exists:clubs,id'],
