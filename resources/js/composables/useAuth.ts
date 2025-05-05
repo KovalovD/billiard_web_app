@@ -2,7 +2,7 @@
 import {computed, ref} from 'vue';
 import {apiClient, getDeviceName, setToken} from '@/lib/apiClient'; // Use apiClient for requests
 import {fetchCsrfToken} from '@/bootstrap'; // Import CSRF fetcher
-import type {ApiError, LoginResponse, User} from '@/types/api';
+import type {ApiError, LoginResponse, RegisterCredentials, User} from '@/types/api';
 import {usePage} from '@inertiajs/vue3';
 import type {SharedData} from '@/types';
 
@@ -142,6 +142,55 @@ const login = async (credentials: { email: string; password: string }): Promise<
     }
 };
 
+// Register a new user
+const register = async (credentials: RegisterCredentials): Promise<User> => {
+    isLoading.value = true;
+    error.value = null;
+    const deviceName = `web-${Date.now()}`; // Generate device name
+
+    try {
+        // 1. Ensure CSRF cookie is fresh
+        await fetchCsrfToken();
+        console.log('[Auth] CSRF token fetched for registration.');
+
+        // 2. Perform registration request
+        const response = await apiClient<{ user: User, token: string }>('/api/auth/register', {
+            method: 'post',
+            data: {
+                ...credentials,
+                deviceName: deviceName
+            }
+        });
+
+        // 3. Store user and token
+        user.value = response.user;
+        if (response.token) {
+            setToken(response.token, deviceName); // Store token and device name
+        }
+        isInitialized = true; // Mark as initialized after successful registration
+        isInitializing.value = false; // Ensure init loading state is off
+        console.log('[Auth] Registration successful. User:', response.user.id);
+        return response.user; // Return the user object
+
+    } catch (err: any) {
+        console.error('[Auth] Registration failed:', err);
+        const apiError = err as ApiError;
+        if (apiError.response?.status === 422 && apiError.data?.errors) {
+            // Handle validation errors specifically
+            const errorMessages = Object.values(apiError.data.errors).flat().join(' ');
+            error.value = `Registration failed: ${errorMessages}`;
+        } else {
+            error.value = apiError.message || 'Registration failed due to an unknown error.';
+        }
+        // Clear any potentially partially set state
+        user.value = null;
+        setToken(null, null);
+        throw apiError; // Re-throw the original error for the component to handle
+    } finally {
+        isLoading.value = false;
+    }
+};
+
 // Logout the user
 const logout = async () => {
     isLoading.value = true;
@@ -183,20 +232,7 @@ const logout = async () => {
 const isAuthenticated = computed(() => !!user.value);
 const isAdmin = computed(() => isAuthenticated.value && user.value.is_admin);
 
-// --- Singleton instance ---
-// We don't strictly need a singleton instance variable here anymore,
-// Vue 3 composables are effectively singletons within the app scope when imported.
-// The `isInitialized` flag prevents the core logic from running multiple times.
-
 export function useAuth() {
-
-    // If the composable is used outside of a setup function during initial load,
-    // `initializeAuth` might need to be manually called or triggered via `onMounted`
-    // in the root component or layout.
-
-    // The core initialization logic is now inside `initializeAuth`.
-    // It should be called once, e.g., from the main AppLayout's `onMounted`.
-
     return {
         // State
         user,
@@ -211,6 +247,7 @@ export function useAuth() {
         // Methods
         initializeAuth, // Expose initialization function
         login,
+        register,
         logout,
         fetchUserFromApi // Expose potentially useful for manual refresh
     };

@@ -4,10 +4,12 @@ namespace App\Auth\Services;
 
 use App\Auth\DataTransferObjects\LoginDTO;
 use App\Auth\DataTransferObjects\LogoutDTO;
+use App\Auth\DataTransferObjects\RegisterDTO;
 use App\Auth\Repositories\AuthRepository;
 use App\Core\Models\User;
 use Exception;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
@@ -22,6 +24,40 @@ readonly class AuthService
      */
     public function __construct(private AuthRepository $repository)
     {
+    }
+
+    /**
+     * Register a new user
+     *
+     * @param  RegisterDTO  $registerDTO
+     * @return array{user: User, token: string}
+     * @throws Exception
+     */
+    public function register(RegisterDTO $registerDTO): array
+    {
+        try {
+            // Create the user
+            $user = User::create([
+                'firstname' => $registerDTO->firstname,
+                'lastname'  => $registerDTO->lastname,
+                'email'     => $registerDTO->email,
+                'phone'     => $registerDTO->phone,
+                'password'  => Hash::make($registerDTO->password),
+            ]);
+
+            // Log in the user
+            Auth::login($user, true);
+
+            // Create token using repository
+            $token = $this->repository->createToken($user, 'web')->plainTextToken;
+
+            return [
+                'user'  => $user,
+                'token' => $token,
+            ];
+        } catch (Exception $e) {
+            throw new RuntimeException('Failed to register user: '.$e->getMessage(), 0, $e);
+        }
     }
 
     /**

@@ -1,7 +1,27 @@
 <script lang="ts" setup>
-// Minimal imports to avoid circular dependencies
 import {Link} from '@inertiajs/vue3';
-// No composition API usage to prevent reactivity issues
+import {ref} from 'vue';
+import RegisterModal from '@/Components/Auth/RegisterModal.vue';
+import {Button} from '@/Components/ui';
+
+// State for modal visibility - start as false
+const showRegisterModal = ref(false);
+
+const openRegisterModal = () => {
+    showRegisterModal.value = true;
+};
+
+const closeRegisterModal = () => {
+    showRegisterModal.value = false;
+};
+
+const handleRegisterSuccess = () => {
+    // Registration already redirects to dashboard in RegisterForm component
+};
+
+const handleRegisterError = (error: any) => {
+    console.error('Registration failed:', error);
+};
 </script>
 
 <template>
@@ -16,13 +36,20 @@ import {Link} from '@inertiajs/vue3';
                 >
                     Dashboard
                 </Link>
-                <Link
-                    v-else
-                    class="inline-block rounded-sm border border-transparent px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#19140035] dark:text-[#EDEDEC] dark:hover:border-[#3E3E3A]"
-                    :href="route('login')"
-                >
-                    Log in
-                </Link>
+                <template v-else>
+                    <Link
+                        :href="route('login')"
+                        class="inline-block rounded-sm border border-transparent px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#19140035] dark:text-[#EDEDEC] dark:hover:border-[#3E3E3A]"
+                    >
+                        Log in
+                    </Link>
+                    <button
+                        class="inline-block rounded-sm border border-[#19140035] px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#1915014a] dark:border-[#3E3E3A] dark:text-[#EDEDEC] dark:hover:border-[#62605b]"
+                        @click="openRegisterModal"
+                    >
+                        Register
+                    </button>
+                </template>
             </nav>
         </header>
         <div class="flex w-full items-center justify-center lg:grow">
@@ -52,8 +79,15 @@ import {Link} from '@inertiajs/vue3';
                             class="inline-block rounded-sm border border-black bg-[#1b1b18] px-5 py-1.5 text-sm leading-normal text-white hover:border-black hover:bg-black dark:border-[#eeeeec] dark:bg-[#eeeeec] dark:text-[#1C1C1A] dark:hover:border-white dark:hover:bg-white"
                             :href="route('login')"
                         >
-                            Get Started
+                            Log In
                         </Link>
+                        <Button
+                            class="inline-block rounded-sm border border-black bg-white px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-black hover:bg-[#f9f9f9] dark:border-[#eeeeec] dark:bg-[#161615] dark:text-[#eeeeec] dark:hover:border-white dark:hover:bg-[#212120]"
+                            variant="outline"
+                            @click="openRegisterModal"
+                        >
+                            Register
+                        </Button>
                     </div>
                 </div>
                 <div
@@ -64,5 +98,13 @@ import {Link} from '@inertiajs/vue3';
                 </div>
             </main>
         </div>
+
+        <!-- Registration Modal -->
+        <RegisterModal
+            :show="showRegisterModal"
+            @close="closeRegisterModal"
+            @error="handleRegisterError"
+            @success="handleRegisterSuccess"
+        />
     </div>
 </template>

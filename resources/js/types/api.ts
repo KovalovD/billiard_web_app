@@ -16,6 +16,16 @@ export interface User {
     updated_at?: string;
     home_city?: City;
     home_club?: Club;
+    token?: string; // JWT token may be included in registration/login responses
+}
+
+export interface RegisterCredentials {
+    firstname: string;
+    lastname: string;
+    email: string;
+    phone: string;
+    password: string;
+    password_confirmation: string;
 }
 
 // New interfaces to support cities and clubs
@@ -38,6 +48,22 @@ export interface Club {
 export interface LoginResponse {
     user: User;
     token: string;
+}
+
+export interface RegisterCredentials {
+    firstname: string;
+    lastname: string;
+    email: string;
+    phone: string;
+    password: string;
+    password_confirmation: string;
+    deviceName?: string;
+}
+
+export interface RegisterResponse {
+    user: User;
+    token?: string;
+    message?: string;
 }
 
 export interface LogoutResponse {
