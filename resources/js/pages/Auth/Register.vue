@@ -144,7 +144,7 @@ function submit() {
                     </Button>
                     <p class="text-center text-sm text-gray-600 dark:text-gray-400">
                         Already have an account?
-                        <a href="/Users/dmitriykovalov/Sites/b2b-bot/resources/js/pages/Auth/Login" class="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">
+                        <a class="font-semibold text-indigo-600 hover:underline dark:text-indigo-400" href="/login">
                             Login
                         </a>
                     </p>

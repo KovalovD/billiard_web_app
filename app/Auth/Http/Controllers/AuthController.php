@@ -4,8 +4,10 @@ namespace App\Auth\Http\Controllers;
 
 use App\Auth\DataTransferObjects\LoginDTO;
 use App\Auth\DataTransferObjects\LogoutDTO;
+use App\Auth\DataTransferObjects\RegisterDTO;
 use App\Auth\Http\Requests\LoginRequest;
 use App\Auth\Http\Requests\LogoutRequest;
+use App\Auth\Http\Requests\RegisterRequest;
 use App\Auth\Services\AuthService;
 use App\Core\Http\Resources\UserResource;
 use Auth;
@@ -46,6 +48,33 @@ readonly class AuthController
                 'message' => 'An unexpected error occurred during login. Please try again.',
                 'errors'  => [
                     'server' => ['Server error occurred. Please try again later.'],
+                ],
+            ], 500);
+        }
+    }
+
+    /**
+     * Register a new user
+     */
+    public function register(RegisterRequest $request): JsonResponse
+    {
+        try {
+            $registration = $this->authService->register(RegisterDTO::fromRequest($request));
+
+            return response()->json([
+                'user'  => new UserResource($registration['user']),
+                'token' => $registration['token'],
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors'  => $e->errors(),
+            ], 422);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => 'An unexpected error occurred during registration. Please try again.',
+                'errors'  => [
+                    'server' => [$e->getMessage() ?: 'Server error occurred. Please try again later.'],
                 ],
             ], 500);
         }

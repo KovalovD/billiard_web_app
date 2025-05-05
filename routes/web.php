@@ -1,5 +1,6 @@
 <?php
 
+use App\Auth\Http\Controllers\RegisteredUserController;
 use App\Core\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Core\Http\Controllers\ErrorController;
 use App\Core\Http\Middleware\AdminMiddleware;
@@ -13,10 +14,11 @@ Route::middleware('guest')->group(function () {
         ->name('login')
     ;
 
-    // Registration routes
-    Route::get('/register', function () {
-        return Inertia::render('auth/Register');
-    })->name('register');
+    Route::get('/register', [RegisteredUserController::class, 'create'])
+        ->name('register')
+    ;
+
+    Route::post('/register', [RegisteredUserController::class, 'store']);
 
     // For guests, homepage shows welcome page
     Route::get('/', function () {

@@ -1,10 +1,7 @@
 <script lang="ts" setup>
-// --- ДОБАВЛЯЕМ computed В ИМПОРТ ---
-import {computed, watchEffect} from 'vue';
-// ------------------------------------
+import {computed, onMounted, onUnmounted, watch} from 'vue';
 import {XIcon} from 'lucide-vue-next';
-// Используем импорт из index.ts, если он настроен, или прямой путь
-import {Button} from '@/Components/ui'; // Предполагаем, что index.ts работает
+import {Button} from '@/Components/ui';
 
 interface Props {
     show: boolean;
@@ -18,7 +15,6 @@ const props = withDefaults(defineProps<Props>(), {
     show: false,
     maxWidth: 'md',
     closeable: true,
-    // Обновляем классы для поддержки темной темы и центрирования
     modalWrapperClass: 'bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-xl transform transition-all sm:w-full sm:mx-auto'
 });
 
@@ -36,20 +32,27 @@ const closeOnEscape = (e: KeyboardEvent) => {
     }
 };
 
-watchEffect((onCleanup) => {
-    if (props.show) {
+// Apply body styles when modal is shown/hidden
+watch(() => props.show, (value) => {
+    if (value) {
         document.body.style.overflow = 'hidden';
-        document.addEventListener('keydown', closeOnEscape);
     } else {
         document.body.style.overflow = '';
     }
-    onCleanup(() => {
-        document.body.style.overflow = '';
-        document.removeEventListener('keydown', closeOnEscape);
-    });
+}, {immediate: true});
+
+// Add event listener for escape key
+onMounted(() => {
+    document.addEventListener('keydown', closeOnEscape);
 });
 
-// Класс для максимальной ширины
+// Clean up event listener
+onUnmounted(() => {
+    document.body.style.overflow = '';
+    document.removeEventListener('keydown', closeOnEscape);
+});
+
+// Class for maximum width
 const maxWidthClass = computed(() => {
     return {
         sm: 'sm:max-w-sm',
@@ -59,7 +62,6 @@ const maxWidthClass = computed(() => {
         '2xl': 'sm:max-w-2xl',
     }[props.maxWidth];
 });
-
 </script>
 
 <template>

@@ -7,12 +7,14 @@ import Dropdown from '@/Components/Dropdown.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
+import RegisterModal from '@/Components/Auth/RegisterModal.vue';
 import {useAuth} from "@/composables/useAuth";
 
 // Simple local state management
 const { user } = useAuth();
 const isLoading = ref(true);
 const showingNavigationDropdown = ref(false);
+const showRegisterModal = ref(false);
 
 // Get auth status directly from localStorage/API
 const getUser = async () => {
@@ -42,13 +44,24 @@ const handleLogout = async () => {
             await axios.post('/api/auth/logout', {deviceName}, {
                 headers: {'Authorization': `Bearer ${token}`}
             });
-            console.log('[Layout] Logout API call successful');
         } catch (error) {
             console.error('[Layout] Logout API call error:', error);
         }
     }
 
     location.href = '/';
+};
+
+const openRegisterModal = () => {
+    showRegisterModal.value = true;
+};
+
+const closeRegisterModal = () => {
+    showRegisterModal.value = false;
+};
+
+const handleRegisterSuccess = () => {
+    // The registration will handle the redirection
 };
 
 // Load user on component mount
@@ -106,6 +119,16 @@ onMounted(() => {
                                     </template>
                                 </Dropdown>
                             </div>
+                            <div v-else class="flex space-x-4">
+                                <Link class="inline-flex items-center px-4 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150"
+                                      href="/login">
+                                    Log In
+                                </Link>
+                                <button class="inline-flex items-center px-4 py-2 bg-gray-800 dark:bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-white dark:text-gray-800 uppercase tracking-widest hover:bg-gray-700 dark:hover:bg-white focus:bg-gray-700 dark:focus:bg-white active:bg-gray-900 dark:active:bg-gray-300 focus:outline-none transition ease-in-out duration-150"
+                                        @click="openRegisterModal">
+                                    Register
+                                </button>
+                            </div>
                         </div>
 
                         <div class="-mr-2 flex items-center sm:hidden">
@@ -147,12 +170,23 @@ onMounted(() => {
                             <ResponsiveNavLink as="button" @click.prevent="handleLogout"> Log Out</ResponsiveNavLink>
                         </div>
                     </div>
+                    <div v-else class="py-3 px-4 border-t border-gray-200 dark:border-gray-700 flex space-x-3">
+                        <ResponsiveNavLink :href="'/login'">Log In</ResponsiveNavLink>
+                        <ResponsiveNavLink as="button" @click="openRegisterModal">Register</ResponsiveNavLink>
+                    </div>
                 </div>
             </nav>
 
             <main>
                 <slot/>
             </main>
+
+            <!-- Registration Modal -->
+            <RegisterModal
+                :show="showRegisterModal"
+                @close="closeRegisterModal"
+                @success="handleRegisterSuccess"
+            />
         </div>
     </div>
 </template>
