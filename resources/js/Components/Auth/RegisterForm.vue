@@ -15,6 +15,9 @@ import {
 } from '@/Components/ui';
 import InputError from '@/Components/InputError.vue';
 
+// Phone validation regex - matches formats like +1234567890, (123) 456-7890, 123-456-7890
+const phonePattern = /^(\+?\d{1,3}[-\s]?)?\(?(\d{3})\)?[-\s]?(\d{3})[-\s]?(\d{4})$/;
+
 const emit = defineEmits(['success', 'error', 'cancel']);
 
 const registerService = useRegister();
@@ -32,7 +35,7 @@ const formValid = computed(() => {
     return form.value.firstname.trim() !== '' &&
         form.value.lastname.trim() !== '' &&
         isEmailValid.value &&
-        form.value.phone.trim() !== '' &&
+        isPhoneValid.value &&
         isPasswordValid.value &&
         form.value.password === form.value.password_confirmation;
 });
@@ -40,6 +43,11 @@ const formValid = computed(() => {
 const isEmailValid = computed(() => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return form.value.email.trim() !== '' && emailRegex.test(form.value.email);
+});
+
+const isPhoneValid = computed(() => {
+    if (!form.value.phone.trim()) return false;
+    return phonePattern.test(form.value.phone);
 });
 
 const isPasswordValid = computed(() => {
@@ -71,9 +79,8 @@ const register = async () => {
 };
 
 onMounted(() => {
-    console.log();
-})
-
+    // Any initialization if needed
+});
 </script>
 
 <template>
@@ -139,8 +146,12 @@ onMounted(() => {
                         :disabled="registerService.isLoading.value"
                         required
                         type="tel"
+                        :class="{ 'border-red-300 focus:border-red-300 focus:ring-red-300': form.phone && !isPhoneValid }"
+                        placeholder="e.g., (123) 456-7890"
                     />
-                    <InputError :message="registerService.getError('phone')"/>
+                    <InputError v-if="registerService.getError('phone')" :message="registerService.getError('phone')"/>
+                    <InputError v-else-if="form.phone && !isPhoneValid"
+                                message="Please enter a valid phone number format (e.g., +1234567890, 123-456-7890)"/>
                 </div>
 
                 <div class="space-y-2">

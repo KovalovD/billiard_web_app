@@ -23,6 +23,9 @@ import {
 import InputError from '@/Components/InputError.vue';
 import type {ApiError, City, Club, User} from '@/types/api';
 
+// Phone validation regex - matches formats like +1234567890, (123) 456-7890, 123-456-7890
+const phonePattern = /^(\+?\d{1,3}[-\s]?)?\(?(\d{3})\)?[-\s]?(\d{3})[-\s]?(\d{4})$/;
+
 defineOptions({ layout: AuthenticatedLayout });
 
 const user = ref<User | null>(null);
@@ -32,6 +35,8 @@ const clubs = ref<Club[]>([]);
 const isLoadingUser = ref(true);
 const isLoadingCities = ref(false);
 const isLoadingClubs = ref(false);
+
+const isPhoneValid = ref(true);
 
 const profileForm = ref({
     firstname: '',
@@ -75,6 +80,9 @@ const loadUser = async () => {
             home_city_id: response.home_city?.id || null,
             home_club_id: response.home_club?.id || null,
         };
+
+        // Validate the phone number from the data
+        isPhoneValid.value = !profileForm.value.phone || phonePattern.test(profileForm.value.phone);
 
         // Load clubs if initial city is set
         if (response.home_city?.id) {
@@ -133,7 +141,28 @@ const onClubChange = (value: string | number) => {
     profileForm.value.home_club_id = value ? Number(value) : null;
 };
 
+const validatePhone = () => {
+    isPhoneValid.value = !profileForm.value.phone || phonePattern.test(profileForm.value.phone);
+
+    // Add validation error if phone is invalid
+    if (!isPhoneValid.value) {
+        profileErrors.value.phone = ['Please enter a valid phone number format (e.g., +1234567890, 123-456-7890)'];
+    } else {
+        // Remove phone error if it exists
+        if (profileErrors.value.phone) {
+            delete profileErrors.value.phone;
+        }
+    }
+
+    return isPhoneValid.value;
+};
+
 const updateProfile = async () => {
+    // Validate phone number first
+    if (!validatePhone()) {
+        return;
+    }
+
     profileSuccess.value = false;
     profileErrors.value = {};
     isProcessingProfile.value = true;
@@ -303,6 +332,10 @@ onMounted(() => {
                                 type="tel"
                                 required
                                 :disabled="isProcessingProfile"
+                                :class="{ 'border-red-300 focus:border-red-300 focus:ring-red-300': !isPhoneValid }"
+                                placeholder="e.g., (123) 456-7890"
+                                @blur="validatePhone"
+                                @input="validatePhone"
                             />
                             <InputError :message="profileErrors.phone?.join(', ')"/>
                         </div>
@@ -354,7 +387,7 @@ onMounted(() => {
                         </div>
 
                         <div class="flex justify-end">
-                            <Button :disabled="isProcessingProfile" type="submit">
+                            <Button :disabled="isProcessingProfile || !isPhoneValid" type="submit">
                                 <span v-if="isProcessingProfile">Saving...</span>
                                 <span v-else>Save</span>
                             </Button>
