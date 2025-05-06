@@ -1,6 +1,6 @@
 // resources/js/composables/useApi.ts
-import { ref, Ref } from 'vue';
 import type { ApiError } from '@/types/api';
+import {ref, Ref} from 'vue';
 
 /**
  * Generic composable for handling API data fetching with loading and error states
@@ -29,7 +29,7 @@ export function useApi<T>(fetchFunction: () => Promise<T>) {
         data,
         isLoading,
         error,
-        execute
+        execute,
     };
 }
 
@@ -37,9 +37,7 @@ export function useApi<T>(fetchFunction: () => Promise<T>) {
  * Generic composable for handling API actions (POST, PUT, DELETE) with loading and error states
  * @param actionFunction Function that performs the API action and returns a promise
  */
-export function useApiAction<T, P = any>(
-    actionFunction: (payload?: P) => Promise<T>
-) {
+export function useApiAction<T, P = any>(actionFunction: (payload?: P) => Promise<T>) {
     const isActing = ref(false);
     const error = ref<ApiError | null>(null);
 
@@ -60,6 +58,6 @@ export function useApiAction<T, P = any>(
     return {
         isActing,
         error,
-        execute
+        execute,
     };
 }

@@ -42,8 +42,8 @@ export const fetchCsrfToken = async () => {
 
 // Add a response interceptor to handle common errors
 axios.interceptors.response.use(
-    response => response,
-    error => {
+    (response) => response,
+    (error) => {
         // Handle network errors
         if (!error.response) {
             console.error('[Axios] Network error:', error.message);
@@ -55,7 +55,7 @@ axios.interceptors.response.use(
         }
 
         return Promise.reject(error);
-    }
+    },
 );
 
 // Initialize - can fetch CSRF token when bootstrap is imported

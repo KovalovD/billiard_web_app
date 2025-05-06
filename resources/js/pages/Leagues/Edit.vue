@@ -1,12 +1,12 @@
 <script lang="ts" setup>
-import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
-import {Head, Link, router} from '@inertiajs/vue3';
-import {useAuth} from '@/composables/useAuth';
-import {useApi} from '@/composables/useApi';
-import {apiClient} from '@/lib/apiClient';
-import type {ApiError, League} from '@/types/api';
 import LeagueForm from '@/Components/LeagueForm.vue';
 import {Button, Spinner} from '@/Components/ui';
+import {useApi} from '@/composables/useApi';
+import {useAuth} from '@/composables/useAuth';
+import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
+import {apiClient} from '@/lib/apiClient';
+import type {ApiError, League} from '@/types/api';
+import {Head, Link, router} from '@inertiajs/vue3';
 import {ArrowLeftIcon} from 'lucide-vue-next';
 import {computed, onMounted, watchEffect} from 'vue';
 
@@ -31,12 +31,7 @@ watchEffect(() => {
 // Load league data
 // Check if API returns object directly or wrapped in data property
 const fetchLeagueFn = () => apiClient<League>(`/api/leagues/${props.leagueId}`);
-const {
-    data: league,
-    isLoading,
-    error: loadingError,
-    execute: fetchLeague
-} = useApi<League>(fetchLeagueFn);
+const {data: league, isLoading, error: loadingError, execute: fetchLeague} = useApi<League>(fetchLeagueFn);
 
 onMounted(() => {
     // Load only if user is admin (extra check)
@@ -56,17 +51,17 @@ const handleError = (error: ApiError) => {
 };
 
 // Dynamic page title
-const pageTitle = computed(() => league.value ? `Edit ${league.value.name}` : 'Edit League');
+const pageTitle = computed(() => (league.value ? `Edit ${league.value.name}` : 'Edit League'));
 </script>
 
 <template>
     <Head :title="pageTitle"/>
     <div class="py-12">
-        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-4xl sm:px-6 lg:px-8">
             <div class="mb-6">
                 <Link :href="route('leagues.index')">
                     <Button variant="outline">
-                        <ArrowLeftIcon class="w-4 h-4 mr-2"/>
+                        <ArrowLeftIcon class="mr-2 h-4 w-4"/>
                         Back to Leagues
                     </Button>
                 </Link>
@@ -76,26 +71,19 @@ const pageTitle = computed(() => league.value ? `Edit ${league.value.name}` : 'E
             </div>
 
             <div v-if="isAdmin">
-                <div v-if="isLoading" class="text-center p-10">
-                    <Spinner class="w-8 h-8 text-primary mx-auto"/>
+                <div v-if="isLoading" class="p-10 text-center">
+                    <Spinner class="text-primary mx-auto h-8 w-8"/>
                     <p class="mt-4 text-gray-500">Loading league data...</p>
                 </div>
-                <div v-else-if="loadingError" class="text-center text-red-600 bg-red-100 p-4 rounded">
+                <div v-else-if="loadingError" class="rounded bg-red-100 p-4 text-center text-red-600">
                     Error loading league data: {{ loadingError.message }}
                 </div>
-                <LeagueForm
-                    v-else-if="league"
-                    :is-edit-mode="true"
-                    :league="league"
-                    @error="handleError"
-                    @submitted="handleSuccess"
-                />
-                <div v-else class="text-center text-gray-500 p-10">
-                    League not found or failed to load.
-                </div>
+                <LeagueForm v-else-if="league" :is-edit-mode="true" :league="league" @error="handleError"
+                            @submitted="handleSuccess"/>
+                <div v-else class="p-10 text-center text-gray-500">League not found or failed to load.</div>
             </div>
-            <div v-else class="text-center text-red-500 bg-red-100 p-4 rounded">
-                You do not have permission to edit leagues. Redirecting...
+            <div v-else class="rounded bg-red-100 p-4 text-center text-red-500">You do not have permission to edit
+                leagues. Redirecting...
             </div>
         </div>
     </div>

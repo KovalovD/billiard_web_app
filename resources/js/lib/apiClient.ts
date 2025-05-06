@@ -38,14 +38,11 @@ export function getDeviceName(): string | null {
  * Function for making API requests using axios.
  * Authorization header is added automatically if token is set via setToken.
  */
-export async function apiClient<T>(
-    endpoint: string,
-    options: import('axios').AxiosRequestConfig = {}
-): Promise<T> {
+export async function apiClient<T>(endpoint: string, options: import('axios').AxiosRequestConfig = {}): Promise<T> {
     try {
         // Ensure auth header is set if we have a token
         const headers: Record<string, string> = {
-            ...options.headers
+            ...options.headers,
         };
 
         if (apiToken.value) {
@@ -62,7 +59,6 @@ export async function apiClient<T>(
 
         const response = await axios.request<T>(config);
         return response.data;
-
     } catch (error: any) {
         const apiError: ApiError = new Error(error.response?.data?.message || error.message || 'API error') as ApiError;
         apiError.response = error.response;

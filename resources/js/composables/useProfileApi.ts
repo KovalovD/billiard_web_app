@@ -1,5 +1,5 @@
-import {apiClient} from '@/lib/apiClient';
 import {useApi, useApiAction} from '@/composables/useApi';
+import {apiClient} from '@/lib/apiClient';
 import type {City, Club, User} from '@/types/api';
 
 export interface UpdateProfilePayload {
@@ -33,8 +33,8 @@ export function useProfileApi() {
         return useApiAction((payload: UpdateProfilePayload) =>
             apiClient<User>('/api/profile', {
                 method: 'put',
-                data: payload
-            })
+                data: payload,
+            }),
         );
     };
 
@@ -42,8 +42,8 @@ export function useProfileApi() {
         return useApiAction((payload: UpdatePasswordPayload) =>
             apiClient('/api/profile/password', {
                 method: 'put',
-                data: payload
-            })
+                data: payload,
+            }),
         );
     };
 
@@ -51,8 +51,8 @@ export function useProfileApi() {
         return useApiAction((password: string) =>
             apiClient('/api/profile', {
                 method: 'delete',
-                data: {password}
-            })
+                data: {password},
+            }),
         );
     };
 

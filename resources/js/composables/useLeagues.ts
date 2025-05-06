@@ -1,6 +1,6 @@
 // resources/js/composables/useLeagues.ts
-import {del, get, post, put} from '@/lib/apiClient';
 import {useApi, useApiAction} from '@/composables/useApi';
+import {del, get, post, put} from '@/lib/apiClient';
 import type {League, LeaguePayload, MatchGame, Rating} from '@/types/api';
 
 /**
@@ -80,7 +80,7 @@ export function useLeagues() {
     // Utility function to check if the current user is in a league
     const isPlayerInLeague = (players: Rating[], userId: number | null): boolean => {
         if (!userId || !players || !players.length) return false;
-        return players.some(rating => rating.player?.id === userId);
+        return players.some((rating) => rating.player?.id === userId);
     };
 
     return {

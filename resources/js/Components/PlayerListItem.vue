@@ -1,7 +1,7 @@
 // resources/js/Components/PlayerListItem.vue
 <script lang="ts" setup>
-import type {Rating} from '@/types/api';
 import {Button} from '@/Components/ui';
+import type {Rating} from '@/types/api';
 import {SwordsIcon} from 'lucide-vue-next';
 
 interface Props {
@@ -21,7 +21,7 @@ const handleChallenge = () => {
     if (props.isAuthenticated) {
         emit('challenge', props.playerRating.player);
     }
-}
+};
 
 // Check if player is within challenge range (±10 positions)
 const isWithinChallengeRange = (): boolean => {
@@ -29,24 +29,34 @@ const isWithinChallengeRange = (): boolean => {
 
     const positionDiff = Math.abs(props.playerRating.position - props.authUserPosition);
     return positionDiff <= 10;
-}
+};
 
 // Check if both players are confirmed
 const canChallenge = (): boolean => {
-    return props.authUserIsConfirmed && props.playerRating.is_confirmed === true && !props.playerRating.hasOngoingMatches && isWithinChallengeRange() &&
-        !props.authUserHaveOngoingMatch;
-}
+    return (
+        props.authUserIsConfirmed &&
+        props.playerRating.is_confirmed === true &&
+        !props.playerRating.hasOngoingMatches &&
+        isWithinChallengeRange() &&
+        !props.authUserHaveOngoingMatch
+    );
+};
 </script>
 
 <template>
-    <li class="flex justify-between items-center p-3 bg-white border rounded shadow-sm hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700/50">
+    <li
+        class="flex items-center justify-between rounded border bg-white p-3 shadow-sm hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700/50"
+    >
         <div class="flex items-center space-x-3">
-            <span class="font-semibold text-gray-500 dark:text-gray-400 w-6 text-right">{{ playerRating.position }}.</span>
+            <span class="w-6 text-right font-semibold text-gray-500 dark:text-gray-400">{{
+                    playerRating.position
+                }}.</span>
             <span class="font-medium text-gray-800 dark:text-gray-200">{{ playerRating.player.name }}</span>
-            <span v-if="isCurrentUser" class="text-xs text-blue-600 dark:text-blue-400 font-semibold">(You)</span>
+            <span v-if="isCurrentUser" class="text-xs font-semibold text-blue-600 dark:text-blue-400">(You)</span>
             <span
                 v-if="!playerRating.is_confirmed"
-                class="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full dark:bg-amber-900/20 dark:text-amber-400">
+                class="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-700 dark:bg-amber-900/20 dark:text-amber-400"
+            >
                 Pending
             </span>
         </div>
@@ -59,13 +69,11 @@ const canChallenge = (): boolean => {
                 variant="outline"
                 @click="handleChallenge"
             >
-                <SwordsIcon class="w-4 h-4 mr-1" />
+                <SwordsIcon class="mr-1 h-4 w-4"/>
                 Challenge
             </Button>
-            <span
-                v-else-if="isAuthenticated && !isCurrentUser && !playerRating.is_confirmed"
-                class="text-xs text-amber-600 dark:text-amber-400"
-            >
+            <span v-else-if="isAuthenticated && !isCurrentUser && !playerRating.is_confirmed"
+                  class="text-xs text-amber-600 dark:text-amber-400">
                 Waiting for admin confirmation
             </span>
             <span

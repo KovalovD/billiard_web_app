@@ -1,12 +1,12 @@
 <script lang="ts" setup>
-import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
-import {Head, Link} from '@inertiajs/vue3';
-import {onMounted, ref} from 'vue';
+import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Spinner} from '@/Components/ui';
 import {useAuth} from '@/composables/useAuth';
+import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
 import type {ApiError, League, Rating} from '@/types/api';
-import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Spinner} from '@/Components/ui';
+import {Head, Link} from '@inertiajs/vue3';
 import {ArrowLeftIcon, CheckIcon, XIcon} from 'lucide-vue-next';
+import {onMounted, ref} from 'vue';
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -20,7 +20,7 @@ const selectedPlayers = ref<number[]>([]);
 const league = ref<League | null>(null);
 const isLoading = ref(true);
 const isProcessing = ref(false);
-const message = ref<{ type: 'success' | 'error', text: string } | null>(null);
+const message = ref<{ type: 'success' | 'error'; text: string } | null>(null);
 
 // Fetch the league
 const fetchLeague = async () => {
@@ -30,7 +30,7 @@ const fetchLeague = async () => {
         const apiError = error as ApiError;
         message.value = {
             type: 'error',
-            text: apiError.message || 'Failed to load league'
+            text: apiError.message || 'Failed to load league',
         };
     }
 };
@@ -44,7 +44,7 @@ const fetchPendingPlayers = async () => {
         const apiError = error as ApiError;
         message.value = {
             type: 'error',
-            text: apiError.message || 'Failed to load pending players'
+            text: apiError.message || 'Failed to load pending players',
         };
     } finally {
         isLoading.value = false;
@@ -56,11 +56,11 @@ const confirmPlayer = async (ratingId: number) => {
     isProcessing.value = true;
     try {
         await apiClient(`/api/leagues/${props.leagueId}/admin/confirm-player/${ratingId}`, {
-            method: 'post'
+            method: 'post',
         });
         message.value = {
             type: 'success',
-            text: 'Player confirmed successfully'
+            text: 'Player confirmed successfully',
         };
         // Refresh the list
         await fetchPendingPlayers();
@@ -68,7 +68,7 @@ const confirmPlayer = async (ratingId: number) => {
         const apiError = error as ApiError;
         message.value = {
             type: 'error',
-            text: apiError.message || 'Failed to confirm player'
+            text: apiError.message || 'Failed to confirm player',
         };
     } finally {
         isProcessing.value = false;
@@ -80,11 +80,11 @@ const rejectPlayer = async (ratingId: number) => {
     isProcessing.value = true;
     try {
         await apiClient(`/api/leagues/${props.leagueId}/admin/reject-player/${ratingId}`, {
-            method: 'post'
+            method: 'post',
         });
         message.value = {
             type: 'success',
-            text: 'Player rejected successfully'
+            text: 'Player rejected successfully',
         };
         // Refresh the list
         await fetchPendingPlayers();
@@ -92,7 +92,7 @@ const rejectPlayer = async (ratingId: number) => {
         const apiError = error as ApiError;
         message.value = {
             type: 'error',
-            text: apiError.message || 'Failed to reject player'
+            text: apiError.message || 'Failed to reject player',
         };
     } finally {
         isProcessing.value = false;
@@ -104,7 +104,7 @@ const bulkConfirmPlayers = async () => {
     if (selectedPlayers.value.length === 0) {
         message.value = {
             type: 'error',
-            text: 'Please select at least one player to confirm'
+            text: 'Please select at least one player to confirm',
         };
         return;
     }
@@ -114,12 +114,12 @@ const bulkConfirmPlayers = async () => {
         await apiClient(`/api/leagues/${props.leagueId}/admin/bulk-confirm`, {
             method: 'post',
             data: {
-                rating_ids: selectedPlayers.value
-            }
+                rating_ids: selectedPlayers.value,
+            },
         });
         message.value = {
             type: 'success',
-            text: `${selectedPlayers.value.length} players confirmed successfully`
+            text: `${selectedPlayers.value.length} players confirmed successfully`,
         };
         selectedPlayers.value = [];
         // Refresh the list
@@ -128,7 +128,7 @@ const bulkConfirmPlayers = async () => {
         const apiError = error as ApiError;
         message.value = {
             type: 'error',
-            text: apiError.message || 'Failed to confirm players'
+            text: apiError.message || 'Failed to confirm players',
         };
     } finally {
         isProcessing.value = false;
@@ -138,7 +138,7 @@ const bulkConfirmPlayers = async () => {
 // Check/uncheck all
 const toggleSelectAll = (checked: boolean) => {
     if (checked) {
-        selectedPlayers.value = pendingPlayers.value.map(player => player.id);
+        selectedPlayers.value = pendingPlayers.value.map((player) => player.id);
     } else {
         selectedPlayers.value = [];
     }
@@ -160,12 +160,12 @@ onMounted(async () => {
     <Head :title="league ? `Confirm Players - ${league.name}` : 'Confirm Players'"/>
 
     <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
             <!-- Header with back button -->
             <div class="mb-6 flex items-center justify-between">
                 <Link :href="`/leagues/${leagueId}`">
                     <Button variant="outline">
-                        <ArrowLeftIcon class="w-4 h-4 mr-2"/>
+                        <ArrowLeftIcon class="mr-2 h-4 w-4"/>
                         Back to League
                     </Button>
                 </Link>
@@ -176,35 +176,34 @@ onMounted(async () => {
 
                 <div class="flex space-x-2">
                     <Link :href="`/admin/leagues/${leagueId}/confirmed-players`">
-                        <Button variant="outline">
-                            Confirmed Players
-                        </Button>
+                        <Button variant="outline"> Confirmed Players</Button>
                     </Link>
                 </div>
             </div>
 
             <!-- Status message -->
-            <div v-if="message"
-                 :class="`mb-6 p-4 rounded-md ${message.type === 'success' ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400' : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'}`">
+            <div
+                v-if="message"
+                :class="`mb-6 rounded-md p-4 ${message.type === 'success' ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400' : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'}`"
+            >
                 {{ message.text }}
             </div>
 
             <Card>
                 <CardHeader>
                     <CardTitle>Players Waiting for Confirmation</CardTitle>
-                    <CardDescription>
-                        Players will only be able to participate in matches after confirmation
+                    <CardDescription> Players will only be able to participate in matches after confirmation
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <!-- Loading state -->
                     <div v-if="isLoading" class="flex justify-center py-8">
-                        <Spinner class="w-8 h-8 text-primary"/>
+                        <Spinner class="text-primary h-8 w-8"/>
                     </div>
 
                     <!-- Empty state -->
                     <div v-else-if="pendingPlayers.length === 0"
-                         class="text-center py-8 text-gray-500 dark:text-gray-400">
+                         class="py-8 text-center text-gray-500 dark:text-gray-400">
                         No pending players to confirm
                     </div>
 
@@ -216,26 +215,24 @@ onMounted(async () => {
                                 <input
                                     id="select-all"
                                     :checked="selectedPlayers.length === pendingPlayers.length"
-                                    class="rounded border-gray-300 text-primary shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50"
+                                    class="text-primary focus:border-primary focus:ring-primary focus:ring-opacity-50 rounded border-gray-300 shadow-sm focus:ring"
                                     type="checkbox"
-                                    @change="e => toggleSelectAll(e.target.checked)"
+                                    @change="(e) => toggleSelectAll(e.target.checked)"
                                 />
                                 <label class="text-sm font-medium" for="select-all">Select All</label>
                             </div>
 
-                            <Button
-                                :disabled="selectedPlayers.length === 0 || isProcessing"
-                                @click="bulkConfirmPlayers"
-                            >
-                                <Spinner v-if="isProcessing" class="w-4 h-4 mr-2"/>
-                                <CheckIcon v-else class="w-4 h-4 mr-2"/>
+                            <Button :disabled="selectedPlayers.length === 0 || isProcessing"
+                                    @click="bulkConfirmPlayers">
+                                <Spinner v-if="isProcessing" class="mr-2 h-4 w-4"/>
+                                <CheckIcon v-else class="mr-2 h-4 w-4"/>
                                 Confirm Selected ({{ selectedPlayers.length }})
                             </Button>
                         </div>
 
                         <div class="overflow-x-auto">
-                            <table class="w-full text-sm text-left">
-                                <thead class="text-xs uppercase bg-gray-50 dark:bg-gray-800">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-gray-50 text-xs uppercase dark:bg-gray-800">
                                 <tr>
                                     <th class="px-4 py-3">&nbsp;</th>
                                     <th class="px-4 py-3">Name</th>
@@ -245,14 +242,17 @@ onMounted(async () => {
                                 </tr>
                                 </thead>
                                 <tbody>
-                                <tr v-for="player in pendingPlayers" :key="player.id"
-                                    class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                <tr
+                                    v-for="player in pendingPlayers"
+                                    :key="player.id"
+                                    class="border-b hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"
+                                >
                                     <td class="px-4 py-3">
                                         <input
                                             :id="`player-${player.id}`"
                                             v-model="selectedPlayers"
                                             :value="player.id"
-                                            class="rounded border-gray-300 text-primary shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50"
+                                            class="text-primary focus:border-primary focus:ring-primary focus:ring-opacity-50 rounded border-gray-300 shadow-sm focus:ring"
                                             type="checkbox"
                                         />
                                     </td>
@@ -262,22 +262,22 @@ onMounted(async () => {
                                     <td class="px-4 py-3 text-right whitespace-nowrap">
                                         <Button
                                             :disabled="isProcessing"
-                                            class="text-green-600 hover:text-green-800 hover:bg-green-100 dark:text-green-400 dark:hover:bg-green-900/20"
+                                            class="text-green-600 hover:bg-green-100 hover:text-green-800 dark:text-green-400 dark:hover:bg-green-900/20"
                                             size="sm"
                                             variant="ghost"
                                             @click="confirmPlayer(player.id)"
                                         >
-                                            <CheckIcon class="w-4 h-4 mr-1"/>
+                                            <CheckIcon class="mr-1 h-4 w-4"/>
                                             Confirm
                                         </Button>
                                         <Button
                                             :disabled="isProcessing"
-                                            class="text-red-600 hover:text-red-800 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/20 ml-2"
+                                            class="ml-2 text-red-600 hover:bg-red-100 hover:text-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
                                             size="sm"
                                             variant="ghost"
                                             @click="rejectPlayer(player.id)"
                                         >
-                                            <XIcon class="w-4 h-4 mr-1"/>
+                                            <XIcon class="mr-1 h-4 w-4"/>
                                             Reject
                                         </Button>
                                     </td>

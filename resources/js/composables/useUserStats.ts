@@ -1,8 +1,8 @@
 // resources/js/composables/useUserStats.ts
 
-import {ref} from 'vue';
 import {apiClient} from '@/lib/apiClient';
 import type {GameTypeStats, MatchGame, Rating, UserStats} from '@/types/api';
+import {ref} from 'vue';
 
 export function useUserStats() {
     const userRatings = ref<Rating[]>([]);
@@ -91,12 +91,7 @@ export function useUserStats() {
     // Utility method to fetch all stats at once
     const fetchAllStats = async () => {
         try {
-            await Promise.all([
-                fetchUserRatings(),
-                fetchUserMatches(),
-                fetchOverallStats(),
-                fetchGameTypeStats()
-            ]);
+            await Promise.all([fetchUserRatings(), fetchUserMatches(), fetchOverallStats(), fetchGameTypeStats()]);
             return true;
             // eslint-disable-next-line
         } catch (error) {

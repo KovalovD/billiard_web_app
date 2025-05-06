@@ -1,7 +1,5 @@
 <script lang="ts" setup>
-import {ref} from 'vue';
-import {Head, useForm} from '@inertiajs/vue3';
-import {useAuth} from '@/composables/useAuth.ts';
+import InputError from '@/Components/InputError.vue';
 import {
     Button,
     Card,
@@ -13,7 +11,9 @@ import {
     Input,
     Label
 } from '@/Components/ui/index.ts';
-import InputError from '@/Components/InputError.vue';
+import {useAuth} from '@/composables/useAuth.ts';
+import {Head, useForm} from '@inertiajs/vue3';
+import {ref} from 'vue';
 
 const auth = useAuth();
 const form = useForm({
@@ -32,7 +32,7 @@ async function submit() {
     try {
         await auth.login({
             email: form.email,
-            password: form.password
+            password: form.password,
         });
 
         // Redirect to dashboard
@@ -49,8 +49,8 @@ async function submit() {
 <template>
     <Head title="Log in" />
 
-    <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100 dark:bg-gray-900">
-        <div class="w-full sm:max-w-md mt-6 px-6 py-4">
+    <div class="flex min-h-screen flex-col items-center bg-gray-100 pt-6 sm:justify-center sm:pt-0 dark:bg-gray-900">
+        <div class="mt-6 w-full px-6 py-4 sm:max-w-md">
             <Card>
                 <CardHeader class="space-y-1">
                     <CardTitle class="text-2xl font-bold">Login</CardTitle>
@@ -58,25 +58,20 @@ async function submit() {
                 </CardHeader>
                 <CardContent>
                     <form @submit.prevent="submit" class="space-y-4">
-                        <div v-if="formError" class="p-3 rounded-md bg-red-50 text-red-500 text-sm dark:bg-red-900/30 dark:text-red-400">
+                        <div v-if="formError"
+                             class="rounded-md bg-red-50 p-3 text-sm text-red-500 dark:bg-red-900/30 dark:text-red-400">
                             {{ formError }}
                         </div>
 
                         <div class="space-y-2">
                             <Label for="email">Email</Label>
-                            <Input
-                                id="email"
-                                v-model="form.email"
-                                type="email"
-                                autocomplete="username"
-                                required
-                                :disabled="processing"
-                            />
+                            <Input id="email" v-model="form.email" :disabled="processing" autocomplete="username" required
+                                   type="email"/>
                             <InputError :message="form.errors.email" />
                         </div>
 
                         <div class="space-y-2">
-                            <div class="flex justify-between items-center">
+                            <div class="flex items-center justify-between">
                                 <Label for="password">Password</Label>
                                 <!--                                <a href="/forgot-password" class="text-sm text-blue-600 hover:underline dark:text-blue-400">
                                                                     Forgot password?
@@ -112,8 +107,7 @@ async function submit() {
                     <p class="text-center text-sm text-gray-600 dark:text-gray-400">
                         Don't have an account?
                         <a href="/register" class="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">
-                            Register
-                        </a>
+                            Register </a>
                     </p>
                 </CardFooter>
             </Card>

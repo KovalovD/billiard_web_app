@@ -1,7 +1,7 @@
-import {computed, readonly, ref} from 'vue';
-import type {Rating, User} from '@/types/api';
 import {useAuth} from '@/composables/useAuth';
 import {useUserStats} from '@/composables/useUserStats';
+import type {Rating, User} from '@/types/api';
+import {computed, readonly, ref} from 'vue';
 
 // Global user store to avoid prop drilling
 const user = ref<User | null>(null);
@@ -38,11 +38,11 @@ export function useUserStore() {
 
     const highestRating = computed(() => {
         if (!userRatings.value.length) return 0;
-        return Math.max(...userRatings.value.map(r => r.rating));
+        return Math.max(...userRatings.value.map((r) => r.rating));
     });
 
     const activeLeaguesCount = computed(() => {
-        return userRatings.value.filter(r => r.is_active).length;
+        return userRatings.value.filter((r) => r.is_active).length;
     });
 
     return {

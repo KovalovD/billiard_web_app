@@ -1,12 +1,12 @@
 <script lang="ts" setup>
-import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
-import {Head, Link} from '@inertiajs/vue3';
 import {useAuth} from '@/composables/useAuth';
-import {computed, onMounted, ref} from 'vue';
+import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
+import {Head, Link} from '@inertiajs/vue3';
+import {computed, onMounted, ref} from 'vue';
 // Убедись, что User тип импортирован и соответствует структуре UserResource
-import type {GameTypeStats, MatchGame, Rating, User, UserStats} from '@/types/api';
 import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Spinner} from '@/Components/ui';
+import type {GameTypeStats, MatchGame, Rating, User, UserStats} from '@/types/api';
 import {
     ActivityIcon,
     AwardIcon,
@@ -39,7 +39,7 @@ const formatDate = (dateString: string | undefined | null): string => {
     return new Date(dateString).toLocaleDateString(undefined, {
         year: 'numeric',
         month: 'short',
-        day: 'numeric'
+        day: 'numeric',
     });
 };
 
@@ -139,7 +139,7 @@ const didUserParticipate = (match: MatchGame): boolean => {
     const userIsP1 = !!match.firstPlayer?.user && match.firstPlayer.user.id === user.value.id;
     const userIsP2 = !!match.secondPlayer?.user && match.secondPlayer.user.id === user.value.id;
     return userIsP1 || userIsP2;
-}
+};
 
 const getRatingChangeClass = (match: MatchGame): string => {
     // Сначала проверяем участие и статус
@@ -226,7 +226,7 @@ const fetchUserRatings = async () => {
     try {
         userRatings.value = await apiClient<Rating[]>('/api/user/ratings');
     } catch (error) {
-        console.error("Failed to load user ratings:", error);
+        console.error('Failed to load user ratings:', error);
         errorMessage.value = 'Failed to load your league ratings. Please try again later.';
     } finally {
         isLoadingRatings.value = false;
@@ -243,7 +243,7 @@ const fetchUserMatches = async () => {
         // Убедись, что API возвращает MatchGame в формате MatchGameResource
         userMatches.value = await apiClient<MatchGame[]>('/api/user/matches');
     } catch (error) {
-        console.error("Failed to load user matches:", error);
+        console.error('Failed to load user matches:', error);
         errorMessage.value = 'Failed to load your match history. Please try again later.';
     } finally {
         isLoadingMatches.value = false;
@@ -259,7 +259,7 @@ const fetchOverallStats = async () => {
     try {
         overallStats.value = await apiClient<UserStats>('/api/user/stats');
     } catch (error) {
-        console.error("Failed to load overall stats:", error);
+        console.error('Failed to load overall stats:', error);
         errorMessage.value = 'Failed to load your statistics. Please try again later.';
     } finally {
         isLoadingStats.value = false;
@@ -275,7 +275,7 @@ const fetchGameTypeStats = async () => {
     try {
         gameTypeStats.value = await apiClient<GameTypeStats>('/api/user/game-type-stats');
     } catch (error) {
-        console.error("Failed to load game type stats:", error);
+        console.error('Failed to load game type stats:', error);
         errorMessage.value = 'Failed to load game type statistics. Please try again later.';
     } finally {
         isLoadingGameTypeStats.value = false;
@@ -285,9 +285,9 @@ const fetchGameTypeStats = async () => {
 // Get game type display name
 const getGameTypeDisplayName = (type: string): string => {
     const types: Record<string, string> = {
-        'pool': 'Pool',
-        'pyramid': 'Pyramid',
-        'snooker': 'Snooker'
+        pool: 'Pool',
+        pyramid: 'Pyramid',
+        snooker: 'Snooker',
         // Добавь другие типы игр, если есть
     };
 
@@ -308,31 +308,23 @@ onMounted(() => {
     <Head title="Profile Statistics" />
 
     <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+        <div class="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
             <!-- Profile Navigation -->
-            <div class="flex space-x-4 mb-6">
+            <div class="mb-6 flex space-x-4">
                 <Link :href="route('profile.edit')">
-                    <Button
-                        class="bg-gray-100 dark:bg-gray-800"
-                        variant="outline"
-                    >
-                        Edit Profile
-                    </Button>
+                    <Button class="bg-gray-100 dark:bg-gray-800" variant="outline"> Edit Profile</Button>
                 </Link>
                 <Link :href="route('profile.stats')">
-                    <Button
-                        class="bg-primary text-primary-foreground"
-                        variant="outline"
-                    >
-                        Statistics
-                    </Button>
+                    <Button class="bg-primary text-primary-foreground" variant="outline"> Statistics</Button>
                 </Link>
             </div>
 
             <!-- Error message section, keep it as is -->
-            <div v-if="errorMessage"
-                 class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative dark:bg-red-900/30 dark:text-red-400 dark:border-red-600"
-                 role="alert">
+            <div
+                v-if="errorMessage"
+                class="relative rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700 dark:border-red-600 dark:bg-red-900/30 dark:text-red-400"
+                role="alert"
+            >
                 <strong class="font-bold">Error!</strong>
                 <span class="block sm:inline"> {{ errorMessage }}</span>
             </div>
@@ -340,52 +332,52 @@ onMounted(() => {
             <Card>
                 <CardHeader>
                     <CardTitle>Statistics Overview</CardTitle>
-                    <CardDescription>
-                        Your performance across all leagues
-                    </CardDescription>
+                    <CardDescription> Your performance across all leagues</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div v-if="isLoadingStats" class="flex justify-center items-center py-8 min-h-[100px]">
-                        <Spinner class="w-8 h-8 text-primary" />
+                    <div v-if="isLoadingStats" class="flex min-h-[100px] items-center justify-center py-8">
+                        <Spinner class="text-primary h-8 w-8"/>
                     </div>
-                    <div v-else-if="overallStats" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                        <div class="p-4 bg-blue-50 rounded-md dark:bg-blue-900/20">
-                            <div class="flex items-center space-x-2 mb-2 text-blue-600 dark:text-blue-400">
-                                <SwordIcon class="w-5 h-5"/>
-                                <h3 class="font-medium text-sm text-blue-800 dark:text-blue-300">Total Matches</h3>
+                    <div v-else-if="overallStats" class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
+                        <div class="rounded-md bg-blue-50 p-4 dark:bg-blue-900/20">
+                            <div class="mb-2 flex items-center space-x-2 text-blue-600 dark:text-blue-400">
+                                <SwordIcon class="h-5 w-5"/>
+                                <h3 class="text-sm font-medium text-blue-800 dark:text-blue-300">Total Matches</h3>
                             </div>
                             <p class="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                                {{ overallStats.total_matches ?? 0 }}</p>
+                                {{ overallStats.total_matches ?? 0 }}
+                            </p>
                         </div>
-                        <div class="p-4 bg-green-50 rounded-md dark:bg-green-900/20">
-                            <div class="flex items-center space-x-2 mb-2 text-green-600 dark:text-green-400">
-                                <TrophyIcon class="w-5 h-5"/>
-                                <h3 class="font-medium text-sm text-green-800 dark:text-green-300">Wins</h3>
+                        <div class="rounded-md bg-green-50 p-4 dark:bg-green-900/20">
+                            <div class="mb-2 flex items-center space-x-2 text-green-600 dark:text-green-400">
+                                <TrophyIcon class="h-5 w-5"/>
+                                <h3 class="text-sm font-medium text-green-800 dark:text-green-300">Wins</h3>
                             </div>
                             <p class="text-3xl font-bold text-green-600 dark:text-green-400">{{
                                     overallStats.wins ?? 0
                                 }}</p>
                         </div>
-                        <div class="p-4 bg-amber-50 rounded-md dark:bg-amber-900/20">
-                            <div class="flex items-center space-x-2 mb-2 text-amber-600 dark:text-amber-400">
-                                <PercentIcon class="w-5 h-5"/>
-                                <h3 class="font-medium text-sm text-amber-800 dark:text-amber-300">Win Rate</h3>
+                        <div class="rounded-md bg-amber-50 p-4 dark:bg-amber-900/20">
+                            <div class="mb-2 flex items-center space-x-2 text-amber-600 dark:text-amber-400">
+                                <PercentIcon class="h-5 w-5"/>
+                                <h3 class="text-sm font-medium text-amber-800 dark:text-amber-300">Win Rate</h3>
                             </div>
                             <p class="text-3xl font-bold text-amber-600 dark:text-amber-400">
                                 {{ overallStats.win_rate ?? 0 }}%</p>
                         </div>
-                        <div class="p-4 bg-purple-50 rounded-md dark:bg-purple-900/20">
-                            <div class="flex items-center space-x-2 mb-2 text-purple-600 dark:text-purple-400">
-                                <BarChart4Icon class="w-5 h-5"/>
-                                <h3 class="font-medium text-sm text-purple-800 dark:text-purple-300">League
+                        <div class="rounded-md bg-purple-50 p-4 dark:bg-purple-900/20">
+                            <div class="mb-2 flex items-center space-x-2 text-purple-600 dark:text-purple-400">
+                                <BarChart4Icon class="h-5 w-5"/>
+                                <h3 class="text-sm font-medium text-purple-800 dark:text-purple-300">League
                                     Memberships</h3>
                             </div>
                             <p class="text-3xl font-bold text-purple-600 dark:text-purple-400">
-                                {{ overallStats.leagues_count ?? 0 }}</p>
+                                {{ overallStats.leagues_count ?? 0 }}
+                            </p>
                         </div>
                     </div>
-                    <div v-else class="text-center py-6 text-gray-500 dark:text-gray-400">
-                        No overall statistics available.
+                    <div v-else class="py-6 text-center text-gray-500 dark:text-gray-400">No overall statistics
+                        available.
                     </div>
                 </CardContent>
             </Card>
@@ -393,43 +385,43 @@ onMounted(() => {
             <Card>
                 <CardHeader>
                     <CardTitle>Rating Analytics</CardTitle>
-                    <CardDescription>
-                        Your rating performance metrics
-                    </CardDescription>
+                    <CardDescription> Your rating performance metrics</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div v-if="isLoadingStats" class="flex justify-center items-center py-8 min-h-[100px]">
-                        <Spinner class="w-8 h-8 text-primary"/>
+                    <div v-if="isLoadingStats" class="flex min-h-[100px] items-center justify-center py-8">
+                        <Spinner class="text-primary h-8 w-8"/>
                     </div>
-                    <div v-else-if="overallStats" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="p-4 bg-gray-50 rounded-md dark:bg-gray-800/50">
-                            <div class="flex items-center space-x-2 mb-2 text-indigo-600 dark:text-indigo-400">
-                                <AwardIcon class="w-5 h-5"/>
-                                <h3 class="font-medium text-sm text-indigo-800 dark:text-indigo-300">Highest Rating</h3>
+                    <div v-else-if="overallStats" class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                        <div class="rounded-md bg-gray-50 p-4 dark:bg-gray-800/50">
+                            <div class="mb-2 flex items-center space-x-2 text-indigo-600 dark:text-indigo-400">
+                                <AwardIcon class="h-5 w-5"/>
+                                <h3 class="text-sm font-medium text-indigo-800 dark:text-indigo-300">Highest Rating</h3>
                             </div>
                             <p class="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
-                                {{ overallStats.highest_rating ?? 0 }}</p>
+                                {{ overallStats.highest_rating ?? 0 }}
+                            </p>
                         </div>
-                        <div class="p-4 bg-gray-50 rounded-md dark:bg-gray-800/50">
-                            <div class="flex items-center space-x-2 mb-2 text-teal-600 dark:text-teal-400">
-                                <TrendingUpIcon class="w-5 h-5"/>
-                                <h3 class="font-medium text-sm text-teal-800 dark:text-teal-300">Average Rating</h3>
+                        <div class="rounded-md bg-gray-50 p-4 dark:bg-gray-800/50">
+                            <div class="mb-2 flex items-center space-x-2 text-teal-600 dark:text-teal-400">
+                                <TrendingUpIcon class="h-5 w-5"/>
+                                <h3 class="text-sm font-medium text-teal-800 dark:text-teal-300">Average Rating</h3>
                             </div>
                             <p class="text-3xl font-bold text-teal-600 dark:text-teal-400">
-                                {{ overallStats.average_rating ?? 0 }}</p>
+                                {{ overallStats.average_rating ?? 0 }}
+                            </p>
                         </div>
-                        <div class="p-4 bg-gray-50 rounded-md dark:bg-gray-800/50">
-                            <div class="flex items-center space-x-2 mb-2 text-pink-600 dark:text-pink-400">
-                                <ActivityIcon class="w-5 h-5"/>
-                                <h3 class="font-medium text-sm text-pink-800 dark:text-pink-300">Win/Loss Ratio</h3>
+                        <div class="rounded-md bg-gray-50 p-4 dark:bg-gray-800/50">
+                            <div class="mb-2 flex items-center space-x-2 text-pink-600 dark:text-pink-400">
+                                <ActivityIcon class="h-5 w-5"/>
+                                <h3 class="text-sm font-medium text-pink-800 dark:text-pink-300">Win/Loss Ratio</h3>
                             </div>
                             <p class="text-3xl font-bold text-pink-600 dark:text-pink-400">
                                 {{ winLossRatio }}
                             </p>
                         </div>
                     </div>
-                    <div v-else class="text-center py-6 text-gray-500 dark:text-gray-400">
-                        No rating analytics available.
+                    <div v-else class="py-6 text-center text-gray-500 dark:text-gray-400">No rating analytics
+                        available.
                     </div>
                 </CardContent>
             </Card>
@@ -437,33 +429,31 @@ onMounted(() => {
             <Card v-if="!isLoadingGameTypeStats && gameTypeStats && Object.keys(gameTypeStats).length > 0">
                 <CardHeader>
                     <CardTitle>Game Type Performance</CardTitle>
-                    <CardDescription>
-                        Your statistics by game type
-                    </CardDescription>
+                    <CardDescription> Your statistics by game type</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm">
                             <thead class="text-left">
                             <tr class="border-b dark:border-gray-700">
-                                <th class="py-3 px-2 font-medium">Game Type</th>
-                                <th class="py-3 px-2 font-medium text-center">Matches</th>
-                                <th class="py-3 px-2 font-medium text-center">Wins</th>
-                                <th class="py-3 px-2 font-medium text-center">Losses</th>
-                                <th class="py-3 px-2 font-medium text-center">Win Rate</th>
+                                <th class="px-2 py-3 font-medium">Game Type</th>
+                                <th class="px-2 py-3 text-center font-medium">Matches</th>
+                                <th class="px-2 py-3 text-center font-medium">Wins</th>
+                                <th class="px-2 py-3 text-center font-medium">Losses</th>
+                                <th class="px-2 py-3 text-center font-medium">Win Rate</th>
                             </tr>
                             </thead>
                             <tbody>
                             <tr v-for="(stats, type) in gameTypeStats" :key="type"
-                                class="border-b dark:border-gray-700 last:border-b-0">
-                                <td class="py-3 px-2 font-medium">{{ getGameTypeDisplayName(type) }}</td>
-                                <td class="py-3 px-2 text-center">{{ stats.matches }}</td>
-                                <td class="py-3 px-2 text-center text-green-600 dark:text-green-400">{{
+                                class="border-b last:border-b-0 dark:border-gray-700">
+                                <td class="px-2 py-3 font-medium">{{ getGameTypeDisplayName(type) }}</td>
+                                <td class="px-2 py-3 text-center">{{ stats.matches }}</td>
+                                <td class="px-2 py-3 text-center text-green-600 dark:text-green-400">{{
                                         stats.wins
                                     }}
                                 </td>
-                                <td class="py-3 px-2 text-center text-red-600 dark:text-red-400">{{ stats.losses }}</td>
-                                <td class="py-3 px-2 text-center font-semibold">{{ stats.win_rate }}%</td>
+                                <td class="px-2 py-3 text-center text-red-600 dark:text-red-400">{{ stats.losses }}</td>
+                                <td class="px-2 py-3 text-center font-semibold">{{ stats.win_rate }}%</td>
                             </tr>
                             </tbody>
                         </table>
@@ -475,56 +465,56 @@ onMounted(() => {
                     <CardTitle>Game Type Performance</CardTitle>
                     <CardDescription>Loading game type statistics...</CardDescription>
                 </CardHeader>
-                <CardContent class="flex justify-center items-center py-8 min-h-[100px]">
-                    <Spinner class="w-8 h-8 text-primary"/>
+                <CardContent class="flex min-h-[100px] items-center justify-center py-8">
+                    <Spinner class="text-primary h-8 w-8"/>
                 </CardContent>
             </Card>
             <Card>
                 <CardHeader>
                     <CardTitle>League Ratings</CardTitle>
-                    <CardDescription>
-                        Your current ratings across different leagues
-                    </CardDescription>
+                    <CardDescription> Your current ratings across different leagues</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div v-if="isLoadingRatings" class="flex justify-center items-center py-8 min-h-[150px]">
-                        <Spinner class="w-8 h-8 text-primary" />
+                    <div v-if="isLoadingRatings" class="flex min-h-[150px] items-center justify-center py-8">
+                        <Spinner class="text-primary h-8 w-8"/>
                     </div>
-                    <div v-else-if="userRatings.length === 0" class="text-center py-6 text-gray-500 dark:text-gray-400">
+                    <div v-else-if="userRatings.length === 0" class="py-6 text-center text-gray-500 dark:text-gray-400">
                         You haven't joined any leagues yet or no ratings found.
                     </div>
                     <div v-else class="overflow-x-auto">
                         <table class="w-full text-sm">
                             <thead class="text-left">
                             <tr class="border-b dark:border-gray-700">
-                                <th class="py-3 px-2 font-medium">League</th>
-                                <th class="py-3 px-2 font-medium">Game Type</th>
-                                <th class="py-3 px-2 font-medium text-right">Rating</th>
-                                <th class="py-3 px-2 font-medium text-right">Position</th>
-                                <th class="py-3 px-2 font-medium text-right">Matches</th>
-                                <th class="py-3 px-2 font-medium text-center">Status</th>
+                                <th class="px-2 py-3 font-medium">League</th>
+                                <th class="px-2 py-3 font-medium">Game Type</th>
+                                <th class="px-2 py-3 text-right font-medium">Rating</th>
+                                <th class="px-2 py-3 text-right font-medium">Position</th>
+                                <th class="px-2 py-3 text-right font-medium">Matches</th>
+                                <th class="px-2 py-3 text-center font-medium">Status</th>
                             </tr>
                             </thead>
                             <tbody>
                             <tr v-for="rating in userRatings" :key="rating.id"
-                                class="border-b dark:border-gray-700 last:border-b-0">
-                                <td class="py-3 px-2">{{ rating.league?.name ?? 'Unknown League' }}</td>
-                                <td class="py-3 px-2">{{
+                                class="border-b last:border-b-0 dark:border-gray-700">
+                                <td class="px-2 py-3">{{ rating.league?.name ?? 'Unknown League' }}</td>
+                                <td class="px-2 py-3">{{
                                         getGameTypeDisplayName(rating.league?.game_type ?? 'unknown')
                                     }}
                                 </td>
-                                <td class="py-3 px-2 font-semibold text-right">{{ rating.rating }}</td>
-                                <td class="py-3 px-2 text-right">#{{ rating.position ?? 'N/A' }}</td>
-                                <td class="py-3 px-2 text-right">{{ rating.matches_count ?? 0 }}</td>
-                                <td class="py-3 px-2 text-center">
-                                    <span
-                                        :class="rating.is_active ?
-                                            'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
-                                            'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300'"
-                                        class="px-2 py-1 text-xs rounded-full font-medium"
-                                    >
-                                        {{ rating.is_active ? 'Active' : 'Inactive' }}
-                                    </span>
+                                <td class="px-2 py-3 text-right font-semibold">{{ rating.rating }}</td>
+                                <td class="px-2 py-3 text-right">#{{ rating.position ?? 'N/A' }}</td>
+                                <td class="px-2 py-3 text-right">{{ rating.matches_count ?? 0 }}</td>
+                                <td class="px-2 py-3 text-center">
+                                        <span
+                                            :class="
+                                                rating.is_active
+                                                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                                                    : 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300'
+                                            "
+                                            class="rounded-full px-2 py-1 text-xs font-medium"
+                                        >
+                                            {{ rating.is_active ? 'Active' : 'Inactive' }}
+                                        </span>
                                 </td>
                             </tr>
                             </tbody>
@@ -536,56 +526,52 @@ onMounted(() => {
             <Card>
                 <CardHeader>
                     <CardTitle>Recent Matches</CardTitle>
-                    <CardDescription>
-                        Your most recent match results (up to 15)
-                    </CardDescription>
+                    <CardDescription> Your most recent match results (up to 15)</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div v-if="isLoadingMatches" class="flex justify-center items-center py-8 min-h-[200px]">
-                        <Spinner class="w-8 h-8 text-primary" />
+                    <div v-if="isLoadingMatches" class="flex min-h-[200px] items-center justify-center py-8">
+                        <Spinner class="text-primary h-8 w-8"/>
                     </div>
-                    <div v-else-if="userMatches.length === 0" class="text-center py-6 text-gray-500 dark:text-gray-400">
+                    <div v-else-if="userMatches.length === 0" class="py-6 text-center text-gray-500 dark:text-gray-400">
                         You haven't played any matches yet.
                     </div>
                     <div v-else class="overflow-x-auto">
                         <table class="w-full text-sm">
                             <thead class="text-left">
                             <tr class="border-b dark:border-gray-700">
-                                <th class="py-3 px-2 font-medium">Date</th>
-                                <th class="py-3 px-2 font-medium">League</th>
-                                <th class="py-3 px-2 font-medium">Opponent</th>
-                                <th class="py-3 px-2 font-medium text-center">Score (You - Opp.)</th>
-                                <th class="py-3 px-2 font-medium text-center">Result</th>
-                                <th class="py-3 px-2 font-medium text-center">Rating Change</th>
+                                <th class="px-2 py-3 font-medium">Date</th>
+                                <th class="px-2 py-3 font-medium">League</th>
+                                <th class="px-2 py-3 font-medium">Opponent</th>
+                                <th class="px-2 py-3 text-center font-medium">Score (You - Opp.)</th>
+                                <th class="px-2 py-3 text-center font-medium">Result</th>
+                                <th class="px-2 py-3 text-center font-medium">Rating Change</th>
                             </tr>
                             </thead>
                             <tbody>
                             <tr v-for="match in userMatches.slice(0, 15)" :key="match.id"
-                                class="border-b dark:border-gray-700 last:border-b-0">
-                                <td class="py-3 px-2 whitespace-nowrap">
+                                class="border-b last:border-b-0 dark:border-gray-700">
+                                <td class="px-2 py-3 whitespace-nowrap">
                                     {{ formatDate(match.finished_at ?? match.updated_at ?? match.created_at) }}
                                 </td>
-                                <td class="py-3 px-2">{{ match.league?.name ?? 'N/A' }}</td>
-                                <td class="py-3 px-2">{{ getOpponentName(match) }}</td>
-                                <td class="py-3 px-2 font-medium text-center whitespace-nowrap">
+                                <td class="px-2 py-3">{{ match.league?.name ?? 'N/A' }}</td>
+                                <td class="px-2 py-3">{{ getOpponentName(match) }}</td>
+                                <td class="px-2 py-3 text-center font-medium whitespace-nowrap">
                                     {{
-                                        isUserFirstPlayer(match) ?
-                                            `${match.first_user_score ?? '-'} : ${match.second_user_score ?? '-'}` :
-                                            `${match.second_user_score ?? '-'} : ${match.first_user_score ?? '-'}`
+                                        isUserFirstPlayer(match)
+                                            ? `${match.first_user_score ?? '-'} : ${match.second_user_score ?? '-'}`
+                                            : `${match.second_user_score ?? '-'} : ${match.first_user_score ?? '-'}`
                                     }}
                                 </td>
-                                <td class="py-3 px-2 text-center">
-                                        <span
-                                            :class="getResultClass(match)"
-                                            class="px-2 py-1 text-xs rounded-full font-semibold whitespace-nowrap"
-                                        >
+                                <td class="px-2 py-3 text-center">
+                                        <span :class="getResultClass(match)"
+                                              class="rounded-full px-2 py-1 text-xs font-semibold whitespace-nowrap">
                                             {{ getMatchResult(match) }}
                                         </span>
                                 </td>
-                                <td class="py-3 px-2 text-center font-medium">
-                                     <span :class="getRatingChangeClass(match)">
-                                        {{ getUserRatingChange(match) }}
-                                    </span>
+                                <td class="px-2 py-3 text-center font-medium">
+                                        <span :class="getRatingChangeClass(match)">
+                                            {{ getUserRatingChange(match) }}
+                                        </span>
                                 </td>
                             </tr>
                             </tbody>

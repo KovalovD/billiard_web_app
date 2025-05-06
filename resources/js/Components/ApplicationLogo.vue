@@ -12,12 +12,8 @@ defineOptions({
 //   height?: string | number;
 // }
 // const props = defineProps<Props>();
-
 </script>
 
 <template>
-    <img
-        src="/logo-min.PNG"
-        alt="Application Logo"
-        v-bind="$attrs" />
+    <img alt="Application Logo" src="/logo-min.PNG" v-bind="$attrs"/>
 </template>
