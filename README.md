@@ -1,148 +1,154 @@
-# B2B League Management System
+# B2B League - Pool League Management System
 
-A comprehensive platform for managing billiard leagues, player challenges, and ratings.
+A comprehensive league management system for billiard clubs, allowing players to register, join leagues, challenge
+opponents, and track their ratings.
 
 ## Overview
 
-The B2B League Management System is a web application for billiard enthusiasts to create, join, and participate in various types of billiard leagues. The application offers:
-
-- League management (creation, editing, membership)
-- Player rating system with Elo-based calculations
-- Match challenges between players
-- Match result tracking with rating updates
-- User profile and statistics
-
-## Tech Stack
-
-### Backend
-- PHP 8.4
-- Laravel 12.0
-- Laravel Sanctum for API authentication
-- Domain-Driven Design (DDD) structure
-
-### Frontend
-- Vue.js 3.5
-- Inertia.js for SPA-like experience
-- TypeScript
-- Tailwind CSS
-- ShadCN UI components
+B2B League is a full-stack web application built with Laravel 12 and Vue 3, providing an intuitive interface for
+billiard leagues management. The system features an ELO-based rating system, match challenges, confirmations, and
+comprehensive player statistics tracking.
 
 ## Features
 
-### Authentication
-- Login/register with email, password
-- API token-based authentication
-- Session management
+- **User Management**: Registration, authentication, and profile management
+- **League System**: Create and manage multiple leagues with different game types
+- **Rating System**: ELO-based player rating calculations
+- **Match Management**: Challenge players, accept/decline matches, submit and confirm results
+- **Admin Panel**: Manage players, confirm registrations, and oversee leagues
+- **Statistics**: Track player performance, win rates, and rating changes
 
-### League Management
-- Create and configure leagues (admin only)
-- Join/leave leagues
-- Configure rating calculation rules
-- Support for multiple game types (Pool, Pyramid, Snooker)
+## Technologies
 
-### Player Rating System
-- Elo-based rating system
-- Rating changes based on match results
-- Player rankings within leagues
-
-### Match System
-- Challenge other players
-- Accept/decline challenges
-- Record match results
-- Automatic rating recalculation
-
-### User Profiles
-- Personal information management
-- Match history and statistics
-- League membership tracking
+- **Backend**: PHP 8.4, Laravel 12, Laravel Sanctum
+- **Frontend**: Vue 3, TypeScript, Tailwind CSS, Vite
+- **Database**: MySQL/MariaDB (or SQLite for local development)
+- **API**: RESTful API with proper DTO pattern and Resources
 
 ## Project Structure
 
-The application follows a domain-driven design approach with the following structure:
+The application follows a modular architecture with domain-specific components:
 
-```
-app/
-├── Auth/         # Authentication functionality
-├── Core/         # Base application classes
-├── Leagues/      # League management features
-└── Matches/      # Match handling functionality
-resources/
-├── js/
-│   ├── Components/    # Reusable Vue components
-│   ├── Pages/         # Main application pages
-│   ├── Layouts/       # Page layouts
-│   ├── Types/         # TypeScript type definitions
-│   └── Composables/   # Reusable Vue composables
-└── css/            # Tailwind CSS configuration
-```
+- **Auth Module**: Handles authentication, registration, and user sessions
+- **Core Module**: Contains shared functionality, base models, and middleware
+- **Leagues Module**: Manages leagues, ratings, and player rankings
+- **Matches Module**: Handles match creation, results, and rating calculations
+- **User Module**: User profiles, statistics, and preferences
 
 ## Getting Started
 
-### Requirements
-- PHP 8.4+
+### Prerequisites
+
+- PHP 8.4 or higher
 - Composer
-- Node.js 16+
-- MySQL/PostgreSQL
+- Node.js & npm
+- MySQL or SQLite
 
 ### Installation
 
 1. Clone the repository
-   ```
-   git clone https://github.com/yourusername/b2b-league.git
-   cd b2b-league
-   ```
+
+```bash
+git clone https://github.com/yourusername/b2b-league.git
+cd b2b-league
+```
 
 2. Install PHP dependencies
-   ```
-   composer install
-   ```
 
-3. Set up environment
-   ```
-   cp .env.example .env
-   php artisan key:generate
-   ```
+```bash
+composer install
+```
 
-4. Configure your database connection in `.env`
+3. Install JavaScript dependencies
 
-5. Run migrations and seed database
-   ```
-   php artisan migrate --seed
-   ```
+```bash
+npm install
+```
 
-6. Install frontend dependencies
-   ```
-   npm install
-   ```
+4. Copy environment file and generate application key
 
-7. Build frontend assets
-   ```
-   npm run dev
-   ```
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-8. Start the local server
-   ```
-   php artisan serve
-   ```
+5. Configure database settings in `.env` file
+
+6. Run database migrations and seed data
+
+```bash
+php artisan migrate --seed
+```
+
+7. Start development server
+
+```bash
+# Run in separate terminals
+php artisan serve
+npm run dev
+```
+
+8. Access the application at `http://localhost:8000`
+
+### Default Admin Account
+
+- Email: kovalov@b2bleague.com
+- Password: nudik_number_one
 
 ## Development
 
-### Useful Commands
+### Development Commands
 
-- `composer dev` - Run development server with queue listener, PAIL logs, and Vite
-- `composer test` - Run all tests
-- `npm run build` - Build production assets
+```bash
+# Run application with all services
+composer dev
 
-### Docker
+# Run tests
+composer test
 
-A Docker setup is included for easy development:
+# Lint code
+npm run lint
 
+# Format code
+npm run format
 ```
-docker-compose up -d
-```
 
-This will start a PHP 8.4 container with Apache, a MySQL database, and PHPMyAdmin.
+### Directory Structure
+
+- `app/` - Application core code
+    - `Auth/` - Authentication modules
+    - `Core/` - Core functionality
+    - `Leagues/` - League management
+    - `Matches/` - Match handling
+    - `User/` - User profiles and statistics
+- `resources/` - Frontend code and assets
+    - `js/` - Vue components and TypeScript code
+    - `css/` - Stylesheets
+    - `views/` - Blade templates
+
+## API Documentation
+
+The API follows RESTful conventions with the following main endpoints:
+
+- `/api/auth/*` - Authentication endpoints
+- `/api/leagues/*` - League management
+- `/api/user/*` - User data and statistics
+
+## ELO Rating System
+
+The system uses a customizable ELO rating algorithm with configurable parameters:
+
+- Initial rating value (default: 1000)
+- Rating change rules for different rating differences
+- Position-based challenge restrictions (within ±10 positions)
 
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgements
+
+- [Laravel](https://laravel.com) - The PHP framework used
+- [Vue.js](https://vuejs.org) - Frontend framework
+- [Tailwind CSS](https://tailwindcss.com) - Utility-first CSS framework
+- [Inertia.js](https://inertiajs.com) - The modern monolith framework
