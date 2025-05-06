@@ -44,7 +44,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('leagues/{league}')->group(function () {
         Route::get('players', [LeaguesController::class, 'players']);
         Route::get('games', [LeaguesController::class, 'games']);
-
+        Route::get('load-user-rating', [LeaguesController::class, 'loadUserRating']);
 
         Route::prefix('players')->group(function () {
             Route::post('enter', [PlayersController::class, 'enter']);

@@ -45,6 +45,11 @@ const {
 } = leagues.fetchLeague(props.leagueId);
 
 const {
+    data: authUserRating,
+    execute: loadUserRating
+} = leagues.loadUserRating(props.leagueId);
+
+const {
     data: players,
     isLoading: isLoadingPlayers,
     error: playersError,
@@ -299,6 +304,7 @@ onMounted(() => {
     fetchLeague();
     fetchPlayers();
     fetchMatches();
+    loadUserRating();
 
     // Check URL query params for matchId
     const url = new URL(window.location.href);
@@ -477,6 +483,7 @@ watch([matches, routeMatchId], ([currentMatches, currentMatchId]) => {
                             :isAuthenticated="isAuthenticated"
                             :leagueId="Number(league.id)"
                             :players="players || []"
+                            :auth-user-have-ongoing-match="authUserRating?.hasOngoingMatches"
                             @challenge="openChallengeModal"
                         />
                     </CardContent>
@@ -559,7 +566,7 @@ watch([matches, routeMatchId], ([currentMatches, currentMatchId]) => {
                                     </div>
                                     <div>
                                         <!-- Match actions based on state -->
-                                        <div v-if="match.status === 'in_progress' || match.status === 'must_be_confirmed' &&
+                                        <div v-if="(match.status === 'in_progress' || match.status === 'must_be_confirmed') &&
                                             (match.firstPlayer?.user?.id === user?.id ||
                                              match.secondPlayer?.user?.id === user?.id)"
                                              class="space-y-2">

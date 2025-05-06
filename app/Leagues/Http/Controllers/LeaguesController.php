@@ -117,4 +117,11 @@ readonly class LeaguesController
             Game::all(),
         );
     }
+
+    public function loadUserRating(League $league): RatingResource
+    {
+        return new RatingResource(
+            Auth::user()->activeRatings()->where('league_id', $league->id)->first(),
+        );
+    }
 }
