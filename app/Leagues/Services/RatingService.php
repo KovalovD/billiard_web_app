@@ -42,6 +42,8 @@ class RatingService
 
     /**
      * Add player to league with optimized performance
+     * Sets is_active = true but is_confirmed = false by default
+     * Requires admin confirmation
      *
      * @param  League  $league
      * @param  User  $user
@@ -52,8 +54,10 @@ class RatingService
     {
         // Check max players limit if set
         if ($league->max_players !== 0) {
+            // Count only confirmed players for the max players limit
             $playersCount = Rating::where('league_id', $league->id)
                 ->where('is_active', true)
+                ->where('is_confirmed', true)
                 ->count()
             ;
 
@@ -69,7 +73,10 @@ class RatingService
             ;
 
             if ($existingRating) {
-                $existingRating->update(['is_active' => true]);
+                $existingRating->update([
+                    'is_active' => true,
+                    // Don't change is_confirmed status if rejoining
+                ]);
             } else {
                 // Get position with a single query
                 $position = $this->getPositionByRatingOrder($league);
@@ -80,6 +87,7 @@ class RatingService
                     'rating'    => $league->start_rating,
                     'position'  => $position + 1,
                     'is_active' => true,
+                    'is_confirmed' => false, // Requires admin confirmation
                 ]);
             }
 

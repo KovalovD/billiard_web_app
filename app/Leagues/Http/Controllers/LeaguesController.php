@@ -118,10 +118,11 @@ readonly class LeaguesController
         );
     }
 
-    public function loadUserRating(League $league): RatingResource
+    public function loadUserRating(League $league): RatingResource|false
     {
-        return new RatingResource(
-            Auth::user()->activeRatings()->where('league_id', $league->id)->first(),
-        );
+        $userRating = Auth::user()->activeRatings()->where('league_id', $league->id)->first();
+        return $userRating
+            ? new RatingResource($userRating) :
+            false;
     }
 }

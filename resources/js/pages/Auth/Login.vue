@@ -78,9 +78,9 @@ async function submit() {
                         <div class="space-y-2">
                             <div class="flex justify-between items-center">
                                 <Label for="password">Password</Label>
-                                <a href="/forgot-password" class="text-sm text-blue-600 hover:underline dark:text-blue-400">
-                                    Forgot password?
-                                </a>
+                                <!--                                <a href="/forgot-password" class="text-sm text-blue-600 hover:underline dark:text-blue-400">
+                                                                    Forgot password?
+                                                                </a>-->
                             </div>
                             <Input
                                 id="password"

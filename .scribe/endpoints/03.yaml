@@ -1,0 +1,91 @@
+name: Players
+description: ''
+endpoints:
+  - httpMethods:
+      - POST
+    uri: 'api/leagues/{league_id}/players/enter'
+    metadata:
+      groupName: Players
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Enter to the League as a player'
+      description: ''
+      authenticated: true
+      custom: [ ]
+    headers:
+      Authorization: 'Bearer 123456'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      league_id:
+        name: league_id
+        description: 'The ID of the league.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: [ ]
+        exampleWasSpecified: false
+        nullable: false
+        custom: [ ]
+    cleanUrlParameters:
+      league_id: 1
+    queryParameters: [ ]
+    cleanQueryParameters: [ ]
+    bodyParameters: [ ]
+    cleanBodyParameters: [ ]
+    fileParameters: [ ]
+    responses: [ ]
+    responseFields: [ ]
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 123456'
+    controller: null
+    method: null
+    route: null
+    custom: [ ]
+  - httpMethods:
+      - POST
+    uri: 'api/leagues/{league_id}/players/leave'
+    metadata:
+      groupName: Players
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Leave the League as a player'
+      description: ''
+      authenticated: true
+      custom: [ ]
+    headers:
+      Authorization: 'Bearer 123456'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      league_id:
+        name: league_id
+        description: 'The ID of the league.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: [ ]
+        exampleWasSpecified: false
+        nullable: false
+        custom: [ ]
+    cleanUrlParameters:
+      league_id: 1
+    queryParameters: [ ]
+    cleanQueryParameters: [ ]
+    bodyParameters: [ ]
+    cleanBodyParameters: [ ]
+    fileParameters: [ ]
+    responses: [ ]
+    responseFields: [ ]
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 123456'
+    controller: null
+    method: null
+    route: null
+    custom: [ ]

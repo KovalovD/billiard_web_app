@@ -1,10 +1,11 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const updateHash = function (id) {
         window.location.hash = `#${id}`;
     };
 
     const navButton = document.getElementById('nav-button');
     const menuWrapper = document.querySelector('.tocify-wrapper');
+
     function toggleSidebar(event) {
         event.preventDefault();
         if (menuWrapper) {
@@ -12,12 +13,14 @@ document.addEventListener('DOMContentLoaded', function() {
             navButton.classList.toggle('open');
         }
     }
+
     function closeSidebar() {
         if (menuWrapper) {
             menuWrapper.classList.remove('open');
             navButton.classList.remove('open');
         }
     }
+
     navButton.addEventListener('click', toggleSidebar);
 
     window.hljs.highlightAll();
@@ -29,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
         searchSelector: '*OR',
         searchTag: '#input-search',
         contentTag: '#toc li',
-        didSearch: function(term) {
+        didSearch: function (term) {
             wrapper.classList.toggle('jets-searching', String(term).length > 0)
         },
         // map these accent keys to plain values
@@ -75,7 +78,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // wait for dom changes to be done
             setTimeout(() => {
-                currentTag.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                currentTag.scrollIntoView({behavior: 'smooth', block: 'center', inline: 'center'});
                 // only close the sidebar on level-2 events
                 if (currentTag.parentElement.classList.contains('level-2')) {
                     closeSidebar();

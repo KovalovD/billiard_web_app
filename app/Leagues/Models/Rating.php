@@ -23,10 +23,12 @@ class Rating extends Model
         'rating',
         'position',
         'is_active',
+        'is_confirmed',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'is_confirmed' => 'boolean',
     ];
 
     protected $with = [

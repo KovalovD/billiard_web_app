@@ -1,4 +1,3 @@
-//resources/js/pages/Leagues/Show.vue
 <script lang="ts" setup>
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {Head, Link} from '@inertiajs/vue3';
@@ -13,6 +12,11 @@ import ResultModal from '@/Components/ResultModal.vue';
 import {apiClient} from '@/lib/apiClient';
 import {ArrowLeftIcon, LogOutIcon, PencilIcon, SmileIcon, TrophyIcon, UserPlusIcon, UsersIcon} from 'lucide-vue-next';
 import {useLeagueStatus} from '@/composables/useLeagueStatus';
+import PendingConfirmationBanner from "@/Components/PendingConfirmationBanner.vue";
+import {ChevronDownIcon} from 'lucide-vue-next';
+
+const adminDropdownOpen = ref(false);
+const adminDropdownRef = ref(null);
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -299,6 +303,10 @@ const handleResultSuccess = (message: string) => {
     fetchPlayers();
 };
 
+const authUserIsConfirmed = computed(() => {
+    return authUserRating.value?.is_confirmed === true;
+});
+
 // Initialize data
 onMounted(() => {
     fetchLeague();
@@ -309,6 +317,12 @@ onMounted(() => {
     // Check URL query params for matchId
     const url = new URL(window.location.href);
     routeMatchId.value = url.searchParams.get('matchId');
+
+    document.addEventListener('click', (event) => {
+        if (adminDropdownRef.value && !adminDropdownRef.value.contains(event.target)) {
+            adminDropdownOpen.value = false;
+        }
+    });
 });
 
 // Watch for matches to be loaded, then check for routeMatchId
@@ -349,8 +363,48 @@ watch([matches, routeMatchId], ([currentMatches, currentMatchId]) => {
                             Edit League
                         </Button>
                     </Link>
+
+                    <div ref="adminDropdownRef" class="relative">
+                        <Button
+                            variant="secondary"
+                            @click="adminDropdownOpen = !adminDropdownOpen"
+                        >
+                            <UsersIcon class="w-4 h-4 mr-2"/>
+                            Manage Players
+                            <ChevronDownIcon class="w-4 h-4 ml-1"/>
+                        </Button>
+
+                        <div
+                            v-if="adminDropdownOpen"
+                            class="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-gray-800 dark:ring-gray-700"
+                            role="menu"
+                        >
+                            <div class="py-1" role="none">
+                                <Link
+                                    :href="`/admin/leagues/${league.id}/pending-players`"
+                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                                    role="menuitem"
+                                >
+                                    Pending Players
+                                </Link>
+                                <Link
+                                    :href="`/admin/leagues/${league.id}/confirmed-players`"
+                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                                    role="menuitem"
+                                >
+                                    Confirmed Players
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
+
+            <PendingConfirmationBanner
+                v-if="isCurrentUserInLeague && authUserRating"
+                :is-confirmed="authUserRating.is_confirmed"
+                :league-name="league?.name"
+            />
 
             <!-- League Loading State -->
             <div v-if="isLoadingLeague" class="text-center p-10">
@@ -484,6 +538,7 @@ watch([matches, routeMatchId], ([currentMatches, currentMatchId]) => {
                             :leagueId="Number(league.id)"
                             :players="players || []"
                             :auth-user-have-ongoing-match="authUserRating?.hasOngoingMatches"
+                            :auth-user-is-confirmed="authUserIsConfirmed"
                             @challenge="openChallengeModal"
                         />
                     </CardContent>

@@ -1,7 +1,7 @@
 <?php
 
-use App\Auth\Http\Controllers\RegisteredUserController;
 use App\Core\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Core\Http\Controllers\Auth\RegisteredUserController;
 use App\Core\Http\Controllers\ErrorController;
 use App\Core\Http\Middleware\AdminMiddleware;
 use Illuminate\Support\Facades\Route;
@@ -18,23 +18,21 @@ Route::middleware('guest')->group(function () {
         ->name('register')
     ;
 
-    Route::post('/register', [RegisteredUserController::class, 'store']);
-
     // For guests, homepage shows welcome page
-    Route::get('/', function () {
+    Route::get('/', static function () {
         return Inertia::render('Welcome');
     })->name('home');
 });
 
 // --- Authenticated routes ---
 Route::middleware('auth')->group(function () {
-    Route::get('/profile/edit', function () {
+    Route::get('/profile/edit', static function () {
         return Inertia::render('Profile/Edit', [
             'header' => 'Edit',
         ]);
     })->name('profile.edit');
 
-    Route::get('/profile/stats', function () {
+    Route::get('/profile/stats', static function () {
         return Inertia::render('Profile/Stats', [
             'header' => 'Statistics',
         ]);
@@ -42,45 +40,59 @@ Route::middleware('auth')->group(function () {
 
 
     // Dashboard as home for authenticated users
-    Route::get('/dashboard', function () {
+    Route::get('/dashboard', static function () {
         return Inertia::render('Dashboard', [
             'header' => 'Dashboard',
         ]);
     })->name('dashboard');
 
-    Route::get('/profile', function () {
+    Route::get('/profile', static function () {
         return Inertia::render('Profile/Edit', [
             'header' => 'Profile Settings',
         ]);
     })->name('profile.edit');
 
     // --- Leagues ---
-    Route::get('/leagues', function () {
+    Route::get('/leagues', static function () {
         return Inertia::render('Leagues/Index', [
             'header' => 'Leagues',
         ]);
     })->name('leagues.index');
 
-    Route::get('/leagues/{league}', function ($leagueId) {
+    Route::get('/leagues/{league}', static function ($leagueId) {
         return Inertia::render('Leagues/Show', [
             'leagueId' => $leagueId,
         ]);
     })->name('leagues.show')->where('league', '[0-9]+');
 
     // --- Admin routes ---
-    Route::middleware(AdminMiddleware::class)->group(function () {
-        Route::get('/leagues/create', function () {
-            return Inertia::render('Leagues/Create', [
-                'header' => 'Create League',
-            ]);
-        })->name('leagues.create');
+    Route::middleware(AdminMiddleware::class)->prefix('admin')->group(function () {
+        Route::group(['prefix' => 'leagues'], static function () {
+            Route::get('{league}/confirmed-players', static function ($leagueId) {
+                return Inertia::render('Admin/ConfirmedPlayers', [
+                    'leagueId' => $leagueId,
+                ]);
+            })->name('admin.leagues.confirmed-players');
 
-        Route::get('/leagues/{league}/edit', function ($leagueId) {
-            return Inertia::render('Leagues/Edit', [
-                'leagueId' => $leagueId,
-                'header'   => 'Edit League',
-            ]);
-        })->name('leagues.edit')->where('league', '[0-9]+');
+            Route::get('create', static function () {
+                return Inertia::render('Leagues/Create', [
+                    'header' => 'Create League',
+                ]);
+            })->name('leagues.create');
+
+            Route::get('{league}/edit', static function ($leagueId) {
+                return Inertia::render('Leagues/Edit', [
+                    'leagueId' => $leagueId,
+                    'header'   => 'Edit League',
+                ]);
+            })->name('leagues.edit')->where('league', '[0-9]+');
+
+            Route::get('{league}/pending-players', static function ($leagueId) {
+                return Inertia::render('Admin/PendingPlayers', [
+                    'leagueId' => $leagueId,
+                ]);
+            })->name('admin.leagues.pending-players');
+        });
     });
 });
 

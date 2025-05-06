@@ -20,7 +20,7 @@ class ProfileService
 
         $user->update($validated);
 
-        return $user->fresh();
+        return $user->refresh();
     }
 
     public function updatePassword(User $user, UpdatePasswordRequest $request): bool

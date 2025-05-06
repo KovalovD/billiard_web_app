@@ -16,6 +16,7 @@ return new class extends Migration {
             $table->integer('rating');
             $table->integer('position');
             $table->boolean('is_active')->default(true);
+            $table->boolean('is_confirmed')->default(false);
             $table->timestamps();
         });
     }
