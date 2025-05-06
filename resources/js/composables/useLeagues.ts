@@ -1,7 +1,7 @@
 // resources/js/composables/useLeagues.ts
-import { get, post, put, del } from '@/lib/apiClient';
-import { useApi, useApiAction } from '@/composables/useApi';
-import type { League, LeaguePayload, MatchGame, Rating } from '@/types/api';
+import {del, get, post, put} from '@/lib/apiClient';
+import {useApi, useApiAction} from '@/composables/useApi';
+import type {League, LeaguePayload, MatchGame, Rating} from '@/types/api';
 
 /**
  * Composable for working with Leagues API endpoints.
@@ -16,6 +16,10 @@ export function useLeagues() {
     // Fetch a single league by ID
     const fetchLeague = (leagueId: number | string) => {
         return useApi<League>(() => get(`/api/leagues/${leagueId}`));
+    };
+
+    const loadUserRating = (leagueId: number | string) => {
+        return useApi<Rating>(() => get(`/api/leagues/${leagueId}/load-user-rating`));
     };
 
     // Create a new league
@@ -94,6 +98,7 @@ export function useLeagues() {
         acceptMatch,
         declineMatch,
         submitMatchResult,
+        loadUserRating,
 
         // Utility functions
         isPlayerInLeague,

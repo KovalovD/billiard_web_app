@@ -8,12 +8,13 @@ interface Props {
     leagueId: number;
     currentUserId: number | null;
     isAuthenticated: boolean;
+    authUserHaveOngoingMatch: boolean | undefined
 }
 
 const props = defineProps<Props>();
 
 // Find the current user's position
-const currentUserPosition = computed((): number | null => {
+const authUserPosition = computed((): number | null => {
     if (!props.currentUserId) return null;
 
     const currentUserRating = props.players.find(
@@ -36,7 +37,8 @@ const currentUserPosition = computed((): number | null => {
             :isCurrentUser="playerRating.player.id === currentUserId"
             :leagueId="leagueId"
             :playerRating="playerRating"
-            :currentUserPosition="currentUserPosition"
+            :authUserHaveOngoingMatch="authUserHaveOngoingMatch"
+            :authUserPosition="authUserPosition"
             @challenge="$emit('challenge', playerRating.player)"
         />
     </ul>

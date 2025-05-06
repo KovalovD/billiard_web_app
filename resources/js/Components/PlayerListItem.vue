@@ -8,7 +8,8 @@ interface Props {
     leagueId: number;
     isCurrentUser: boolean;
     isAuthenticated: boolean;
-    currentUserPosition: number | null;
+    authUserPosition: number | null;
+    authUserHaveOngoingMatch: boolean | undefined;
 }
 
 const props = defineProps<Props>();
@@ -22,9 +23,9 @@ const handleChallenge = () => {
 
 // Check if player is within challenge range (±10 positions)
 const isWithinChallengeRange = (): boolean => {
-    if (!props.currentUserPosition) return false;
+    if (!props.authUserPosition) return false;
 
-    const positionDiff = Math.abs(props.playerRating.position - props.currentUserPosition);
+    const positionDiff = Math.abs(props.playerRating.position - props.authUserPosition);
     return positionDiff <= 10;
 }
 </script>
@@ -39,7 +40,7 @@ const isWithinChallengeRange = (): boolean => {
         <div class="flex items-center space-x-3">
             <span class="text-sm font-bold text-indigo-600 dark:text-indigo-400">{{ playerRating.rating }}</span>
             <Button
-                v-if="isAuthenticated && !isCurrentUser && !playerRating.hasOngoingMatches && isWithinChallengeRange()"
+                v-if="isAuthenticated && !isCurrentUser && !playerRating.hasOngoingMatches && isWithinChallengeRange() && !authUserHaveOngoingMatch"
                 size="sm"
                 title="Challenge this player"
                 variant="outline"
@@ -49,7 +50,7 @@ const isWithinChallengeRange = (): boolean => {
                 Challenge
             </Button>
             <span
-                v-else-if="isAuthenticated && !isCurrentUser && !playerRating.hasOngoingMatches && !isWithinChallengeRange()"
+                v-else-if="isAuthenticated && !isCurrentUser && !playerRating.hasOngoingMatches && !isWithinChallengeRange() && !authUserHaveOngoingMatch"
                 class="text-xs text-gray-500 dark:text-gray-400"
             >
                 Not in challenge range
