@@ -102,7 +102,7 @@ export interface League {
     created_at: string | null;
     updated_at: string | null;
     matches_count?: number;
-    game: Game
+    game: Game;
     game_id: number | null;
     rating_type?: string;
     max_players: number;
@@ -160,7 +160,7 @@ export enum MatchStatus {
     PENDING = 'pending',
     IN_PROGRESS = 'in_progress',
     MUST_BE_CONFIRMED = 'must_be_confirmed',
-    COMPLETED = 'completed'
+    COMPLETED = 'completed',
 }
 
 // Update the MatchGame interface in resources/js/types/api.ts
@@ -282,5 +282,5 @@ export interface GameTypeStats {
         wins: number;
         losses: number;
         win_rate: number;
-    }
+    };
 }

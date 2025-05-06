@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import {SidebarProvider} from '@/components/ui/sidebar';
-import {usePage} from '@inertiajs/vue3';
 import {SharedData} from '@/types';
+import {usePage} from '@inertiajs/vue3';
 
 interface Props {
     variant?: 'header' | 'sidebar';

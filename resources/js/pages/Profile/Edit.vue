@@ -1,9 +1,6 @@
 //resources/js/pages/Profile/Edit.vue
 <script lang="ts" setup>
-import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
-import {Head, Link} from '@inertiajs/vue3';
-import {onMounted, ref} from 'vue';
-import {apiClient} from '@/lib/apiClient';
+import InputError from '@/Components/InputError.vue';
 import {
     Button,
     Card,
@@ -18,10 +15,13 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
-    Spinner
+    Spinner,
 } from '@/Components/ui';
-import InputError from '@/Components/InputError.vue';
+import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
+import {apiClient} from '@/lib/apiClient';
 import type {ApiError, City, Club, User} from '@/types/api';
+import {Head, Link} from '@inertiajs/vue3';
+import {onMounted, ref} from 'vue';
 
 // Phone validation regex - matches formats like +1234567890, (123) 456-7890, 123-456-7890
 const phonePattern = /^(\+?\d{1,3}[-\s]?)?\(?(\d{3})\)?[-\s]?(\d{3})[-\s]?(\d{4})$/;
@@ -88,7 +88,6 @@ const loadUser = async () => {
         if (response.home_city?.id) {
             await loadClubs(response.home_city.id);
         }
-
     } catch (error) {
         console.error('Failed to load user data:', error);
     } finally {
@@ -170,7 +169,7 @@ const updateProfile = async () => {
     try {
         user.value = await apiClient<User>('/api/profile', {
             method: 'put',
-            data: profileForm.value
+            data: profileForm.value,
         });
         profileSuccess.value = true;
         setTimeout(() => {
@@ -194,7 +193,7 @@ const updatePassword = async () => {
     try {
         await apiClient('/api/profile/password', {
             method: 'put',
-            data: passwordForm.value
+            data: passwordForm.value,
         });
 
         passwordForm.value = {
@@ -223,7 +222,7 @@ const deleteAccount = async () => {
     try {
         await apiClient('/api/profile', {
             method: 'delete',
-            data: deleteForm.value
+            data: deleteForm.value,
         });
         // The backend will logout the user
         window.location.href = '/login';
@@ -248,30 +247,20 @@ onMounted(() => {
     <Head title="Profile Settings"/>
 
     <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+        <div class="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
             <!-- Profile Navigation -->
-            <div class="flex space-x-4 mb-6">
+            <div class="mb-6 flex space-x-4">
                 <Link :href="route('profile.edit')">
-                    <Button
-                        class="bg-primary text-primary-foreground"
-                        variant="outline"
-                    >
-                        Edit Profile
-                    </Button>
+                    <Button class="bg-primary text-primary-foreground" variant="outline"> Edit Profile</Button>
                 </Link>
                 <Link :href="route('profile.stats')">
-                    <Button
-                        class="bg-gray-100 dark:bg-gray-800"
-                        variant="outline"
-                    >
-                        Statistics
-                    </Button>
+                    <Button class="bg-gray-100 dark:bg-gray-800" variant="outline"> Statistics</Button>
                 </Link>
             </div>
 
             <!-- Loading state -->
             <div v-if="isLoadingUser" class="flex justify-center py-8">
-                <Spinner class="w-8 h-8 text-primary"/>
+                <Spinner class="text-primary h-8 w-8"/>
             </div>
 
             <!-- Update Profile Information -->
@@ -282,45 +271,31 @@ onMounted(() => {
                 </CardHeader>
                 <CardContent>
                     <form @submit.prevent="updateProfile" class="space-y-4">
-                        <div v-if="profileSuccess" class="p-3 rounded-md bg-green-50 text-green-600 text-sm dark:bg-green-900/30 dark:text-green-400">
+                        <div v-if="profileSuccess"
+                             class="rounded-md bg-green-50 p-3 text-sm text-green-600 dark:bg-green-900/30 dark:text-green-400">
                             Profile updated successfully.
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div class="space-y-2">
                                 <Label for="firstname">First Name</Label>
-                                <Input
-                                    id="firstname"
-                                    v-model="profileForm.firstname"
-                                    type="text"
-                                    required
-                                    :disabled="isProcessingProfile"
-                                />
+                                <Input id="firstname" v-model="profileForm.firstname" :disabled="isProcessingProfile" required
+                                       type="text"/>
                                 <InputError :message="profileErrors.firstname?.join(', ')"/>
                             </div>
 
                             <div class="space-y-2">
                                 <Label for="lastname">Last Name</Label>
-                                <Input
-                                    id="lastname"
-                                    v-model="profileForm.lastname"
-                                    type="text"
-                                    required
-                                    :disabled="isProcessingProfile"
-                                />
+                                <Input id="lastname" v-model="profileForm.lastname" :disabled="isProcessingProfile" required
+                                       type="text"/>
                                 <InputError :message="profileErrors.lastname?.join(', ')"/>
                             </div>
                         </div>
 
                         <div class="space-y-2">
                             <Label for="email">Email</Label>
-                            <Input
-                                id="email"
-                                v-model="profileForm.email"
-                                type="email"
-                                required
-                                :disabled="isProcessingProfile"
-                            />
+                            <Input id="email" v-model="profileForm.email" :disabled="isProcessingProfile" required
+                                   type="email"/>
                             <InputError :message="profileErrors.email?.join(', ')"/>
                         </div>
 
@@ -340,7 +315,7 @@ onMounted(() => {
                             <InputError :message="profileErrors.phone?.join(', ')"/>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div class="space-y-2">
                                 <Label for="home_city">Hometown</Label>
                                 <Select
@@ -350,8 +325,7 @@ onMounted(() => {
                                 >
                                     <SelectTrigger id="home_city">
                                         <SelectValue
-                                            :placeholder="isLoadingCities ? 'Loading cities...' : user?.home_city?.name || 'Select city'"
-                                        />
+                                            :placeholder="isLoadingCities ? 'Loading cities...' : user?.home_city?.name || 'Select city'"/>
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="">None</SelectItem>
@@ -372,8 +346,7 @@ onMounted(() => {
                                 >
                                     <SelectTrigger id="home_club">
                                         <SelectValue
-                                            :placeholder="isLoadingClubs ? 'Loading clubs...' : user?.home_club?.name || 'Select club'"
-                                        />
+                                            :placeholder="isLoadingClubs ? 'Loading clubs...' : user?.home_club?.name || 'Select club'"/>
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="">None</SelectItem>
@@ -404,7 +377,10 @@ onMounted(() => {
                 </CardHeader>
                 <CardContent>
                     <form @submit.prevent="updatePassword" class="space-y-4">
-                        <div v-if="passwordSuccess" class="p-3 rounded-md bg-green-50 text-green-600 text-sm dark:bg-green-900/30 dark:text-green-400">
+                        <div
+                            v-if="passwordSuccess"
+                            class="rounded-md bg-green-50 p-3 text-sm text-green-600 dark:bg-green-900/30 dark:text-green-400"
+                        >
                             Password updated successfully.
                         </div>
 
@@ -466,51 +442,35 @@ onMounted(() => {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Button variant="destructive" @click="showDeleteModal = true">
-                        Delete Account
-                    </Button>
+                    <Button variant="destructive" @click="showDeleteModal = true"> Delete Account</Button>
                 </CardContent>
             </Card>
         </div>
     </div>
 
     <!-- Delete Account Modal -->
-    <div v-if="showDeleteModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md w-full p-6">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                Are you sure you want to delete your account?
-            </h3>
-            <p class="text-gray-600 dark:text-gray-400 mb-4">
-                Once your account is deleted, all of its resources and data will be permanently deleted. Please enter your password to confirm you would like to permanently delete your account.
+    <div v-if="showDeleteModal" class="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4">
+        <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-lg dark:bg-gray-800">
+            <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">Are you sure you want to delete your
+                account?</h3>
+            <p class="mb-4 text-gray-600 dark:text-gray-400">
+                Once your account is deleted, all of its resources and data will be permanently deleted. Please enter
+                your password to confirm you
+                would like to permanently delete your account.
             </p>
 
             <form @submit.prevent="deleteAccount">
                 <div class="mb-4">
                     <Label for="delete_password">Password</Label>
-                    <Input
-                        id="delete_password"
-                        v-model="deleteForm.password"
-                        type="password"
-                        required
-                        :disabled="isProcessingDelete"
-                        class="mt-1"
-                    />
+                    <Input id="delete_password" v-model="deleteForm.password" :disabled="isProcessingDelete" class="mt-1"
+                           required type="password"/>
                     <InputError :message="deleteErrors.password?.join(', ')" class="mt-1"/>
                 </div>
 
                 <div class="flex justify-end space-x-3">
-                    <Button
-                        variant="outline"
-                        :disabled="isProcessingDelete"
-                        @click="showDeleteModal = false"
-                    >
-                        Cancel
+                    <Button :disabled="isProcessingDelete" variant="outline" @click="showDeleteModal = false"> Cancel
                     </Button>
-                    <Button
-                        variant="destructive"
-                        :disabled="isProcessingDelete"
-                        type="submit"
-                    >
+                    <Button :disabled="isProcessingDelete" type="submit" variant="destructive">
                         <span v-if="isProcessingDelete">Deleting...</span>
                         <span v-else>Delete Account</span>
                     </Button>

@@ -1,10 +1,10 @@
 // resources/js/composables/useAuth.ts
-import {computed, ref} from 'vue';
-import {apiClient, getDeviceName, setToken} from '@/lib/apiClient'; // Use apiClient for requests
 import {fetchCsrfToken} from '@/bootstrap'; // Import CSRF fetcher
+import {apiClient, getDeviceName, setToken} from '@/lib/apiClient'; // Use apiClient for requests
+import type {SharedData} from '@/types';
 import type {ApiError, LoginResponse, RegisterCredentials, User} from '@/types/api';
 import {usePage} from '@inertiajs/vue3';
-import type {SharedData} from '@/types';
+import {computed, ref} from 'vue';
 
 // --- Reactive State ---
 const user = ref<User | null>(null);
@@ -107,12 +107,13 @@ const login = async (credentials: { email: string; password: string }): Promise<
         console.log('[Auth] CSRF token fetched for login.');
 
         // 2. Perform login request
-        const response = await apiClient<LoginResponse>('/api/auth/login', { // Use apiClient
+        const response = await apiClient<LoginResponse>('/api/auth/login', {
+            // Use apiClient
             method: 'post',
             data: {
                 ...credentials,
-                deviceName: deviceName
-            }
+                deviceName: deviceName,
+            },
         });
 
         // 3. Store user and token
@@ -122,7 +123,6 @@ const login = async (credentials: { email: string; password: string }): Promise<
         isInitializing.value = false; // Ensure init loading state is off
         console.log('[Auth] Login successful. User:', response.user.id);
         return response; // Return the full response
-
     } catch (err: any) {
         console.error('[Auth] Login failed:', err);
         const apiError = err as ApiError;
@@ -154,12 +154,12 @@ const register = async (credentials: RegisterCredentials): Promise<User> => {
         console.log('[Auth] CSRF token fetched for registration.');
 
         // 2. Perform registration request
-        const response = await apiClient<{ user: User, token: string }>('/api/auth/register', {
+        const response = await apiClient<{ user: User; token: string }>('/api/auth/register', {
             method: 'post',
             data: {
                 ...credentials,
-                deviceName: deviceName
-            }
+                deviceName: deviceName,
+            },
         });
 
         // 3. Store user and token
@@ -171,7 +171,6 @@ const register = async (credentials: RegisterCredentials): Promise<User> => {
         isInitializing.value = false; // Ensure init loading state is off
         console.log('[Auth] Registration successful. User:', response.user.id);
         return response.user; // Return the user object
-
     } catch (err: any) {
         console.error('[Auth] Registration failed:', err);
         const apiError = err as ApiError;
@@ -202,9 +201,10 @@ const logout = async () => {
         if (currentToken && currentDeviceName) {
             console.log(`[Auth] Logging out device: ${currentDeviceName}`);
             // Call API to invalidate token on the server
-            await apiClient('/api/auth/logout', { // Use apiClient
+            await apiClient('/api/auth/logout', {
+                // Use apiClient
                 method: 'post',
-                data: { deviceName: currentDeviceName } // Send device name to logout specific token
+                data: {deviceName: currentDeviceName}, // Send device name to logout specific token
             });
             console.log('[Auth] Server logout successful.');
         } else {
@@ -249,6 +249,6 @@ export function useAuth() {
         login,
         register,
         logout,
-        fetchUserFromApi // Expose potentially useful for manual refresh
+        fetchUserFromApi, // Expose potentially useful for manual refresh
     };
 }

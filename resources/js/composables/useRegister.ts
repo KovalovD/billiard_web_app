@@ -1,6 +1,6 @@
-import {ref} from 'vue';
 import {apiClient} from '@/lib/apiClient';
 import type {ApiError, RegisterCredentials, User} from '@/types/api';
+import {ref} from 'vue';
 
 export function useRegister() {
     const isLoading = ref(false);
@@ -16,7 +16,7 @@ export function useRegister() {
             // Call the API to register the user
             const response = await apiClient<{ user: User; token: string }>('/api/auth/register', {
                 method: 'post',
-                data: credentials
+                data: credentials,
             });
 
             // If successful, store the token and update the auth state
@@ -67,6 +67,6 @@ export function useRegister() {
         validationErrors,
         register,
         hasError,
-        getError
+        getError,
     };
 }

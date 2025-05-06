@@ -1,7 +1,5 @@
 <script lang="ts" setup>
-import {computed, onMounted, ref} from 'vue';
-import {useRegister} from '@/composables/useRegister';
-import type {RegisterCredentials} from '@/types/api';
+import InputError from '@/Components/InputError.vue';
 import {
     Button,
     Card,
@@ -13,7 +11,9 @@ import {
     Input,
     Label
 } from '@/Components/ui';
-import InputError from '@/Components/InputError.vue';
+import {useRegister} from '@/composables/useRegister';
+import type {RegisterCredentials} from '@/types/api';
+import {computed, onMounted, ref} from 'vue';
 
 // Phone validation regex - matches formats like +1234567890, (123) 456-7890, 123-456-7890
 const phonePattern = /^(\+?\d{1,3}[-\s]?)?\(?(\d{3})\)?[-\s]?(\d{3})[-\s]?(\d{4})$/;
@@ -27,17 +27,19 @@ const form = ref<RegisterCredentials>({
     email: '',
     phone: '',
     password: '',
-    password_confirmation: ''
+    password_confirmation: '',
 });
 
 // Client-side validation
 const formValid = computed(() => {
-    return form.value.firstname.trim() !== '' &&
+    return (
+        form.value.firstname.trim() !== '' &&
         form.value.lastname.trim() !== '' &&
         isEmailValid.value &&
         isPhoneValid.value &&
         isPasswordValid.value &&
-        form.value.password === form.value.password_confirmation;
+        form.value.password === form.value.password_confirmation
+    );
 });
 
 const isEmailValid = computed(() => {
@@ -92,32 +94,22 @@ onMounted(() => {
         <CardContent>
             <form class="space-y-4" @submit.prevent="register">
                 <div v-if="registerService.error.value"
-                     class="p-3 rounded-md bg-red-50 text-red-500 text-sm dark:bg-red-900/30 dark:text-red-400">
+                     class="rounded-md bg-red-50 p-3 text-sm text-red-500 dark:bg-red-900/30 dark:text-red-400">
                     {{ registerService.error.value }}
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-2">
                         <Label for="firstname">First Name</Label>
-                        <Input
-                            id="firstname"
-                            v-model="form.firstname"
-                            :disabled="registerService.isLoading.value"
-                            required
-                            type="text"
-                        />
+                        <Input id="firstname" v-model="form.firstname" :disabled="registerService.isLoading.value"
+                               required type="text"/>
                         <InputError :message="registerService.getError('firstname')"/>
                     </div>
 
                     <div class="space-y-2">
                         <Label for="lastname">Last Name</Label>
-                        <Input
-                            id="lastname"
-                            v-model="form.lastname"
-                            :disabled="registerService.isLoading.value"
-                            required
-                            type="text"
-                        />
+                        <Input id="lastname" v-model="form.lastname" :disabled="registerService.isLoading.value"
+                               required type="text"/>
                         <InputError :message="registerService.getError('lastname')"/>
                     </div>
                 </div>
@@ -150,8 +142,10 @@ onMounted(() => {
                         placeholder="e.g., (123) 456-7890"
                     />
                     <InputError v-if="registerService.getError('phone')" :message="registerService.getError('phone')"/>
-                    <InputError v-else-if="form.phone && !isPhoneValid"
-                                message="Please enter a valid phone number format (e.g., +1234567890, 123-456-7890)"/>
+                    <InputError
+                        v-else-if="form.phone && !isPhoneValid"
+                        message="Please enter a valid phone number format (e.g., +1234567890, 123-456-7890)"
+                    />
                 </div>
 
                 <div class="space-y-2">
@@ -182,17 +176,17 @@ onMounted(() => {
                         required
                         type="password"
                     />
-                    <InputError v-if="registerService.hasError('password_confirmation')"
-                                :message="registerService.getError('password_confirmation')"/>
+                    <InputError
+                        v-if="registerService.hasError('password_confirmation')"
+                        :message="registerService.getError('password_confirmation')"
+                    />
                     <InputError v-else-if="!passwordsMatch && form.password_confirmation !== ''"
                                 message="Passwords do not match"/>
                 </div>
             </form>
         </CardContent>
         <CardFooter class="flex justify-end space-x-4">
-            <Button variant="outline" @click="$emit('cancel')">
-                Cancel
-            </Button>
+            <Button variant="outline" @click="$emit('cancel')"> Cancel</Button>
             <Button :disabled="registerService.isLoading.value || !formValid" @click="register">
                 <span v-if="registerService.isLoading.value">Registering...</span>
                 <span v-else>Register</span>

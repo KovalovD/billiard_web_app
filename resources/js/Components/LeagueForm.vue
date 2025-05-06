@@ -1,7 +1,6 @@
 <script lang="ts" setup>
-import {onMounted, reactive, ref, watch} from 'vue';
-import {apiClient} from '@/lib/apiClient';
-import type {ApiError, Game, League, LeaguePayload} from '@/types/api';
+import InputError from '@/Components/InputError.vue';
+import RatingRuleEditor from '@/Components/RatingRuleEditor.vue';
 import {
     Button,
     Card,
@@ -17,10 +16,11 @@ import {
     SelectTrigger,
     SelectValue,
     Spinner,
-    Textarea
+    Textarea,
 } from '@/Components/ui';
-import InputError from '@/Components/InputError.vue';
-import RatingRuleEditor from '@/Components/RatingRuleEditor.vue';
+import {apiClient} from '@/lib/apiClient';
+import type {ApiError, Game, League, LeaguePayload} from '@/types/api';
+import {onMounted, reactive, ref, watch} from 'vue';
 
 interface Props {
     league?: League | null; // Passed league for editing
@@ -35,19 +35,27 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits(['submitted', 'error']);
 
 // Default rating rules in JSON format
-const defaultWinnerRules = JSON.stringify([
-    {range: [0, 50], strong: 25, weak: 25},
-    {range: [51, 100], strong: 20, weak: 30},
-    {range: [101, 200], strong: 15, weak: 35},
-    {range: [201, 1000000], strong: 10, weak: 40}
-], null, 2);
+const defaultWinnerRules = JSON.stringify(
+    [
+        {range: [0, 50], strong: 25, weak: 25},
+        {range: [51, 100], strong: 20, weak: 30},
+        {range: [101, 200], strong: 15, weak: 35},
+        {range: [201, 1000000], strong: 10, weak: 40},
+    ],
+    null,
+    2,
+);
 
-const defaultLoserRules = JSON.stringify([
-    {range: [0, 50], strong: -25, weak: -25},
-    {range: [51, 100], strong: -20, weak: -30},
-    {range: [101, 200], strong: -15, weak: -35},
-    {range: [201, 1000000], strong: -10, weak: -40}
-], null, 2);
+const defaultLoserRules = JSON.stringify(
+    [
+        {range: [0, 50], strong: -25, weak: -25},
+        {range: [51, 100], strong: -20, weak: -30},
+        {range: [101, 200], strong: -15, weak: -35},
+        {range: [201, 1000000], strong: -10, weak: -40},
+    ],
+    null,
+    2,
+);
 
 const form = reactive<LeaguePayload>({
     name: '',
@@ -87,7 +95,7 @@ async function fetchGames() {
     try {
         // Fetch games from API when endpoint is available
         games.value = await apiClient<Game[]>('/api/games');
-// eslint-disable-next-line
+        // eslint-disable-next-line
     } catch (error) {
         // Fallback to hardcoded data if API fails
         games.value = [
@@ -105,27 +113,31 @@ async function fetchGames() {
 }
 
 // Initialize form data when editing
-watch(() => props.league, (newLeague) => {
-    if (newLeague && props.isEditMode) {
-        form.name = newLeague.name;
-        form.game_id = newLeague.game_id;
-        form.picture = newLeague.picture;
-        form.details = newLeague.details;
-        form.has_rating = newLeague.has_rating;
-        form.start_rating = newLeague.start_rating;
-        form.max_players = newLeague.max_players || 0;
-        form.max_score = newLeague.max_score || 9;
-        form.invite_days_expire = newLeague.invite_days_expire || 3;
+watch(
+    () => props.league,
+    (newLeague) => {
+        if (newLeague && props.isEditMode) {
+            form.name = newLeague.name;
+            form.game_id = newLeague.game_id;
+            form.picture = newLeague.picture;
+            form.details = newLeague.details;
+            form.has_rating = newLeague.has_rating;
+            form.start_rating = newLeague.start_rating;
+            form.max_players = newLeague.max_players || 0;
+            form.max_score = newLeague.max_score || 9;
+            form.invite_days_expire = newLeague.invite_days_expire || 3;
 
-        // Format dates if present
-        form.started_at = formatDateForInput(newLeague.started_at);
-        form.finished_at = formatDateForInput(newLeague.finished_at);
+            // Format dates if present
+            form.started_at = formatDateForInput(newLeague.started_at);
+            form.finished_at = formatDateForInput(newLeague.finished_at);
 
-        // Format rating rules as JSON strings for editing
-        form.rating_change_for_winners_rule = JSON.stringify(newLeague.rating_change_for_winners_rule || [], null, 2);
-        form.rating_change_for_losers_rule = JSON.stringify(newLeague.rating_change_for_losers_rule || [], null, 2);
-    }
-}, { immediate: true });
+            // Format rating rules as JSON strings for editing
+            form.rating_change_for_winners_rule = JSON.stringify(newLeague.rating_change_for_winners_rule || [], null, 2);
+            form.rating_change_for_losers_rule = JSON.stringify(newLeague.rating_change_for_losers_rule || [], null, 2);
+        }
+    },
+    {immediate: true},
+);
 
 onMounted(fetchGames);
 
@@ -139,14 +151,14 @@ const submit = async () => {
 
         // Validate JSON before submitting
         try {
-            JSON.parse(payload.rating_change_for_winners_rule as string || '[]');
-            JSON.parse(payload.rating_change_for_losers_rule as string || '[]');
-// eslint-disable-next-line
+            JSON.parse((payload.rating_change_for_winners_rule as string) || '[]');
+            JSON.parse((payload.rating_change_for_losers_rule as string) || '[]');
+            // eslint-disable-next-line
         } catch (e) {
             formErrors.value = {
-                rating_rules: ["Invalid JSON format in rating rules."]
+                rating_rules: ['Invalid JSON format in rating rules.'],
             };
-            throw new Error("Invalid JSON format");
+            throw new Error('Invalid JSON format');
         }
 
         let response: League;
@@ -173,7 +185,7 @@ const submit = async () => {
             formErrors.value = apiError.data.errors;
         } else {
             formErrors.value = {
-                form: [apiError.message || 'An unknown error occurred.']
+                form: [apiError.message || 'An unknown error occurred.'],
             };
         }
 
@@ -191,7 +203,8 @@ const submit = async () => {
         </CardHeader>
         <form @submit.prevent="submit">
             <CardContent class="space-y-4">
-                <div v-if="formErrors.form" class="text-red-600 text-sm bg-red-100 p-3 rounded dark:bg-red-900/30 dark:text-red-400">
+                <div v-if="formErrors.form"
+                     class="rounded bg-red-100 p-3 text-sm text-red-600 dark:bg-red-900/30 dark:text-red-400">
                     {{ formErrors.form.join(', ') }}
                 </div>
 
@@ -203,17 +216,9 @@ const submit = async () => {
 
                 <div>
                     <Label for="game_id">Game</Label>
-                    <Select
-                        id="game_id"
-                        v-model="form.game_id"
-                        :disabled="isLoading"
-                        required
-                    >
+                    <Select id="game_id" v-model="form.game_id" :disabled="isLoading" required>
                         <SelectTrigger id="game_id">
-                            <SelectValue
-                                :placeholder="league?.game || '-- Select Game --'"
-                            />
-
+                            <SelectValue :placeholder="league?.game || '-- Select Game --'"/>
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="">-- Select Game --</SelectItem>
@@ -242,7 +247,7 @@ const submit = async () => {
                         id="has_rating"
                         v-model="form.has_rating"
                         :disabled="isLoading"
-                        class="rounded border-gray-300 text-primary shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50"
+                        class="text-primary focus:border-primary focus:ring-primary focus:ring-opacity-50 rounded border-gray-300 shadow-sm focus:ring"
                         type="checkbox"
                     />
                     <Label for="has_rating">Enable Rating System</Label>
@@ -255,13 +260,13 @@ const submit = async () => {
                     <InputError :message="formErrors.details?.join(', ')" />
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <div>
                         <Label for="max_players">Maximum Players</Label>
                         <Input id="max_players" v-model.number="form.max_players" :disabled="isLoading" min="0" required
                                type="number"/>
                         <InputError :message="formErrors.max_players?.join(', ')"/>
-                        <p class="text-xs text-gray-500 mt-1">0 = unlimited</p>
+                        <p class="mt-1 text-xs text-gray-500">0 = unlimited</p>
                     </div>
 
                     <div>
@@ -273,8 +278,14 @@ const submit = async () => {
 
                     <div>
                         <Label for="invite_days_expire">Invite Expiry (Days)</Label>
-                        <Input id="invite_days_expire" v-model.number="form.invite_days_expire" :disabled="isLoading"
-                               min="1" required type="number"/>
+                        <Input
+                            id="invite_days_expire"
+                            v-model.number="form.invite_days_expire"
+                            :disabled="isLoading"
+                            min="1"
+                            required
+                            type="number"
+                        />
                         <InputError :message="formErrors.invite_days_expire?.join(', ')"/>
                     </div>
                 </div>
@@ -292,28 +303,25 @@ const submit = async () => {
                 </div>
 
                 <div v-if="form.has_rating" class="space-y-6">
-                    <RatingRuleEditor
-                        v-model="form.rating_change_for_winners_rule"
-                        :disabled="isLoading"
-                        :is-winners="true"
-                    />
+                    <RatingRuleEditor v-model="form.rating_change_for_winners_rule" :disabled="isLoading"
+                                      :is-winners="true"/>
 
-                    <RatingRuleEditor
-                        v-model="form.rating_change_for_losers_rule"
-                        :disabled="isLoading"
-                        :is-winners="false"
-                    />
+                    <RatingRuleEditor v-model="form.rating_change_for_losers_rule" :disabled="isLoading"
+                                      :is-winners="false"/>
                 </div>
 
                 <!-- Show error messages for rating rules -->
                 <InputError
                     v-if="formErrors.rating_change_for_winners_rule || formErrors.rating_change_for_losers_rule || formErrors.rating_rules"
-                    :message="(formErrors.rating_change_for_winners_rule || formErrors.rating_change_for_losers_rule || formErrors.rating_rules)?.join(', ')"/>
+                    :message="
+                        (formErrors.rating_change_for_winners_rule || formErrors.rating_change_for_losers_rule || formErrors.rating_rules)?.join(', ')
+                    "
+                />
             </CardContent>
 
             <CardFooter>
                 <Button :disabled="isLoading" type="submit">
-                    <Spinner v-if="isLoading" class="w-4 h-4 mr-2" />
+                    <Spinner v-if="isLoading" class="mr-2 h-4 w-4"/>
                     {{ isEditMode ? 'Save Changes' : 'Create League' }}
                 </Button>
             </CardFooter>

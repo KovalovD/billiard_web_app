@@ -1,9 +1,9 @@
 <script lang="ts" setup>
-import { reactive, ref, watch } from 'vue';
+import InputError from '@/Components/InputError.vue';
+import {Button, Input, Label, Modal, Spinner, Textarea} from '@/Components/ui';
 import { apiClient } from '@/lib/apiClient';
 import type { ApiError, League, Player, SendGamePayload } from '@/types/api';
-import { Button, Input, Label, Modal, Spinner, Textarea } from '@/Components/ui';
-import InputError from '@/Components/InputError.vue';
+import {reactive, ref, watch} from 'vue';
 
 interface Props {
     show: boolean;
@@ -25,15 +25,18 @@ const formErrors = ref<Record<string, string[]>>({});
 const generalError = ref<string | null>(null);
 
 // Reset form when the modal is opened or player changes
-watch(() => props.show, (newVal) => {
-    if (newVal) {
-        form.stream_url = '';
-        form.details = '';
-        form.club_id = null;
-        formErrors.value = {};
-        generalError.value = null;
-    }
-});
+watch(
+    () => props.show,
+    (newVal) => {
+        if (newVal) {
+            form.stream_url = '';
+            form.details = '';
+            form.club_id = null;
+            formErrors.value = {};
+            generalError.value = null;
+        }
+    },
+);
 
 const submitChallenge = async () => {
     if (!props.league || !props.targetPlayer) return;
@@ -50,7 +53,7 @@ const submitChallenge = async () => {
     try {
         await apiClient<boolean>(`/api/leagues/${props.league.id}/players/${props.targetPlayer.id}/send-match-game`, {
             method: 'post',
-            data: payload
+            data: payload,
         });
         emit('success', `Challenge sent to ${props.targetPlayer.name}!`);
         emit('close');
@@ -59,40 +62,53 @@ const submitChallenge = async () => {
         if (apiError.data?.errors) {
             formErrors.value = apiError.data.errors;
         } else {
-            generalError.value = apiError.message || "Failed to send challenge.";
+            generalError.value = apiError.message || 'Failed to send challenge.';
         }
         emit('error', apiError);
     } finally {
         isLoading.value = false;
     }
-}
+};
 </script>
 
 <template>
     <Modal :show="show" :title="`Challenge ${targetPlayer?.name ?? 'Player'}`" @close="$emit('close')">
         <form class="space-y-4" @submit.prevent="submitChallenge">
-            <div v-if="generalError" class="text-red-600 text-sm bg-red-100 p-3 rounded dark:bg-red-900/30 dark:text-red-400">
+            <div v-if="generalError"
+                 class="rounded bg-red-100 p-3 text-sm text-red-600 dark:bg-red-900/30 dark:text-red-400">
                 {{ generalError }}
             </div>
 
             <div>
                 <Label for="challenge_stream_url">Stream URL (Optional)</Label>
-                <Input id="challenge_stream_url" v-model="form.stream_url" :disabled="isLoading" class="mt-1" placeholder="https://twitch.tv/..." type="url" />
+                <Input
+                    id="challenge_stream_url"
+                    v-model="form.stream_url"
+                    :disabled="isLoading"
+                    class="mt-1"
+                    placeholder="https://twitch.tv/..."
+                    type="url"
+                />
                 <InputError :message="formErrors.stream_url?.join(', ')" class="mt-1" />
             </div>
 
             <div>
                 <Label for="challenge_details">Details (Optional)</Label>
-                <Textarea id="challenge_details" v-model="form.details" :disabled="isLoading" class="mt-1" placeholder="Any specific challenge details..." rows="3" />
+                <Textarea
+                    id="challenge_details"
+                    v-model="form.details"
+                    :disabled="isLoading"
+                    class="mt-1"
+                    placeholder="Any specific challenge details..."
+                    rows="3"
+                />
                 <InputError :message="formErrors.details?.join(', ')" class="mt-1" />
             </div>
 
-            <div class="pt-4 flex justify-end space-x-3">
-                <Button :disabled="isLoading" type="button" variant="outline" @click="$emit('close')">
-                    Cancel
-                </Button>
+            <div class="flex justify-end space-x-3 pt-4">
+                <Button :disabled="isLoading" type="button" variant="outline" @click="$emit('close')"> Cancel</Button>
                 <Button :disabled="isLoading" type="submit">
-                    <Spinner v-if="isLoading" class="w-4 h-4 mr-2" />
+                    <Spinner v-if="isLoading" class="mr-2 h-4 w-4"/>
                     Send Challenge
                 </Button>
             </div>

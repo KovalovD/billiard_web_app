@@ -13,19 +13,19 @@ export function useLeagueStatus() {
             return {
                 text: 'Ended',
                 class: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-                icon: CalendarIcon
+                icon: CalendarIcon,
             };
         } else if (started && started > now) {
             return {
                 text: 'Upcoming',
                 class: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-                icon: CalendarIcon
+                icon: CalendarIcon,
             };
         } else if (started && started <= now && (!finished || finished > now)) {
             return {
                 text: 'Active',
                 class: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-                icon: CalendarIcon
+                icon: CalendarIcon,
             };
         }
         return null;
@@ -68,7 +68,7 @@ export function useLeagueStatus() {
         if (finished && finished < now) {
             return 'This league has ended';
         } else if (started && started > now) {
-            return 'League hasn\'t started yet';
+            return "League hasn't started yet";
         } else if (league.max_players > 0 && (league.active_players || 0) >= league.max_players) {
             return `League is full (${league.active_players}/${league.max_players})`;
         } else if (!league.has_rating) {
