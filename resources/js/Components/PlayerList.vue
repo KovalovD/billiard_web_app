@@ -1,3 +1,4 @@
+// resources/js/Components/PlayerList.vue
 <script lang="ts" setup>
 import type {Rating} from '@/types/api';
 import PlayerListItem from './PlayerListItem.vue';
@@ -8,7 +9,8 @@ interface Props {
     leagueId: number;
     currentUserId: number | null;
     isAuthenticated: boolean;
-    authUserHaveOngoingMatch: boolean | undefined
+    authUserHaveOngoingMatch: boolean | undefined;
+    authUserIsConfirmed: boolean | undefined;
 }
 
 const props = defineProps<Props>();
@@ -39,6 +41,7 @@ const authUserPosition = computed((): number | null => {
             :playerRating="playerRating"
             :authUserHaveOngoingMatch="authUserHaveOngoingMatch"
             :authUserPosition="authUserPosition"
+            :authUserIsConfirmed="authUserIsConfirmed"
             @challenge="$emit('challenge', playerRating.player)"
         />
     </ul>

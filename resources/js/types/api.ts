@@ -143,7 +143,8 @@ export interface Rating {
     rating: number;
     position: number;
     is_active?: boolean;
-    user?: User; // Added based on Rating model relations
+    is_confirmed?: boolean;
+    user?: User;
     league_id?: number;
     user_id?: number;
     matches_count?: number;

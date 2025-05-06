@@ -30,11 +30,13 @@ readonly class MatchGamesService
             $sendGameDTO->league,
         );
 
-        // Check if both players are active and different
+        // Check if both players are active, confirmed, and different
         if (
             !$senderRating
             || !$receiverRating
             || $senderRating->id === $receiverRating->id
+            || !$senderRating->is_confirmed
+            || !$receiverRating->is_confirmed
         ) {
             return false;
         }
@@ -146,11 +148,30 @@ readonly class MatchGamesService
     {
         $userRating = $this->ratingService->getActiveRatingForUserLeague($user, $matchGame->league);
 
-        $isNotExpire = $matchGame->invitation_available_till === null || $matchGame->invitation_available_till->gt(now());
-        $isParticipate = $userRating && in_array($userRating->id,
-                [$matchGame->first_rating_id, $matchGame->second_rating_id], true);
+        // Check if both players still have active AND confirmed ratings in the league
+        $firstRatingValid = Rating::where('id', $matchGame->first_rating_id)
+            ->where('is_active', true)
+            ->where('is_confirmed', true)
+            ->exists()
+        ;
 
-        return $isNotExpire && $isParticipate;
+        $secondRatingValid = Rating::where('id', $matchGame->second_rating_id)
+            ->where('is_active', true)
+            ->where('is_confirmed', true)
+            ->exists()
+        ;
+
+        $isNotExpire = $matchGame->invitation_available_till === null ||
+            $matchGame->invitation_available_till->gt(now());
+
+        $isParticipate = $userRating &&
+            in_array($userRating->id, [$matchGame->first_rating_id, $matchGame->second_rating_id], true);
+
+        return $isNotExpire &&
+            $isParticipate &&
+            $firstRatingValid &&
+            $secondRatingValid &&
+            $userRating->is_confirmed;
     }
 
     /**

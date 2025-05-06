@@ -94,19 +94,19 @@ function makeAPICall(method, path, body = {}, query = {}, headers = {}, endpoint
     // We need this function because if you try to set an array or object directly to a URLSearchParams object,
     // you'll get [object Object] or the array.toString()
     function addItemToSearchParamsObject(key, value, searchParams) {
-            if (Array.isArray(value)) {
-                value.forEach((v, i) => {
-                    // Append {filters: [first, second]} as filters[0]=first&filters[1]second
-                    addItemToSearchParamsObject(key + '[' + i + ']', v, searchParams);
-                })
-            } else if (typeof value === 'object' && value !== null) {
-                Object.keys(value).forEach((i) => {
-                    // Append {filters: {name: first}} as filters[name]=first
-                    addItemToSearchParamsObject(key + '[' + i + ']', value[i], searchParams);
-                });
-            } else {
-                searchParams.append(key, value);
-            }
+        if (Array.isArray(value)) {
+            value.forEach((v, i) => {
+                // Append {filters: [first, second]} as filters[0]=first&filters[1]second
+                addItemToSearchParamsObject(key + '[' + i + ']', v, searchParams);
+            })
+        } else if (typeof value === 'object' && value !== null) {
+            Object.keys(value).forEach((i) => {
+                // Append {filters: {name: first}} as filters[name]=first
+                addItemToSearchParamsObject(key + '[' + i + ']', value[i], searchParams);
+            });
+        } else {
+            searchParams.append(key, value);
+        }
     }
 
     Object.keys(query)

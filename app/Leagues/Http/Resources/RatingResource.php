@@ -20,15 +20,17 @@ class RatingResource extends JsonResource
             'rating'            => $this->rating,
             'position'          => $this->position,
             'is_active'     => $this->is_active,
+            'is_confirmed'  => $this->is_confirmed,
             'league_id'     => $this->league_id,
             'user_id'       => $this->user_id,
             'hasOngoingMatches' => $this->ongoingMatches()->count() > 0,
             'matches_count' => $this->matches()->count(),
             'wins_count'    => $this->wins()->count(),
-            'loses_count'   => $this->loses()->count(),
+            'losses_count'  => $this->loses()->count(),
             'league'        => $this->whenLoaded('league', function () {
                 return new LeagueResource($this->league);
             }),
+            'created_at'    => $this->created_at,
         ];
     }
 }

@@ -27,7 +27,7 @@ endpoints:
     responses:
       -
         status: 200
-        content: '[{"id":1,"name":"B2B Pool League","picture":null,"details":null,"has_rating":true,"started_at":null,"finished_at":null,"start_rating":1000,"rating_change_for_winners_rule":[{"weak":25,"range":[0,50],"strong":25},{"weak":30,"range":[51,100],"strong":20},{"weak":35,"range":[101,200],"strong":15},{"weak":40,"range":[201,1000000],"strong":10}],"rating_change_for_losers_rule":[{"weak":-25,"range":[0,50],"strong":-25},{"weak":-30,"range":[51,100],"strong":-20},{"weak":-35,"range":[101,200],"strong":-15},{"weak":-40,"range":[201,1000000],"strong":-10}],"created_at":null,"updated_at":null,"matches_count":2,"game":"\u041f\u0443\u043b 8"},{"id":2,"name":"B2B Killer Pool League","picture":null,"details":null,"has_rating":true,"started_at":null,"finished_at":null,"start_rating":1000,"rating_change_for_winners_rule":[{"weak":25,"range":[0,50],"strong":25},{"weak":30,"range":[51,100],"strong":20},{"weak":35,"range":[101,200],"strong":15},{"weak":40,"range":[201,1000000],"strong":10}],"rating_change_for_losers_rule":[{"weak":-25,"range":[0,50],"strong":-25},{"weak":-30,"range":[51,100],"strong":-20},{"weak":-35,"range":[101,200],"strong":-15},{"weak":-40,"range":[201,1000000],"strong":-10}],"created_at":null,"updated_at":null,"matches_count":0,"game":"Killer pool"}]'
+        content: '[{"id":1,"name":"B2B Pool League","picture":null,"details":null,"has_rating":true,"started_at":null,"finished_at":null,"start_rating":1000,"rating_change_for_winners_rule":[{"weak":25,"range":[0,50],"strong":25},{"weak":30,"range":[51,100],"strong":20},{"weak":35,"range":[101,200],"strong":15},{"weak":40,"range":[201,1000000],"strong":10}],"rating_change_for_losers_rule":[{"weak":-25,"range":[0,50],"strong":-25},{"weak":-30,"range":[51,100],"strong":-20},{"weak":-35,"range":[101,200],"strong":-15},{"weak":-40,"range":[201,1000000],"strong":-10}],"created_at":null,"updated_at":null,"matches_count":0,"invite_days_expire":3,"max_players":0,"max_score":0,"active_players":2,"game_id":3,"game":"\u041f\u0443\u043b 8","game_type":"pool"},{"id":2,"name":"B2B Killer Pool League","picture":null,"details":null,"has_rating":true,"started_at":null,"finished_at":null,"start_rating":1000,"rating_change_for_winners_rule":[{"weak":25,"range":[0,50],"strong":25},{"weak":30,"range":[51,100],"strong":20},{"weak":35,"range":[101,200],"strong":15},{"weak":40,"range":[201,1000000],"strong":10}],"rating_change_for_losers_rule":[{"weak":-25,"range":[0,50],"strong":-25},{"weak":-30,"range":[51,100],"strong":-20},{"weak":-35,"range":[101,200],"strong":-15},{"weak":-40,"range":[201,1000000],"strong":-10}],"created_at":null,"updated_at":null,"matches_count":0,"invite_days_expire":3,"max_players":0,"max_score":0,"active_players":0,"game_id":5,"game":"Killer pool","game_type":"pool"}]'
         headers:
           cache-control: 'no-cache, private'
           content-type: application/json
@@ -78,109 +78,7 @@ endpoints:
     responses:
       -
         status: 200
-        content: '{"id":1,"name":"B2B Pool League","picture":null,"details":null,"has_rating":true,"started_at":null,"finished_at":null,"start_rating":1000,"rating_change_for_winners_rule":[{"weak":25,"range":[0,50],"strong":25},{"weak":30,"range":[51,100],"strong":20},{"weak":35,"range":[101,200],"strong":15},{"weak":40,"range":[201,1000000],"strong":10}],"rating_change_for_losers_rule":[{"weak":-25,"range":[0,50],"strong":-25},{"weak":-30,"range":[51,100],"strong":-20},{"weak":-35,"range":[101,200],"strong":-15},{"weak":-40,"range":[201,1000000],"strong":-10}],"created_at":null,"updated_at":null,"matches_count":2,"game":"\u041f\u0443\u043b 8"}'
-        headers:
-          cache-control: 'no-cache, private'
-          content-type: application/json
-          access-control-allow-origin: 'http://localhost:8001'
-          access-control-allow-credentials: 'true'
-        description: null
-        custom: []
-    responseFields: []
-    auth: []
-    controller: null
-    method: null
-    route: null
-    custom: []
-  -
-    httpMethods:
-      - GET
-    uri: 'api/leagues/{league_id}/players'
-    metadata:
-      groupName: Leagues
-      groupDescription: ''
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Get a list of players in a league'
-      description: ''
-      authenticated: false
-      custom: []
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-    urlParameters:
-      league_id:
-        name: league_id
-        description: 'The ID of the league.'
-        required: true
-        example: 1
-        type: integer
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        custom: []
-    cleanUrlParameters:
-      league_id: 1
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
-    responses:
-      -
-        status: 200
-        content: '[{"id":1,"player":{"id":1,"name":"Kovalov Dmytro"},"rating":1070,"position":1},{"id":2,"player":{"id":2,"name":"Nudik Volodymyr"},"rating":930,"position":2}]'
-        headers:
-          cache-control: 'no-cache, private'
-          content-type: application/json
-          access-control-allow-origin: 'http://localhost:8001'
-          access-control-allow-credentials: 'true'
-        description: null
-        custom: []
-    responseFields: []
-    auth: []
-    controller: null
-    method: null
-    route: null
-    custom: []
-  -
-    httpMethods:
-      - GET
-    uri: 'api/leagues/{league_id}/games'
-    metadata:
-      groupName: Leagues
-      groupDescription: ''
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Get a list of games in a league'
-      description: ''
-      authenticated: false
-      custom: []
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-    urlParameters:
-      league_id:
-        name: league_id
-        description: 'The ID of the league.'
-        required: true
-        example: 1
-        type: integer
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        custom: []
-    cleanUrlParameters:
-      league_id: 1
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
-    responses:
-      -
-        status: 200
-        content: '[{"id":4,"status":"completed","first_user_score":3,"second_user_score":5,"winner_rating_id":1,"loser_rating_id":2,"rating_change_for_winner":20,"rating_change_for_loser":-20,"stream_url":"http:\/\/www.bailey.biz\/quos-velit-et-fugiat-sunt-nihil-accusantium-harum.html","details":null,"invitation_sent_at":1745843824,"invitation_available_till":1746103024,"invitation_accepted_at":1745843858,"finished_at":1745844976,"created_at":"2025-04-28T12:37:04.000000Z","updated_at":"2025-04-28T12:56:16.000000Z","first_rating_id":2,"second_rating_id":1,"club":null,"firstPlayer":{"rating":{"id":2,"player":{"id":2,"name":"Nudik Volodymyr"},"rating":930,"position":2}},"secondPlayer":{"rating":{"id":1,"player":{"id":1,"name":"Kovalov Dmytro"},"rating":1070,"position":1}}},{"id":1,"status":"completed","first_user_score":0,"second_user_score":0,"winner_rating_id":2,"loser_rating_id":1,"rating_change_for_winner":0,"rating_change_for_loser":0,"stream_url":null,"details":null,"invitation_sent_at":1745842848,"invitation_available_till":1746102048,"invitation_accepted_at":null,"finished_at":1745843481,"created_at":"2025-04-28T12:20:48.000000Z","updated_at":"2025-04-28T12:31:21.000000Z","first_rating_id":2,"second_rating_id":1,"club":null,"firstPlayer":{"rating":{"id":2,"player":{"id":2,"name":"Nudik Volodymyr"},"rating":930,"position":2}},"secondPlayer":{"rating":{"id":1,"player":{"id":1,"name":"Kovalov Dmytro"},"rating":1070,"position":1}}}]'
+        content: '{"id":1,"name":"B2B Pool League","picture":null,"details":null,"has_rating":true,"started_at":null,"finished_at":null,"start_rating":1000,"rating_change_for_winners_rule":[{"weak":25,"range":[0,50],"strong":25},{"weak":30,"range":[51,100],"strong":20},{"weak":35,"range":[101,200],"strong":15},{"weak":40,"range":[201,1000000],"strong":10}],"rating_change_for_losers_rule":[{"weak":-25,"range":[0,50],"strong":-25},{"weak":-30,"range":[51,100],"strong":-20},{"weak":-35,"range":[101,200],"strong":-15},{"weak":-40,"range":[201,1000000],"strong":-10}],"created_at":null,"updated_at":null,"matches_count":0,"invite_days_expire":3,"max_players":0,"max_score":0,"active_players":2,"game_id":3,"game":"\u041f\u0443\u043b 8","game_type":"pool"}'
         headers:
           cache-control: 'no-cache, private'
           content-type: application/json
@@ -218,9 +116,9 @@ endpoints:
     bodyParameters:
       name:
         name: name
-        description: ''
+        description: 'Must not be greater than 255 characters.'
         required: true
-        example: architecto
+        example: b
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -238,9 +136,9 @@ endpoints:
         custom: []
       picture:
         name: picture
-        description: ''
+        description: 'Must be a valid URL. Must not be greater than 255 characters.'
         required: false
-        example: null
+        example: 'n'
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -250,7 +148,7 @@ endpoints:
         name: details
         description: ''
         required: false
-        example: null
+        example: architecto
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -270,7 +168,7 @@ endpoints:
         name: started_at
         description: 'Must be a valid date.'
         required: false
-        example: '2025-04-30T17:16:18'
+        example: '2025-05-06T19:11:02'
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -278,9 +176,9 @@ endpoints:
         custom: []
       finished_at:
         name: finished_at
-        description: 'Must be a valid date.'
+        description: 'Must be a valid date. Must be a date after or equal to <code>started_at</code>.'
         required: false
-        example: '2025-04-30T17:16:18'
+        example: '2051-05-30'
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -288,9 +186,9 @@ endpoints:
         custom: []
       start_rating:
         name: start_rating
-        description: ''
+        description: 'Must be at least 0.'
         required: true
-        example: 16
+        example: 39
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -315,15 +213,50 @@ endpoints:
         enumValues: []
         exampleWasSpecified: false
         nullable: true
+        custom: [ ]
+      max_players:
+        name: max_players
+        description: 'Must be at least 0.'
+        required: true
+        example: 39
+        type: integer
+        enumValues: [ ]
+        exampleWasSpecified: false
+        nullable: false
+        custom: [ ]
+      max_score:
+        name: max_score
+        description: 'Must be at least 0.'
+        required: true
+        example: 84
+        type: integer
+        enumValues: [ ]
+        exampleWasSpecified: false
+        nullable: false
+        custom: [ ]
+      invite_days_expire:
+        name: invite_days_expire
+        description: 'Must be at least 1.'
+        required: true
+        example: 66
+        type: integer
+        enumValues: [ ]
+        exampleWasSpecified: false
+        nullable: false
         custom: []
     cleanBodyParameters:
-      name: architecto
+      name: b
+      picture: 'n'
+      details: architecto
       has_rating: true
-      started_at: '2025-04-30T17:16:18'
-      finished_at: '2025-04-30T17:16:18'
-      start_rating: 16
+      started_at: '2025-05-06T19:11:02'
+      finished_at: '2051-05-30'
+      start_rating: 39
       rating_change_for_winners_rule: architecto
       rating_change_for_losers_rule: architecto
+      max_players: 39
+      max_score: 84
+      invite_days_expire: 66
     fileParameters: []
     responses: []
     responseFields: []
@@ -371,9 +304,9 @@ endpoints:
     bodyParameters:
       name:
         name: name
-        description: ''
+        description: 'Must not be greater than 255 characters.'
         required: true
-        example: architecto
+        example: b
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -391,9 +324,9 @@ endpoints:
         custom: []
       picture:
         name: picture
-        description: ''
+        description: 'Must be a valid URL. Must not be greater than 255 characters.'
         required: false
-        example: null
+        example: 'n'
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -403,7 +336,7 @@ endpoints:
         name: details
         description: ''
         required: false
-        example: null
+        example: architecto
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -413,7 +346,7 @@ endpoints:
         name: has_rating
         description: ''
         required: false
-        example: true
+        example: false
         type: boolean
         enumValues: []
         exampleWasSpecified: false
@@ -423,7 +356,7 @@ endpoints:
         name: started_at
         description: 'Must be a valid date.'
         required: false
-        example: '2025-04-30T17:16:18'
+        example: '2025-05-06T19:11:02'
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -431,9 +364,9 @@ endpoints:
         custom: []
       finished_at:
         name: finished_at
-        description: 'Must be a valid date.'
+        description: 'Must be a valid date. Must be a date after or equal to <code>started_at</code>.'
         required: false
-        example: '2025-04-30T17:16:18'
+        example: '2051-05-30'
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -441,9 +374,9 @@ endpoints:
         custom: []
       start_rating:
         name: start_rating
-        description: ''
+        description: 'Must be at least 0.'
         required: true
-        example: 16
+        example: 39
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -469,14 +402,49 @@ endpoints:
         exampleWasSpecified: false
         nullable: true
         custom: []
+      max_players:
+        name: max_players
+        description: 'Must be at least 0.'
+        required: true
+        example: 39
+        type: integer
+        enumValues: [ ]
+        exampleWasSpecified: false
+        nullable: false
+        custom: [ ]
+      max_score:
+        name: max_score
+        description: 'Must be at least 0.'
+        required: true
+        example: 84
+        type: integer
+        enumValues: [ ]
+        exampleWasSpecified: false
+        nullable: false
+        custom: [ ]
+      invite_days_expire:
+        name: invite_days_expire
+        description: 'Must be at least 1.'
+        required: true
+        example: 66
+        type: integer
+        enumValues: [ ]
+        exampleWasSpecified: false
+        nullable: false
+        custom: [ ]
     cleanBodyParameters:
-      name: architecto
-      has_rating: true
-      started_at: '2025-04-30T17:16:18'
-      finished_at: '2025-04-30T17:16:18'
-      start_rating: 16
+      name: b
+      picture: 'n'
+      details: architecto
+      has_rating: false
+      started_at: '2025-05-06T19:11:02'
+      finished_at: '2051-05-30'
+      start_rating: 39
       rating_change_for_winners_rule: architecto
       rating_change_for_losers_rule: architecto
+      max_players: 39
+      max_score: 84
+      invite_days_expire: 66
     fileParameters: []
     responses: []
     responseFields: []
@@ -533,3 +501,217 @@ endpoints:
     method: null
     route: null
     custom: []
+  - httpMethods:
+      - POST
+    uri: api/my-leagues-and-challenges
+    metadata:
+      groupName: Leagues
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Load leagues and challenges for logged user'
+      description: ''
+      authenticated: false
+      custom: [ ]
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: [ ]
+    cleanUrlParameters: [ ]
+    queryParameters: [ ]
+    cleanQueryParameters: [ ]
+    bodyParameters: [ ]
+    cleanBodyParameters: [ ]
+    fileParameters: [ ]
+    responses: [ ]
+    responseFields: [ ]
+    auth: [ ]
+    controller: null
+    method: null
+    route: null
+    custom: [ ]
+  - httpMethods:
+      - GET
+    uri: api/games
+    metadata:
+      groupName: Leagues
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: false
+      custom: [ ]
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: [ ]
+    cleanUrlParameters: [ ]
+    queryParameters: [ ]
+    cleanQueryParameters: [ ]
+    bodyParameters: [ ]
+    cleanBodyParameters: [ ]
+    fileParameters: [ ]
+    responses:
+      - status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: 'http://localhost:8001'
+          access-control-allow-credentials: 'true'
+        description: null
+        custom: [ ]
+    responseFields: [ ]
+    auth: [ ]
+    controller: null
+    method: null
+    route: null
+    custom: [ ]
+  - httpMethods:
+      - GET
+    uri: 'api/leagues/{league_id}/players'
+    metadata:
+      groupName: Leagues
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get a list of players in a league'
+      description: ''
+      authenticated: false
+      custom: [ ]
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      league_id:
+        name: league_id
+        description: 'The ID of the league.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: [ ]
+        exampleWasSpecified: false
+        nullable: false
+        custom: [ ]
+    cleanUrlParameters:
+      league_id: 1
+    queryParameters: [ ]
+    cleanQueryParameters: [ ]
+    bodyParameters: [ ]
+    cleanBodyParameters: [ ]
+    fileParameters: [ ]
+    responses:
+      - status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: 'http://localhost:8001'
+          access-control-allow-credentials: 'true'
+        description: null
+        custom: [ ]
+    responseFields: [ ]
+    auth: [ ]
+    controller: null
+    method: null
+    route: null
+    custom: [ ]
+  - httpMethods:
+      - GET
+    uri: 'api/leagues/{league_id}/games'
+    metadata:
+      groupName: Leagues
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get a list of games in a league'
+      description: ''
+      authenticated: false
+      custom: [ ]
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      league_id:
+        name: league_id
+        description: 'The ID of the league.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: [ ]
+        exampleWasSpecified: false
+        nullable: false
+        custom: [ ]
+    cleanUrlParameters:
+      league_id: 1
+    queryParameters: [ ]
+    cleanQueryParameters: [ ]
+    bodyParameters: [ ]
+    cleanBodyParameters: [ ]
+    fileParameters: [ ]
+    responses:
+      - status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: 'http://localhost:8001'
+          access-control-allow-credentials: 'true'
+        description: null
+        custom: [ ]
+    responseFields: [ ]
+    auth: [ ]
+    controller: null
+    method: null
+    route: null
+    custom: [ ]
+  - httpMethods:
+      - GET
+    uri: 'api/leagues/{league_id}/load-user-rating'
+    metadata:
+      groupName: Leagues
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: false
+      custom: [ ]
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      league_id:
+        name: league_id
+        description: 'The ID of the league.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: [ ]
+        exampleWasSpecified: false
+        nullable: false
+        custom: [ ]
+    cleanUrlParameters:
+      league_id: 1
+    queryParameters: [ ]
+    cleanQueryParameters: [ ]
+    bodyParameters: [ ]
+    cleanBodyParameters: [ ]
+    fileParameters: [ ]
+    responses:
+      - status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: 'http://localhost:8001'
+          access-control-allow-credentials: 'true'
+        description: null
+        custom: [ ]
+    responseFields: [ ]
+    auth: [ ]
+    controller: null
+    method: null
+    route: null
+    custom: [ ]
