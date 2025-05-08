@@ -1,41 +1,28 @@
 // resources/js/types/api.ts
 
-import type {AxiosResponse} from 'axios';
-
-// --- Auth Types ---
 export interface User {
     id: number;
     firstname: string;
     lastname: string;
+    name?: string;
     email: string;
-    phone: string;
-    email_verified_at?: string | null;
-    is_admin?: boolean;
-    name?: string; // Combined name field if provided by backend
-    created_at?: string;
-    updated_at?: string;
-    home_city?: City;
-    home_club?: Club;
-    token?: string; // JWT token may be included in registration/login responses
+    phone?: string;
+    is_admin: boolean;
+    avatar?: string;
+    home_city?: City | null;
+    home_club?: Club | null;
 }
 
-export interface RegisterCredentials {
-    firstname: string;
-    lastname: string;
-    email: string;
-    phone: string;
-    password: string;
-    password_confirmation: string;
-}
-
-// New interfaces to support cities and clubs
 export interface City {
     id: number;
     name: string;
-    country: {
-        id: number;
-        name: string;
-    };
+    country: Country;
+}
+
+export interface Country {
+    id: number;
+    name: string;
+    flag_path?: string;
 }
 
 export interface Club {
@@ -45,98 +32,35 @@ export interface Club {
     country?: string;
 }
 
-export interface LoginResponse {
-    user: User;
-    token: string;
-}
-
-export interface RegisterCredentials {
-    firstname: string;
-    lastname: string;
-    email: string;
-    phone: string;
-    password: string;
-    password_confirmation: string;
-    deviceName?: string;
-}
-
-export interface RegisterResponse {
-    user: User;
-    token?: string;
-    message?: string;
-}
-
-export interface LogoutResponse {
-    success: boolean;
-    message?: string;
-}
-
-// --- League & Game Types ---
 export interface Game {
     id: number;
     name: string;
-    type?: string;
+    type: string;
     is_multiplayer?: boolean;
-    rules?: string | null;
-    created_at?: string;
-    updated_at?: string;
-}
-
-export interface RatingRuleItem {
-    range: [number, number];
-    strong: number;
-    weak: number;
 }
 
 export interface League {
     id: number;
     name: string;
-    picture: string | null;
-    details: string | null;
-    has_rating: boolean;
-    started_at: string | null;
-    finished_at: string | null;
-    start_rating: number;
-    rating_change_for_winners_rule: RatingRuleItem[];
-    rating_change_for_losers_rule: RatingRuleItem[];
-    created_at: string | null;
-    updated_at: string | null;
-    matches_count?: number;
-    game_id: number | null;
-    game: string | null;
-    game_type: string | null;
-    game_multiplayer: boolean | false;
-    rating_type?: string;
-    max_players: number;
-    max_score: number;
-    invite_days_expire?: number;
-    active_players: number;
-}
-
-export interface LeaguePayload {
-    name: string;
-    game_id: number | null;
     picture?: string | null;
     details?: string | null;
-    has_rating?: boolean;
+    has_rating: boolean;
     started_at?: string | null;
     finished_at?: string | null;
     start_rating: number;
+    rating_change_for_winners_rule: any;
+    rating_change_for_losers_rule: any;
+    created_at?: string;
+    updated_at?: string;
+    matches_count?: number;
+    invite_days_expire: number;
     max_players: number;
     max_score: number;
-    invite_days_expire: number;
-    rating_change_for_winners_rule?: string | RatingRuleItem[];
-    rating_change_for_losers_rule?: string | RatingRuleItem[];
-}
-
-// --- Player & Rating Types ---
-export interface Player {
-    id: number;
-    name: string;
-    firstname?: string;
-    lastname?: string;
-    email?: string;
-    avatar?: string | null;
+    active_players?: number;
+    game_id?: number;
+    game?: string;
+    game_type?: string;
+    game_multiplayer?: boolean;
 }
 
 export interface Rating {
@@ -144,70 +68,61 @@ export interface Rating {
     player: Player;
     rating: number;
     position: number;
-    is_active?: boolean;
-    is_confirmed?: boolean;
-    user?: User;
-    league_id?: number;
-    user_id?: number;
-    matches_count?: number;
-    wins_count?: number;
-    losses_count?: number;
-    created_at?: string;
-    updated_at?: string;
+    is_active: boolean;
+    is_confirmed: boolean;
+    league_id: number;
+    user_id: number;
     hasOngoingMatches: boolean;
+    matches_count: number;
+    wins_count: number;
+    losses_count: number;
+    league?: League;
+    created_at?: string;
 }
 
-// --- Match Types ---
-export enum MatchStatus {
-    PENDING = 'pending',
-    IN_PROGRESS = 'in_progress',
-    MUST_BE_CONFIRMED = 'must_be_confirmed',
-    COMPLETED = 'completed',
+export interface Player {
+    id: number;
+    name: string;
 }
-
-// Update the MatchGame interface in resources/js/types/api.ts
 
 export interface MatchGame {
     id: number;
+    status: string;
     league_id: number;
-    game_id?: number | null;
+    stream_url?: string | null;
+    details?: string | null;
     first_rating_id: number;
     second_rating_id: number;
-    first_user_score?: number | null;
-    second_user_score?: number | null;
-    winner_rating_id?: number | null;
-    loser_rating_id?: number | null;
-    status: MatchStatus | string;
-    details?: string | null;
-    stream_url?: string | null;
-    club_id?: number | null;
-    invitation_sent_at?: string | null;
-    invitation_available_till?: string | null;
-    invitation_accepted_at?: string | null;
-    finished_at?: string | null;
-    created_at?: string;
-    updated_at?: string;
+    first_user_score: number;
+    second_user_score: number;
+    winner_rating_id?: number;
+    loser_rating_id?: number;
+    result_confirmed?: Array<{ key: number; score: string }>;
     rating_change_for_winner?: number;
     rating_change_for_loser?: number;
-
-    // New format for result_confirmed as an array of objects
-    result_confirmed?: Array<{
-        key: number;
-        score: string;
-    }>;
-
-    // Relations
-    firstRating?: Rating;
-    secondRating?: Rating;
-    firstPlayer?: { user: User; rating: Rating };
-    secondPlayer?: { user: User; rating: Rating };
-    game?: Game;
+    first_rating_before_game?: number;
+    second_rating_before_game?: number;
+    invitation_sent_at?: string;
+    invitation_available_till?: string;
+    invitation_accepted_at?: string;
+    finished_at?: string;
+    created_at?: string;
+    updated_at?: string;
+    club?: Club;
     league?: League;
+    firstPlayer?: {
+        user: User;
+        rating: Rating;
+    };
+    secondPlayer?: {
+        user: User;
+        rating: Rating;
+    };
 }
 
 export interface SendGamePayload {
-    stream_url?: string | null;
-    details?: string | null;
+    stream_url?: string;
+    details?: string;
     club_id?: number | null;
 }
 
@@ -216,78 +131,46 @@ export interface SendResultPayload {
     second_user_score: number;
 }
 
-// --- API Response/Error Types ---
-export interface ApiValidationError {
+export interface ApiError {
     message: string;
-    errors: Record<string, string[]>;
-}
-
-export interface ApiError extends Error {
-    response?: AxiosResponse;
     data?: {
-        message?: string;
         errors?: Record<string, string[]>;
-        [key: string]: any;
-    };
-    status?: number;
-    type?: 'auth_failure' | 'validation_error' | 'server_error' | 'network_error' | 'unknown';
-}
-
-export interface ApiCollectionResponse<T> {
-    data: T[];
-    links?: {
-        first: string | null;
-        last: string | null;
-        prev: string | null;
-        next: string | null;
-    };
-    meta?: {
-        current_page?: number;
-        from?: number;
-        last_page?: number;
-        links?: { url: string | null; label: string; active: boolean }[];
-        path?: string;
-        per_page?: number;
-        to?: number;
-        total?: number;
+        message?: string;
     };
 }
 
-export interface ApiItemResponse<T> {
-    data: T;
+export interface CreateMultiplayerGamePayload {
+    name: string;
+    max_players?: number | null;
+    registration_ends_at?: string | null;
+    allow_player_targeting?: boolean;
+    entrance_fee?: number;
+    first_place_percent?: number;
+    second_place_percent?: number;
+    grand_final_percent?: number;
+    penalty_fee?: number;
 }
 
-export interface PaginationParams {
-    page?: number;
-    per_page?: number;
-    sort_by?: string;
-    sort_dir?: 'asc' | 'desc';
-    search?: string;
-}
-
-// Add these interfaces to your existing api.ts file
-
-export interface UserStats {
-    total_matches: number;
-    completed_matches: number;
-    wins: number;
-    losses: number;
-    win_rate: number;
-    leagues_count: number;
-    highest_rating: number;
-    average_rating: number;
-}
-
-export interface GameTypeStats {
-    [key: string]: {
-        matches: number;
-        wins: number;
-        losses: number;
-        win_rate: number;
+export interface MultiplayerGamePlayer {
+    id: number;
+    user: User;
+    lives: number;
+    turn_order: number | null;
+    cards: {
+        skip_turn?: boolean;
+        pass_turn?: boolean;
+        hand_shot?: boolean;
     };
+    finish_position?: number | null;
+    eliminated_at?: string | null;
+    joined_at: string;
+    is_current_turn?: boolean;
+    rating_points?: number;
+    prize_amount?: number;
+    penalty_paid?: boolean;
+    time_fund_contribution?: number;
 }
 
-// For multiplayer games
 export interface MultiplayerGame {
     id: number;
     league_id: number;
@@ -302,27 +185,57 @@ export interface MultiplayerGame {
     created_at: string;
     active_players_count: number;
     total_players_count: number;
-    is_current_user_moderator: boolean;
-    moderator_user_id: number | null;
     current_turn_player_id: number | null;
     is_registration_open: boolean;
-    current_user_player: MultiplayerGamePlayer | null;
+    moderator_user_id: number | null;
+    allow_player_targeting: boolean;
+    is_current_user_moderator: boolean;
+    entrance_fee: number;
+    first_place_percent: number;
+    second_place_percent: number;
+    grand_final_percent: number;
+    penalty_fee: number;
+    financial_data?: {
+        entrance_fee: number;
+        total_prize_pool: number;
+        first_place_prize: number;
+        second_place_prize: number;
+        grand_final_fund: number;
+        penalty_fee: number;
+        time_fund_total: number;
+    };
+    current_user_player?: {
+        id: number;
+        lives: number;
+        turn_order: number | null;
+        cards: {
+            skip_turn?: boolean;
+            pass_turn?: boolean;
+            hand_shot?: boolean;
+        };
+        finish_position?: number | null;
+        eliminated_at?: string | null;
+        joined_at: string;
+        is_current_turn: boolean;
+        rating_points?: number;
+        prize_amount?: number;
+        penalty_paid?: boolean;
+    };
     active_players: MultiplayerGamePlayer[];
     eliminated_players: MultiplayerGamePlayer[];
 }
 
-export interface MultiplayerGamePlayer {
-    id: number;
-    user: User;
-    lives: number;
-    turn_order: number | null;
-    cards: {
-        skip_turn: boolean;
-        pass_turn: boolean;
-        hand_shot: boolean;
-    };
-    finish_position?: number;
-    joined_at: string;
-    eliminated_at: string | null;
-    is_current_turn?: boolean;
+export interface RegisterCredentials {
+    firstname: string;
+    lastname: string;
+    email: string;
+    phone: string;
+    password: string;
+    password_confirmation: string;
+}
+
+export interface LoginCredentials {
+    email: string;
+    password: string;
+    remember?: boolean;
 }

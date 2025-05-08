@@ -1,57 +1,54 @@
 // resources/js/composables/useMultiplayerGames.ts
-
-import {apiClient} from '@/lib/apiClient';
-import type {MultiplayerGame} from '@/types/api';
 import {ref} from 'vue';
+import {apiClient} from '@/lib/apiClient';
+import type {CreateMultiplayerGamePayload, MultiplayerGame} from '@/types/api';
 
 export function useMultiplayerGames() {
     const isLoading = ref(false);
     const error = ref<string | null>(null);
 
-    // Fetch all multiplayer games for a league
-    const getMultiplayerGames = async (leagueId: number | string) => {
+    // Get all multiplayer games for a league
+    const getMultiplayerGames = async (leagueId: number | string): Promise<MultiplayerGame[]> => {
         isLoading.value = true;
         error.value = null;
 
         try {
             return await apiClient<MultiplayerGame[]>(`/api/leagues/${leagueId}/multiplayer-games`);
         } catch (err: any) {
-            error.value = err.message || 'Failed to fetch multiplayer games';
-            throw err;
+            error.value = err.message || 'Failed to load multiplayer games';
+            return [];
         } finally {
             isLoading.value = false;
         }
     };
 
-    // Fetch a specific multiplayer game
-    const getMultiplayerGame = async (leagueId: number | string, gameId: number | string) => {
+    // Get a specific multiplayer game
+    const getMultiplayerGame = async (leagueId: number | string, gameId: number | string): Promise<MultiplayerGame> => {
         isLoading.value = true;
         error.value = null;
 
         try {
             return await apiClient<MultiplayerGame>(`/api/leagues/${leagueId}/multiplayer-games/${gameId}`);
         } catch (err: any) {
-            error.value = err.message || 'Failed to fetch multiplayer game';
+            error.value = err.message || 'Failed to load multiplayer game';
             throw err;
         } finally {
             isLoading.value = false;
         }
     };
 
-    // Create a new multiplayer game (admin only)
-    const createMultiplayerGame = async (leagueId: number | string, data: {
-        name: string;
-        max_players?: number;
-        registration_ends_at?: string;
-        allow_player_targeting?: boolean;
-    }) => {
+    // Create a new multiplayer game
+    const createMultiplayerGame = async (
+        leagueId: number | string,
+        payload: CreateMultiplayerGamePayload
+    ): Promise<MultiplayerGame> => {
         isLoading.value = true;
         error.value = null;
 
         try {
             return await apiClient<MultiplayerGame>(`/api/leagues/${leagueId}/multiplayer-games`, {
                 method: 'post',
-                data,
+                data: payload
             });
         } catch (err: any) {
             error.value = err.message || 'Failed to create multiplayer game';
@@ -62,13 +59,13 @@ export function useMultiplayerGames() {
     };
 
     // Join a multiplayer game
-    const joinMultiplayerGame = async (leagueId: number | string, gameId: number | string) => {
+    const joinMultiplayerGame = async (leagueId: number | string, gameId: number | string): Promise<MultiplayerGame> => {
         isLoading.value = true;
         error.value = null;
 
         try {
             return await apiClient<MultiplayerGame>(`/api/leagues/${leagueId}/multiplayer-games/${gameId}/join`, {
-                method: 'post',
+                method: 'post'
             });
         } catch (err: any) {
             error.value = err.message || 'Failed to join multiplayer game';
@@ -79,13 +76,13 @@ export function useMultiplayerGames() {
     };
 
     // Leave a multiplayer game
-    const leaveMultiplayerGame = async (leagueId: number | string, gameId: number | string) => {
+    const leaveMultiplayerGame = async (leagueId: number | string, gameId: number | string): Promise<MultiplayerGame> => {
         isLoading.value = true;
         error.value = null;
 
         try {
             return await apiClient<MultiplayerGame>(`/api/leagues/${leagueId}/multiplayer-games/${gameId}/leave`, {
-                method: 'post',
+                method: 'post'
             });
         } catch (err: any) {
             error.value = err.message || 'Failed to leave multiplayer game';
@@ -96,13 +93,13 @@ export function useMultiplayerGames() {
     };
 
     // Start a multiplayer game (admin only)
-    const startMultiplayerGame = async (leagueId: number | string, gameId: number | string) => {
+    const startMultiplayerGame = async (leagueId: number | string, gameId: number | string): Promise<MultiplayerGame> => {
         isLoading.value = true;
         error.value = null;
 
         try {
             return await apiClient<MultiplayerGame>(`/api/leagues/${leagueId}/multiplayer-games/${gameId}/start`, {
-                method: 'post',
+                method: 'post'
             });
         } catch (err: any) {
             error.value = err.message || 'Failed to start multiplayer game';
@@ -113,13 +110,13 @@ export function useMultiplayerGames() {
     };
 
     // Cancel a multiplayer game (admin only)
-    const cancelMultiplayerGame = async (leagueId: number | string, gameId: number | string) => {
+    const cancelMultiplayerGame = async (leagueId: number | string, gameId: number | string): Promise<void> => {
         isLoading.value = true;
         error.value = null;
 
         try {
-            return await apiClient(`/api/leagues/${leagueId}/multiplayer-games/${gameId}/cancel`, {
-                method: 'post',
+            await apiClient(`/api/leagues/${leagueId}/multiplayer-games/${gameId}/cancel`, {
+                method: 'post'
             });
         } catch (err: any) {
             error.value = err.message || 'Failed to cancel multiplayer game';
@@ -129,7 +126,7 @@ export function useMultiplayerGames() {
         }
     };
 
-    // Perform a game action
+    // Perform a game action (increment/decrement lives, use card, record turn)
     const performGameAction = async (
         leagueId: number | string,
         gameId: number | string,
@@ -137,19 +134,20 @@ export function useMultiplayerGames() {
         targetUserId?: number,
         cardType?: 'skip_turn' | 'pass_turn' | 'hand_shot',
         actingUserId?: number
-    ) => {
+    ): Promise<MultiplayerGame> => {
         isLoading.value = true;
         error.value = null;
 
         try {
-            const data: any = {action};
-            if (targetUserId) data.target_user_id = targetUserId;
-            if (cardType) data.card_type = cardType;
-            if (actingUserId) data.acting_user_id = actingUserId;
+            const payload: Record<string, any> = {action};
+
+            if (targetUserId) payload.target_user_id = targetUserId;
+            if (cardType) payload.card_type = cardType;
+            if (actingUserId) payload.acting_user_id = actingUserId;
 
             return await apiClient<MultiplayerGame>(`/api/leagues/${leagueId}/multiplayer-games/${gameId}/action`, {
                 method: 'post',
-                data,
+                data: payload
             });
         } catch (err: any) {
             error.value = err.message || 'Failed to perform game action';
@@ -159,19 +157,19 @@ export function useMultiplayerGames() {
         }
     };
 
-    // Finish game and set final positions
+    // Finish a game and set final positions
     const finishGame = async (
         leagueId: number | string,
         gameId: number | string,
         positions: { player_id: number, position: number }[]
-    ) => {
+    ): Promise<MultiplayerGame> => {
         isLoading.value = true;
         error.value = null;
 
         try {
             return await apiClient<MultiplayerGame>(`/api/leagues/${leagueId}/multiplayer-games/${gameId}/finish`, {
                 method: 'post',
-                data: {positions},
+                data: {positions}
             });
         } catch (err: any) {
             error.value = err.message || 'Failed to finish game';
@@ -181,22 +179,58 @@ export function useMultiplayerGames() {
         }
     };
 
-    // Set a game moderator
+    // Set a user as game moderator
     const setGameModerator = async (
         leagueId: number | string,
         gameId: number | string,
         userId: number
-    ) => {
+    ): Promise<MultiplayerGame> => {
         isLoading.value = true;
         error.value = null;
 
         try {
             return await apiClient<MultiplayerGame>(`/api/leagues/${leagueId}/multiplayer-games/${gameId}/set-moderator`, {
                 method: 'post',
-                data: {user_id: userId},
+                data: {user_id: userId}
             });
         } catch (err: any) {
             error.value = err.message || 'Failed to set game moderator';
+            throw err;
+        } finally {
+            isLoading.value = false;
+        }
+    };
+
+    // Get financial summary
+    const getFinancialSummary = async (
+        leagueId: number | string,
+        gameId: number | string
+    ): Promise<any> => {
+        isLoading.value = true;
+        error.value = null;
+
+        try {
+            return await apiClient<any>(`/api/leagues/${leagueId}/multiplayer-games/${gameId}/financial-summary`);
+        } catch (err: any) {
+            error.value = err.message || 'Failed to get financial summary';
+            throw err;
+        } finally {
+            isLoading.value = false;
+        }
+    };
+
+    // Get rating summary
+    const getRatingSummary = async (
+        leagueId: number | string,
+        gameId: number | string
+    ): Promise<any> => {
+        isLoading.value = true;
+        error.value = null;
+
+        try {
+            return await apiClient<any>(`/api/leagues/${leagueId}/multiplayer-games/${gameId}/rating-summary`);
+        } catch (err: any) {
+            error.value = err.message || 'Failed to get rating summary';
             throw err;
         } finally {
             isLoading.value = false;
@@ -216,5 +250,7 @@ export function useMultiplayerGames() {
         performGameAction,
         finishGame,
         setGameModerator,
+        getFinancialSummary,
+        getRatingSummary
     };
 }

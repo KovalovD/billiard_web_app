@@ -3,7 +3,7 @@
 import InputError from '@/Components/InputError.vue';
 import {Button, Input, Label, Modal, Spinner} from '@/Components/ui';
 import {useMultiplayerGames} from '@/composables/useMultiplayerGames';
-import {computed, ref} from 'vue';
+import {computed, ref, watch} from 'vue';
 
 interface Props {
     show: boolean;
@@ -20,14 +20,39 @@ const form = ref({
     max_players: null as number | null,
     registration_ends_at: '' as string | null,
     allow_player_targeting: false,
+    entrance_fee: 300,
+    first_place_percent: 60,
+    second_place_percent: 20,
+    grand_final_percent: 20,
+    penalty_fee: 50,
 });
 
 const validationErrors = ref<Record<string, string[]>>({});
 
 const formattedError = computed(() => {
     if (!error.value) return null;
-
     return 'An error occurred while creating the game';
+});
+
+// Check if percentages add up to 100%
+const percentageSum = computed(() => {
+    return (form.value.first_place_percent || 0) +
+        (form.value.second_place_percent || 0) +
+        (form.value.grand_final_percent || 0);
+});
+
+const percentageError = computed(() => {
+    if (percentageSum.value !== 100) {
+        return 'Prize percentages must add up to 100%';
+    }
+    return null;
+});
+
+// Reset form when modal opens/closes
+watch(() => props.show, (newVal) => {
+    if (newVal) {
+        resetForm();
+    }
 });
 
 const resetForm = () => {
@@ -36,27 +61,48 @@ const resetForm = () => {
         max_players: null,
         registration_ends_at: null,
         allow_player_targeting: false,
+        entrance_fee: 300,
+        first_place_percent: 60,
+        second_place_percent: 20,
+        grand_final_percent: 20,
+        penalty_fee: 50,
     };
     validationErrors.value = {};
 };
 
 const handleSubmit = async () => {
     try {
+        // Validate percentages
+        if (percentageSum.value !== 100) {
+            validationErrors.value = {
+                ...validationErrors.value,
+                prize_distribution: ['Prize percentages must add up to 100%']
+            };
+            return;
+        }
+
         validationErrors.value = {};
         const gameData = {
             name: form.value.name,
             max_players: form.value.max_players,
             registration_ends_at: form.value.registration_ends_at,
             allow_player_targeting: form.value.allow_player_targeting,
+            entrance_fee: form.value.entrance_fee,
+            first_place_percent: form.value.first_place_percent,
+            second_place_percent: form.value.second_place_percent,
+            grand_final_percent: form.value.grand_final_percent,
+            penalty_fee: form.value.penalty_fee,
         };
 
         const newGame = await createMultiplayerGame(props.leagueId, gameData);
         resetForm();
         emit('created', newGame);
         emit('close');
-        // eslint-disable-next-line
     } catch (err) {
         // Error is handled by the composable and displayed in the form
+        if (err instanceof Error && (err as any).data?.errors) {
+            validationErrors.value = (err as any).data.errors;
+        }
     }
 };
 </script>
@@ -128,9 +174,86 @@ const handleSubmit = async () => {
                 <InputError :message="validationErrors.allow_player_targeting?.join(', ')"/>
             </div>
 
+            <h3 class="mt-4 font-medium">Financial Settings</h3>
+
+            <div class="space-y-2">
+                <Label for="entrance_fee">Entrance Fee</Label>
+                <Input
+                    id="entrance_fee"
+                    v-model.number="form.entrance_fee"
+                    :disabled="isLoading"
+                    class="mt-1"
+                    min="0"
+                    type="number"
+                />
+                <InputError :message="validationErrors.entrance_fee?.join(', ')"/>
+            </div>
+
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div class="space-y-2">
+                    <Label for="first_place_percent">1st Place %</Label>
+                    <Input
+                        id="first_place_percent"
+                        v-model.number="form.first_place_percent"
+                        :disabled="isLoading"
+                        class="mt-1"
+                        max="100"
+                        min="0"
+                        type="number"
+                    />
+                </div>
+
+                <div class="space-y-2">
+                    <Label for="second_place_percent">2nd Place %</Label>
+                    <Input
+                        id="second_place_percent"
+                        v-model.number="form.second_place_percent"
+                        :disabled="isLoading"
+                        class="mt-1"
+                        max="100"
+                        min="0"
+                        type="number"
+                    />
+                </div>
+
+                <div class="space-y-2">
+                    <Label for="grand_final_percent">Grand Final %</Label>
+                    <Input
+                        id="grand_final_percent"
+                        v-model.number="form.grand_final_percent"
+                        :disabled="isLoading"
+                        class="mt-1"
+                        max="100"
+                        min="0"
+                        type="number"
+                    />
+                </div>
+            </div>
+
+            <div v-if="percentageError" class="mt-1 text-sm text-red-600">
+                {{ percentageError }}
+            </div>
+            <InputError :message="validationErrors.prize_distribution?.join(', ')"/>
+
+            <div class="space-y-2">
+                <Label for="penalty_fee">Penalty Fee</Label>
+                <Input
+                    id="penalty_fee"
+                    v-model.number="form.penalty_fee"
+                    :disabled="isLoading"
+                    class="mt-1"
+                    min="0"
+                    type="number"
+                />
+                <p class="text-xs text-gray-500">
+                    First half of eliminated players pay this fee, which goes to the time fund.
+                </p>
+                <InputError :message="validationErrors.penalty_fee?.join(', ')"/>
+            </div>
+
             <div class="flex justify-end space-x-3 pt-4">
                 <Button :disabled="isLoading" type="button" variant="outline" @click="emit('close')"> Cancel</Button>
-                <Button :disabled="isLoading" type="submit">
+                <Button :disabled="isLoading || percentageError !== null" type="submit">
                     <Spinner v-if="isLoading" class="mr-2 h-4 w-4"/>
                     Create Game
                 </Button>
