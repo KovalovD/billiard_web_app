@@ -106,7 +106,8 @@ async function submit() {
                     </Button>
                     <p class="text-center text-sm text-gray-600 dark:text-gray-400">
                         Don't have an account?
-                        <a href="/register" class="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">
+                        <a :href="route('register')"
+                           class="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">
                             Register </a>
                     </p>
                 </CardFooter>

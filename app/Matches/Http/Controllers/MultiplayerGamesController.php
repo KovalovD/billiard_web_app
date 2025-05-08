@@ -16,6 +16,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
+use Throwable;
 
 class MultiplayerGamesController
 {
@@ -96,7 +98,7 @@ class MultiplayerGamesController
     }
 
     // Start the game (admin only)
-    public function start(Request $request, League $league, MultiplayerGame $multiplayerGame): JsonResponse
+    public function start(League $league, MultiplayerGame $multiplayerGame): JsonResponse
     {
         $success = $multiplayerGame->startGame();
 
@@ -109,6 +111,10 @@ class MultiplayerGamesController
     }
 
     // Perform game actions (update lives, use cards)
+
+    /**
+     * @throws Throwable
+     */
     public function performAction(
         PerformGameActionRequest $request,
         League $league,
@@ -163,12 +169,15 @@ class MultiplayerGamesController
             DB::commit();
             $multiplayerGame->load(['players.user']);
             return response()->json(new MultiplayerGameResource($multiplayerGame));
-        } catch (Exception $e) {
-            DB::rollBack();
-            return response()->json(['error' => $e->getMessage()], 400);
+        } catch (Exception|Throwable $e) {
         }
+        DB::rollBack();
+        return response()->json(['error' => $e->getMessage()], 400);
     }
 
+    /**
+     * @throws Exception
+     */
     private function handleIncrementLives(
         MultiplayerGame $game,
         MultiplayerGamePlayer $actingPlayer,
@@ -176,11 +185,13 @@ class MultiplayerGamesController
     ): void {
         // Admin/moderator can increment anyone's lives
         // Regular players only themselves or if targeting is explicitly allowed
-        if (!Auth::user()->is_admin
+        if (
+            $actingPlayer->user_id !== $targetUserId
+            && !$game->allow_player_targeting
+            && !Auth::user()->is_admin
             && Auth::id() !== $game->moderator_user_id
-            && $actingPlayer->user_id !== $targetUserId
-            && !$game->allow_player_targeting) {
-            throw new Exception('You can only increment your own lives.');
+        ) {
+            throw new RuntimeException('You can only increment your own lives.');
         }
 
         $targetPlayer = $targetUserId
@@ -188,7 +199,7 @@ class MultiplayerGamesController
             : $actingPlayer;
 
         if (!$targetPlayer) {
-            throw new Exception('Target player not found.');
+            throw new RuntimeException('Target player not found.');
         }
 
         $targetPlayer->incrementLives();
@@ -213,11 +224,13 @@ class MultiplayerGamesController
     ): void {
         // Admin/moderator can decrement anyone's lives
         // Regular players only themselves or if targeting is explicitly allowed
-        if (!Auth::user()->is_admin
+        if (
+            $actingPlayer->user_id !== $targetUserId
+            && !$game->allow_player_targeting
+            && !Auth::user()->is_admin
             && Auth::id() !== $game->moderator_user_id
-            && $actingPlayer->user_id !== $targetUserId
-            && !$game->allow_player_targeting) {
-            throw new Exception('You can only decrement your own lives.');
+        ) {
+            throw new RuntimeException('You can only decrement your own lives.');
         }
 
         $targetPlayer = $targetUserId
@@ -225,7 +238,7 @@ class MultiplayerGamesController
             : $actingPlayer;
 
         if (!$targetPlayer) {
-            throw new Exception('Target player not found.');
+            throw new RuntimeException('Target player not found.');
         }
 
         $oldLives = $targetPlayer->lives;
@@ -253,22 +266,21 @@ class MultiplayerGamesController
         ?int $targetUserId,
     ): void {
         if (!in_array($cardType, ['skip_turn', 'pass_turn', 'hand_shot'])) {
-            throw new Exception('Invalid card type.');
+            throw new RuntimeException('Invalid card type.');
         }
 
         if (!$actingPlayer->hasCard($cardType)) {
-            throw new Exception('Player does not have this card.');
+            throw new RuntimeException('Player does not have this card.');
         }
 
-        $targetPlayer = null;
         if ($cardType === 'pass_turn' && !$targetUserId) {
-            throw new Exception('Target player is required for pass turn card.');
+            throw new RuntimeException('Target player is required for pass turn card.');
         }
 
         if ($targetUserId) {
             $targetPlayer = $game->players()->where('user_id', $targetUserId)->first();
             if (!$targetPlayer || $targetPlayer->eliminated_at) {
-                throw new Exception('Target player not found or eliminated.');
+                throw new RuntimeException('Target player not found or eliminated.');
             }
         }
 
@@ -300,7 +312,7 @@ class MultiplayerGamesController
     }
 
     // Leave a game (if it's in registration status)
-    public function leave(Request $request, League $league, MultiplayerGame $multiplayerGame): JsonResponse
+    public function leave(League $league, MultiplayerGame $multiplayerGame): JsonResponse
     {
         $user = Auth::user();
 
@@ -321,7 +333,7 @@ class MultiplayerGamesController
     }
 
     // Cancel a game (admin only, if it's in registration status)
-    public function cancel(Request $request, League $league, MultiplayerGame $multiplayerGame): JsonResponse
+    public function cancel(League $league, MultiplayerGame $multiplayerGame): JsonResponse
     {
         if ($multiplayerGame->status !== 'registration') {
             return response()->json(['error' => 'Cannot cancel a game that has already started.'], 400);
@@ -333,6 +345,10 @@ class MultiplayerGamesController
     }
 
     // Manually finish game and set final positions
+
+    /**
+     * @throws Throwable
+     */
     public function finishGame(
         FinishGameRequest $request,
         League $league,
@@ -352,7 +368,7 @@ class MultiplayerGamesController
             foreach ($positions as $position) {
                 $player = $activePlayers->firstWhere('id', $position['player_id']);
                 if (!$player) {
-                    throw new Exception("Player with ID {$position['player_id']} not found or already eliminated.");
+                    throw new RuntimeException("Player with ID {$position['player_id']} not found or already eliminated.");
                 }
 
                 $player->update([
@@ -382,10 +398,10 @@ class MultiplayerGamesController
 
             $multiplayerGame->load(['players.user']);
             return response()->json(new MultiplayerGameResource($multiplayerGame));
-        } catch (Exception $e) {
-            DB::rollBack();
-            return response()->json(['error' => $e->getMessage()], 400);
+        } catch (Exception|Throwable $e) {
         }
+        DB::rollBack();
+        return response()->json(['error' => $e->getMessage()], 400);
     }
 
     // Set a user as game moderator (can perform actions for all players)

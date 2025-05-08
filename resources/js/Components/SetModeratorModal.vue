@@ -2,7 +2,7 @@
 <script lang="ts" setup>
 import {Button, Modal, Spinner} from '@/Components/ui';
 import type {MultiplayerGame} from '@/types/api';
-import {computed, ref, watch} from 'vue';
+import {ref, watch} from 'vue';
 
 interface Props {
     show: boolean;
@@ -14,12 +14,6 @@ const emit = defineEmits(['close', 'set-moderator']);
 
 const isLoading = ref(false);
 const selectedUserId = ref<number | null>(null);
-
-// When modal opens, set the current moderator as selected
-const currentModerator = computed(() => {
-    if (!props.game) return null;
-    return props.game.active_players.find(p => p.user.id === props.game?.moderator_user_id);
-});
 
 // Reset selection when modal is opened
 const onShowChange = () => {
