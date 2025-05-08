@@ -65,6 +65,21 @@ Route::middleware('auth')->group(function () {
         ]);
     })->name('leagues.show')->where('league', '[0-9]+');
 
+    Route::prefix('leagues/{leagueId}/multiplayer-games')->group(function () {
+        Route::get('/', function ($leagueId) {
+            return Inertia::render('Leagues/MultiplayerGames/Index', [
+                'leagueId' => $leagueId,
+            ]);
+        })->name('leagues.multiplayer-games.index');
+
+        Route::get('/{gameId}', function ($leagueId, $gameId) {
+            return Inertia::render('Leagues/MultiplayerGames/Show', [
+                'leagueId' => $leagueId,
+                'gameId'   => $gameId,
+            ]);
+        })->name('leagues.multiplayer-games.show');
+    });
+
     // --- Admin routes ---
     Route::middleware(AdminMiddleware::class)->prefix('admin')->group(function () {
         Route::group(['prefix' => 'leagues'], static function () {

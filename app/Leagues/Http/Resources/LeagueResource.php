@@ -38,6 +38,9 @@ class LeagueResource extends JsonResource
             'game_type'          => $this->whenLoaded('game', function () {
                 return $this->game->type;
             }),
+            'game_multiplayer'   => $this->whenLoaded('game', function () {
+                return $this->game->is_multiplayer;
+            }),
         ];
     }
 }
