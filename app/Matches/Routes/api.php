@@ -14,6 +14,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/{multiplayerGame}/action', [MultiplayerGamesController::class, 'performAction']);
         Route::post('/{multiplayerGame}/finish', [MultiplayerGamesController::class, 'finishGame']);
         Route::post('/{multiplayerGame}/set-moderator', [MultiplayerGamesController::class, 'setModerator']);
+        Route::get('/{multiplayerGame}/financial-summary', [MultiplayerGamesController::class, 'getFinancialSummary']);
+        Route::get('/{multiplayerGame}/rating-summary', [MultiplayerGamesController::class, 'getRatingSummary']);
 
         // Admin-only routes
         Route::middleware(AdminMiddleware::class)->group(function () {

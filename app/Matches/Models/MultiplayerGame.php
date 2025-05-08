@@ -23,6 +23,12 @@ class MultiplayerGame extends Model
         'completed_at',
         'moderator_user_id',
         'allow_player_targeting',
+        'entrance_fee',
+        'first_place_percent',
+        'second_place_percent',
+        'grand_final_percent',
+        'penalty_fee',
+        'prize_pool',
     ];
 
     protected $casts = [
@@ -30,6 +36,7 @@ class MultiplayerGame extends Model
         'started_at'           => 'datetime',
         'completed_at'         => 'datetime',
         'allow_player_targeting' => 'boolean',
+        'prize_pool' => 'array',
     ];
 
     public function league(): BelongsTo
@@ -45,6 +52,16 @@ class MultiplayerGame extends Model
     public function players(): HasMany
     {
         return $this->hasMany(MultiplayerGamePlayer::class);
+    }
+
+    public function logs(): HasMany
+    {
+        return $this->hasMany(MultiplayerGameLog::class);
+    }
+
+    public function activePlayers(): HasMany
+    {
+        return $this->players()->whereNull('eliminated_at');
     }
 
     public function canJoin(User $user): bool
@@ -169,16 +186,6 @@ class MultiplayerGame extends Model
         return ($lastPlayerIndex + 1) % $activePlayers->count();
     }
 
-    public function activePlayers(): HasMany
-    {
-        return $this->players()->whereNull('eliminated_at');
-    }
-
-    public function logs(): HasMany
-    {
-        return $this->hasMany(MultiplayerGameLog::class);
-    }
-
     public function eliminatePlayer(MultiplayerGamePlayer $player): void
     {
         $activePlayersCount = $this->activePlayers()->count();
@@ -208,5 +215,90 @@ class MultiplayerGame extends Model
     public function isUserModerator(User $user): bool
     {
         return $user->id === $this->moderator_user_id || $user->is_admin;
+    }
+
+    /**
+     * Calculate prize pool when game is finished
+     */
+    public function calculatePrizes(): void
+    {
+        if ($this->status !== 'completed') {
+            return;
+        }
+
+        $totalPlayers = $this->players()->count();
+        if ($totalPlayers < 2) {
+            return;
+        }
+
+        // Calculate total prize pool
+        $totalPrizePool = $totalPlayers * $this->entrance_fee;
+
+        // Calculate prize amounts
+        $firstPlacePrize = (int) ($totalPrizePool * ($this->first_place_percent / 100));
+        $secondPlacePrize = (int) ($totalPrizePool * ($this->second_place_percent / 100));
+        $grandFinalFund = $totalPrizePool - $firstPlacePrize - $secondPlacePrize;
+
+        // Save prize pool info
+        $this->prize_pool = [
+            'total'            => $totalPrizePool,
+            'first_place'      => $firstPlacePrize,
+            'second_place'     => $secondPlacePrize,
+            'grand_final_fund' => $grandFinalFund,
+            'players_count'    => $totalPlayers,
+        ];
+        $this->save();
+
+        // Assign prizes to players
+        $winner = $this->players()->where('finish_position', 1)->first();
+        $secondPlace = $this->players()->where('finish_position', 2)->first();
+
+        if ($winner) {
+            $winner->prize_amount = $firstPlacePrize;
+            $winner->save();
+        }
+
+        if ($secondPlace) {
+            $secondPlace->prize_amount = $secondPlacePrize;
+            $secondPlace->save();
+        }
+
+        // Calculate penalty fees
+        $penaltyCount = (int) floor($totalPlayers / 2);
+        $penaltyPlayers = $this
+            ->players()
+            ->orderByDesc('finish_position')
+            ->limit($penaltyCount)
+            ->get()
+        ;
+
+        foreach ($penaltyPlayers as $player) {
+            $player->penalty_paid = true;
+            $player->save();
+        }
+    }
+
+    /**
+     * Calculate rating points for all players based on their finish position
+     */
+    public function calculateRatingPoints(): void
+    {
+        if ($this->status !== 'completed') {
+            return;
+        }
+
+        $totalPlayers = $this->players()->count();
+
+        // Assign rating points: last position gets 1 point, and each position above gets +1 point
+        $players = $this->players()->get();
+
+        foreach ($players as $player) {
+            if ($player->finish_position) {
+                // Calculate rating points (position from bottom)
+                // Last place gets 1 point, second-to-last gets 2, etc.
+                $player->rating_points = $totalPlayers - $player->finish_position + 1;
+                $player->save();
+            }
+        }
     }
 }

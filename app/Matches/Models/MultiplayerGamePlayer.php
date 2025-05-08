@@ -17,12 +17,16 @@ class MultiplayerGamePlayer extends Model
         'cards',
         'joined_at',
         'eliminated_at',
+        'rating_points',
+        'prize_amount',
+        'penalty_paid',
     ];
 
     protected $casts = [
         'cards'         => 'array',
         'joined_at'     => 'datetime',
         'eliminated_at' => 'datetime',
+        'penalty_paid' => 'boolean',
     ];
 
     public function multiplayerGame(): BelongsTo
@@ -65,5 +69,30 @@ class MultiplayerGamePlayer extends Model
     public function incrementLives(): void
     {
         $this->increment('lives');
+    }
+
+    /**
+     * Get total time fund contribution the player has to pay
+     */
+    public function getTimeFundContribution(): int
+    {
+        // Only players with penalty_paid true have to pay
+        if (!$this->penalty_paid) {
+            return 0;
+        }
+
+        return $this->multiplayerGame->penalty_fee ?? 50;
+    }
+
+    /**
+     * Get formatted prize amount with currency
+     */
+    public function getFormattedPrize(): string
+    {
+        if (!$this->prize_amount) {
+            return '0 ₴';
+        }
+
+        return $this->prize_amount.' ₴';
     }
 }
