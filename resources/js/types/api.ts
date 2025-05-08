@@ -102,8 +102,10 @@ export interface League {
     created_at: string | null;
     updated_at: string | null;
     matches_count?: number;
-    game: Game;
     game_id: number | null;
+    game: string | null;
+    game_type: string | null;
+    game_multiplayer: boolean | false;
     rating_type?: string;
     max_players: number;
     max_score: number;
@@ -283,4 +285,41 @@ export interface GameTypeStats {
         losses: number;
         win_rate: number;
     };
+}
+
+// For multiplayer games
+export interface MultiplayerGame {
+    id: number;
+    league_id: number;
+    game_id: number;
+    name: string;
+    status: 'registration' | 'in_progress' | 'completed';
+    initial_lives: number;
+    max_players: number | null;
+    registration_ends_at: string | null;
+    started_at: string | null;
+    completed_at: string | null;
+    created_at: string;
+    active_players_count: number;
+    total_players_count: number;
+    current_turn_player_id: number | null;
+    is_registration_open: boolean;
+    active_players: MultiplayerGamePlayer[];
+    eliminated_players: MultiplayerGamePlayer[];
+}
+
+export interface MultiplayerGamePlayer {
+    id: number;
+    user: User;
+    lives: number;
+    turn_order: number | null;
+    cards: {
+        skip_turn: boolean;
+        pass_turn: boolean;
+        hand_shot: boolean;
+    };
+    finish_position?: number;
+    joined_at: string;
+    eliminated_at?: string;
+    is_current_turn?: boolean;
 }

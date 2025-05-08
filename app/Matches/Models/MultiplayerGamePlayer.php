@@ -1,0 +1,69 @@
+<?php
+
+namespace App\Matches\Models;
+
+use App\Core\Models\User;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class MultiplayerGamePlayer extends Model
+{
+    protected $fillable = [
+        'multiplayer_game_id',
+        'user_id',
+        'lives',
+        'turn_order',
+        'finish_position',
+        'cards',
+        'joined_at',
+        'eliminated_at',
+    ];
+
+    protected $casts = [
+        'cards'         => 'array',
+        'joined_at'     => 'datetime',
+        'eliminated_at' => 'datetime',
+    ];
+
+    public function multiplayerGame(): BelongsTo
+    {
+        return $this->belongsTo(MultiplayerGame::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function useCard(string $cardType): bool
+    {
+        if (!$this->hasCard($cardType)) {
+            return false;
+        }
+
+        $cards = $this->cards;
+        $cards[$cardType] = false;
+        $this->update(['cards' => $cards]);
+
+        return true;
+    }
+
+    public function hasCard(string $cardType): bool
+    {
+        return isset($this->cards[$cardType]) && $this->cards[$cardType] === true;
+    }
+
+    public function decrementLives(): void
+    {
+        $this->decrement('lives');
+
+        if ($this->lives <= 0) {
+            $this->multiplayerGame->eliminatePlayer($this);
+        }
+    }
+
+    public function incrementLives(): void
+    {
+        $this->increment('lives');
+    }
+}

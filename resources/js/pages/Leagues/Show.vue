@@ -487,6 +487,15 @@ watch(
 
                         <!-- Join/Leave Actions -->
                         <div v-if="isAuthenticated" class="mt-6">
+                            <div v-if="league?.game_multiplayer" class="mb-6 mt-4">
+                                <Link :href="`/leagues/${leagueId}/multiplayer-games`">
+                                    <Button variant="secondary">
+                                        <UsersIcon class="mr-2 h-4 w-4"/>
+                                        Multiplayer Games
+                                    </Button>
+                                </Link>
+                            </div>
+
                             <template v-if="!isCurrentUserInLeague">
                                 <Button v-if="canUserJoinLeague" :disabled="isJoining" @click="handleJoinLeague">
                                     <Spinner v-if="isJoining" class="mr-2 h-4 w-4"/>
