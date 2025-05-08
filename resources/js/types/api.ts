@@ -302,8 +302,11 @@ export interface MultiplayerGame {
     created_at: string;
     active_players_count: number;
     total_players_count: number;
+    is_current_user_moderator: boolean;
+    moderator_user_id: number | null;
     current_turn_player_id: number | null;
     is_registration_open: boolean;
+    current_user_player: MultiplayerGamePlayer | null;
     active_players: MultiplayerGamePlayer[];
     eliminated_players: MultiplayerGamePlayer[];
 }

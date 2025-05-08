@@ -1,3 +1,5 @@
+// resources/js/composables/useMultiplayerGames.ts
+
 import {apiClient} from '@/lib/apiClient';
 import type {MultiplayerGame} from '@/types/api';
 import {ref} from 'vue';
@@ -41,6 +43,7 @@ export function useMultiplayerGames() {
         name: string;
         max_players?: number;
         registration_ends_at?: string;
+        allow_player_targeting?: boolean;
     }) => {
         isLoading.value = true;
         error.value = null;
@@ -132,7 +135,8 @@ export function useMultiplayerGames() {
         gameId: number | string,
         action: 'increment_lives' | 'decrement_lives' | 'use_card' | 'record_turn',
         targetUserId?: number,
-        cardType?: 'skip_turn' | 'pass_turn' | 'hand_shot'
+        cardType?: 'skip_turn' | 'pass_turn' | 'hand_shot',
+        actingUserId?: number
     ) => {
         isLoading.value = true;
         error.value = null;
@@ -141,6 +145,7 @@ export function useMultiplayerGames() {
             const data: any = {action};
             if (targetUserId) data.target_user_id = targetUserId;
             if (cardType) data.card_type = cardType;
+            if (actingUserId) data.acting_user_id = actingUserId;
 
             return await apiClient<MultiplayerGame>(`/api/leagues/${leagueId}/multiplayer-games/${gameId}/action`, {
                 method: 'post',
@@ -148,6 +153,50 @@ export function useMultiplayerGames() {
             });
         } catch (err: any) {
             error.value = err.message || 'Failed to perform game action';
+            throw err;
+        } finally {
+            isLoading.value = false;
+        }
+    };
+
+    // Finish game and set final positions
+    const finishGame = async (
+        leagueId: number | string,
+        gameId: number | string,
+        positions: { player_id: number, position: number }[]
+    ) => {
+        isLoading.value = true;
+        error.value = null;
+
+        try {
+            return await apiClient<MultiplayerGame>(`/api/leagues/${leagueId}/multiplayer-games/${gameId}/finish`, {
+                method: 'post',
+                data: {positions},
+            });
+        } catch (err: any) {
+            error.value = err.message || 'Failed to finish game';
+            throw err;
+        } finally {
+            isLoading.value = false;
+        }
+    };
+
+    // Set a game moderator
+    const setGameModerator = async (
+        leagueId: number | string,
+        gameId: number | string,
+        userId: number
+    ) => {
+        isLoading.value = true;
+        error.value = null;
+
+        try {
+            return await apiClient<MultiplayerGame>(`/api/leagues/${leagueId}/multiplayer-games/${gameId}/set-moderator`, {
+                method: 'post',
+                data: {user_id: userId},
+            });
+        } catch (err: any) {
+            error.value = err.message || 'Failed to set game moderator';
             throw err;
         } finally {
             isLoading.value = false;
@@ -165,5 +214,7 @@ export function useMultiplayerGames() {
         startMultiplayerGame,
         cancelMultiplayerGame,
         performGameAction,
+        finishGame,
+        setGameModerator,
     };
 }
