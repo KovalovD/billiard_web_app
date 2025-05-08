@@ -50,6 +50,8 @@ const statusText = computed(() => {
             return 'In Progress';
         case 'completed':
             return 'Completed';
+        case 'finished':
+            return 'Finished';
         default:
             return props.game.status;
     }
@@ -111,6 +113,7 @@ const statusBadgeClass = computed(() => {
         case 'in_progress':
             return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
         case 'completed':
+        case 'finished':
             return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
         default:
             return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
