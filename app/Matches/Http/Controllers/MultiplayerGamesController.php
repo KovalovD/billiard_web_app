@@ -4,6 +4,7 @@ namespace App\Matches\Http\Controllers;
 
 use App\Leagues\Models\League;
 use App\Matches\Http\Requests\CreateMultiplayerGameRequest;
+use App\Matches\Http\Requests\FinishGameRequest;
 use App\Matches\Http\Requests\JoinMultiplayerGameRequest;
 use App\Matches\Http\Requests\PerformGameActionRequest;
 use App\Matches\Http\Resources\MultiplayerGameResource;
@@ -116,17 +117,25 @@ class MultiplayerGamesController
         $user = Auth::user();
         $action = $request->action;
         $targetUserId = $request->target_user_id;
+        $actingUserId = $request->acting_user_id ?? null;
 
         // Only active games can have actions
         if ($multiplayerGame->status !== 'in_progress') {
             return response()->json(['error' => 'Game is not in progress.'], 400);
         }
 
-        // Get the player records
-        $player = $multiplayerGame->players()->where('user_id', $user->id)->first();
-
-        if (!$player || $player->eliminated_at) {
-            return response()->json(['error' => 'You are not an active player in this game.'], 400);
+        // For admin or moderator operations, allow controlling any player
+        if ($actingUserId && (Auth::user()->is_admin || $user->id === $multiplayerGame->moderator_user_id)) {
+            $actingPlayer = $multiplayerGame->players()->where('user_id', $actingUserId)->first();
+            if (!$actingPlayer || $actingPlayer->eliminated_at) {
+                return response()->json(['error' => 'Acting player not found or eliminated.'], 400);
+            }
+        } else {
+            // For normal user operations, they can only control themselves
+            $actingPlayer = $multiplayerGame->players()->where('user_id', $user->id)->first();
+            if (!$actingPlayer || $actingPlayer->eliminated_at) {
+                return response()->json(['error' => 'You are not an active player in this game.'], 400);
+            }
         }
 
         try {
@@ -134,17 +143,17 @@ class MultiplayerGamesController
 
             switch ($action) {
                 case 'increment_lives':
-                    $this->handleIncrementLives($multiplayerGame, $player, $targetUserId);
+                    $this->handleIncrementLives($multiplayerGame, $actingPlayer, $targetUserId);
                     break;
                 case 'decrement_lives':
-                    $this->handleDecrementLives($multiplayerGame, $player, $targetUserId);
+                    $this->handleDecrementLives($multiplayerGame, $actingPlayer, $targetUserId);
                     break;
                 case 'use_card':
                     $cardType = $request->card_type;
-                    $this->handleUseCard($multiplayerGame, $player, $cardType, $targetUserId);
+                    $this->handleUseCard($multiplayerGame, $actingPlayer, $cardType, $targetUserId);
                     break;
                 case 'record_turn':
-                    $this->handleRecordTurn($multiplayerGame, $player);
+                    $this->handleRecordTurn($multiplayerGame, $actingPlayer);
                     break;
                 default:
                     DB::rollBack();
@@ -162,17 +171,21 @@ class MultiplayerGamesController
 
     private function handleIncrementLives(
         MultiplayerGame $game,
-        MultiplayerGamePlayer $player,
+        MultiplayerGamePlayer $actingPlayer,
         ?int $targetUserId,
     ): void {
-        // Admin can increment anyone's lives, players only themselves
-        if (!Auth::user()->is_admin && $player->user_id !== $targetUserId) {
+        // Admin/moderator can increment anyone's lives
+        // Regular players only themselves or if targeting is explicitly allowed
+        if (!Auth::user()->is_admin
+            && Auth::id() !== $game->moderator_user_id
+            && $actingPlayer->user_id !== $targetUserId
+            && !$game->allow_player_targeting) {
             throw new Exception('You can only increment your own lives.');
         }
 
         $targetPlayer = $targetUserId
             ? $game->players()->where('user_id', $targetUserId)->first()
-            : $player;
+            : $actingPlayer;
 
         if (!$targetPlayer) {
             throw new Exception('Target player not found.');
@@ -183,7 +196,7 @@ class MultiplayerGamesController
         // Log the action
         MultiplayerGameLog::create([
             'multiplayer_game_id' => $game->id,
-            'user_id'             => Auth::id(),
+            'user_id' => $actingPlayer->user_id,
             'action_type'         => 'increment_lives',
             'action_data'         => [
                 'target_user_id' => $targetPlayer->user_id,
@@ -195,17 +208,21 @@ class MultiplayerGamesController
 
     private function handleDecrementLives(
         MultiplayerGame $game,
-        MultiplayerGamePlayer $player,
+        MultiplayerGamePlayer $actingPlayer,
         ?int $targetUserId,
     ): void {
-        // Admin can decrement anyone's lives, players only themselves
-        if (!Auth::user()->is_admin && $player->user_id !== $targetUserId) {
+        // Admin/moderator can decrement anyone's lives
+        // Regular players only themselves or if targeting is explicitly allowed
+        if (!Auth::user()->is_admin
+            && Auth::id() !== $game->moderator_user_id
+            && $actingPlayer->user_id !== $targetUserId
+            && !$game->allow_player_targeting) {
             throw new Exception('You can only decrement your own lives.');
         }
 
         $targetPlayer = $targetUserId
             ? $game->players()->where('user_id', $targetUserId)->first()
-            : $player;
+            : $actingPlayer;
 
         if (!$targetPlayer) {
             throw new Exception('Target player not found.');
@@ -217,7 +234,7 @@ class MultiplayerGamesController
         // Log the action
         MultiplayerGameLog::create([
             'multiplayer_game_id' => $game->id,
-            'user_id'             => Auth::id(),
+            'user_id' => $actingPlayer->user_id,
             'action_type'         => 'decrement_lives',
             'action_data'         => [
                 'target_user_id' => $targetPlayer->user_id,
@@ -231,7 +248,7 @@ class MultiplayerGamesController
 
     private function handleUseCard(
         MultiplayerGame $game,
-        MultiplayerGamePlayer $player,
+        MultiplayerGamePlayer $actingPlayer,
         string $cardType,
         ?int $targetUserId,
     ): void {
@@ -239,8 +256,8 @@ class MultiplayerGamesController
             throw new Exception('Invalid card type.');
         }
 
-        if (!$player->hasCard($cardType)) {
-            throw new Exception('You do not have this card.');
+        if (!$actingPlayer->hasCard($cardType)) {
+            throw new Exception('Player does not have this card.');
         }
 
         $targetPlayer = null;
@@ -256,12 +273,12 @@ class MultiplayerGamesController
         }
 
         // Use the card
-        $player->useCard($cardType);
+        $actingPlayer->useCard($cardType);
 
         // Log the action
         MultiplayerGameLog::create([
             'multiplayer_game_id' => $game->id,
-            'user_id'             => $player->user_id,
+            'user_id' => $actingPlayer->user_id,
             'action_type'         => 'use_card',
             'action_data'         => [
                 'card_type'      => $cardType,
@@ -271,12 +288,12 @@ class MultiplayerGamesController
         ]);
     }
 
-    private function handleRecordTurn(MultiplayerGame $game, MultiplayerGamePlayer $player): void
+    private function handleRecordTurn(MultiplayerGame $game, MultiplayerGamePlayer $actingPlayer): void
     {
         // Record that this player has taken their turn
         MultiplayerGameLog::create([
             'multiplayer_game_id' => $game->id,
-            'user_id'             => $player->user_id,
+            'user_id' => $actingPlayer->user_id,
             'action_type'         => 'turn',
             'created_at'          => now(),
         ]);
@@ -313,5 +330,87 @@ class MultiplayerGamesController
         $multiplayerGame->delete();
 
         return response()->json(['message' => 'Game cancelled successfully.']);
+    }
+
+    // Manually finish game and set final positions
+    public function finishGame(
+        FinishGameRequest $request,
+        League $league,
+        MultiplayerGame $multiplayerGame,
+    ): JsonResponse {
+        if ($multiplayerGame->status !== 'in_progress') {
+            return response()->json(['error' => 'Can only finish games that are in progress.'], 400);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Process player positions
+            $positions = $request->positions;
+            $activePlayers = $multiplayerGame->activePlayers()->get();
+
+            foreach ($positions as $position) {
+                $player = $activePlayers->firstWhere('id', $position['player_id']);
+                if (!$player) {
+                    throw new Exception("Player with ID {$position['player_id']} not found or already eliminated.");
+                }
+
+                $player->update([
+                    'finish_position' => $position['position'],
+                    'eliminated_at'   => $position['position'] > 1 ? now() : null,
+                ]);
+            }
+
+            // Update game status
+            $multiplayerGame->update([
+                'status' => 'completed',
+                'completed_at' => now(),
+            ]);
+
+            // Log the finish action
+            MultiplayerGameLog::create([
+                'multiplayer_game_id' => $multiplayerGame->id,
+                'user_id'             => Auth::id(),
+                'action_type'         => 'finish_game',
+                'action_data'         => [
+                    'positions' => $positions,
+                ],
+                'created_at'          => now(),
+            ]);
+
+            DB::commit();
+
+            $multiplayerGame->load(['players.user']);
+            return response()->json(new MultiplayerGameResource($multiplayerGame));
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
+
+    // Set a user as game moderator (can perform actions for all players)
+    public function setModerator(Request $request, League $league, MultiplayerGame $multiplayerGame): JsonResponse
+    {
+        // Only admins or the current moderator can set/change moderator
+        if (!Auth::user()->is_admin && Auth::id() !== $multiplayerGame->moderator_user_id) {
+            return response()->json(['error' => 'Only admins or the current moderator can change the moderator.'], 403);
+        }
+
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+        ]);
+
+        // Check if the user is a player in this game
+        $playerExists = $multiplayerGame->players()->where('user_id', $request->user_id)->exists();
+        if (!$playerExists && !Auth::user()->is_admin) {
+            return response()->json(['error' => 'The moderator must be a player in the game.'], 400);
+        }
+
+        $multiplayerGame->update([
+            'moderator_user_id' => $request->user_id,
+        ]);
+
+        $multiplayerGame->load(['players.user']);
+        return response()->json(new MultiplayerGameResource($multiplayerGame));
     }
 }

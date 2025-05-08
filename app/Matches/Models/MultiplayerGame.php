@@ -21,12 +21,15 @@ class MultiplayerGame extends Model
         'registration_ends_at',
         'started_at',
         'completed_at',
+        'moderator_user_id',
+        'allow_player_targeting',
     ];
 
     protected $casts = [
         'registration_ends_at' => 'datetime',
         'started_at'           => 'datetime',
         'completed_at'         => 'datetime',
+        'allow_player_targeting' => 'boolean',
     ];
 
     public function league(): BelongsTo
@@ -37,6 +40,11 @@ class MultiplayerGame extends Model
     public function game(): BelongsTo
     {
         return $this->belongsTo(Game::class);
+    }
+
+    public function moderator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'moderator_user_id');
     }
 
     public function eliminatedPlayers()
@@ -113,10 +121,20 @@ class MultiplayerGame extends Model
             ]);
         }
 
+        // Set the first player in turn order as default moderator if none is set
+        if (!$this->moderator_user_id) {
+            $firstPlayer = $players->sortBy('turn_order')->first();
+            if ($firstPlayer) {
+                $this->moderator_user_id = $firstPlayer->user_id;
+            }
+        }
+
         $this->update([
             'status'        => 'in_progress',
             'started_at'    => now(),
             'initial_lives' => $initialLives,
+            'moderator_user_id'      => $this->moderator_user_id,
+            'allow_player_targeting' => $this->allow_player_targeting ?? false,
         ]);
 
         return true;
@@ -194,5 +212,10 @@ class MultiplayerGame extends Model
                 'completed_at' => now(),
             ]);
         }
+    }
+
+    public function isUserModerator(User $user): bool
+    {
+        return $user->id === $this->moderator_user_id || $user->is_admin;
     }
 }

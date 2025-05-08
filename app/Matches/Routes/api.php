@@ -12,6 +12,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/{multiplayerGame}/join', [MultiplayerGamesController::class, 'join']);
         Route::post('/{multiplayerGame}/leave', [MultiplayerGamesController::class, 'leave']);
         Route::post('/{multiplayerGame}/action', [MultiplayerGamesController::class, 'performAction']);
+        Route::post('/{multiplayerGame}/finish', [MultiplayerGamesController::class, 'finishGame']);
+        Route::post('/{multiplayerGame}/set-moderator', [MultiplayerGamesController::class, 'setModerator']);
 
         // Admin-only routes
         Route::middleware(AdminMiddleware::class)->group(function () {
