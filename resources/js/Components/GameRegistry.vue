@@ -26,8 +26,7 @@ const isUserInGame = computed(() => {
     const userId = user.value?.id;
     if (!userId) return false;
 
-    const playerExists = props.game.active_players.some(player => player.user.id === userId);
-    return playerExists;
+    return props.game.active_players.some(player => player.user.id === userId);
 });
 
 const canJoin = computed(() => {
@@ -35,9 +34,7 @@ const canJoin = computed(() => {
     if (isUserInGame.value) return false;
 
     // Check if game has max players and is full
-    if (props.game.max_players && props.game.total_players_count >= props.game.max_players) return false;
-
-    return true;
+    return !(props.game.max_players && props.game.total_players_count >= props.game.max_players);
 });
 
 const canStart = computed(() => {
@@ -75,6 +72,7 @@ const handleJoin = async () => {
         setTimeout(() => {
             successMessage.value = null;
         }, 5000);
+// eslint-disable-next-line
     } catch (err) {
         // Error is handled by the composable and shown through the errorMessage ref
     }
@@ -89,6 +87,7 @@ const handleLeave = async () => {
         setTimeout(() => {
             successMessage.value = null;
         }, 5000);
+// eslint-disable-next-line
     } catch (err) {
         // Error is handled by the composable and shown through the errorMessage ref
     }
@@ -105,6 +104,7 @@ const handleStart = async () => {
         setTimeout(() => {
             successMessage.value = null;
         }, 5000);
+// eslint-disable-next-line
     } catch (err) {
         // Error is handled by the composable and shown through the errorMessage ref
     }

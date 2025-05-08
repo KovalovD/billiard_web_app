@@ -535,6 +535,7 @@ watch(
                             v-else
                             :currentUserId="user?.id ?? null"
                             :isAuthenticated="isAuthenticated"
+                            :multiplayer-game="league.game_multiplayer"
                             :leagueId="Number(league.id)"
                             :players="players || []"
                             :auth-user-have-ongoing-match="authUserRating?.hasOngoingMatches"

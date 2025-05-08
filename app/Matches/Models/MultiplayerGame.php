@@ -188,28 +188,10 @@ class MultiplayerGame extends Model
 
     public function eliminatePlayer(MultiplayerGamePlayer $player): void
     {
-        $activePlayersCount = $this->activePlayers()->count();
-
-        $finishPosition = $this->players()->count() - $activePlayersCount + 1;
-
         $player->update([
             'eliminated_at'   => now(),
-            'finish_position' => $finishPosition,
+            'finish_position' => $this->activePlayers()->count(),
         ]);
-
-        $activePlayersCount--;
-
-        if ($activePlayersCount === 1) {
-            $lastPlayer = $this->activePlayers()->first();
-            $lastPlayer->update([
-                'finish_position' => 1,
-            ]);
-
-            $this->update([
-                'status'       => 'completed',
-                'completed_at' => now(),
-            ]);
-        }
     }
 
     public function isUserModerator(User $user): bool
@@ -300,17 +282,6 @@ class MultiplayerGame extends Model
                 // Calculate rating points (position from bottom)
                 // Last place gets 1 point, second-to-last gets 2, etc.
                 $player->rating_points = $maxPosition - $player->finish_position + 1;
-
-                // Bonus points for winners
-                if ($player->finish_position === 1) {
-                    // First place gets 2 extra points
-                    $player->rating_points += 2;
-                } else {
-                    if ($player->finish_position === 2) {
-                        // Second place gets 1 extra point
-                        ++$player->rating_points;
-                    }
-                }
             } else {
                 // Players without a finish position (e.g., they left before the game ended)
                 // get no points

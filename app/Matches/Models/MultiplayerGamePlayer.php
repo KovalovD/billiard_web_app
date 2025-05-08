@@ -22,6 +22,10 @@ class MultiplayerGamePlayer extends Model
         'penalty_paid',
     ];
 
+    protected $with = [
+        'multiplayerGame',
+    ];
+
     protected $casts = [
         'cards'         => 'array',
         'joined_at'     => 'datetime',
@@ -72,6 +76,7 @@ class MultiplayerGamePlayer extends Model
                 if ($winner) {
                     $winner->update([
                         'finish_position' => 1,
+                        'eliminated_at' => now(),
                     ]);
                 }
 
@@ -104,17 +109,5 @@ class MultiplayerGamePlayer extends Model
         }
 
         return $this->multiplayerGame->penalty_fee ?? 50;
-    }
-
-    /**
-     * Get formatted prize amount with currency
-     */
-    public function getFormattedPrize(): string
-    {
-        if (!$this->prize_amount) {
-            return '0 ₴';
-        }
-
-        return $this->prize_amount.' ₴';
     }
 }
