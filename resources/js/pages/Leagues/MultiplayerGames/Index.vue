@@ -1,4 +1,3 @@
-// resources/js/pages/Leagues/MultiplayerGames/Index.vue
 <script lang="ts" setup>
 import CreateMultiplayerGameModal from '@/Components/CreateMultiplayerGameModal.vue';
 import MultiplayerGameCard from '@/Components/MultiplayerGameCard.vue';

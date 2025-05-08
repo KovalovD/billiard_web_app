@@ -24,12 +24,12 @@ export function useLeagues() {
 
     // Create a new league
     const createLeague = () => {
-        return useApiAction((payload: LeaguePayload) => post<League>('/api/leagues', payload));
+        return useApiAction((payload: LeaguePayload | undefined) => post<League>('/api/leagues', payload));
     };
 
     // Update an existing league
     const updateLeague = (leagueId: number | string) => {
-        return useApiAction((payload: LeaguePayload) => put<League>(`/api/leagues/${leagueId}`, payload));
+        return useApiAction((payload: LeaguePayload | undefined) => put<League>(`/api/leagues/${leagueId}`, payload));
     };
 
     // Delete a league

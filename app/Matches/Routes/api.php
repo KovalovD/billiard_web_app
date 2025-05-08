@@ -12,6 +12,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/{multiplayerGame}/join', [MultiplayerGamesController::class, 'join']);
         Route::post('/{multiplayerGame}/leave', [MultiplayerGamesController::class, 'leave']);
         Route::post('/{multiplayerGame}/action', [MultiplayerGamesController::class, 'performAction']);
+        Route::post('/{multiplayerGame}/finish', [MultiplayerGamesController::class, 'finish']);
         Route::post('/{multiplayerGame}/set-moderator', [MultiplayerGamesController::class, 'setModerator']);
         Route::get('/{multiplayerGame}/financial-summary', [MultiplayerGamesController::class, 'getFinancialSummary']);
         Route::get('/{multiplayerGame}/rating-summary', [MultiplayerGamesController::class, 'getRatingSummary']);

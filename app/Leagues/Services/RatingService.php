@@ -7,10 +7,13 @@ use App\Leagues\Enums\RatingType;
 use App\Leagues\Models\League;
 use App\Leagues\Models\Rating;
 use App\Leagues\Strategies\Rating\EloRatingStrategy;
+use App\Leagues\Strategies\Rating\KillerPoolRatingStrategy;
 use App\Leagues\Strategies\Rating\RatingStrategy;
 use App\Matches\Models\MatchGame;
+use App\Matches\Models\MultiplayerGame;
 use DB;
 use Illuminate\Database\Eloquent\Collection;
+use LogicException;
 use Throwable;
 
 class RatingService
@@ -296,7 +299,45 @@ class RatingService
         // In a real application, you might want to cache strategies
         return match ($type) {
             RatingType::Elo => new EloRatingStrategy(),
+            RatingType::KillerPool => new KillerPoolRatingStrategy(),
         };
+    }
+
+    public function applyRatingPointsForMultiplayerGame(MultiplayerGame $game): void
+    {
+        $game->load('players', 'league');
+
+        $league = $game->league;
+
+        // Verify league has KillerPool rating type
+        if ($league->rating_type !== RatingType::KillerPool) {
+            throw new LogicException("League rating type must be KillerPool");
+        }
+
+        $strategy = $this->resolveStrategy($league->rating_type);
+
+        $ratings = Rating::query()
+            ->where('league_id', $league->id)
+            ->whereIn('user_id', $game->players->pluck('user_id'))
+            ->get()
+            ->toArray()
+        ;
+
+        $result = $strategy->calculate($ratings, 0, $game->players->pluck('rating_points', 'user_id')->toArray(), []);
+
+        // Batch update ratings
+        $updates = [];
+        foreach ($ratings as $rating) {
+            $updates[] = [
+                'id'     => $rating['id'],
+                'rating' => $result[$rating['id']],
+            ];
+        }
+
+        // Perform batch update
+        foreach ($updates as $update) {
+            Rating::where('id', $update['id'])->update(['rating' => $update['rating']]);
+        }
     }
 
     /**

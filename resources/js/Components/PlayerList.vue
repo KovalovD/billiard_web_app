@@ -11,7 +11,7 @@ interface Props {
     isAuthenticated: boolean;
     authUserHaveOngoingMatch: boolean | undefined;
     authUserIsConfirmed: boolean | undefined;
-    multiplayerGame: boolean;
+    multiplayerGame: boolean | undefined;
 }
 
 const props = defineProps<Props>();
