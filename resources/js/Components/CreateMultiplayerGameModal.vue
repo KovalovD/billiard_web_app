@@ -26,13 +26,6 @@ const validationErrors = ref<Record<string, string[]>>({});
 
 const formattedError = computed(() => {
     if (!error.value) return null;
-    if (typeof error.value === 'string') return error.value;
-
-    const errorObj = error.value as unknown as { data?: { errors?: Record<string, string[]> } };
-    if (errorObj.data?.errors) {
-        validationErrors.value = errorObj.data.errors;
-        return Object.values(errorObj.data.errors).flat().join(', ');
-    }
 
     return 'An error occurred while creating the game';
 });
@@ -61,6 +54,7 @@ const handleSubmit = async () => {
         resetForm();
         emit('created', newGame);
         emit('close');
+        // eslint-disable-next-line
     } catch (err) {
         // Error is handled by the composable and displayed in the form
     }

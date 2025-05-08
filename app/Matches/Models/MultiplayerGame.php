@@ -42,16 +42,6 @@ class MultiplayerGame extends Model
         return $this->belongsTo(Game::class);
     }
 
-    public function moderator(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'moderator_user_id');
-    }
-
-    public function eliminatedPlayers()
-    {
-        return $this->players()->whereNotNull('eliminated_at')->orderBy('finish_position');
-    }
-
     public function players(): HasMany
     {
         return $this->hasMany(MultiplayerGamePlayer::class);
@@ -122,18 +112,19 @@ class MultiplayerGame extends Model
         }
 
         // Set the first player in turn order as default moderator if none is set
-        if (!$this->moderator_user_id) {
+        $moderatorUserId = $this->moderator_user_id;
+        if (!$moderatorUserId) {
             $firstPlayer = $players->sortBy('turn_order')->first();
             if ($firstPlayer) {
-                $this->moderator_user_id = $firstPlayer->user_id;
+                $moderatorUserId = $firstPlayer->user_id;
             }
         }
 
         $this->update([
-            'status'        => 'in_progress',
-            'started_at'    => now(),
-            'initial_lives' => $initialLives,
-            'moderator_user_id'      => $this->moderator_user_id,
+            'status'            => 'in_progress',
+            'started_at'        => now(),
+            'initial_lives'     => $initialLives,
+            'moderator_user_id' => $moderatorUserId,
             'allow_player_targeting' => $this->allow_player_targeting ?? false,
         ]);
 
@@ -178,7 +169,7 @@ class MultiplayerGame extends Model
         return ($lastPlayerIndex + 1) % $activePlayers->count();
     }
 
-    public function activePlayers()
+    public function activePlayers(): HasMany
     {
         return $this->players()->whereNull('eliminated_at');
     }
@@ -192,7 +183,6 @@ class MultiplayerGame extends Model
     {
         $activePlayersCount = $this->activePlayers()->count();
 
-        // Set finish position (players count - active players + 1)
         $finishPosition = $this->players()->count() - $activePlayersCount + 1;
 
         $player->update([
@@ -200,7 +190,8 @@ class MultiplayerGame extends Model
             'finish_position' => $finishPosition,
         ]);
 
-        // If only one player remains, complete the game
+        $activePlayersCount--;
+
         if ($activePlayersCount === 1) {
             $lastPlayer = $this->activePlayers()->first();
             $lastPlayer->update([

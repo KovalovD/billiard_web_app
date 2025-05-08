@@ -323,6 +323,6 @@ export interface MultiplayerGamePlayer {
     };
     finish_position?: number;
     joined_at: string;
-    eliminated_at?: string;
+    eliminated_at: string | null;
     is_current_turn?: boolean;
 }
