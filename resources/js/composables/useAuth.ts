@@ -53,8 +53,8 @@ const fetchUserFromApi = async (): Promise<boolean> => {
 
     try {
         setToken(token, localStorage.getItem('authDeviceName')); // Ensure token is set for apiClient
-        const fetchedUser = await apiClient<User>('/api/auth/user'); // Use apiClient
-        user.value = fetchedUser;
+         // Use apiClient
+        user.value = await apiClient<User>('/api/auth/user');
         console.log('[Auth] User fetched successfully from API.');
         return true;
     } catch (err: any) {
@@ -230,7 +230,7 @@ const logout = async () => {
 
 // --- Computed Properties ---
 const isAuthenticated = computed(() => !!user.value);
-const isAdmin = computed(() => isAuthenticated.value && user.value.is_admin);
+const isAdmin = computed(() => isAuthenticated.value && user.value?.is_admin);
 
 export function useAuth() {
     return {

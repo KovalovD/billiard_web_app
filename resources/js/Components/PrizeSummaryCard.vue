@@ -71,7 +71,7 @@ const winners = computed(() => {
     return winnersList;
 });
 
-const showWinners = computed(() => props.game.status === 'completed' && winners.value.length > 0);
+const showWinners = computed(() => props.game.status === 'completed' || props.game.status === 'finished' && winners.value.length > 0);
 </script>
 
 <template>

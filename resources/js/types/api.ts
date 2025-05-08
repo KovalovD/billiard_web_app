@@ -39,6 +39,33 @@ export interface Game {
     is_multiplayer?: boolean;
 }
 
+export interface LeaguePayload {
+    name: string;
+    game_id: number | null;
+    picture?: string | null;
+    details?: string | null;
+    has_rating?: boolean;
+    started_at?: string | null;
+    finished_at?: string | null;
+    start_rating: number;
+    max_players: number;
+    max_score: number;
+    invite_days_expire: number;
+    rating_change_for_winners_rule?: string | RatingRuleItem[];
+    rating_change_for_losers_rule?: string | RatingRuleItem[];
+}
+
+export interface RatingRuleItem {
+    range: [number, number];
+    strong: number;
+    weak: number;
+}
+
+export interface LoginResponse {
+    user: User;
+    token: string;
+}
+
 export interface League {
     id: number;
     name: string;
@@ -132,6 +159,8 @@ export interface SendResultPayload {
 }
 
 export interface ApiError {
+    status: any;
+    response: any;
     message: string;
     data?: {
         errors?: Record<string, string[]>;
@@ -176,7 +205,7 @@ export interface MultiplayerGame {
     league_id: number;
     game_id: number;
     name: string;
-    status: 'registration' | 'in_progress' | 'completed';
+    status: 'registration' | 'in_progress' | 'completed' | 'finished';
     initial_lives: number;
     max_players: number | null;
     registration_ends_at: string | null;
@@ -234,8 +263,22 @@ export interface RegisterCredentials {
     password_confirmation: string;
 }
 
-export interface LoginCredentials {
-    email: string;
-    password: string;
-    remember?: boolean;
+export interface GameTypeStats {
+    [key: string]: {
+        matches: number;
+        wins: number;
+        losses: number;
+        win_rate: number;
+    }
+}
+
+export interface UserStats {
+    total_matches: number;
+    completed_matches: number;
+    wins: number;
+    losses: number;
+    win_rate: number;
+    leagues_count: number;
+    highest_rating: number;
+    average_rating: number;
 }

@@ -9,7 +9,7 @@ import {useLeagues} from '@/composables/useLeagues';
 import {useLeagueStatus} from '@/composables/useLeagueStatus';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
-import type {ApiError, MatchGame, Player} from '@/types/api';
+import type {ApiError, MatchGame, MultiplayerGame, Player} from '@/types/api';
 import {Head, Link} from '@inertiajs/vue3';
 import {
     ArrowLeftIcon,
@@ -22,6 +22,10 @@ import {
     UsersIcon
 } from 'lucide-vue-next';
 import {computed, onMounted, ref, watch} from 'vue';
+import MultiplayerGameCard from "@/Components/MultiplayerGameCard.vue";
+import {useMultiplayerGames} from "@/composables/useMultiplayerGames";
+
+const {getMultiplayerGames} = useMultiplayerGames();
 
 const adminDropdownOpen = ref(false);
 const adminDropdownRef = ref(null);
@@ -44,6 +48,7 @@ const genericModalMessage = ref('');
 const targetPlayerForChallenge = ref<Player | null>(null);
 const matchForResults = ref<MatchGame | null>(null);
 const isProcessingAction = ref(false);
+const multiplayerGames = ref<MultiplayerGame[]>([]);
 
 // Check for matched route query params
 const routeMatchId = ref<string | null>(null);
@@ -304,12 +309,21 @@ const authUserIsConfirmed = computed(() => {
     return authUserRating.value?.is_confirmed === true;
 });
 
+const fetchMultiplayerGames = async () => {
+    try {
+        multiplayerGames.value = await getMultiplayerGames(props.leagueId);
+    } catch (err) {
+        console.error('Failed to fetch multiplayer games:', err);
+    }
+};
+
 // Initialize data
 onMounted(() => {
     fetchLeague();
     fetchPlayers();
     fetchMatches();
     loadUserRating();
+    fetchMultiplayerGames();
 
     // Check URL query params for matchId
     const url = new URL(window.location.href);
@@ -561,9 +575,19 @@ watch(
                             Error loading matches: {{ matchesError.message }}
                         </div>
 
+                        <div v-else-if="league.game_multiplayer" class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                            <MultiplayerGameCard
+                                v-for="game in multiplayerGames"
+                                :key="game.id"
+                                :game="game"
+                                :league-id="leagueId"
+                            />
+                        </div>
+
                         <div v-else-if="!matches || matches.length === 0" class="py-4 text-center text-gray-500">
                             No matches found for this league.
                         </div>
+
 
                         <ul v-else class="space-y-3">
                             <li

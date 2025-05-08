@@ -36,7 +36,7 @@ const timeFundTotal = computed(() => {
 });
 
 const showTimeFundDetails = computed(() => {
-    return props.game.status === 'completed' && penaltyPlayers.value.length > 0;
+    return props.game.status === 'completed' || props.game.status === 'finished' && penaltyPlayers.value.length > 0;
 });
 </script>
 

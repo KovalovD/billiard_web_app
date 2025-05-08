@@ -17,6 +17,7 @@ import type {League, MultiplayerGame, MultiplayerGamePlayer} from '@/types/api';
 import {Head, Link} from '@inertiajs/vue3';
 import {ArrowLeftIcon, TrophyIcon, UserIcon} from 'lucide-vue-next';
 import {computed, onMounted, ref, watch} from 'vue';
+import GameFinishModal from "@/Components/GameFinishModal.vue";
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -94,6 +95,7 @@ const statusBadgeClass = computed(() => {
         case 'in_progress':
             return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
         case 'completed':
+        case 'finished':
             return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
         default:
             return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
@@ -111,6 +113,8 @@ const statusText = computed(() => {
             return 'In Progress';
         case 'completed':
             return 'Completed';
+        case 'finished':
+            return 'Finished';
         default:
             return game.value.status;
     }
@@ -323,6 +327,11 @@ const handlePlayerAction = (actionData: any) => {
     }
 };
 
+const handleGameFinished = () => {
+    fetchLeague();
+    fetchGame();
+};
+
 // Clear action feedback after 5 seconds
 watch(actionFeedback, (newValue) => {
     if (newValue) {
@@ -375,7 +384,7 @@ onMounted(() => {
                     </span>
 
                     <Button
-                        v-if="game?.status === 'in_progress' && (isAdmin || isModerator)"
+                        v-if="game?.status === 'completed' && (isAdmin || isModerator)"
                         variant="outline"
                         @click="showFinishModal = true"
                     >
@@ -572,7 +581,8 @@ onMounted(() => {
                             </div>
 
                             <!-- Game Completed Summary -->
-                            <div v-if="game.status === 'completed'" class="order-1 lg:order-2 lg:col-span-2">
+                            <div v-if="game.status === 'completed' || game.status === 'finished'"
+                                 class="order-1 lg:order-2 lg:col-span-2">
                                 <Card>
                                     <CardHeader>
                                         <CardTitle>Game Results</CardTitle>
@@ -670,5 +680,13 @@ onMounted(() => {
         :show="showModeratorModal"
         @close="showModeratorModal = false"
         @set-moderator="handleSetModerator"
+    />
+
+    <GameFinishModal
+        :game="game"
+        :leagueId="leagueId"
+        :show="showFinishModal"
+        @close="showFinishModal = false"
+        @finished="handleGameFinished"
     />
 </template>

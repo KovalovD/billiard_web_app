@@ -61,43 +61,6 @@ class MultiplayerGamePlayer extends Model
         return isset($this->cards[$cardType]) && $this->cards[$cardType] === true;
     }
 
-    public function decrementLives(): void
-    {
-        $this->decrement('lives');
-
-        if ($this->lives <= 0) {
-            $this->multiplayerGame->eliminatePlayer($this);
-
-            // Check if game should be completed (only one active player left)
-            $activePlayersCount = $this->multiplayerGame->activePlayers()->count();
-            if ($activePlayersCount === 1) {
-                // Set the winner (last remaining player)
-                $winner = $this->multiplayerGame->activePlayers()->first();
-                if ($winner) {
-                    $winner->update([
-                        'finish_position' => 1,
-                        'eliminated_at' => now(),
-                    ]);
-                }
-
-                // Mark game as completed
-                $this->multiplayerGame->update([
-                    'status'       => 'completed',
-                    'completed_at' => now(),
-                ]);
-
-                // Calculate prizes and rating points
-                $this->multiplayerGame->calculatePrizes();
-                $this->multiplayerGame->calculateRatingPoints();
-            }
-        }
-    }
-
-    public function incrementLives(): void
-    {
-        $this->increment('lives');
-    }
-
     /**
      * Get total time fund contribution the player has to pay
      */

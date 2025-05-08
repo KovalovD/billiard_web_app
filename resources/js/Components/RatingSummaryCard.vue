@@ -11,7 +11,7 @@ interface Props {
 const props = defineProps<Props>();
 
 // Computed properties
-const showRatingData = computed(() => props.game.status === 'completed');
+const showRatingData = computed(() => props.game.status === 'completed' || props.game.status === 'finished');
 
 // Sort players by rating points
 const sortedPlayers = computed(() => {

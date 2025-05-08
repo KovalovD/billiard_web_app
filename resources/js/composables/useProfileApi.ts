@@ -30,7 +30,7 @@ export function useProfileApi() {
     };
 
     const updateProfile = () => {
-        return useApiAction((payload: UpdateProfilePayload) =>
+        return useApiAction((payload: UpdateProfilePayload | undefined) =>
             apiClient<User>('/api/profile', {
                 method: 'put',
                 data: payload,
@@ -39,7 +39,7 @@ export function useProfileApi() {
     };
 
     const updatePassword = () => {
-        return useApiAction((payload: UpdatePasswordPayload) =>
+        return useApiAction((payload: UpdatePasswordPayload | undefined) =>
             apiClient('/api/profile/password', {
                 method: 'put',
                 data: payload,
@@ -48,7 +48,7 @@ export function useProfileApi() {
     };
 
     const deleteAccount = () => {
-        return useApiAction((password: string) =>
+        return useApiAction((password: string | undefined) =>
             apiClient('/api/profile', {
                 method: 'delete',
                 data: {password},
