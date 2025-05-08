@@ -63,6 +63,28 @@ class MultiplayerGamePlayer extends Model
 
         if ($this->lives <= 0) {
             $this->multiplayerGame->eliminatePlayer($this);
+
+            // Check if game should be completed (only one active player left)
+            $activePlayersCount = $this->multiplayerGame->activePlayers()->count();
+            if ($activePlayersCount === 1) {
+                // Set the winner (last remaining player)
+                $winner = $this->multiplayerGame->activePlayers()->first();
+                if ($winner) {
+                    $winner->update([
+                        'finish_position' => 1,
+                    ]);
+                }
+
+                // Mark game as completed
+                $this->multiplayerGame->update([
+                    'status'       => 'completed',
+                    'completed_at' => now(),
+                ]);
+
+                // Calculate prizes and rating points
+                $this->multiplayerGame->calculatePrizes();
+                $this->multiplayerGame->calculateRatingPoints();
+            }
         }
     }
 

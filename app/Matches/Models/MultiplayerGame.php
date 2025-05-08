@@ -292,13 +292,31 @@ class MultiplayerGame extends Model
         // Assign rating points: last position gets 1 point, and each position above gets +1 point
         $players = $this->players()->get();
 
+        // Find the maximum finish position (to handle missing sequential positions)
+        $maxPosition = $players->max('finish_position') ?? $totalPlayers;
+
         foreach ($players as $player) {
             if ($player->finish_position) {
                 // Calculate rating points (position from bottom)
                 // Last place gets 1 point, second-to-last gets 2, etc.
-                $player->rating_points = $totalPlayers - $player->finish_position + 1;
-                $player->save();
+                $player->rating_points = $maxPosition - $player->finish_position + 1;
+
+                // Bonus points for winners
+                if ($player->finish_position === 1) {
+                    // First place gets 2 extra points
+                    $player->rating_points += 2;
+                } else {
+                    if ($player->finish_position === 2) {
+                        // Second place gets 1 extra point
+                        ++$player->rating_points;
+                    }
+                }
+            } else {
+                // Players without a finish position (e.g., they left before the game ended)
+                // get no points
+                $player->rating_points = 0;
             }
+            $player->save();
         }
     }
 }

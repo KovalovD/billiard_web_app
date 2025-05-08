@@ -257,6 +257,12 @@ class MultiplayerGamesController
             ],
             'created_at'          => now(),
         ]);
+
+        // Check if the game status changed to completed during decrement operation
+        // If so, reload the game
+        if ($game->status !== 'completed' && $game->fresh()->status === 'completed') {
+            $game->refresh();
+        }
     }
 
     private function handleUseCard(
@@ -344,8 +350,6 @@ class MultiplayerGamesController
         return response()->json(['message' => 'Game cancelled successfully.']);
     }
 
-    // Manually finish game and set final positions
-
     /**
      * @throws Throwable
      */
@@ -382,6 +386,10 @@ class MultiplayerGamesController
                 'status' => 'completed',
                 'completed_at' => now(),
             ]);
+
+            // Calculate prizes and rating points
+            $multiplayerGame->calculatePrizes();
+            $multiplayerGame->calculateRatingPoints();
 
             // Log the finish action
             MultiplayerGameLog::create([
@@ -428,5 +436,77 @@ class MultiplayerGamesController
 
         $multiplayerGame->load(['players.user']);
         return response()->json(new MultiplayerGameResource($multiplayerGame));
+    }
+
+    /**
+     * Get financial summary for a game
+     */
+    public function getFinancialSummary(League $league, MultiplayerGame $multiplayerGame): JsonResponse
+    {
+        if ($multiplayerGame->status !== 'completed') {
+            return response()->json([
+                'message' => 'Financial summary is only available for completed games.',
+            ], 400);
+        }
+
+        // Make sure prize pool is calculated
+        if (!$multiplayerGame->prize_pool) {
+            $multiplayerGame->calculatePrizes();
+        }
+
+        return response()->json([
+            'entrance_fee'          => $multiplayerGame->entrance_fee,
+            'total_players'         => $multiplayerGame->players()->count(),
+            'total_prize_pool'      => $multiplayerGame->prize_pool['total'] ?? 0,
+            'first_place_prize'     => $multiplayerGame->prize_pool['first_place'] ?? 0,
+            'second_place_prize'    => $multiplayerGame->prize_pool['second_place'] ?? 0,
+            'grand_final_fund'      => $multiplayerGame->prize_pool['grand_final_fund'] ?? 0,
+            'penalty_fee'           => $multiplayerGame->penalty_fee,
+            'penalty_players_count' => $multiplayerGame->players()->where('penalty_paid', true)->count(),
+            'time_fund_total'       => $multiplayerGame->players()->where('penalty_paid',
+                    true)->count() * $multiplayerGame->penalty_fee,
+        ]);
+    }
+
+    /**
+     * Get rating summary for a game
+     */
+    public function getRatingSummary(League $league, MultiplayerGame $multiplayerGame): JsonResponse
+    {
+        if ($multiplayerGame->status !== 'completed') {
+            return response()->json([
+                'message' => 'Rating summary is only available for completed games.',
+            ], 400);
+        }
+
+        // Make sure rating points are calculated
+        if (!$multiplayerGame->players()->where('rating_points', '>', 0)->exists()) {
+            $multiplayerGame->calculateRatingPoints();
+        }
+
+        $playerRatings = $multiplayerGame
+            ->players()
+            ->whereNotNull('finish_position')
+            ->with('user')
+            ->orderBy('finish_position')
+            ->get()
+            ->map(function ($player) {
+                return [
+                    'player_id'       => $player->id,
+                    'user'            => [
+                        'id'        => $player->user->id,
+                        'firstname' => $player->user->firstname,
+                        'lastname'  => $player->user->lastname,
+                    ],
+                    'finish_position' => $player->finish_position,
+                    'rating_points'   => $player->rating_points,
+                ];
+            })
+        ;
+
+        return response()->json([
+            'players'       => $playerRatings,
+            'total_players' => $multiplayerGame->players()->count(),
+        ]);
     }
 }
