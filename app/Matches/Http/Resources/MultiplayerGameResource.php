@@ -37,6 +37,20 @@ class MultiplayerGameResource extends JsonResource
         $isModerator = $user && $this->isUserModerator($user);
         $currentUserPlayer = $user ? $players->firstWhere('user_id', $user->id) : null;
 
+        // Financial and rating data
+        $financialData = null;
+        if ($this->status === 'completed' && $this->prize_pool) {
+            $financialData = [
+                'entrance_fee'       => $this->entrance_fee,
+                'total_prize_pool'   => $this->prize_pool['total'] ?? 0,
+                'first_place_prize'  => $this->prize_pool['first_place'] ?? 0,
+                'second_place_prize' => $this->prize_pool['second_place'] ?? 0,
+                'grand_final_fund'   => $this->prize_pool['grand_final_fund'] ?? 0,
+                'penalty_fee'        => $this->penalty_fee,
+                'time_fund_total'    => $players->where('penalty_paid', true)->count() * $this->penalty_fee,
+            ];
+        }
+
         return [
             'id'                        => $this->id,
             'league_id'                 => $this->league_id,
@@ -56,6 +70,12 @@ class MultiplayerGameResource extends JsonResource
             'moderator_user_id'         => $this->moderator_user_id,
             'allow_player_targeting'    => $this->allow_player_targeting,
             'is_current_user_moderator' => $isModerator,
+            'entrance_fee'              => $this->entrance_fee,
+            'first_place_percent'       => $this->first_place_percent,
+            'second_place_percent'      => $this->second_place_percent,
+            'grand_final_percent'       => $this->grand_final_percent,
+            'penalty_fee'               => $this->penalty_fee,
+            'financial_data'            => $financialData,
             'current_user_player'       => $currentUserPlayer ? [
                 'id'              => $currentUserPlayer->id,
                 'lives'           => $currentUserPlayer->lives,
@@ -65,6 +85,9 @@ class MultiplayerGameResource extends JsonResource
                 'eliminated_at'   => $currentUserPlayer->eliminated_at,
                 'joined_at'       => $currentUserPlayer->joined_at,
                 'is_current_turn' => $currentUserPlayer->user_id === $currentTurnPlayerId,
+                'rating_points' => $currentUserPlayer->rating_points,
+                'prize_amount'  => $currentUserPlayer->prize_amount,
+                'penalty_paid'  => $currentUserPlayer->penalty_paid,
             ] : null,
             'active_players'            => $activePlayers->map(function (MultiplayerGamePlayer $player) use (
                 $currentTurnPlayerId,
@@ -87,6 +110,10 @@ class MultiplayerGameResource extends JsonResource
                     'turn_order'      => $player->turn_order,
                     'finish_position' => $player->finish_position,
                     'eliminated_at'   => $player->eliminated_at,
+                    'rating_points'          => $player->rating_points,
+                    'prize_amount'           => $player->prize_amount,
+                    'penalty_paid'           => $player->penalty_paid,
+                    'time_fund_contribution' => $player->getTimeFundContribution(),
                 ];
             }),
         ];
