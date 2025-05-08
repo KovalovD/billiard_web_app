@@ -1,9 +1,8 @@
 // resources/js/Components/PlayersList.vue
 <script lang="ts" setup>
 import LivesTracker from '@/Components/LivesTracker.vue';
-import {Button} from '@/Components/ui';
 import type {MultiplayerGamePlayer} from '@/types/api';
-import {CheckIcon, MinusIcon, PlusIcon, UserIcon} from 'lucide-vue-next';
+import {CheckIcon} from 'lucide-vue-next';
 import {computed} from 'vue';
 
 interface Props {
@@ -33,16 +32,6 @@ const sortedPlayers = computed(() => {
 
 const selectPlayer = (player: MultiplayerGamePlayer) => {
     emit('select-player', player);
-};
-
-const incrementLives = (player: MultiplayerGamePlayer, event: Event) => {
-    event.stopPropagation();
-    emit('increment-lives', player);
-};
-
-const decrementLives = (player: MultiplayerGamePlayer, event: Event) => {
-    event.stopPropagation();
-    emit('decrement-lives', player);
 };
 </script>
 
@@ -84,38 +73,6 @@ const decrementLives = (player: MultiplayerGamePlayer, event: Event) => {
                 <div class="flex items-center space-x-2">
                     <LivesTracker :lives="player.lives" :size="'sm'"/>
 
-                    <!-- Controls if enabled -->
-                    <div v-if="showControls" class="flex space-x-1">
-                        <Button
-                            class="h-7 w-7 p-0"
-                            size="sm"
-                            title="Decrement lives"
-                            variant="ghost"
-                            @click="decrementLives(player, $event)"
-                        >
-                            <MinusIcon class="h-4 w-4"/>
-                        </Button>
-
-                        <Button
-                            class="h-7 w-7 p-0"
-                            size="sm"
-                            title="Increment lives"
-                            variant="ghost"
-                            @click="incrementLives(player, $event)"
-                        >
-                            <PlusIcon class="h-4 w-4"/>
-                        </Button>
-
-                        <Button
-                            class="h-7 w-7 p-0"
-                            size="sm"
-                            title="Select this player"
-                            variant="ghost"
-                            @click="selectPlayer(player)"
-                        >
-                            <UserIcon class="h-4 w-4"/>
-                        </Button>
-                    </div>
                 </div>
             </div>
         </div>

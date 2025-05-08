@@ -11,6 +11,7 @@ interface Props {
     isAuthenticated: boolean;
     authUserHaveOngoingMatch: boolean | undefined;
     authUserIsConfirmed: boolean | undefined;
+    multiplayerGame: boolean;
 }
 
 const props = defineProps<Props>();
@@ -40,6 +41,7 @@ const authUserPosition = computed((): number | null => {
             :authUserHaveOngoingMatch="authUserHaveOngoingMatch"
             :authUserPosition="authUserPosition"
             :authUserIsConfirmed="authUserIsConfirmed"
+            :multiplayerGame="multiplayerGame"
             @challenge="$emit('challenge', playerRating.player)"
         />
     </ul>

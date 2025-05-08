@@ -4,7 +4,6 @@ namespace App\Matches\Http\Controllers;
 
 use App\Leagues\Models\League;
 use App\Matches\Http\Requests\CreateMultiplayerGameRequest;
-use App\Matches\Http\Requests\FinishGameRequest;
 use App\Matches\Http\Requests\JoinMultiplayerGameRequest;
 use App\Matches\Http\Requests\PerformGameActionRequest;
 use App\Matches\Http\Resources\MultiplayerGameResource;
@@ -348,68 +347,6 @@ class MultiplayerGamesController
         $multiplayerGame->delete();
 
         return response()->json(['message' => 'Game cancelled successfully.']);
-    }
-
-    /**
-     * @throws Throwable
-     */
-    public function finishGame(
-        FinishGameRequest $request,
-        League $league,
-        MultiplayerGame $multiplayerGame,
-    ): JsonResponse {
-        if ($multiplayerGame->status !== 'in_progress') {
-            return response()->json(['error' => 'Can only finish games that are in progress.'], 400);
-        }
-
-        try {
-            DB::beginTransaction();
-
-            // Process player positions
-            $positions = $request->positions;
-            $activePlayers = $multiplayerGame->activePlayers()->get();
-
-            foreach ($positions as $position) {
-                $player = $activePlayers->firstWhere('id', $position['player_id']);
-                if (!$player) {
-                    throw new RuntimeException("Player with ID {$position['player_id']} not found or already eliminated.");
-                }
-
-                $player->update([
-                    'finish_position' => $position['position'],
-                    'eliminated_at'   => $position['position'] > 1 ? now() : null,
-                ]);
-            }
-
-            // Update game status
-            $multiplayerGame->update([
-                'status' => 'completed',
-                'completed_at' => now(),
-            ]);
-
-            // Calculate prizes and rating points
-            $multiplayerGame->calculatePrizes();
-            $multiplayerGame->calculateRatingPoints();
-
-            // Log the finish action
-            MultiplayerGameLog::create([
-                'multiplayer_game_id' => $multiplayerGame->id,
-                'user_id'             => Auth::id(),
-                'action_type'         => 'finish_game',
-                'action_data'         => [
-                    'positions' => $positions,
-                ],
-                'created_at'          => now(),
-            ]);
-
-            DB::commit();
-
-            $multiplayerGame->load(['players.user']);
-            return response()->json(new MultiplayerGameResource($multiplayerGame));
-        } catch (Exception|Throwable $e) {
-        }
-        DB::rollBack();
-        return response()->json(['error' => $e->getMessage()], 400);
     }
 
     // Set a user as game moderator (can perform actions for all players)

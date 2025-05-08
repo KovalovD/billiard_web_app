@@ -41,8 +41,7 @@ const hearts = computed(() => {
                 filled ? 'text-red-500' : 'text-gray-300 dark:text-gray-600',
                 index > 0 ? '-ml-0.5' : ''
             ]"
-            ? fill={filled
-        'currentColor' : 'none'}
+            :fill="filled ? 'currentColor' : 'none'"
         />
         <span class="ml-1.5 text-sm font-medium">{{ props.lives }}</span>
     </div>

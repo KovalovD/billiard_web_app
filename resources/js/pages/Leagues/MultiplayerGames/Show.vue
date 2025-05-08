@@ -1,7 +1,13 @@
-// resources/js/pages/Leagues/MultiplayerGames/Show.vue
 <script lang="ts" setup>
-import FinishGameModal from '@/Components/FinishGameModal.vue';
 import SetModeratorModal from '@/Components/SetModeratorModal.vue';
+import GameRegistry from '@/Components/GameRegistry.vue';
+import LivesEditorView from '@/Components/LivesEditorView.vue';
+import PlayersList from '@/Components/PlayersList.vue';
+import PrizeSummaryCard from '@/Components/PrizeSummaryCard.vue';
+import RatingSummaryCard from '@/Components/RatingSummaryCard.vue';
+import GameActionPanel from '@/Components/GameActionPanel.vue';
+import TimeFundCard from '@/Components/TimeFundCard.vue';
+import MultiplayerGameSummary from '@/Components/MultiplayerGameSummary.vue';
 import {Button, Card, CardContent, CardHeader, CardTitle, Spinner} from '@/Components/ui';
 import {useAuth} from '@/composables/useAuth';
 import {useMultiplayerGames} from '@/composables/useMultiplayerGames';
@@ -9,7 +15,7 @@ import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
 import type {League, MultiplayerGame, MultiplayerGamePlayer} from '@/types/api';
 import {Head, Link} from '@inertiajs/vue3';
-import {ArrowLeftIcon, CheckIcon, HeartIcon, MinusIcon, PlusIcon, TrophyIcon, UserIcon} from 'lucide-vue-next';
+import {ArrowLeftIcon, TrophyIcon, UserIcon} from 'lucide-vue-next';
 import {computed, onMounted, ref, watch} from 'vue';
 
 defineOptions({layout: AuthenticatedLayout});
@@ -23,7 +29,6 @@ const {isAdmin, user} = useAuth();
 const {
     getMultiplayerGame,
     performGameAction,
-    finishGame,
     setGameModerator,
     error,
     isLoading: isActionLoading
@@ -39,6 +44,7 @@ const selectedActingPlayer = ref<MultiplayerGamePlayer | null>(null);
 const showFinishModal = ref(false);
 const showModeratorModal = ref(false);
 const actionFeedback = ref<{ type: 'success' | 'error', message: string } | null>(null);
+const activeTab = ref<'game' | 'prizes' | 'ratings' | 'timefund'>('game');
 
 // Computed properties
 const formattedStatusMessage = computed(() => {
@@ -64,12 +70,6 @@ const formattedStatusMessage = computed(() => {
 const isModerator = computed(() => {
     if (!game.value || !user.value) return false;
     return game.value.is_current_user_moderator;
-});
-
-const isInGame = computed(() => {
-    if (!game.value || !user.value) return false;
-    return [...game.value.active_players, ...game.value.eliminated_players]
-        .some(p => p.user.id === user.value?.id);
 });
 
 // Get the current turn player
@@ -121,7 +121,7 @@ const fetchLeague = async () => {
     isLoadingLeague.value = true;
     try {
         league.value = await apiClient<League>(`/api/leagues/${props.leagueId}`);
-        // eslint-disable-next-line
+// eslint-disable-next-line
     } catch (err) {
         // Error handling is managed by the composable
     } finally {
@@ -141,7 +141,7 @@ const fetchGame = async () => {
             // Auto-select the current user's player or current turn player when first loading
             selectDefaultActingPlayer();
         }
-        // eslint-disable-next-line
+// eslint-disable-next-line
     } catch (err) {
         // Error handling is managed by the composable
     } finally {
@@ -209,13 +209,13 @@ const handleAction = async (
         if (action === 'increment_lives' && game.value) {
             actionFeedback.value = {
                 type: 'success',
-                message: `Live successfully incremented`
+                message: `Life successfully incremented`
             };
         }
         if (action === 'decrement_lives' && game.value) {
             actionFeedback.value = {
                 type: 'success',
-                message: `Live successfully decremented`
+                message: `Life successfully decremented`
             };
         }
 
@@ -280,29 +280,6 @@ const handleUseCard = async (cardType: 'skip_turn' | 'pass_turn' | 'hand_shot', 
     }
 };
 
-const handleFinishGame = async (positions: { player_id: number, position: number }[]) => {
-    if (!game.value) return;
-
-    actionFeedback.value = null;
-
-    try {
-        await finishGame(props.leagueId, props.gameId, positions);
-        showFinishModal.value = false;
-
-        actionFeedback.value = {
-            type: 'success',
-            message: 'Game finished successfully'
-        };
-
-        await fetchGame();
-    } catch (err: any) {
-        actionFeedback.value = {
-            type: 'error',
-            message: err.message || 'Failed to finish game'
-        };
-    }
-};
-
 const handleSetModerator = async (userId: number) => {
     if (!game.value) return;
 
@@ -327,33 +304,22 @@ const handleSetModerator = async (userId: number) => {
 };
 
 // User interface selection handlers
-const selectPlayer = (player: MultiplayerGamePlayer, type: 'target' | 'acting') => {
-    if (type === 'target') {
-        selectedTargetPlayer.value = selectedTargetPlayer.value?.id === player.id ? null : player;
-    } else {
-        // When selecting a different acting player, clear the card and target selections
-        if (selectedActingPlayer.value?.id !== player.id) {
-            selectedCardType.value = null;
-            selectedTargetPlayer.value = null;
-        }
-        selectedActingPlayer.value = selectedActingPlayer.value?.id === player.id ? null : player;
+const selectPlayer = (player: MultiplayerGamePlayer) => {
+    // When selecting a different acting player, clear the card and target selections
+    if (selectedActingPlayer.value?.id !== player.id) {
+        selectedCardType.value = null;
+        selectedTargetPlayer.value = null;
     }
+    selectedActingPlayer.value = selectedActingPlayer.value?.id === player.id ? null : player;
 };
 
-const selectCard = (cardType: 'skip_turn' | 'pass_turn' | 'hand_shot', player: MultiplayerGamePlayer) => {
-    if (!player.cards[cardType]) return; // Card unavailable
-
-    if (selectedCardType.value === cardType && selectedActingPlayer.value?.id === player.id) {
-        selectedCardType.value = null;
-        // Do not clear acting player, just the card
-    } else {
-        selectedCardType.value = cardType;
-        selectedActingPlayer.value = player;
-
-        // If not pass_turn, no target needed
-        if (cardType !== 'pass_turn') {
-            selectedTargetPlayer.value = null;
-        }
+const handlePlayerAction = (actionData: any) => {
+    if (actionData.cardType) {
+        handleUseCard(
+            actionData.cardType,
+            actionData.targetPlayerId,
+            selectedActingPlayer.value?.user.id
+        );
     }
 };
 
@@ -457,303 +423,245 @@ onMounted(() => {
                 <Spinner class="text-primary h-8 w-8"/>
             </div>
 
-            <div v-else-if="game" class="space-y-6">
-                <!-- Game Info Card -->
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Game Information</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-                            <div class="space-y-1">
-                                <p class="text-sm text-gray-500">Status</p>
-                                <p class="font-medium">{{ statusText }}</p>
-                            </div>
-                            <div class="space-y-1">
-                                <p class="text-sm text-gray-500">Players</p>
-                                <p class="font-medium">{{ game.active_players_count }} active /
-                                    {{ game.total_players_count }} total</p>
-                            </div>
-                            <div class="space-y-1">
-                                <p class="text-sm text-gray-500">Initial Lives</p>
-                                <p class="font-medium">{{ game.initial_lives }}</p>
-                            </div>
+            <div v-else-if="game">
+                <!-- Registration phase -->
+                <div v-if="game.status === 'registration'">
+                    <GameRegistry :game="game" :league-id="leagueId" @updated="fetchGame"/>
+                </div>
 
-                            <div v-if="game.status === 'registration'" class="space-y-1">
-                                <p class="text-sm text-gray-500">Registration Ends</p>
-                                <p class="font-medium">{{ formatDate(game.registration_ends_at) }}</p>
-                            </div>
-                            <div v-if="game.status === 'in_progress' || game.status === 'completed'" class="space-y-1">
-                                <p class="text-sm text-gray-500">Started</p>
-                                <p class="font-medium">{{ formatDate(game.started_at) }}</p>
-                            </div>
-                            <div v-if="game.status === 'completed'" class="space-y-1">
-                                <p class="text-sm text-gray-500">Completed</p>
-                                <p class="font-medium">{{ formatDate(game.completed_at) }}</p>
-                            </div>
-                            <div v-if="game.moderator_user_id" class="space-y-1">
-                                <p class="text-sm text-gray-500">Game Moderator</p>
-                                <p class="font-medium">
-                                    {{
-                                        game.active_players.find(p => p.user.id === game?.moderator_user_id)?.user.firstname || 'Unknown'
-                                    }}
-                                    {{
-                                        game.active_players.find(p => p.user.id === game?.moderator_user_id)?.user.lastname || ''
-                                    }}
-                                    <span v-if="game.moderator_user_id === user?.id" class="ml-1 text-xs text-blue-600">(You)</span>
-                                </p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                <!-- Game in progress or completed -->
+                <div v-else class="space-y-6">
+                    <!-- Game summary -->
+                    <MultiplayerGameSummary :game="game"/>
 
-                <!-- Central Game Management Section (Only for in-progress games) -->
-                <Card v-if="game.status === 'in_progress' && (isInGame || isAdmin || isModerator)">
-                    <CardHeader>
-                        <CardTitle>Game Management</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div class="mb-4">
-                            <h3 class="mb-2 font-medium">Select Player to Act As:</h3>
-                            <div class="flex flex-wrap gap-2">
-                                <Button
-                                    v-for="player in game.active_players"
-                                    :key="player.id"
-                                    :disabled="!isModerator && player.user.id !== user?.id"
-                                    :variant="selectedActingPlayer?.id === player.id ? 'default' : 'outline'"
-                                    :class="player.is_current_turn ? 'border-green-300 dark:border-green-400' : ''"
-                                    size="sm"
-                                    @click="selectPlayer(player, 'acting')"
-                                >
-                                    {{ player.user.firstname }} {{ player.user.lastname }}
-                                    <span v-if="player.is_current_turn" class="ml-1 text-xs">(Current Turn)</span>
-                                </Button>
-                            </div>
-                        </div>
-
-                        <div v-if="selectedActingPlayer" class="space-y-4">
-                            <div class="rounded-lg border p-4">
-                                <h3 class="mb-2 font-medium">
-                                    Actions for {{ selectedActingPlayer.user.firstname }}
-                                    {{ selectedActingPlayer.user.lastname }}
-                                </h3>
-
-                                <div class="mb-4 flex items-center space-x-4">
-                                    <div class="flex items-center">
-                                        <HeartIcon class="mr-2 h-5 w-5 text-red-500"/>
-                                        <span class="font-medium">{{ selectedActingPlayer.lives }} lives</span>
-                                    </div>
-
-                                    <Button
-                                        size="sm"
-                                        variant="outline"
-                                        :disabled="isActionLoading"
-                                        @click="handleAction('decrement_lives', selectedActingPlayer.user.id, selectedActingPlayer.user.id)"
-                                    >
-                                        <MinusIcon class="h-4 w-4"/>
-                                    </Button>
-
-                                    <Button
-                                        size="sm"
-                                        variant="outline"
-                                        :disabled="isActionLoading"
-                                        @click="handleAction('increment_lives', selectedActingPlayer.user.id, selectedActingPlayer.user.id)"
-                                    >
-                                        <PlusIcon class="h-4 w-4"/>
-                                    </Button>
-                                </div>
-
-                                <div class="mb-4">
-                                    <h4 class="mb-2 text-sm font-medium">Available Cards:</h4>
-                                    <div class="flex flex-wrap gap-2">
-                                        <Button
-                                            v-if="selectedActingPlayer.cards.skip_turn"
-                                            :variant="selectedCardType === 'skip_turn' ? 'default' : 'outline'"
-                                            size="sm"
-                                            @click="selectCard('skip_turn', selectedActingPlayer)"
-                                        >
-                                            Skip Turn
-                                        </Button>
-                                        <Button
-                                            v-if="selectedActingPlayer.cards.pass_turn"
-                                            :variant="selectedCardType === 'pass_turn' ? 'default' : 'outline'"
-                                            size="sm"
-                                            @click="selectCard('pass_turn', selectedActingPlayer)"
-                                        >
-                                            Pass Turn
-                                        </Button>
-                                        <Button
-                                            v-if="selectedActingPlayer.cards.hand_shot"
-                                            :variant="selectedCardType === 'hand_shot' ? 'default' : 'outline'"
-                                            size="sm"
-                                            @click="selectCard('hand_shot', selectedActingPlayer)"
-                                        >
-                                            Hand Shot
-                                        </Button>
-                                        <p v-if="!selectedActingPlayer.cards.skip_turn && !selectedActingPlayer.cards.pass_turn && !selectedActingPlayer.cards.hand_shot"
-                                           class="text-sm text-gray-500">
-                                            No cards available
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div v-if="selectedCardType === 'pass_turn'" class="mb-4">
-                                    <h4 class="mb-2 text-sm font-medium">Select Target Player:</h4>
-                                    <div class="flex flex-wrap gap-2">
-                                        <Button
-                                            v-for="player in game.active_players.filter(p => p.id !== selectedActingPlayer?.id)"
-                                            :key="player.id"
-                                            :variant="selectedTargetPlayer?.id === player.id ? 'default' : 'outline'"
-                                            size="sm"
-                                            @click="selectPlayer(player, 'target')"
-                                        >
-                                            {{ player.user.firstname }} {{ player.user.lastname }}
-                                        </Button>
-                                    </div>
-                                </div>
-
-                                <div class="flex justify-between">
-                                    <Button
-                                        v-if="selectedCardType"
-                                        :disabled="(selectedCardType === 'pass_turn' && !selectedTargetPlayer) || isActionLoading"
-                                        @click="handleUseCard(
-                                            selectedCardType,
-                                            selectedTargetPlayer?.user.id,
-                                            selectedActingPlayer.user.id
-                                        )"
-                                    >
-                                        <Spinner v-if="isActionLoading" class="mr-2 h-4 w-4"/>
-                                        Use {{
-                                            selectedCardType === 'skip_turn' ? 'Skip Turn' : selectedCardType === 'pass_turn' ? 'Pass Turn' : 'Hand Shot'
-                                        }} Card
-                                    </Button>
-
-                                    <Button
-                                        v-if="selectedActingPlayer.is_current_turn"
-                                        :disabled="isActionLoading"
-                                        @click="handleAction('record_turn', undefined, selectedActingPlayer.user.id)"
-                                    >
-                                        <Spinner v-if="isActionLoading" class="mr-2 h-4 w-4"/>
-                                        Record Turn
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div v-else class="text-center text-gray-500">
-                            <p>Select a player to manage their actions</p>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <!-- Active Players Card -->
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Active Players</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div v-if="game.active_players.length === 0" class="py-4 text-center text-gray-500">
-                            No active players remaining.
-                        </div>
-
-                        <div v-else class="divide-y">
-                            <div
-                                v-for="player in game.active_players"
-                                :key="player.id"
+                    <!-- Tab navigation -->
+                    <div class="border-b border-gray-200 dark:border-gray-700">
+                        <nav class="-mb-px flex space-x-8">
+                            <button
                                 :class="[
-                                    'flex items-center justify-between py-3',
-                                    player.is_current_turn ? 'bg-green-50 dark:bg-green-900/10' : '',
-                                    selectedActingPlayer?.id === player.id ? 'border-l-4 border-blue-500 pl-2' : ''
+                                    'py-4 px-1 text-sm font-medium border-b-2',
+                                    activeTab === 'game'
+                                        ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:border-gray-600'
                                 ]"
+                                @click="activeTab = 'game'"
                             >
-                                <div class="flex items-center space-x-3">
-                                    <div
-                                        v-if="player.is_current_turn"
-                                        class="flex h-6 w-6 items-center justify-center rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
-                                    >
-                                        <CheckIcon class="h-4 w-4"/>
-                                    </div>
-                                    <div v-else class="h-6 w-6 text-center text-sm text-gray-500">
-                                        {{ player.turn_order }}
-                                    </div>
-                                    <div>
-                                        <p class="font-medium">{{ player.user.firstname }} {{
-                                                player.user.lastname
-                                            }}</p>
-                                        <p v-if="player.user.id === user?.id" class="text-xs text-blue-600">(You)</p>
-                                        <p v-if="player.user.id === game.moderator_user_id"
-                                           class="text-xs text-purple-600">(Moderator)</p>
-                                    </div>
+                                Game
+                            </button>
+                            <button
+                                :class="[
+                                    'py-4 px-1 text-sm font-medium border-b-2',
+                                    activeTab === 'prizes'
+                                        ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:border-gray-600'
+                                ]"
+                                @click="activeTab = 'prizes'"
+                            >
+                                Prizes
+                            </button>
+                            <button
+                                :class="[
+                                    'py-4 px-1 text-sm font-medium border-b-2',
+                                    activeTab === 'ratings'
+                                        ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:border-gray-600'
+                                ]"
+                                @click="activeTab = 'ratings'"
+                            >
+                                Rating Points
+                            </button>
+                            <button
+                                :class="[
+                                    'py-4 px-1 text-sm font-medium border-b-2',
+                                    activeTab === 'timefund'
+                                        ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:border-gray-600'
+                                ]"
+                                @click="activeTab = 'timefund'"
+                            >
+                                Time Fund
+                            </button>
+                        </nav>
+                    </div>
+
+                    <!-- Game tab -->
+                    <div v-if="activeTab === 'game'">
+                        <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                            <!-- Active Players Panel -->
+                            <div class="order-2 lg:order-1 lg:col-span-1">
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Active Players</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <PlayersList
+                                            :highlight-current-turn="true"
+                                            :players="game.active_players"
+                                            :selected-player-id="selectedActingPlayer?.id"
+                                            :show-controls="isModerator && game.status === 'in_progress'"
+                                            title=""
+                                            @select-player="selectPlayer"
+                                        />
+                                    </CardContent>
+                                </Card>
+
+                                <!-- Eliminated Players if any -->
+                                <Card v-if="game.eliminated_players.length > 0" class="mt-6">
+                                    <CardHeader>
+                                        <CardTitle>Eliminated Players</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div class="divide-y">
+                                            <div
+                                                v-for="player in game.eliminated_players"
+                                                :key="player.id"
+                                                class="flex items-center justify-between py-3"
+                                            >
+                                                <div class="flex items-center space-x-3">
+                                                    <div
+                                                        class="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">
+                                                        {{ player.finish_position }}
+                                                    </div>
+                                                    <div>
+                                                        <p class="font-medium">{{ player.user.firstname }} {{
+                                                                player.user.lastname
+                                                            }}</p>
+                                                        <p v-if="player.user.id === user?.id"
+                                                           class="text-xs text-blue-600">(You)</p>
+                                                    </div>
+                                                </div>
+
+                                                <div class="text-sm text-gray-500">
+                                                    Eliminated: {{ formatDate(player?.eliminated_at) }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </div>
+
+                            <!-- Game Action Panel -->
+                            <div v-if="game.status === 'in_progress'" class="order-1 lg:order-2 lg:col-span-2">
+                                <div v-if="selectedActingPlayer" class="space-y-4">
+                                    <GameActionPanel
+                                        :is-current-turn="selectedActingPlayer.is_current_turn"
+                                        :is-loading="isActionLoading"
+                                        :player="selectedActingPlayer"
+                                        :target-players="game.active_players.filter(p => p.id !== selectedActingPlayer?.id)"
+                                        @decrement-lives="() => handleAction('decrement_lives', selectedActingPlayer?.user.id, selectedActingPlayer?.user.id)"
+                                        @increment-lives="() => handleAction('increment_lives', selectedActingPlayer?.user.id, selectedActingPlayer?.user.id)"
+                                        @record-turn="() => handleAction('record_turn', undefined, selectedActingPlayer?.user.id)"
+                                        @use-card="handlePlayerAction"
+                                    />
                                 </div>
 
-                                <div class="flex items-center space-x-2">
-                                    <div class="flex items-center space-x-1">
-                                        <HeartIcon class="h-5 w-5 text-red-500"/>
-                                        <span class="font-medium">{{ player.lives }}</span>
-                                    </div>
+                                <div v-else-if="isModerator" class="space-y-4">
+                                    <LivesEditorView
+                                        :current-turn-player-id="game.current_turn_player_id"
+                                        :is-loading="isActionLoading"
+                                        :players="game.active_players"
+                                        @decrement-lives="(userId) => handleAction('decrement_lives', userId)"
+                                        @increment-lives="(userId) => handleAction('increment_lives', userId)"
+                                        @set-turn="(userId) => handleAction('record_turn', undefined, userId)"
+                                    />
+                                </div>
 
-                                    <!-- Quick action buttons for moderator -->
-                                    <div v-if="isModerator && game.status === 'in_progress'" class="flex space-x-1">
-                                        <Button
-                                            class="h-7 w-7 p-0"
-                                            size="sm"
-                                            title="Select this player"
-                                            variant="ghost"
-                                            @click="selectPlayer(player, 'acting')"
-                                        >
-                                            <UserIcon class="h-4 w-4"/>
-                                        </Button>
-                                    </div>
+                                <div v-else class="rounded-lg border p-4 text-center text-gray-500 dark:text-gray-400">
+                                    <p>Select a player to view their actions or wait for your turn.</p>
                                 </div>
                             </div>
-                        </div>
-                    </CardContent>
-                </Card>
 
-                <!-- Eliminated Players Card -->
-                <Card v-if="game.eliminated_players.length > 0">
-                    <CardHeader>
-                        <CardTitle>Eliminated Players</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div class="divide-y">
-                            <div
-                                v-for="player in game.eliminated_players"
-                                :key="player.id"
-                                class="flex items-center justify-between py-3"
-                            >
-                                <div class="flex items-center space-x-3">
-                                    <div
-                                        class="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">
-                                        {{ player.finish_position }}
-                                    </div>
-                                    <div>
-                                        <p class="font-medium">{{ player.user.firstname }} {{
-                                                player.user.lastname
-                                            }}</p>
-                                        <p v-if="player.user.id === user?.id" class="text-xs text-blue-600">(You)</p>
-                                    </div>
-                                </div>
-
-                                <div class="text-sm text-gray-500">
-                                    Eliminated: {{ formatDate(player?.eliminated_at) }}
-                                </div>
+                            <!-- Game Completed Summary -->
+                            <div v-if="game.status === 'completed'" class="order-1 lg:order-2 lg:col-span-2">
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Game Results</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div class="space-y-4">
+                                            <div class="overflow-auto">
+                                                <table class="w-full">
+                                                    <thead>
+                                                    <tr class="border-b dark:border-gray-700">
+                                                        <th class="px-4 py-2 text-left">Position</th>
+                                                        <th class="px-4 py-2 text-left">Player</th>
+                                                        <th class="px-4 py-2 text-center">Rating Points</th>
+                                                        <th class="px-4 py-2 text-right">Prize</th>
+                                                    </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                    <tr
+                                                        v-for="player in game.eliminated_players.sort((a, b) =>
+                                                            (a.finish_position || 999) - (b.finish_position || 999))"
+                                                        :key="player.id"
+                                                        class="border-b dark:border-gray-700"
+                                                    >
+                                                        <td class="px-4 py-2">
+                                                            <span
+                                                                :class="{
+                                                                    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300': player.finish_position === 1,
+                                                                    'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200': player.finish_position !== 1
+                                                                }"
+                                                                class="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium"
+                                                            >
+                                                                {{ player.finish_position }}
+                                                            </span>
+                                                        </td>
+                                                        <td class="px-4 py-2">
+                                                            {{ player.user.firstname }} {{ player.user.lastname }}
+                                                            <span v-if="player.user.id === user?.id"
+                                                                  class="ml-1 text-xs text-blue-600">(You)</span>
+                                                        </td>
+                                                        <td class="px-4 py-2 text-center">
+                                                            <span
+                                                                v-if="player.rating_points"
+                                                                class="rounded-full bg-blue-100 px-2 py-1 text-xs text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+                                                            >
+                                                                +{{ player.rating_points }}
+                                                            </span>
+                                                            <span v-else>—</span>
+                                                        </td>
+                                                        <td class="px-4 py-2 text-right">
+                                                            <span v-if="player.prize_amount && player.prize_amount > 0"
+                                                                  class="font-medium">
+                                                                {{
+                                                                    (player.prize_amount || 0).toLocaleString('uk-UA', {
+                                                                        style: 'currency',
+                                                                        currency: 'UAH'
+                                                                    }).replace('UAH', '₴')
+                                                                }}
+                                                            </span>
+                                                            <span v-else>—</span>
+                                                        </td>
+                                                    </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
                             </div>
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
+
+                    <!-- Prizes tab -->
+                    <div v-if="activeTab === 'prizes'" class="space-y-6">
+                        <PrizeSummaryCard :game="game"/>
+                    </div>
+
+                    <!-- Ratings tab -->
+                    <div v-if="activeTab === 'ratings'" class="space-y-6">
+                        <RatingSummaryCard :game="game"/>
+                    </div>
+
+                    <!-- Time Fund tab -->
+                    <div v-if="activeTab === 'timefund'" class="space-y-6">
+                        <TimeFundCard :game="game"/>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-
-    <!-- Finish Game Modal -->
-    <FinishGameModal
-        v-if="game"
-        :game="game"
-        :show="showFinishModal"
-        @close="showFinishModal = false"
-        @finish="handleFinishGame"
-    />
 
     <!-- Set Moderator Modal -->
     <SetModeratorModal
