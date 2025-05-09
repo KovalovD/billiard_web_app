@@ -47,15 +47,16 @@ const getCardDisplayText = (cardType: string): string => {
 const getCardDescription = (cardType: string): string => {
     switch (cardType) {
         case 'skip_turn':
-            return 'Skip your turn';
+            return 'Skip your turn, game moves to the next player';
         case 'pass_turn':
-            return 'Pass your turn to another player';
+            return 'Pass your turn to another player. After they play, the turn will return to you';
         case 'hand_shot':
-            return 'Place the cue ball anywhere on the table';
+            return 'Place the cue ball anywhere on the table and play any ball';
         default:
             return '';
     }
 };
+
 </script>
 
 <template>

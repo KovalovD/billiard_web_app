@@ -22,6 +22,8 @@ class MultiplayerGame extends Model
         'started_at',
         'completed_at',
         'moderator_user_id',
+        'current_player_id',
+        'next_turn_order',
         'allow_player_targeting',
         'entrance_fee',
         'first_place_percent',
@@ -30,7 +32,6 @@ class MultiplayerGame extends Model
         'penalty_fee',
         'prize_pool',
     ];
-
     protected $casts = [
         'registration_ends_at' => 'datetime',
         'started_at'           => 'datetime',
@@ -93,7 +94,7 @@ class MultiplayerGame extends Model
 
     public function getCurrentTurnPlayerIndex(): ?int
     {
-        if ($this->status !== 'in_progress') {
+        if ($this->status !== 'in_progress' || !$this->current_player_id) {
             return null;
         }
 
@@ -102,47 +103,19 @@ class MultiplayerGame extends Model
             return null;
         }
 
-        // Get the latest log to find out whose turn it was last
-        $lastLog = $this
-            ->logs()
-            ->where('action_type', 'turn')
-            ->orderBy('created_at', 'desc')
-            ->first()
-        ;
-
-        if (!$lastLog) {
-            // First turn, return the first player
-            return 0;
-        }
-
-        // Find the index of the player who took the last turn
-        $lastPlayerIndex = $activePlayers->search(function ($player) use ($lastLog) {
-            return $player->user_id === $lastLog->user_id;
+        // Find the index of the current player
+        $currentPlayerIndex = $activePlayers->search(function ($player) {
+            return $player->user_id === $this->current_player_id;
         });
 
-        if ($lastPlayerIndex === false) {
-            // If player not found (was eliminated), return the first player
+        // If current player not found (perhaps they were eliminated),
+        // just return the first player's index
+        if ($currentPlayerIndex === false) {
             return 0;
         }
 
-        // Check if this was a normal turn or a card effect
-        $actionData = $lastLog->action_data ?? [];
-
-        // For a passed turn, the next player should be determined by normal progression
-        // from the player who received the turn
-        if (isset($actionData['passed_from'])) {
-            return ($lastPlayerIndex + 1) % $activePlayers->count();
-        }
-
-        // For a skipped turn, we need to skip the next player
-        if (isset($actionData['skipped']) && $actionData['skipped']) {
-            return ($lastPlayerIndex + 2) % $activePlayers->count();
-        }
-
-        // Normal turn progression
-        return ($lastPlayerIndex + 1) % $activePlayers->count();
+        return $currentPlayerIndex;
     }
-
     public function isUserModerator(User $user): bool
     {
         return $user->id === $this->moderator_user_id || $user->is_admin;

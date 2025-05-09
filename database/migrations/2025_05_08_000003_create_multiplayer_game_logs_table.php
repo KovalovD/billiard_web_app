@@ -13,7 +13,7 @@ return new class extends Migration {
             $table->id();
             $table->foreignIdFor(MultiplayerGame::class)->constrained()->cascadeOnDelete();
             $table->foreignIdFor(User::class)->constrained();
-            $table->string('action_type');  // turn, card_use, elimination
+            $table->string('action_type');
             $table->json('action_data')->nullable();
             $table->timestamp('created_at');
         });

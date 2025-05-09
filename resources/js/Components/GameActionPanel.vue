@@ -38,8 +38,7 @@ const needsTarget = computed(() => {
 
 const canPerformAction = computed(() => {
     if (!selectedCardType.value) return true;
-    if (needsTarget.value && !selectedTargetPlayer.value) return false;
-    return true;
+    return !(needsTarget.value && !selectedTargetPlayer.value);
 });
 
 // Methods
@@ -100,12 +99,13 @@ const handleRecordTurn = () => {
 </script>
 
 <template>
-    <div class="space-y-4 rounded-lg border p-4">
+    <div :class="{'bg-green-50 dark:bg-green-900/10': isCurrentTurn}" class="space-y-4 rounded-lg border p-4">
         <div class="flex items-center justify-between">
             <div>
-                <h3 class="font-medium">
+                <h3 class="font-medium flex items-center">
                     {{ player.user.firstname }} {{ player.user.lastname }}
-                    <span v-if="isCurrentTurn" class="ml-1 text-xs text-green-600">(Current Turn)</span>
+                    <span v-if="isCurrentTurn"
+                          class="ml-2 px-2 py-0.5 text-xs text-white bg-green-600 rounded-full font-semibold dark:bg-green-700">Current Turn</span>
                 </h3>
             </div>
 
@@ -163,8 +163,9 @@ const handleRecordTurn = () => {
         <div class="flex justify-between border-t pt-3">
             <Button
                 v-if="selectedCardType"
-                :disabled="!canPerformAction || isLoading"
+                :disabled="!canPerformAction || isLoading || !isCurrentTurn"
                 @click="handleUseCard"
+                :variant="selectedCardType === 'skip_turn' ? 'destructive' : 'default'"
             >
                 <Spinner v-if="isLoading" class="mr-2 h-4 w-4"/>
                 Use {{
@@ -178,7 +179,7 @@ const handleRecordTurn = () => {
                 @click="handleRecordTurn"
             >
                 <Spinner v-if="isLoading" class="mr-2 h-4 w-4"/>
-                Record Turn
+                End Turn
             </Button>
         </div>
     </div>

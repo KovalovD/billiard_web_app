@@ -167,12 +167,13 @@ class MultiplayerGameService
 
         // Set the first player in turn order as default moderator if none is set
         $moderatorUserId = $game->moderator_user_id;
-        if (!$moderatorUserId) {
-            $firstPlayer = $players->sortBy('turn_order')->first();
-            if ($firstPlayer) {
-                $moderatorUserId = $firstPlayer->user_id;
-            }
+        $firstPlayer = $players->sortBy('turn_order')->first();
+        if (!$moderatorUserId && $firstPlayer) {
+            $moderatorUserId = $firstPlayer->user_id;
         }
+
+        // Set the first player (lowest turn order) as the current player
+        $secondPlayer = $players->sortBy('turn_order')->skip(1)->first();
 
         $game->update([
             'status'                 => 'in_progress',
@@ -180,6 +181,8 @@ class MultiplayerGameService
             'initial_lives'          => $initialLives,
             'moderator_user_id'      => $moderatorUserId,
             'allow_player_targeting' => $game->allow_player_targeting ?? false,
+            'current_player_id' => $firstPlayer->user_id ?? null,
+            'next_turn_order'   => $secondPlayer->turn_order ?? null,
         ]);
 
         return true;
@@ -230,8 +233,8 @@ class MultiplayerGameService
         MultiplayerGame $game,
         string $action,
         ?int $targetUserId = null,
-        ?int $actingUserId = null,
         ?string $cardType = null,
+        ?int $actingUserId = null,
     ): MultiplayerGame {
         // Only active games can have actions
         if ($game->status !== 'in_progress') {
@@ -380,11 +383,11 @@ class MultiplayerGameService
             'created_at'          => now(),
         ]);
 
-        // Check if the game status changed to completed during decrement operation
-        // If so, reload the game
-        if ($game->status !== 'completed' && $game->fresh()->status === 'completed') {
-            $game->refresh();
+        if ($targetUserId === $game->current_player_id) {
+            $this->moveToNextPlayer($game);
         }
+
+        $game->refresh();
     }
 
     /**
@@ -525,15 +528,19 @@ class MultiplayerGameService
         }
     }
 
-    /**
-     * Handle using a card
-     */
     private function handleUseCard(
         MultiplayerGame $game,
         MultiplayerGamePlayer $actingPlayer,
         string $cardType,
         ?int $targetUserId,
     ): void {
+        // Verify this is the current player's turn (unless admin/moderator)
+        if ($game->current_player_id !== $actingPlayer->user_id &&
+            !Auth::user()->is_admin &&
+            Auth::id() !== $game->moderator_user_id) {
+            throw new RuntimeException('It is not your turn.');
+        }
+
         if (!in_array($cardType, ['skip_turn', 'pass_turn', 'hand_shot'])) {
             throw new RuntimeException('Invalid card type.');
         }
@@ -544,6 +551,8 @@ class MultiplayerGameService
 
         // Handle card-specific requirements
         $targetPlayer = null;
+        $currentPlayerTurnOrder = $game->players()->where('user_id', $actingPlayer->user_id)->first()?->turn_order;
+
         if ($cardType === 'pass_turn') {
             if (!$targetUserId) {
                 throw new RuntimeException('Target player is required for pass turn card.');
@@ -570,34 +579,78 @@ class MultiplayerGameService
             'created_at'          => now(),
         ]);
 
-        // Apply the card effect
+        // Apply the card effect based on card type
         switch ($cardType) {
             case 'skip_turn':
-                // Log a turn for the current player to skip the next player
-                MultiplayerGameLog::create([
-                    'multiplayer_game_id' => $game->id,
-                    'user_id'             => $actingPlayer->user_id,
-                    'action_type'         => 'turn',
-                    'action_data'         => ['skipped' => true],
-                    'created_at'          => now(),
-                ]);
+                // Skip the next player's turn and move to the player after that
                 break;
 
             case 'pass_turn':
-                // Log a turn for the target player instead
-                MultiplayerGameLog::create([
-                    'multiplayer_game_id' => $game->id,
-                    'user_id'             => $targetPlayer->user_id,
-                    'action_type'         => 'turn',
-                    'action_data'         => ['passed_from' => $actingPlayer->user_id],
-                    'created_at'          => now(),
-                ]);
+                // Pass turn directly to a specific player
+                $this->passTurnToPlayer($game, $targetPlayer, $currentPlayerTurnOrder);
                 break;
 
             case 'hand_shot':
-                // No turn manipulation for hand shot, just card usage
+                // Hand shot doesn't affect turn order, just logs the card usage
                 break;
         }
+
+        // If the card is not a pass_turn card, log a normal turn for the current player
+        if ($cardType !== 'pass_turn') {
+            MultiplayerGameLog::create([
+                'multiplayer_game_id' => $game->id,
+                'user_id'             => $actingPlayer->user_id,
+                'action_type'         => 'turn',
+                'action_data'         => ['card_used' => $cardType],
+                'created_at'          => now(),
+            ]);
+        }
+
+        // Move to next player unless we're using pass_turn (which already handles this)
+        if ($cardType !== 'pass_turn') {
+            $this->moveToNextPlayer($game);
+        }
+    }
+
+    /**
+     * Pass turn to a specific player
+     */
+    private function passTurnToPlayer(
+        MultiplayerGame $game,
+        MultiplayerGamePlayer $targetPlayer,
+        int $currentPlayerTurnOrder,
+    ): void {
+        // Get active players sorted by turn order
+        $activePlayers = $game->activePlayers()->orderBy('turn_order')->get();
+        if ($activePlayers->isEmpty()) {
+            return;
+        }
+
+        // Find the target player index
+        $targetIndex = $activePlayers->search(function ($player) use ($targetPlayer) {
+            return $player->id === $targetPlayer->id;
+        });
+
+        if ($targetIndex === false) {
+            // Target player not found in active players
+            $this->moveToNextPlayer($game);
+            return;
+        }
+
+        // Update the game with new current and next player
+        $game->update([
+            'current_player_id' => $targetPlayer->user_id,
+            'next_turn_order'   => $currentPlayerTurnOrder,
+        ]);
+
+        // Log a turn for the target player
+        MultiplayerGameLog::create([
+            'multiplayer_game_id' => $game->id,
+            'user_id'             => $targetPlayer->user_id,
+            'action_type'         => 'turn',
+            'action_data'         => ['received_turn' => true],
+            'created_at'          => now(),
+        ]);
     }
 
     /**
@@ -614,17 +667,63 @@ class MultiplayerGameService
         $player->update(['cards' => $cards]);
     }
 
-    /**
-     * Handle recording a turn
-     */
     private function handleRecordTurn(MultiplayerGame $game, MultiplayerGamePlayer $actingPlayer): void
     {
+        // Verify this is the current player's turn
+        if ($game->current_player_id !== $actingPlayer->user_id &&
+            !Auth::user()->is_admin &&
+            Auth::id() !== $game->moderator_user_id) {
+            throw new RuntimeException('It is not your turn.');
+        }
+
         // Record that this player has taken their turn
         MultiplayerGameLog::create([
             'multiplayer_game_id' => $game->id,
             'user_id'             => $actingPlayer->user_id,
             'action_type'         => 'turn',
             'created_at'          => now(),
+        ]);
+
+        // Update to the next player
+        $this->moveToNextPlayer($game);
+    }
+
+    /**
+     * Move to the next player in turn order
+     */
+    private function moveToNextPlayer(MultiplayerGame $game): void
+    {
+        // Get active players sorted by turn order
+        $activePlayers = $game->activePlayers()->orderBy('turn_order')->get();
+        if ($activePlayers->isEmpty()) {
+            return;
+        }
+
+        // Find current next turn order
+        $nextTurnOrder = $game->next_turn_order;
+
+        // Find the player with this turn order
+        $nextPlayer = $activePlayers->first(function ($player) use ($nextTurnOrder) {
+            return $player->turn_order === $nextTurnOrder;
+        });
+
+        // If no player found with next turn order, use the first player
+        if (!$nextPlayer) {
+            $nextPlayer = $activePlayers->first();
+        }
+
+        // Find the player after the next player (becomes the new next player)
+        $nextPlayerIndex = $activePlayers->search(function ($player) use ($nextPlayer) {
+            return $player->id === $nextPlayer->id;
+        });
+
+        $newNextPlayerIndex = ($nextPlayerIndex + 1) % $activePlayers->count();
+        $newNextPlayer = $activePlayers[$newNextPlayerIndex];
+
+        // Update the game with new current and next player
+        $game->update([
+            'current_player_id' => $nextPlayer->user_id,
+            'next_turn_order'   => $newNextPlayer->turn_order,
         ]);
     }
 
