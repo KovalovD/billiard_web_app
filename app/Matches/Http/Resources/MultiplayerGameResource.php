@@ -29,9 +29,7 @@ class MultiplayerGameResource extends JsonResource
             ->values()
         ;
 
-        $currentTurnIndex = $this->getCurrentTurnPlayerIndex();
-        $currentTurnPlayerId = $currentTurnIndex !== null ?
-            $activePlayers[$currentTurnIndex]->user_id ?? null : null;
+        $currentTurnPlayerId = $this->current_player_id;
 
         $user = Auth::user();
         $isModerator = $user && $this->isUserModerator($user);

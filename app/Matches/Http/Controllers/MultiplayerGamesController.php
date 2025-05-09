@@ -102,8 +102,8 @@ readonly class MultiplayerGamesController
                 $multiplayerGame,
                 $request->validated('action'),
                 $request->validated('target_user_id'),
-                $request->validated('acting_user_id'),
                 $request->validated('card_type'),
+                $request->validated('acting_user_id'),
             ),
         ));
     }

@@ -8,7 +8,7 @@ import RatingSummaryCard from '@/Components/RatingSummaryCard.vue';
 import GameActionPanel from '@/Components/GameActionPanel.vue';
 import TimeFundCard from '@/Components/TimeFundCard.vue';
 import MultiplayerGameSummary from '@/Components/MultiplayerGameSummary.vue';
-import {Button, Card, CardContent, CardHeader, CardTitle, Spinner} from '@/Components/ui';
+import {Button, Card, CardContent, CardHeader, CardTitle} from '@/Components/ui';
 import {useAuth} from '@/composables/useAuth';
 import {useMultiplayerGames} from '@/composables/useMultiplayerGames';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
@@ -155,22 +155,7 @@ const fetchGame = async () => {
 
 // Update the selected acting player with fresh data from the game
 const updateSelectedActingPlayer = () => {
-    if (!game.value || !selectedActingPlayer.value) return;
-
-    // Find the player with the same ID in the updated game data
-    const updatedPlayer = game.value.active_players.find(p => p.id === selectedActingPlayer.value?.id);
-
-    if (updatedPlayer) {
-        selectedActingPlayer.value = updatedPlayer;
-    } else {
-        // If player is no longer active (was eliminated), clear the selection
-        selectedActingPlayer.value = null;
-        selectedCardType.value = null;
-        selectedTargetPlayer.value = null;
-
-        // Auto-select another player if possible
-        selectDefaultActingPlayer();
-    }
+    selectDefaultActingPlayer();
 };
 
 // Select a default acting player (current user or current turn)
@@ -178,10 +163,10 @@ const selectDefaultActingPlayer = () => {
     if (!game.value || !user.value) return;
 
     // First try to select the current user's player
-    const userPlayer = game.value.active_players.find(p => p.user.id === user.value?.id);
+    const currentTurnUser = game.value.active_players.find(p => p.user.id === game.value?.current_turn_player_id);
 
-    if (userPlayer) {
-        selectedActingPlayer.value = userPlayer;
+    if (currentTurnUser) {
+        selectedActingPlayer.value = currentTurnUser;
     } else if (isModerator.value && currentTurnPlayer.value) {
         // If user is moderator, select the current turn player
         selectedActingPlayer.value = currentTurnPlayer.value;
@@ -268,12 +253,12 @@ const handleUseCard = async (cardType: 'skip_turn' | 'pass_turn' | 'hand_shot', 
 
         // Add more specific messages for each card type
         if (cardType === 'skip_turn') {
-            message = 'Skip turn card used - next player will be skipped';
+            message = 'Skip Turn card used - your turn is skipped, game moves to the next player';
         } else if (cardType === 'pass_turn') {
             const targetPlayer = game.value.active_players.find(p => p.user.id === targetPlayerId);
-            message = `Turn passed to ${targetPlayer?.user.firstname} ${targetPlayer?.user.lastname}`;
+            message = `Pass Turn card used - turn passed to ${targetPlayer?.user.firstname} ${targetPlayer?.user.lastname}. After they play, the turn will return to you`;
         } else if (cardType === 'hand_shot') {
-            message = 'Hand shot card used - you can place the cue ball anywhere';
+            message = 'Hand Shot card used - you can place the cue ball anywhere on the table';
         }
 
         actionFeedback.value = {
@@ -439,11 +424,8 @@ onMounted(() => {
             </div>
 
             <!-- Loading state -->
-            <div v-if="isLoadingGame" class="flex justify-center py-8">
-                <Spinner class="text-primary h-8 w-8"/>
-            </div>
 
-            <div v-else-if="game">
+            <div v-if="game">
                 <!-- Registration phase -->
                 <div v-if="game.status === 'registration'">
                     <GameRegistry :game="game" :league-id="leagueId" @updated="fetchGame"/>
