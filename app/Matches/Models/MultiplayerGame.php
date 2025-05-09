@@ -125,7 +125,21 @@ class MultiplayerGame extends Model
             return 0;
         }
 
-        // Return the next player index
+        // Check if this was a normal turn or a card effect
+        $actionData = $lastLog->action_data ?? [];
+
+        // For a passed turn, the next player should be determined by normal progression
+        // from the player who received the turn
+        if (isset($actionData['passed_from'])) {
+            return ($lastPlayerIndex + 1) % $activePlayers->count();
+        }
+
+        // For a skipped turn, we need to skip the next player
+        if (isset($actionData['skipped']) && $actionData['skipped']) {
+            return ($lastPlayerIndex + 2) % $activePlayers->count();
+        }
+
+        // Normal turn progression
         return ($lastPlayerIndex + 1) % $activePlayers->count();
     }
 
