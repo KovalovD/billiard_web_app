@@ -6,16 +6,18 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth:sanctum'])->group(function () {
     // Multiplayer Games routes
-    Route::prefix('leagues/{league}/multiplayer-games')->group(function () {
+    Route::group(['prefix' => 'leagues/{league}/multiplayer-games'], static function () {
         Route::get('/', [MultiplayerGamesController::class, 'index']);
-        Route::get('/{multiplayerGame}', [MultiplayerGamesController::class, 'show']);
-        Route::post('/{multiplayerGame}/join', [MultiplayerGamesController::class, 'join']);
-        Route::post('/{multiplayerGame}/leave', [MultiplayerGamesController::class, 'leave']);
-        Route::post('/{multiplayerGame}/action', [MultiplayerGamesController::class, 'performAction']);
-        Route::post('/{multiplayerGame}/finish', [MultiplayerGamesController::class, 'finish']);
-        Route::post('/{multiplayerGame}/set-moderator', [MultiplayerGamesController::class, 'setModerator']);
-        Route::get('/{multiplayerGame}/financial-summary', [MultiplayerGamesController::class, 'getFinancialSummary']);
-        Route::get('/{multiplayerGame}/rating-summary', [MultiplayerGamesController::class, 'getRatingSummary']);
+        Route::group(['prefix' => '{multiplayerGame}'], static function () {
+            Route::get('/', [MultiplayerGamesController::class, 'show']);
+            Route::post('/join', [MultiplayerGamesController::class, 'join']);
+            Route::post('/leave', [MultiplayerGamesController::class, 'leave']);
+            Route::post('/action', [MultiplayerGamesController::class, 'performAction']);
+            Route::post('/finish', [MultiplayerGamesController::class, 'finish']);
+            Route::post('/set-moderator', [MultiplayerGamesController::class, 'setModerator']);
+            Route::get('/financial-summary', [MultiplayerGamesController::class, 'getFinancialSummary']);
+            Route::get('/rating-summary', [MultiplayerGamesController::class, 'getRatingSummary']);
+        });
 
         // Admin-only routes
         Route::middleware(AdminMiddleware::class)->group(function () {

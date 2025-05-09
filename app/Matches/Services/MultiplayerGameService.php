@@ -462,6 +462,13 @@ class MultiplayerGameService
         ];
         $game->save();
 
+        $game->players()->update(
+            [
+                'prize_amount' => 0,
+                'penalty_paid' => false,
+            ],
+        );
+
         // Assign prizes to players
         $winner = $game->players()->where('finish_position', 1)->first();
         $secondPlace = $game->players()->where('finish_position', 2)->first();

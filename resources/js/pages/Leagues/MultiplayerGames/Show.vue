@@ -498,7 +498,7 @@ onMounted(() => {
                         <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
                             <!-- Active Players Panel -->
                             <div class="order-2 lg:order-1 lg:col-span-1">
-                                <Card>
+                                <Card v-if="game.active_players.length > 0">
                                     <CardHeader>
                                         <CardTitle>Active Players</CardTitle>
                                     </CardHeader>
@@ -515,7 +515,10 @@ onMounted(() => {
                                 </Card>
 
                                 <!-- Eliminated Players if any -->
-                                <Card v-if="game.eliminated_players.length > 0" class="mt-6">
+                                <Card
+                                    v-if="game.eliminated_players.length > 0"
+                                    :class="game.active_players.length > 0 ? 'mt-6' : ''"
+                                >
                                     <CardHeader>
                                         <CardTitle>Eliminated Players</CardTitle>
                                     </CardHeader>
