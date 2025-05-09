@@ -542,11 +542,13 @@ class MultiplayerGameService
             throw new RuntimeException('Player does not have this card.');
         }
 
-        if ($cardType === 'pass_turn' && !$targetUserId) {
-            throw new RuntimeException('Target player is required for pass turn card.');
-        }
+        // Handle card-specific requirements
+        $targetPlayer = null;
+        if ($cardType === 'pass_turn') {
+            if (!$targetUserId) {
+                throw new RuntimeException('Target player is required for pass turn card.');
+            }
 
-        if ($targetUserId) {
             $targetPlayer = $game->players()->where('user_id', $targetUserId)->first();
             if (!$targetPlayer || $targetPlayer->eliminated_at) {
                 throw new RuntimeException('Target player not found or eliminated.');
@@ -556,7 +558,7 @@ class MultiplayerGameService
         // Use the card
         $this->usePlayerCard($actingPlayer, $cardType);
 
-        // Log the action
+        // Log the card usage
         MultiplayerGameLog::create([
             'multiplayer_game_id' => $game->id,
             'user_id'             => $actingPlayer->user_id,
@@ -567,6 +569,35 @@ class MultiplayerGameService
             ],
             'created_at'          => now(),
         ]);
+
+        // Apply the card effect
+        switch ($cardType) {
+            case 'skip_turn':
+                // Log a turn for the current player to skip the next player
+                MultiplayerGameLog::create([
+                    'multiplayer_game_id' => $game->id,
+                    'user_id'             => $actingPlayer->user_id,
+                    'action_type'         => 'turn',
+                    'action_data'         => ['skipped' => true],
+                    'created_at'          => now(),
+                ]);
+                break;
+
+            case 'pass_turn':
+                // Log a turn for the target player instead
+                MultiplayerGameLog::create([
+                    'multiplayer_game_id' => $game->id,
+                    'user_id'             => $targetPlayer->user_id,
+                    'action_type'         => 'turn',
+                    'action_data'         => ['passed_from' => $actingPlayer->user_id],
+                    'created_at'          => now(),
+                ]);
+                break;
+
+            case 'hand_shot':
+                // No turn manipulation for hand shot, just card usage
+                break;
+        }
     }
 
     /**

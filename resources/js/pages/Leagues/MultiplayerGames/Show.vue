@@ -248,7 +248,7 @@ const handleAction = async (
     }
 };
 
-const handleUseCard = async (cardType: 'skip_turn' | 'pass_turn' | 'hand_shot', targetUserId?: number, actingUserId?: number) => {
+const handleUseCard = async (cardType: 'skip_turn' | 'pass_turn' | 'hand_shot', targetPlayerId?: number, actingUserId?: number) => {
     if (!game.value) return;
 
     actionFeedback.value = null;
@@ -258,15 +258,27 @@ const handleUseCard = async (cardType: 'skip_turn' | 'pass_turn' | 'hand_shot', 
             props.leagueId,
             props.gameId,
             'use_card',
-            targetUserId,
+            targetPlayerId,
             cardType,
             actingUserId
         );
 
         // Show success feedback
+        let message = `Used ${cardType.replace('_', ' ')} card successfully`;
+
+        // Add more specific messages for each card type
+        if (cardType === 'skip_turn') {
+            message = 'Skip turn card used - next player will be skipped';
+        } else if (cardType === 'pass_turn') {
+            const targetPlayer = game.value.active_players.find(p => p.user.id === targetPlayerId);
+            message = `Turn passed to ${targetPlayer?.user.firstname} ${targetPlayer?.user.lastname}`;
+        } else if (cardType === 'hand_shot') {
+            message = 'Hand shot card used - you can place the cue ball anywhere';
+        }
+
         actionFeedback.value = {
             type: 'success',
-            message: `Used ${cardType} card successfully`
+            message
         };
 
         // Reset selections
@@ -275,7 +287,7 @@ const handleUseCard = async (cardType: 'skip_turn' | 'pass_turn' | 'hand_shot', 
 
         // Don't clear acting player, just update it with fresh data
         await fetchGame();
-    } catch (err: any) {
+    } catch (err) {
         // Show error feedback
         actionFeedback.value = {
             type: 'error',
@@ -283,7 +295,6 @@ const handleUseCard = async (cardType: 'skip_turn' | 'pass_turn' | 'hand_shot', 
         };
     }
 };
-
 const handleSetModerator = async (userId: number) => {
     if (!game.value) return;
 
