@@ -303,6 +303,9 @@ class RatingService
         };
     }
 
+    /**
+     * @throws Throwable
+     */
     public function applyRatingPointsForMultiplayerGame(MultiplayerGame $game): void
     {
         $game->load('players', 'league');
@@ -338,6 +341,8 @@ class RatingService
         foreach ($updates as $update) {
             Rating::where('id', $update['id'])->update(['rating' => $update['rating']]);
         }
+
+        $this->rearrangePositions($league->id);
     }
 
     /**

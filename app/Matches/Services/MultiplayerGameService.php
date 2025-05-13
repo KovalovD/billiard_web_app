@@ -329,6 +329,12 @@ class MultiplayerGameService
             ],
             'created_at'          => now(),
         ]);
+
+        if ($targetUserId === $game->current_player_id) {
+            $this->moveToNextPlayer($game);
+        }
+
+        $game->refresh();
     }
 
     /**
@@ -729,6 +735,7 @@ class MultiplayerGameService
 
     /**
      * Finish the game and apply the rating changes to league ratings
+     * @throws Throwable
      */
     public function finishGame(MultiplayerGame $game, User $user): void
     {
@@ -758,6 +765,7 @@ class MultiplayerGameService
 
     /**
      * Apply rating points from the game to league ratings
+     * @throws Throwable
      */
     public function applyRatingPointsToLeague(MultiplayerGame $game): void
     {
