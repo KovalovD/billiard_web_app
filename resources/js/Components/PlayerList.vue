@@ -1,4 +1,3 @@
-// resources/js/Components/PlayerList.vue
 <script lang="ts" setup>
 import type {Rating} from '@/types/api';
 import {computed} from 'vue';
@@ -12,11 +11,11 @@ interface Props {
     authUserHaveOngoingMatch: boolean | undefined;
     authUserIsConfirmed: boolean | undefined;
     multiplayerGame: boolean | undefined;
+    authUserRating: Rating | null | undefined;
 }
 
 const props = defineProps<Props>();
 
-// Find the current user's position
 const authUserPosition = computed((): number | null => {
     if (!props.currentUserId) return null;
 
@@ -41,6 +40,7 @@ const authUserPosition = computed((): number | null => {
             :authUserHaveOngoingMatch="authUserHaveOngoingMatch"
             :authUserPosition="authUserPosition"
             :authUserIsConfirmed="authUserIsConfirmed"
+            :authUserRating="authUserRating"
             :multiplayerGame="multiplayerGame"
             @challenge="$emit('challenge', playerRating.player)"
         />

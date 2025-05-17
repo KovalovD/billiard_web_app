@@ -105,6 +105,7 @@ export interface Rating {
     losses_count: number;
     league?: League;
     created_at?: string;
+    last_player_rating_id?: number;
 }
 
 export interface Player {

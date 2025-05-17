@@ -554,6 +554,7 @@ watch(
                             :players="players || []"
                             :auth-user-have-ongoing-match="authUserRating?.hasOngoingMatches"
                             :auth-user-is-confirmed="authUserIsConfirmed"
+                            :authUserRating="authUserRating"
                             @challenge="openChallengeModal"
                         />
                     </CardContent>
