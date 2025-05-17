@@ -1,3 +1,4 @@
+// resources/js/Components/ResultModal.vue
 <script lang="ts" setup>
 import InputError from '@/Components/InputError.vue';
 import {Button, Input, Label, Modal, Spinner} from '@/Components/ui';
@@ -139,6 +140,10 @@ const validateScores = (): boolean => {
 
     // Check max score if defined
     if (props.maxScore !== null && props.maxScore !== undefined && props.maxScore > 0) {
+        // Check if one player has reached the max score
+        const isMaxScoreReached = form.first_user_score === props.maxScore || form.second_user_score === props.maxScore;
+
+        // Check if either player exceeded max score
         if (form.first_user_score > props.maxScore) {
             newErrors.first_user_score = [`Maximum score is ${props.maxScore}`];
             isValid = false;
@@ -146,6 +151,21 @@ const validateScores = (): boolean => {
         if (form.second_user_score > props.maxScore) {
             newErrors.second_user_score = [`Maximum score is ${props.maxScore}`];
             isValid = false;
+        }
+
+        // Check if valid match result (one player must have exactly max score)
+        if (isValid && !isMaxScoreReached) {
+            newErrors.general = [`One player must reach exactly ${props.maxScore} points to win`];
+            isValid = false;
+        }
+
+        // Ensure the player with higher score has exactly max score
+        if (isValid) {
+            const winnerScore = Math.max(form.first_user_score, form.second_user_score);
+            if (winnerScore !== props.maxScore) {
+                newErrors.general = [`The winner must have exactly ${props.maxScore} points`];
+                isValid = false;
+            }
         }
     }
 
@@ -297,6 +317,11 @@ const rejectOtherPlayerResult = () => {
                     >.
                 </p>
 
+                <div v-if="maxScore" class="mt-2 text-sm text-blue-600 dark:text-blue-400">
+                    This match is played to {{ maxScore }} wins. One player must reach exactly {{ maxScore }} points to
+                    win.
+                </div>
+
                 <div class="mt-4 grid grid-cols-2 items-start gap-4">
                     <div>
                         <Label :for="`first_score_${matchGame?.id}`">{{ firstPlayer?.name || 'Player 1' }} Score</Label>
@@ -329,20 +354,12 @@ const rejectOtherPlayerResult = () => {
                     </div>
                 </div>
 
-                <!-- Show warning about tie games -->
-                <div
-                    v-if="form.first_user_score === form.second_user_score"
-                    class="mt-3 rounded-md bg-yellow-50 p-2 text-sm text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400"
-                >
-                    Tie games are not allowed. One player must have a higher score.
-                </div>
-
                 <!-- Show warning about max score -->
                 <div
-                    v-if="maxScore && (form.first_user_score > maxScore || form.second_user_score > maxScore)"
+                    v-if="formErrors.general"
                     class="mt-3 rounded-md bg-red-50 p-2 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"
                 >
-                    Maximum score for this league is {{ maxScore }}.
+                    {{ formErrors.general[0] }}
                 </div>
 
                 <!-- Show warning about status -->
@@ -359,7 +376,7 @@ const rejectOtherPlayerResult = () => {
                 <Button :disabled="isLoading" type="button" variant="outline" @click="$emit('close')"> Close</Button>
                 <Button
                     v-if="!isConfirmationNeeded && !isUserConfirmed"
-                    :disabled="isLoading || form.first_user_score === form.second_user_score"
+                    :disabled="isLoading || form.first_user_score === form.second_user_score || Object.keys(formErrors).length > 0"
                     type="submit"
                 >
                     <Spinner v-if="isLoading" class="mr-2 h-4 w-4"/>
