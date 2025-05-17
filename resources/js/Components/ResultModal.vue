@@ -138,7 +138,7 @@ const validateScores = (): boolean => {
     }
 
     // Check max score if defined
-    if (props.maxScore !== null && props.maxScore !== undefined) {
+    if (props.maxScore !== null && props.maxScore !== undefined && props.maxScore > 0) {
         if (form.first_user_score > props.maxScore) {
             newErrors.first_user_score = [`Maximum score is ${props.maxScore}`];
             isValid = false;
