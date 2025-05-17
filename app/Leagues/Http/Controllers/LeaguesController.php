@@ -11,6 +11,7 @@ use App\Leagues\Http\Resources\RatingResource;
 use App\Leagues\Models\League;
 use App\Leagues\Services\LeaguesService;
 use App\Leagues\Services\RatingService;
+use App\Matches\Enums\GameStatus;
 use Auth;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -120,9 +121,30 @@ readonly class LeaguesController
 
     public function loadUserRating(League $league): RatingResource|false
     {
-        $userRating = Auth::user()->activeRatings()->where('league_id', $league->id)->first();
-        return $userRating
-            ? new RatingResource($userRating) :
-            false;
+        $userRating = Auth::user()
+            ->activeRatings()
+            ->with('matchesAsSecondPlayer', 'matchesAsFirstPlayer')
+            ->where('league_id', $league->id)
+            ->first()
+        ;
+
+        $lastFinishedMatch = $userRating->matchesAsSecondPlayer
+            ->merge($userRating->matchesAsFirstPlayer)
+            ->where('status', GameStatus::COMPLETED)
+            ->first()
+        ;
+
+
+        $lastPlayerRatingId = $lastFinishedMatch?->first_rating_id === $userRating->id
+            ? $lastFinishedMatch?->second_rating_id
+            : $lastFinishedMatch?->first_rating_id;
+
+
+        if ($userRating) {
+            $userRating->setLastPlayerRatingId($lastPlayerRatingId);
+            return new RatingResource($userRating);
+        }
+
+        return false;
     }
 }

@@ -17,6 +17,8 @@ class Rating extends Model
 {
     use HasFactory;
 
+    private ?int $last_player_rating_id = null;
+
     protected $fillable = [
         'user_id',
         'league_id',
@@ -93,12 +95,12 @@ class Rating extends Model
 
     public function matchesAsFirstPlayer(): HasMany
     {
-        return $this->hasMany(MatchGame::class, 'first_rating_id')->with('league');
+        return $this->hasMany(MatchGame::class, 'first_rating_id')->orderBy('finished_at', 'desc')->with('league');
     }
 
     public function matchesAsSecondPlayer(): HasMany
     {
-        return $this->hasMany(MatchGame::class, 'second_rating_id')->with('league');
+        return $this->hasMany(MatchGame::class, 'second_rating_id')->orderBy('finished_at', 'desc')->with('league');
     }
 
     /**
@@ -123,5 +125,17 @@ class Rating extends Model
     public function loses(): Collection
     {
         return $this->matches()->where('loser_rating_id', $this->id);
+    }
+
+    public function setLastPlayerRatingId(?int $id): self
+    {
+        $this->last_player_rating_id = $id;
+
+        return $this;
+    }
+
+    public function getLastPlayerRatingId(): ?int
+    {
+        return $this->last_player_rating_id;
     }
 }

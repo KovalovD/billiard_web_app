@@ -1,4 +1,3 @@
-// resources/js/Components/PlayerListItem.vue
 <script lang="ts" setup>
 import {Button} from '@/Components/ui';
 import type {Rating} from '@/types/api';
@@ -12,7 +11,8 @@ interface Props {
     authUserPosition: number | null;
     authUserHaveOngoingMatch: boolean | undefined;
     authUserIsConfirmed: boolean | undefined;
-    multiplayerGame: boolean;
+    multiplayerGame: boolean | undefined;
+    authUserRating: Rating | null | undefined;
 }
 
 const props = defineProps<Props>();
@@ -33,8 +33,15 @@ const isWithinChallengeRange = (): boolean => {
 };
 
 // Check if both players are confirmed
-const canChallenge = (): boolean => {
-    return (props.authUserIsConfirmed && props.playerRating.is_confirmed && !props.playerRating.hasOngoingMatches && isWithinChallengeRange() && !props.authUserHaveOngoingMatch);
+const canChallenge = (playerRating: Rating): boolean => {
+    return (
+        props.authUserIsConfirmed
+        && props.playerRating.is_confirmed
+        && !props.playerRating.hasOngoingMatches
+        && isWithinChallengeRange()
+        && !props.authUserHaveOngoingMatch
+        && playerRating.id !== props.authUserRating?.last_player_rating_id
+    );
 };
 </script>
 
@@ -58,7 +65,7 @@ const canChallenge = (): boolean => {
         <div class="flex items-center space-x-3">
             <span class="text-sm font-bold text-indigo-600 dark:text-indigo-400">{{ playerRating.rating }}</span>
             <Button
-                v-if="isAuthenticated && !isCurrentUser && canChallenge() && !multiplayerGame"
+                v-if="isAuthenticated && !isCurrentUser && canChallenge(playerRating) && !multiplayerGame"
                 size="sm"
                 title="Challenge this player"
                 variant="outline"
