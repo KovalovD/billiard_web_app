@@ -152,3 +152,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [Vue.js](https://vuejs.org) - Frontend framework
 - [Tailwind CSS](https://tailwindcss.com) - Utility-first CSS framework
 - [Inertia.js](https://inertiajs.com) - The modern monolith framework
+
+## License
+Source available under the Business Source License 1.1. Commercial or production use requires a separate agreement.
+
