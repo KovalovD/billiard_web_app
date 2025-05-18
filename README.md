@@ -1,39 +1,86 @@
-# B2B League - Pool League Management System
+# Billiard League - Game Management System
 
-A comprehensive league management system for billiard clubs, allowing players to register, join leagues, challenge
-opponents, and track their ratings.
+A comprehensive platform for managing billiard leagues, tournaments, player ratings, and matches. This application
+offers a modern web interface for players to join leagues, challenge opponents, track statistics, and participate in
+multiplayer game events.
 
 ## Overview
 
-B2B League is a full-stack web application built with Laravel 12 and Vue 3, providing an intuitive interface for
-billiard leagues management. The system features an ELO-based rating system, match challenges, confirmations, and
-comprehensive player statistics tracking.
+This full-stack web application is built with Laravel 12 and Vue 3, providing an intuitive interface for billiard clubs
+and leagues. The system features customizable ELO-based rating systems, match challenge mechanics, result confirmations,
+and detailed player statistics.
 
-## Features
+## Key Features
 
-- **User Management**: Registration, authentication, and profile management
-- **League System**: Create and manage multiple leagues with different game types
-- **Rating System**: ELO-based player rating calculations
-- **Match Management**: Challenge players, accept/decline matches, submit and confirm results
-- **Admin Panel**: Manage players, confirm registrations, and oversee leagues
-- **Statistics**: Track player performance, win rates, and rating changes
+### League Management
 
-## Technologies
+- Create multiple leagues for different billiard game types (Pool, Pyramid, Snooker)
+- Customizable league settings (rating rules, match configurations, player limits)
+- Separate leaderboards and statistics for each league
 
-- **Backend**: PHP 8.4, Laravel 12, Laravel Sanctum
-- **Frontend**: Vue 3, TypeScript, Tailwind CSS, Vite
-- **Database**: MySQL/MariaDB (or SQLite for local development)
-- **API**: RESTful API with proper DTO pattern and Resources
+### Rating System
+
+- ELO-based rating calculations with customizable rule sets
+- Position-based rankings with automatic recalculation
+- Challenge restrictions based on player positions (±10 positions)
+- Admin confirmation required for new player registrations
+
+### Match System
+
+- Challenge system for arranging 1v1 matches
+- Match invitation and confirmation workflow
+- Score submission with mutual confirmation to prevent disputes
+- Statistics tracking for wins, losses, and rating changes
+
+### Multiplayer Games
+
+- Support for "Killer Pool" and other multiplayer game formats
+- Player lives tracking and elimination mechanics
+- Prize pool distribution with customizable percentages
+- Time fund for table reservation with penalty fee system
+
+### User Management
+
+- Registration and authentication
+- Profile management with personal statistics
+- Club and city affiliations
+- Mobile-responsive interface for on-the-go access
+
+### Admin Features
+
+- Player approval and management
+- League creation and configuration
+- Override capabilities for disputed results
+- Game moderation tools
+
+## Technology Stack
+
+- **Backend**: PHP 8.4, Laravel 12, Laravel Sanctum for authentication
+- **Frontend**: Vue 3, TypeScript, Tailwind CSS 4, Vite
+- **UI Components**: Custom component library built on Tailwind
+- **Database**: MySQL/MariaDB (or SQLite for development)
+- **Architecture**: Domain-driven design with modular components
+- **API**: RESTful API with DTO pattern and Resources
 
 ## Project Structure
 
-The application follows a modular architecture with domain-specific components:
+```
+app/
+├── Auth/             # Authentication, login, registration
+├── Core/             # Base models, middleware, providers
+├── Leagues/          # League management, ratings, players
+├── Matches/          # Match games, multiplayer games, game logs
+└── User/             # User profiles, statistics, cities/clubs
 
-- **Auth Module**: Handles authentication, registration, and user sessions
-- **Core Module**: Contains shared functionality, base models, and middleware
-- **Leagues Module**: Manages leagues, ratings, and player rankings
-- **Matches Module**: Handles match creation, results, and rating calculations
-- **User Module**: User profiles, statistics, and preferences
+resources/
+├── js/
+│   ├── components/   # Vue components
+│   ├── composables/  # Vue composition API functions
+│   ├── layouts/      # Application layouts
+│   ├── pages/        # Vue pages corresponding to routes
+│   └── types/        # TypeScript type definitions
+└── css/              # Tailwind and custom styles
+```
 
 ## Getting Started
 
@@ -49,8 +96,8 @@ The application follows a modular architecture with domain-specific components:
 1. Clone the repository
 
 ```bash
-git clone https://github.com/yourusername/b2b-league.git
-cd b2b-league
+git clone https://github.com/KovalovD/billiard_web_app.git
+cd billiard_web_app
 ```
 
 2. Install PHP dependencies
@@ -83,25 +130,24 @@ php artisan migrate --seed
 7. Start development server
 
 ```bash
-# Run in separate terminals
+# Run in separate terminals, or use the combined command
 php artisan serve
 npm run dev
+
+# Or use the combined development command
+composer dev
 ```
 
 8. Access the application at `http://localhost:8000`
 
-### Default Admin Account
-
-- Email: kovalov@b2bleague.com
-- Password: nudik_number_one
-
-## Development
-
 ### Development Commands
 
 ```bash
-# Run application with all services
+# Run application with all services (server, queue, logs, vite)
 composer dev
+
+# Run with SSR (Server-Side Rendering)
+composer dev:ssr
 
 # Run tests
 composer test
@@ -113,38 +159,39 @@ npm run lint
 npm run format
 ```
 
-### Directory Structure
-
-- `app/` - Application core code
-    - `Auth/` - Authentication modules
-    - `Core/` - Core functionality
-    - `Leagues/` - League management
-    - `Matches/` - Match handling
-    - `User/` - User profiles and statistics
-- `resources/` - Frontend code and assets
-    - `js/` - Vue components and TypeScript code
-    - `css/` - Stylesheets
-    - `views/` - Blade templates
-
-## API Documentation
-
-The API follows RESTful conventions with the following main endpoints:
-
-- `/api/auth/*` - Authentication endpoints
-- `/api/leagues/*` - League management
-- `/api/user/*` - User data and statistics
-
 ## ELO Rating System
 
 The system uses a customizable ELO rating algorithm with configurable parameters:
 
 - Initial rating value (default: 1000)
-- Rating change rules for different rating differences
-- Position-based challenge restrictions (within ±10 positions)
+- Different rating adjustments based on points difference between players
+- Separate rules for winners and losers
+- Players can only challenge others within ±10 positions of their rank
+- Special rating rules for multiplayer "Killer Pool" games
+
+## Multiplayer Game Features
+
+The Billiard League application supports multiplayer game formats with special rules:
+
+- **Killer Pool**: Players start with a set number of lives and are eliminated when they run out
+- **Card System**: Players have special cards (Skip Turn, Pass Turn, Hand Shot) they can use strategically
+- **Financial System**: Entrance fees, prize distribution, and time fund for table costs
+- **Player Targeting**: Option to allow/disallow targeting other players
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the Business Source License 1.1.
+
+- **Source available** for review, modification, and non-production use
+- **Change date**: May 19, 2029 (or when specified version is 4 years old)
+- **Change license**: GPL-2.0-or-later (after change date)
+- **Commercial use** requires a separate agreement before the change date
+
+See the [LICENSE](LICENSE) file for complete details.
+
+## Contributors
+
+- Dmytro Kovalov - Project Lead
 
 ## Acknowledgements
 
@@ -152,7 +199,3 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [Vue.js](https://vuejs.org) - Frontend framework
 - [Tailwind CSS](https://tailwindcss.com) - Utility-first CSS framework
 - [Inertia.js](https://inertiajs.com) - The modern monolith framework
-
-## License
-Source available under the Business Source License 1.1. Commercial or production use requires a separate agreement.
-
