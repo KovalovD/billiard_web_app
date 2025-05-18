@@ -1,0 +1,20 @@
+<html>
+<head><title>404 Not Found</title></head>
+<body>
+<h1>404 Not Found</h1>
+<ul>
+<li>Code: NoSuchKey</li>
+<li>Message: The specified key does not exist.</li>
+<li>Key: licenses/BUSL-1.1.txt</li>
+<li>RequestId: TKBDA9Q4QGYEQV0Z</li>
+<li>HostId: UepgrJkWVOeKq3XSzvbV26/UNAxA0rwlNtPYCYuyQJRwB8G9p5p3eZ9ieqL4wWpexGWZt0mr78g=</li>
+</ul>
+<h3>An Error Occurred While Attempting to Retrieve a Custom Error Document</h3>
+<ul>
+<li>Code: NoSuchKey</li>
+<li>Message: The specified key does not exist.</li>
+<li>Key: error.html</li>
+</ul>
+<hr/>
+</body>
+</html>
