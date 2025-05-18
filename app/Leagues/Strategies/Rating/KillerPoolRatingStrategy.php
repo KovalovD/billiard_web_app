@@ -2,14 +2,12 @@
 
 namespace App\Leagues\Strategies\Rating;
 
-use App\Leagues\Models\Rating;
-
 class KillerPoolRatingStrategy implements RatingStrategy
 {
     /**
      * Calculate ratings based on KillerPool strategy
      *
-     * @param  array<Rating>  $ratings
+     * @param  array  $ratings
      * @param  int  $winnerId
      * @param  array  $winnersRules  - This is a game-players array with points
      * @param  array  $losersRules

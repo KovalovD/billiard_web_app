@@ -12,9 +12,9 @@ use App\Matches\Models\MatchGame;
 use Illuminate\Database\Eloquent\Builder;
 use Throwable;
 
-readonly class MatchGamesService
+class MatchGamesService
 {
-    public function __construct(private RatingService $ratingService)
+    public function __construct(private readonly RatingService $ratingService)
     {
     }
 

@@ -5,7 +5,7 @@ namespace App\Auth\Repositories;
 use App\Core\Models\User;
 use Laravel\Sanctum\NewAccessToken;
 
-readonly class AuthRepository
+class AuthRepository
 {
     public function createToken(User $user, string $deviceName): NewAccessToken
     {
