@@ -17,12 +17,12 @@ use RuntimeException;
 /**
  * Service for handling authentication operations
  */
-readonly class AuthService
+class AuthService
 {
     /**
      * @param  AuthRepository  $repository
      */
-    public function __construct(private AuthRepository $repository)
+    public function __construct(private readonly AuthRepository $repository)
     {
     }
 

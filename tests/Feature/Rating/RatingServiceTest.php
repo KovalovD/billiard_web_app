@@ -2,21 +2,127 @@
 
 use App\Core\Models\Game;
 use App\Core\Models\User;
+use App\Leagues\Enums\RatingType;
 use App\Leagues\Models\League;
 use App\Leagues\Models\Rating;
 use App\Leagues\Services\RatingService;
 use App\Matches\Models\MatchGame;
-use Illuminate\Database\Eloquent\Collection;
+use App\Matches\Models\MultiplayerGame;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-it('updates ratings and reorders positions for 5 users with strict positions', function () {
-    $service = new RatingService();
+beforeEach(function () {
+    $this->service = new RatingService();
+});
 
+it('gets active ratings with users for a league', function () {
+    // Create a league
+    $league = League::factory()->create();
+
+    // Create some users
+    $users = User::factory()->count(3)->create();
+
+    // Create active ratings for these users
+    foreach ($users as $i => $user) {
+        Rating::create([
+            'league_id' => $league->id,
+            'user_id'   => $user->id,
+            'rating'    => 1000 + ($i * 100),
+            'position'  => $i + 1,
+            'is_active' => true,
+        ]);
+    }
+
+    // Create an inactive rating that shouldn't be returned
+    Rating::create([
+        'league_id' => $league->id,
+        'user_id'   => User::factory()->create()->id,
+        'rating'    => 1500,
+        'position'  => 4,
+        'is_active' => false,
+    ]);
+
+    // Get active ratings
+    $activeRatings = $this->service->getRatingsWithUsers($league);
+
+    expect($activeRatings)
+        ->toHaveCount(3)
+        ->and($activeRatings->pluck('is_active')->unique())->toEqual(collect([true]))
+        ->and($activeRatings->pluck('user_id')->sort()->values())->toEqual($users->pluck('id')->sort()->values())
+    ;
+});
+
+it('adds player to league considering max players limit', function () {
+    // Create a league with max_players = 2
     $league = League::factory()->create([
-        'start_rating'                   => 1000,
-        'rating_type'                    => 'elo',
+        'max_players' => 2,
+    ]);
+
+    // Create 3 users
+    $users = User::factory()->count(3)->create();
+
+    // Add first two users - should succeed
+    expect($this->service->addPlayer($league, $users[0]))
+        ->toBeTrue()
+        ->and($this->service->addPlayer($league, $users[1]))->toBeTrue()
+    ;
+
+    // Confirm both users
+    Rating::where('league_id', $league->id)->update(['is_confirmed' => true]);
+
+    // Attempt to add third user - should fail due to max_players limit
+    expect($this->service->addPlayer($league, $users[2]))->toBeFalse();
+
+    // Now set max_players to 0 (unlimited)
+    $league->update(['max_players' => 0]);
+
+    // Should now be able to add the third user
+    expect($this->service->addPlayer($league, $users[2]))->toBeTrue();
+
+    // Verify proper count of active ratings
+    $activeRatings = Rating::where('league_id', $league->id)
+        ->where('is_active', true)
+        ->count()
+    ;
+
+    expect($activeRatings)->toBe(3);
+});
+
+it('disables a player in a league', function () {
+    // Create a league
+    $league = League::factory()->create();
+
+    // Create a user with an active rating
+    $user = User::factory()->create();
+    Rating::create([
+        'league_id' => $league->id,
+        'user_id'   => $user->id,
+        'rating'    => 1000,
+        'position'  => 1,
+        'is_active' => true,
+    ]);
+
+    // Verify the rating is active
+    expect(Rating::where('league_id', $league->id)
+        ->where('user_id', $user->id)
+        ->where('is_active', true)
+        ->exists())->toBeTrue();
+
+    // Disable the player
+    $this->service->disablePlayer($league, $user);
+
+    // Verify the rating is now inactive
+    expect(Rating::where('league_id', $league->id)
+        ->where('user_id', $user->id)
+        ->where('is_active', false)
+        ->exists())->toBeTrue();
+});
+
+it('updates ratings with the elo strategy', function () {
+    // Create a league with Elo rating type
+    $league = League::factory()->create([
+        'rating_type' => RatingType::Elo,
         'rating_change_for_winners_rule' => [
             ['range' => [0, 50], 'strong' => 25, 'weak' => 25],
             ['range' => [51, 100], 'strong' => 20, 'weak' => 30],
@@ -31,65 +137,185 @@ it('updates ratings and reorders positions for 5 users with strict positions', f
         ],
     ]);
 
-    $users = User::factory()->count(5)->create();
-    [$u1, $u2, $u3, $u4, $u5] = $users;
+    // Create 2 users with different ratings
+    $user1 = User::factory()->create();
+    $user2 = User::factory()->create();
 
-    // Уникальные рейтинги
-    /** @var Collection<MatchGame> $ratings */
-    $ratings = collect([980, 1000, 1080, 990, 1060])
-        ->map(fn($rating, $i) => Rating::create([
-            'league_id' => $league->id,
-            'user_id'   => $users[$i]->id,
-            'rating'    => $rating,
-            'position'  => $i + 1,
-            'is_active' => true,
-        ]))
-    ;
+    $rating1 = Rating::create([
+        'league_id' => $league->id,
+        'user_id'   => $user1->id,
+        'rating'    => 1000,
+        'position'  => 1,
+        'is_active' => true,
+    ]);
 
+    $rating2 = Rating::create([
+        'league_id' => $league->id,
+        'user_id'   => $user2->id,
+        'rating'    => 1100,
+        'position'  => 2,
+        'is_active' => true,
+    ]);
+
+    // Create a match game
     $matchGame = MatchGame::create([
-        'game_id'            => Game::factory()->create()->id,
-        'league_id'          => $league->id,
-        'first_rating_id'    => $ratings[0]->id,
-        'second_rating_id'   => $ratings[2]->id,
-        'first_user_score'   => 5,
-        'second_user_score'  => 3,
-        'winner_rating_id'   => $ratings[0]->id,
-        'loser_rating_id'    => $ratings[2]->id,
+        'game_id'           => Game::factory()->create()->id,
+        'league_id'         => $league->id,
+        'first_rating_id'   => $rating1->id,
+        'second_rating_id'  => $rating2->id,
+        'first_user_score'  => 5,
+        'second_user_score' => 3,
+        'winner_rating_id'  => $rating1->id,
+        'loser_rating_id'   => $rating2->id,
         'invitation_sent_at' => now(),
     ]);
 
-    // u1 (980) выигрывает у u3 (1080) → Δ = 100 → слабый победил
-    // по правилам: +30/-30
-    $service->updateRatings($matchGame, $u1->id);
+    // Update ratings
+    $result = $this->service->updateRatings($matchGame, $user1->id);
 
-    // Обновляем модели
-    $ratings = $ratings->map(fn($r) => $r->refresh());
+    // Delta = 100, weaker player (rating1) won
+    expect($result[$rating1->id])
+        ->toBe(1035) // 1000 + 35
+        ->and($result[$rating2->id])->toBe(1085)
+    ; // 1100 - 15
 
-    expect($ratings[0]->rating)
-        ->toBe(1010)
-        ->and($ratings[2]->rating)
-        ->toBe(1050)
-    ; // 980 + 30
-    // 1080 - 30
+    // Verify the ratings were updated in the database
+    expect(Rating::find($rating1->id)->rating)
+        ->toBe(1035)
+        ->and(Rating::find($rating2->id)->rating)->toBe(1085)
+    ;
+});
 
-    // Проверим порядок по position
-    $ordered = Rating::where('league_id', $league->id)
-        ->orderBy('position')
-        ->get()
+it('gets active rating for user in league', function () {
+    // Create a league
+    $league = League::factory()->create();
+
+    // Create a user with an active rating
+    $user = User::factory()->create();
+    $rating = Rating::create([
+        'league_id' => $league->id,
+        'user_id'   => $user->id,
+        'rating'    => 1000,
+        'position'  => 1,
+        'is_active' => true,
+    ]);
+
+    // Get the active rating
+    $activeRating = $this->service->getActiveRatingForUserLeague($user, $league);
+
+    expect($activeRating)->not
+        ->toBeNull()
+        ->and($activeRating->id)->toBe($rating->id)
     ;
 
-    $expectedOrder = [
-        $u5->id, // 1060
-        $u3->id, // 1050
-        $u1->id, // 1010
-        $u2->id, // 1000
-        $u4->id, // 990
-    ];
+    // Now create an inactive rating for another user
+    $inactiveUser = User::factory()->create();
+    Rating::create([
+        'league_id' => $league->id,
+        'user_id'   => $inactiveUser->id,
+        'rating'    => 1000,
+        'position'  => 2,
+        'is_active' => false,
+    ]);
 
-    expect($ordered->pluck('user_id')->toArray())->toBe($expectedOrder);
+    // Should return null for inactive rating
+    $inactiveRating = $this->service->getActiveRatingForUserLeague($inactiveUser, $league);
 
-    echo "\n[RatingServiceTest] Финальные позиции:\n";
-    $ordered->each(function ($r) {
-        echo "Позиция {$r->position}: user_id={$r->user_id}, рейтинг={$r->rating}\n";
-    });
+    expect($inactiveRating)->toBeNull();
+});
+
+it('applies rating points from multiplayer game', function () {
+    // Create a league with KillerPool rating type
+    $league = League::factory()->create([
+        'rating_type' => RatingType::KillerPool,
+    ]);
+
+    // Create 3 users with ratings
+    $users = User::factory()->count(3)->create();
+    $ratings = [];
+
+    foreach ($users as $i => $user) {
+        $ratings[] = Rating::create([
+            'league_id' => $league->id,
+            'user_id'   => $user->id,
+            'rating'    => 1000,
+            'position'  => $i + 1,
+            'is_active' => true,
+        ]);
+    }
+
+    // Create a multiplayer game
+    $game = MultiplayerGame::create([
+        'league_id' => $league->id,
+        'game_id'   => Game::factory()->create(['is_multiplayer' => true])->id,
+        'name'      => 'Test Game',
+        'status'    => 'completed',
+    ]);
+
+    // Create players with rating points
+    foreach ($users as $i => $user) {
+        $game->players()->create([
+            'user_id'         => $user->id,
+            'rating_points'   => 10 + ($i * 5), // 10, 15, 20 points
+            'finish_position' => 3 - $i, // 3, 2, 1 (reverse order)
+        ]);
+    }
+
+    // Apply rating points
+    $this->service->applyRatingPointsForMultiplayerGame($game);
+
+    // Verify ratings were updated
+    foreach ($ratings as $i => $rating) {
+        $updatedRating = Rating::find($rating->id);
+        $expectedRating = 1000 + (10 + ($i * 5)); // 1010, 1015, 1020
+
+        expect($updatedRating->rating)->toBe($expectedRating);
+    }
+});
+
+it('throws exception when applying multiplayer rating points with wrong strategy', function () {
+    // Create a league with Elo rating type
+    $league = League::factory()->create([
+        'rating_type' => RatingType::Elo,
+    ]);
+
+    // Create a multiplayer game
+    $game = MultiplayerGame::create([
+        'league_id' => $league->id,
+        'game_id'   => Game::factory()->create(['is_multiplayer' => true])->id,
+        'name'      => 'Test Game',
+        'status'    => 'completed',
+    ]);
+
+    // Should throw exception because we're using Elo for a multiplayer game
+    expect(function () use ($game) {
+        $this->service->applyRatingPointsForMultiplayerGame($game);
+    })->toThrow(LogicException::class, "League rating type must be KillerPool");
+});
+
+it('handles reactivating a previously inactive player', function () {
+    // Create a league
+    $league = League::factory()->create();
+
+    // Create a user
+    $user = User::factory()->create();
+
+    // Add the player and then disable them
+    $this->service->addPlayer($league, $user);
+    $this->service->disablePlayer($league, $user);
+
+    // Verify the rating is inactive
+    expect(Rating::where('league_id', $league->id)
+        ->where('user_id', $user->id)
+        ->where('is_active', false)
+        ->exists())->toBeTrue();
+
+    // Reactivate the player
+    $this->service->addPlayer($league, $user);
+
+    // Verify the rating is now active again
+    expect(Rating::where('league_id', $league->id)
+        ->where('user_id', $user->id)
+        ->where('is_active', true)
+        ->exists())->toBeTrue();
 });

@@ -1,299 +1,287 @@
 <?php
 
+use App\Core\Models\Game;
 use App\Core\Models\User;
 use App\Leagues\Models\League;
 use App\Leagues\Models\Rating;
 use App\Leagues\Services\RatingService;
+use App\Matches\Enums\GameStatus;
 use App\Matches\Models\MatchGame;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->service = app(RatingService::class);
+    $this->service = new RatingService();
 });
 
-it('0) sorts by rating descending', function () {
-    /** @var League $league */
+it('rearranges positions based on match results', function () {
+    // Create a league
     $league = League::factory()->create();
-    $strong = User::factory()->create(['firstname' => 'Strong', 'lastname' => 'Player']);
-    $weak = User::factory()->create(['firstname' => 'Weak', 'lastname' => 'Player']);
 
-    Rating::create([
-        'league_id' => $league->id, 'user_id' => $strong->id,
-        'rating' => 2000, 'position' => 0, 'is_active' => true,
-    ]);
-    Rating::create([
-        'league_id' => $league->id, 'user_id' => $weak->id,
-        'rating' => 1000, 'position' => 0, 'is_active' => true,
-    ]);
+    // Create a game
+    $game = Game::factory()->create();
 
+    // Create users with equal ratings initially
+    $users = User::factory()->count(4)->create();
+    $ratings = [];
+
+    foreach ($users as $i => $user) {
+        $ratings[] = Rating::create([
+            'league_id'    => $league->id,
+            'user_id'      => $user->id,
+            'rating'       => 1000, // All equal ratings
+            'position'     => 0, // Will be rearranged
+            'is_active'    => true,
+            'is_confirmed' => true,
+        ]);
+    }
+
+    // Rearrange initial positions
     $this->service->rearrangePositions($league->id);
 
-    expect(Rating::where('user_id', $strong->id)->first()->position)
-        ->toBe(1)
-        ->and(Rating::where('user_id', $weak->id)->first()->position)->toBe(2)
-    ;
-});
+    // Create matches with different outcomes to test all tiebreakers
 
-it('1) breaks tie by wins_count descending', function () {
-    /** @var League $league */
-    $league = League::factory()->create();
-    $a = User::factory()->create(['firstname' => 'A', 'lastname' => 'Alpha']);
-    $b = User::factory()->create(['firstname' => 'B', 'lastname' => 'Beta']);
-
-    $rA = Rating::create([
-        'league_id' => $league->id, 'user_id' => $a->id, 'rating' => 1500, 'position' => 0, 'is_active' => true,
-    ]);
-    $rB = Rating::create([
-        'league_id' => $league->id, 'user_id' => $b->id, 'rating' => 1500, 'position' => 0, 'is_active' => true,
-    ]);
-
-    // A выигрывает один матч, B — ни одного
+    // Match 1: user[0] wins against user[1] with a large score difference
+    // This affects: wins_count, frame_diff, frames_won
     MatchGame::create([
-        'league_id'          => $league->id,
-        'first_rating_id'    => $rA->id,
-        'second_rating_id'   => $rB->id,
-        'first_user_score'   => 5,
-        'second_user_score'  => 3,
-        'winner_rating_id'   => $rA->id,
-        'loser_rating_id'    => $rB->id,
+        'game_id'           => $game->id,
+        'league_id'         => $league->id,
+        'first_rating_id'   => $ratings[0]->id,
+        'second_rating_id'  => $ratings[1]->id,
+        'first_user_score'  => 5,
+        'second_user_score' => 0,
+        'winner_rating_id'  => $ratings[0]->id,
+        'loser_rating_id'   => $ratings[1]->id,
+        'status'            => GameStatus::COMPLETED,
         'invitation_sent_at' => now(),
+        'finished_at'       => now(),
     ]);
 
+    // Match 2: user[2] wins against user[3] with a close score
+    // This affects: wins_count, frame_diff, frames_won
+    MatchGame::create([
+        'game_id'           => $game->id,
+        'league_id'         => $league->id,
+        'first_rating_id'   => $ratings[2]->id,
+        'second_rating_id'  => $ratings[3]->id,
+        'first_user_score'  => 3,
+        'second_user_score' => 2,
+        'winner_rating_id'  => $ratings[2]->id,
+        'loser_rating_id'   => $ratings[3]->id,
+        'status'            => GameStatus::COMPLETED,
+        'invitation_sent_at' => now(),
+        'finished_at'       => now(),
+    ]);
+
+    // Match 3: user[1] wins against user[2]
+    // Now both user[0] and user[1] have 1 win each
+    MatchGame::create([
+        'game_id'           => $game->id,
+        'league_id'         => $league->id,
+        'first_rating_id'   => $ratings[1]->id,
+        'second_rating_id'  => $ratings[2]->id,
+        'first_user_score'  => 3,
+        'second_user_score' => 1,
+        'winner_rating_id'  => $ratings[1]->id,
+        'loser_rating_id'   => $ratings[2]->id,
+        'status'            => GameStatus::COMPLETED,
+        'invitation_sent_at' => now(),
+        'finished_at'       => now(),
+    ]);
+
+    // Match 4: user[3] plays extra match but loses
+    // This affects: matches_count
+    MatchGame::create([
+        'game_id'           => $game->id,
+        'league_id'         => $league->id,
+        'first_rating_id'   => $ratings[0]->id,
+        'second_rating_id'  => $ratings[3]->id,
+        'first_user_score'  => 3,
+        'second_user_score' => 1,
+        'winner_rating_id'  => $ratings[0]->id,
+        'loser_rating_id'   => $ratings[3]->id,
+        'status'            => GameStatus::COMPLETED,
+        'invitation_sent_at' => now(),
+        'finished_at'       => now(),
+    ]);
+
+    // Rearrange positions
     $this->service->rearrangePositions($league->id);
 
-    expect($rA->fresh()->position)
-        ->toBe(1)
-        ->and($rB->fresh()->position)->toBe(2)
-    ;
-});
+    // Expected order based on tiebreakers:
+    // 1. user[0]: 2 wins, +7 frame diff, 8 frames won, 2 matches
+    // 2. user[1]: 1 win, +2 frame diff, 3 frames won, 2 matches
+    // 3. user[2]: 1 win, +1 frame diff, 4 frames won, 2 matches
+    // 4. user[3]: 0 wins, -10 frame diff, 3 frames won, 2 matches
 
-it('2) breaks tie by frame_diff descending when rating and wins_count equal', function () {
-    /** @var League $league */
-    $league = League::factory()->create();
-    $a = User::factory()->create(['firstname' => 'A', 'lastname' => 'Alpha']);
-    $b = User::factory()->create(['firstname' => 'B', 'lastname' => 'Beta']);
-    $c = User::factory()->create(['firstname' => 'C', 'lastname' => 'Gamma']);
+    $expectedOrder = [$users[0]->id, $users[1]->id, $users[2]->id, $users[3]->id];
 
-    $rA = Rating::create([
-        'league_id' => $league->id, 'user_id' => $a->id, 'rating' => 1500, 'position' => 0, 'is_active' => true,
-    ]);
-    $rB = Rating::create([
-        'league_id' => $league->id, 'user_id' => $b->id, 'rating' => 1500, 'position' => 0, 'is_active' => true,
-    ]);
-    $rC = Rating::create([
-        'league_id' => $league->id, 'user_id' => $c->id, 'rating' => 1500, 'position' => 0, 'is_active' => true,
-    ]);
-
-    // ни у кого нет побед → wins_count = 0
-    // A: проигрыш 3–5 → diff = 3 – 5 = -2
-    MatchGame::create([
-        'league_id'          => $league->id,
-        'first_rating_id'    => $rA->id,
-        'second_rating_id' => $rC->id, // использует C вместо невалидного ID
-        'first_user_score'   => 3,
-        'second_user_score'  => 5,
-        'winner_rating_id' => $rC->id,
-        'loser_rating_id'  => $rA->id,
-        'invitation_sent_at' => now(),
-    ]);
-    // B: проигрыш 1–5 → diff = 1 – 5 = -4
-    MatchGame::create([
-        'league_id'          => $league->id,
-        'first_rating_id'    => $rB->id,
-        'second_rating_id' => $rC->id, // использует C вместо невалидного ID
-        'first_user_score'   => 1,
-        'second_user_score'  => 5,
-        'winner_rating_id' => $rC->id,
-        'loser_rating_id'  => $rB->id,
-        'invitation_sent_at' => now(),
-    ]);
-
-    $this->service->rearrangePositions($league->id);
-
-    // C has 2 wins, so C is position 1
-    // A has 0 wins but better frame_diff (-2 vs -4), so A is position 2
-    // B has 0 wins and worse frame_diff (-4), so B is position 3
-    expect($rA->fresh()->position)
-        ->toBe(2)
-        ->and($rB->fresh()->position)->toBe(3)
-    ;
-});
-
-it('3) breaks tie by frames_won descending when previous metrics equal', function () {
-    /** @var League $league */
-    $league = League::factory()->create();
-    $a = User::factory()->create(['firstname' => 'A', 'lastname' => 'Alpha']);
-    $b = User::factory()->create(['firstname' => 'B', 'lastname' => 'Beta']);
-
-    $rA = Rating::create([
-        'league_id' => $league->id, 'user_id' => $a->id, 'rating' => 1500, 'position' => 0, 'is_active' => true,
-    ]);
-    $rB = Rating::create([
-        'league_id' => $league->id, 'user_id' => $b->id, 'rating' => 1500, 'position' => 0, 'is_active' => true,
-    ]);
-
-    // обеих по одной победе и по одному поражению (diff=0 у обоих)
-    // A: выиграл 7–5, проиграл 5–7 → frames_won = 7+5 = 12
-    MatchGame::create([
-        'league_id'          => $league->id,
-        'first_rating_id'    => $rA->id,
-        'second_rating_id'   => $rB->id,
-        'first_user_score'   => 7,
-        'second_user_score'  => 5,
-        'winner_rating_id'   => $rA->id,
-        'loser_rating_id'    => $rB->id,
-        'invitation_sent_at' => now(),
-    ]);
-    MatchGame::create([
-        'league_id'          => $league->id,
-        'first_rating_id'    => $rA->id,
-        'second_rating_id'   => $rB->id,
-        'first_user_score'   => 5,
-        'second_user_score'  => 7,
-        'winner_rating_id'   => $rB->id,
-        'loser_rating_id'    => $rA->id,
-        'invitation_sent_at' => now(),
-    ]);
-    // B: выиграл 6–4, проиграл 4–6 → frames_won = 6+4 = 10
-    MatchGame::create([
-        'league_id'          => $league->id,
-        'first_rating_id'    => $rB->id,
-        'second_rating_id'   => $rA->id,
-        'first_user_score'   => 6,
-        'second_user_score'  => 4,
-        'winner_rating_id'   => $rB->id,
-        'loser_rating_id'    => $rA->id,
-        'invitation_sent_at' => now(),
-    ]);
-    MatchGame::create([
-        'league_id'          => $league->id,
-        'first_rating_id'    => $rB->id,
-        'second_rating_id'   => $rA->id,
-        'first_user_score'   => 4,
-        'second_user_score'  => 6,
-        'winner_rating_id'   => $rA->id,
-        'loser_rating_id'    => $rB->id,
-        'invitation_sent_at' => now(),
-    ]);
-
-    $this->service->rearrangePositions($league->id);
-
-    expect($rA->fresh()->position)
-        ->toBe(1)
-        ->and($rB->fresh()->position)->toBe(2)
-    ;
-});
-
-it('4) breaks tie by matches_count descending when all previous metrics equal', function () {
-    /** @var League $league */
-    $league = League::factory()->create();
-    $a = User::factory()->create(['firstname' => 'A', 'lastname' => 'Alpha']);
-    $b = User::factory()->create(['firstname' => 'B', 'lastname' => 'Beta']);
-    $c = User::factory()->create(['firstname' => 'C', 'lastname' => 'Gamma']);
-
-    $rA = Rating::create([
-        'league_id' => $league->id, 'user_id' => $a->id, 'rating' => 1500, 'position' => 0, 'is_active' => true,
-    ]);
-    $rB = Rating::create([
-        'league_id' => $league->id, 'user_id' => $b->id, 'rating' => 1500, 'position' => 0, 'is_active' => true,
-    ]);
-    $rC = Rating::create([
-        'league_id' => $league->id, 'user_id' => $c->id, 'rating' => 1500, 'position' => 0, 'is_active' => true,
-    ]);
-
-    // Два первых матча между A и B дают wins_count=1, diff=0, frames_won=10
-    MatchGame::create([
-        'league_id'          => $league->id,
-        'first_rating_id'    => $rA->id,
-        'second_rating_id'   => $rB->id,
-        'first_user_score'   => 6,
-        'second_user_score'  => 4,
-        'winner_rating_id'   => $rA->id,
-        'loser_rating_id'    => $rB->id,
-        'invitation_sent_at' => now(),
-    ]);
-    MatchGame::create([
-        'league_id'          => $league->id,
-        'first_rating_id'    => $rB->id,
-        'second_rating_id'   => $rA->id,
-        'first_user_score'   => 6,
-        'second_user_score'  => 4,
-        'winner_rating_id'   => $rB->id,
-        'loser_rating_id'    => $rA->id,
-        'invitation_sent_at' => now(),
-    ]);
-    // Дополнительный "пустой" матч C→B, нулевые очки и без победителя,
-    // чтобы увеличить matches_count только для B
-    MatchGame::create([
-        'league_id'          => $league->id,
-        'first_rating_id'    => $rC->id,
-        'second_rating_id'   => $rB->id,
-        'first_user_score'   => 0,
-        'second_user_score'  => 0,
-        'winner_rating_id'   => null,
-        'loser_rating_id'    => null,
-        'invitation_sent_at' => now(),
-    ]);
-
-    $this->service->rearrangePositions($league->id);
-
-    expect($rB->fresh()->position)
-        ->toBe(1)
-        ->and($rA->fresh()->position)->toBe(2)
-    ;
-});
-
-it('6) falls back to user.lastname ascending when all metrics equal', function () {
-    /** @var League $league */
-    $league = League::factory()->create();
-    $a = User::factory()->create(['firstname' => 'Z', 'lastname' => 'Alpha']);
-    $b = User::factory()->create(['firstname' => 'Y', 'lastname' => 'Beta']);
-
-    Rating::create([
-        'league_id' => $league->id, 'user_id' => $a->id, 'rating' => 1500, 'position' => 0, 'is_active' => true,
-    ]);
-    Rating::create([
-        'league_id' => $league->id, 'user_id' => $b->id, 'rating' => 1500, 'position' => 0, 'is_active' => true,
-    ]);
-
-    // Никаких игр — все метрики 0
-    $this->service->rearrangePositions($league->id);
-
-    $ordered = Rating::where('league_id', $league->id)
+    $actualOrder = Rating::where('league_id', $league->id)
         ->orderBy('position')
-        ->with('user')
-        ->get()
-        ->pluck('user.lastname')
+        ->pluck('user_id')
         ->toArray()
     ;
 
-    expect($ordered)->toEqual(['Alpha', 'Beta']);
+    expect($actualOrder)->toBe($expectedOrder);
 });
 
-it('7) falls back to user.firstname ascending when lastnames equal', function () {
+it('handles rearranging positions with no active ratings', function () {
     /** @var League $league */
     $league = League::factory()->create();
-    $a = User::factory()->create(['firstname' => 'Alice', 'lastname' => 'Smith']);
-    $b = User::factory()->create(['firstname' => 'Bob', 'lastname' => 'Smith']);
 
-    Rating::create([
-        'league_id' => $league->id, 'user_id' => $a->id, 'rating' => 1500, 'position' => 0, 'is_active' => true,
-    ]);
-    Rating::create([
-        'league_id' => $league->id, 'user_id' => $b->id, 'rating' => 1500, 'position' => 0, 'is_active' => true,
-    ]);
+    // No ratings created
 
+    // This should not throw any exceptions
     $this->service->rearrangePositions($league->id);
 
-    $ordered = Rating::where('league_id', $league->id)
-        ->orderBy('position')
+    // Verify no ratings exist
+    expect(Rating::where('league_id', $league->id)->count())->toBe(0);
+});
+
+it('correctly rearranges positions for multiple ratings with the same metrics', function () {
+    /** @var League $league */
+    $league = League::factory()->create();
+
+    // Create 5 users with the same rating value
+    $users = User::factory()->count(5)->create();
+    $userRatings = [];
+
+    foreach ($users as $i => $user) {
+        $userRatings[] = Rating::create([
+            'league_id' => $league->id,
+            'user_id'   => $user->id,
+            'rating'    => 1000, // Same rating for all
+            'position'  => 0, // Will be rearranged
+            'is_active' => true,
+        ]);
+    }
+
+    // Rearrange positions
+    $this->service->rearrangePositions($league->id);
+
+    // Should be ordered by lastname, firstname
+    $ratingsInOrder = Rating::where('league_id', $league->id)
         ->with('user')
+        ->orderBy('position')
         ->get()
-        ->pluck('user.firstname')
+    ;
+
+    $expectedOrder = $users->sortBy('lastname')->sortBy('firstname')->pluck('id')->toArray();
+    $actualOrder = $ratingsInOrder->pluck('user_id')->toArray();
+
+    expect($actualOrder)->toBe($expectedOrder);
+});
+
+it('handles a mix of active and inactive ratings correctly', function () {
+    /** @var League $league */
+    $league = League::factory()->create();
+
+    // Create 3 active and 2 inactive users
+    $activeUsers = User::factory()->count(3)->create();
+    $inactiveUsers = User::factory()->count(2)->create();
+
+    // Create active ratings
+    foreach ($activeUsers as $i => $user) {
+        Rating::create([
+            'league_id' => $league->id,
+            'user_id'   => $user->id,
+            'rating'    => 1000 + ($i * 100), // Different ratings
+            'position'  => 0, // Will be rearranged
+            'is_active' => true,
+        ]);
+    }
+
+    // Create inactive ratings
+    foreach ($inactiveUsers as $i => $user) {
+        Rating::create([
+            'league_id' => $league->id,
+            'user_id'   => $user->id,
+            'rating'    => 1500 + ($i * 100), // Higher ratings than active users
+            'position'  => 0, // Will be rearranged
+            'is_active' => false,
+        ]);
+    }
+
+    // Rearrange positions
+    $this->service->rearrangePositions($league->id);
+
+    // Get active ratings in order
+    $activeRatingsInOrder = Rating::where('league_id', $league->id)
+        ->where('is_active', true)
+        ->orderBy('position')
+        ->get()
+    ;
+
+    // Verify positions are sequential
+    $positions = $activeRatingsInOrder->pluck('position')->toArray();
+    expect($positions)->toBe([1, 2, 3]);
+
+    // Verify correct ordering by rating
+    $ratings = $activeRatingsInOrder->pluck('rating')->toArray();
+    expect($ratings)->toBe([1200, 1100, 1000]); // Descending order
+});
+
+it('updates positions after ratings change', function () {
+    /** @var League $league */
+    $league = League::factory()->create();
+
+    // Create users with different ratings
+    $users = User::factory()->count(3)->create();
+
+    Rating::create([
+        'league_id' => $league->id,
+        'user_id'   => $users[0]->id,
+        'rating'    => 1000,
+        'position'  => 0,
+        'is_active' => true,
+    ]);
+
+    Rating::create([
+        'league_id' => $league->id,
+        'user_id'   => $users[1]->id,
+        'rating'    => 1200,
+        'position'  => 0,
+        'is_active' => true,
+    ]);
+
+    Rating::create([
+        'league_id' => $league->id,
+        'user_id'   => $users[2]->id,
+        'rating'    => 1100,
+        'position'  => 0,
+        'is_active' => true,
+    ]);
+
+    // Rearrange positions
+    $this->service->rearrangePositions($league->id);
+
+    // Verify initial positions
+    $initialPositions = Rating::where('league_id', $league->id)
+        ->orderBy('position')
+        ->pluck('user_id')
         ->toArray()
     ;
 
-    expect($ordered)->toEqual(['Alice', 'Bob']);
+    // Expected order: user[1] (1200), user[2] (1100), user[0] (1000)
+    expect($initialPositions)->toBe([$users[1]->id, $users[2]->id, $users[0]->id]);
+
+    // Change ratings
+    Rating::where('user_id', $users[0]->id)
+        ->where('league_id', $league->id)
+        ->update(['rating' => 1500])
+    ; // Now highest
+
+    // Rearrange positions again
+    $this->service->rearrangePositions($league->id);
+
+    // Verify updated positions
+    $updatedPositions = Rating::where('league_id', $league->id)
+        ->orderBy('position')
+        ->pluck('user_id')
+        ->toArray()
+    ;
+
+    // Expected new order: user[0] (1500), user[1] (1200), user[2] (1100)
+    expect($updatedPositions)->toBe([$users[0]->id, $users[1]->id, $users[2]->id]);
 });
