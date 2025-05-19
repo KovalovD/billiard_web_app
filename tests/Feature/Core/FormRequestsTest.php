@@ -21,14 +21,13 @@ class FormRequestsTest extends TestCase
     use RefreshDatabase;
 
     /** @test */
-    public function base_form_request_handles_failed_validation()
+    public function base_form_request_handles_failed_validation(): void
     {
         // Create a mock validator
         $validator = $this->mock(Validator::class);
         $validator
-            ->shouldReceive('errors')
-            ->once()
-            ->andReturn([
+            ->expects('errors')
+            ->andReturns([
                 'field' => ['The field is required.'],
             ])
         ;
@@ -55,7 +54,7 @@ class FormRequestsTest extends TestCase
     }
 
     /** @test */
-    public function login_request_has_expected_rules()
+    public function login_request_has_expected_rules(): void
     {
         $request = new LoginRequest();
 
@@ -70,22 +69,23 @@ class FormRequestsTest extends TestCase
         $this->assertEquals(['sometimes', 'string'], $rules['deviceName']);
     }
 
-    /** @test */
-    public function login_request_prepares_devicename_from_header()
+    /** @test
+     * @throws ReflectionException
+     */
+    public function login_request_prepares_devicename_from_header(): void
     {
         $request = new LoginRequest();
         $request->headers->set('User-Agent', 'Test User Agent');
 
         // Use reflection to access protected method
         $method = new ReflectionMethod(LoginRequest::class, 'prepareForValidation');
-        $method->setAccessible(true);
         $method->invoke($request);
 
         $this->assertEquals('Test User Agent', $request->deviceName);
     }
 
     /** @test */
-    public function logout_request_has_expected_rules()
+    public function logout_request_has_expected_rules(): void
     {
         $request = new LogoutRequest();
 
@@ -95,22 +95,23 @@ class FormRequestsTest extends TestCase
         $this->assertEquals(['sometimes', 'string'], $rules['deviceName']);
     }
 
-    /** @test */
-    public function logout_request_prepares_devicename_from_header()
+    /** @test
+     * @throws ReflectionException
+     */
+    public function logout_request_prepares_devicename_from_header(): void
     {
         $request = new LogoutRequest();
         $request->headers->set('User-Agent', 'Test User Agent');
 
         // Use reflection to access protected method
         $method = new ReflectionMethod(LogoutRequest::class, 'prepareForValidation');
-        $method->setAccessible(true);
         $method->invoke($request);
 
         $this->assertEquals('Test User Agent', $request->deviceName);
     }
 
     /** @test */
-    public function register_request_has_expected_rules()
+    public function register_request_has_expected_rules(): void
     {
         $request = new RegisterRequest();
 
@@ -132,7 +133,7 @@ class FormRequestsTest extends TestCase
     }
 
     /** @test */
-    public function put_league_request_has_expected_rules()
+    public function put_league_request_has_expected_rules(): void
     {
         $request = new PutLeagueRequest();
 
@@ -153,8 +154,10 @@ class FormRequestsTest extends TestCase
         $this->assertEquals(['required', 'integer', 'min:1'], $rules['invite_days_expire']);
     }
 
-    /** @test */
-    public function put_league_request_handles_zero_max_players()
+    /** @test
+     * @throws ReflectionException
+     */
+    public function put_league_request_handles_zero_max_players(): void
     {
         $request = new PutLeagueRequest();
 
@@ -163,7 +166,6 @@ class FormRequestsTest extends TestCase
 
         // Use reflection to access protected method
         $method = new ReflectionMethod(PutLeagueRequest::class, 'prepareForValidation');
-        $method->setAccessible(true);
         $method->invoke($request);
 
         // 0 means unlimited, so it should stay as 0
@@ -171,7 +173,7 @@ class FormRequestsTest extends TestCase
     }
 
     /** @test */
-    public function send_game_request_has_expected_rules()
+    public function send_game_request_has_expected_rules(): void
     {
         $request = new SendGameRequest();
 
@@ -187,7 +189,7 @@ class FormRequestsTest extends TestCase
     }
 
     /** @test */
-    public function send_result_request_has_expected_rules()
+    public function send_result_request_has_expected_rules(): void
     {
         $request = new SendResultRequest();
 
@@ -201,7 +203,7 @@ class FormRequestsTest extends TestCase
     }
 
     /** @test */
-    public function create_multiplayer_game_request_has_expected_rules()
+    public function create_multiplayer_game_request_has_expected_rules(): void
     {
         $request = new CreateMultiplayerGameRequest();
 
@@ -223,8 +225,10 @@ class FormRequestsTest extends TestCase
         $this->assertEquals(['nullable', 'integer', 'min:0'], $rules['entrance_fee']);
     }
 
-    /** @test */
-    public function create_multiplayer_game_request_corrects_prize_percentages()
+    /** @test
+     * @throws ReflectionException
+     */
+    public function create_multiplayer_game_request_corrects_prize_percentages(): void
     {
         $request = new CreateMultiplayerGameRequest();
 
@@ -237,7 +241,6 @@ class FormRequestsTest extends TestCase
 
         // Use reflection to access protected method
         $method = new ReflectionMethod(CreateMultiplayerGameRequest::class, 'prepareForValidation');
-        $method->setAccessible(true);
         $method->invoke($request);
 
         // Should be corrected to default values that add up to 100%
@@ -247,7 +250,7 @@ class FormRequestsTest extends TestCase
     }
 
     /** @test */
-    public function update_password_request_has_expected_rules()
+    public function update_password_request_has_expected_rules(): void
     {
         $request = new UpdatePasswordRequest();
 
@@ -262,7 +265,7 @@ class FormRequestsTest extends TestCase
     }
 
     /** @test */
-    public function update_profile_request_has_expected_rules()
+    public function update_profile_request_has_expected_rules(): void
     {
         $request = new UpdateProfileRequest();
 

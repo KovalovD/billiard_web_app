@@ -13,6 +13,8 @@ use App\Leagues\Services\LeaguesService;
 use App\Leagues\Services\RatingService;
 use App\Matches\Enums\GameStatus;
 use App\Matches\Models\MatchGame;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Tests\TestCase;
@@ -39,15 +41,14 @@ class LeaguesControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_returns_all_leagues()
+    public function it_returns_all_leagues(): void
     {
         // Arrange
         $leagues = League::factory()->count(3)->create();
 
         $this->mockLeaguesService
-            ->shouldReceive('index')
-            ->once()
-            ->andReturn($leagues)
+            ->expects('index')
+            ->andReturns($leagues)
         ;
 
         // Act
@@ -60,7 +61,7 @@ class LeaguesControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_returns_single_league()
+    public function it_returns_single_league(): void
     {
         // Arrange
         $league = League::factory()->create();
@@ -73,8 +74,11 @@ class LeaguesControllerTest extends TestCase
         $this->assertEquals($league->id, $result->resource->id);
     }
 
-    /** @test */
-    public function it_creates_new_league()
+    /** @test
+     * @throws JsonException
+     * @throws JsonException
+     */
+    public function it_creates_new_league(): void
     {
         // Arrange
         $game = Game::factory()->create();
@@ -90,21 +94,20 @@ class LeaguesControllerTest extends TestCase
             'invite_days_expire'             => 2,
             'rating_change_for_winners_rule' => json_encode([
                 ['range' => [0, 100], 'strong' => 20, 'weak' => 30],
-            ]),
+            ], JSON_THROW_ON_ERROR),
             'rating_change_for_losers_rule'  => json_encode([
                 ['range' => [0, 100], 'strong' => -20, 'weak' => -30],
-            ]),
+            ], JSON_THROW_ON_ERROR),
         ];
 
         $newLeague = League::factory()->create($leagueData);
 
         $request = $this->mock(PutLeagueRequest::class);
-        $request->shouldReceive('validated')->andReturn($leagueData);
+        $request->allows('validated')->andReturns($leagueData);
 
         $this->mockLeaguesService
-            ->shouldReceive('store')
-            ->once()
-            ->andReturn($newLeague)
+            ->expects('store')
+            ->andReturns($newLeague)
         ;
 
         // Act
@@ -115,8 +118,11 @@ class LeaguesControllerTest extends TestCase
         $this->assertEquals($newLeague->id, $result->resource->id);
     }
 
-    /** @test */
-    public function it_updates_league()
+    /** @test
+     * @throws JsonException
+     * @throws JsonException
+     */
+    public function it_updates_league(): void
     {
         // Arrange
         $league = League::factory()->create();
@@ -130,10 +136,10 @@ class LeaguesControllerTest extends TestCase
             'invite_days_expire'             => 2,
             'rating_change_for_winners_rule' => json_encode([
                 ['range' => [0, 100], 'strong' => 20, 'weak' => 30],
-            ]),
+            ], JSON_THROW_ON_ERROR),
             'rating_change_for_losers_rule'  => json_encode([
                 ['range' => [0, 100], 'strong' => -20, 'weak' => -30],
-            ]),
+            ], JSON_THROW_ON_ERROR),
         ];
 
         $updatedLeague = League::factory()->create(array_merge(
@@ -142,12 +148,11 @@ class LeaguesControllerTest extends TestCase
         ));
 
         $request = $this->mock(PutLeagueRequest::class);
-        $request->shouldReceive('validated')->andReturn($updateData);
+        $request->allows('validated')->andReturns($updateData);
 
         $this->mockLeaguesService
-            ->shouldReceive('update')
-            ->once()
-            ->andReturn($updatedLeague)
+            ->expects('update')
+            ->andReturns($updatedLeague)
         ;
 
         // Act
@@ -160,14 +165,13 @@ class LeaguesControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_deletes_league()
+    public function it_deletes_league(): void
     {
         // Arrange
         $league = League::factory()->create();
 
         $this->mockLeaguesService
-            ->shouldReceive('destroy')
-            ->once()
+            ->expects('destroy')
             ->with($league)
         ;
 
@@ -179,7 +183,7 @@ class LeaguesControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_returns_league_players()
+    public function it_returns_league_players(): void
     {
         // Arrange
         $league = League::factory()->create();
@@ -198,10 +202,9 @@ class LeaguesControllerTest extends TestCase
         }
 
         $this->mockRatingService
-            ->shouldReceive('getRatingsWithUsers')
-            ->once()
+            ->expects('getRatingsWithUsers')
             ->with($league)
-            ->andReturn($ratings)
+            ->andReturns($ratings)
         ;
 
         // Act
@@ -214,7 +217,7 @@ class LeaguesControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_returns_league_games()
+    public function it_returns_league_games(): void
     {
         // Arrange
         $league = League::factory()->create();
@@ -224,10 +227,9 @@ class LeaguesControllerTest extends TestCase
         ]);
 
         $this->mockLeaguesService
-            ->shouldReceive('games')
-            ->once()
+            ->expects('games')
             ->with($league)
-            ->andReturn($matches)
+            ->andReturns($matches)
         ;
 
         // Act
@@ -240,7 +242,7 @@ class LeaguesControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_returns_user_leagues_and_challenges()
+    public function it_returns_user_leagues_and_challenges(): void
     {
         // Arrange
         $user = User::factory()->create();
@@ -272,10 +274,9 @@ class LeaguesControllerTest extends TestCase
         $this->actingAs($user);
 
         $this->mockLeaguesService
-            ->shouldReceive('myLeaguesAndChallenges')
-            ->once()
+            ->expects('myLeaguesAndChallenges')
             ->with($user)
-            ->andReturn($myLeaguesData)
+            ->andReturns($myLeaguesData)
         ;
 
         // Act
@@ -286,7 +287,7 @@ class LeaguesControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_loads_user_rating_for_league()
+    public function it_loads_user_rating_for_league(): void
     {
         // Arrange
         $user = User::factory()->create();
@@ -300,17 +301,16 @@ class LeaguesControllerTest extends TestCase
         $this->actingAs($user);
 
         // Mock the user's relationship
-        $mockCollection = $this->mock('Illuminate\Database\Eloquent\Collection');
-        $mockRelation = $this->mock('Illuminate\Database\Eloquent\Relations\HasMany');
+        $mockCollection = $this->mock(Collection::class);
+        $mockRelation = $this->mock(HasMany::class);
 
         $mockRelation
-            ->shouldReceive('with->where->first')
-            ->once()
-            ->andReturn($rating)
+            ->expects('with->where->first')
+            ->andReturns($rating)
         ;
 
         $user
-            ->shouldReceive('activeRatings')
+            ->expects('activeRatings')
             ->once()
             ->andReturn($mockRelation)
         ;

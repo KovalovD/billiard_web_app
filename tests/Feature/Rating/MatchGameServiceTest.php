@@ -48,17 +48,15 @@ it('can send a match game with valid input', function () {
 
     // Mock the getActiveRatingForUserLeague method
     $this->mockRatingService
-        ->shouldReceive('getActiveRatingForUserLeague')
+        ->expects('getActiveRatingForUserLeague')
         ->with($sender, $league)
-        ->once()
-        ->andReturn($senderRating)
+        ->andReturns($senderRating)
     ;
 
     $this->mockRatingService
-        ->shouldReceive('getActiveRatingForUserLeague')
+        ->expects('getActiveRatingForUserLeague')
         ->with($receiver, $league)
-        ->once()
-        ->andReturn($receiverRating)
+        ->andReturns($receiverRating)
     ;
 
     // Create DTO
@@ -118,15 +116,15 @@ it('handles validation for rating criteria when sending match', function () {
 
     // Mock the getActiveRatingForUserLeague method
     $this->mockRatingService
-        ->shouldReceive('getActiveRatingForUserLeague')
+        ->allows('getActiveRatingForUserLeague')
         ->with($sender, $league)
-        ->andReturn($senderRating)
+        ->andReturns($senderRating)
     ;
 
     $this->mockRatingService
-        ->shouldReceive('getActiveRatingForUserLeague')
+        ->allows('getActiveRatingForUserLeague')
         ->with($receiver, $league)
-        ->andReturn($receiverRating)
+        ->andReturns($receiverRating)
     ;
 
     // Create DTO
@@ -187,15 +185,15 @@ it('prevents sending match if player already has ongoing matches', function () {
 
     // Mock the getActiveRatingForUserLeague method
     $this->mockRatingService
-        ->shouldReceive('getActiveRatingForUserLeague')
+        ->allows('getActiveRatingForUserLeague')
         ->with($sender, $league)
-        ->andReturn($senderRating)
+        ->andReturns($senderRating)
     ;
 
     $this->mockRatingService
-        ->shouldReceive('getActiveRatingForUserLeague')
+        ->allows('getActiveRatingForUserLeague')
         ->with($receiver, $league)
-        ->andReturn($receiverRating)
+        ->andReturns($receiverRating)
     ;
 
     // Create DTO
@@ -251,15 +249,15 @@ it('prevents sending match if last opponent was the same', function () {
 
     // Mock the getActiveRatingForUserLeague method
     $this->mockRatingService
-        ->shouldReceive('getActiveRatingForUserLeague')
+        ->allows('getActiveRatingForUserLeague')
         ->with($sender, $league)
-        ->andReturn($senderRating)
+        ->andReturns($senderRating)
     ;
 
     $this->mockRatingService
-        ->shouldReceive('getActiveRatingForUserLeague')
+        ->allows('getActiveRatingForUserLeague')
         ->with($receiver, $league)
-        ->andReturn($receiverRating)
+        ->andReturns($receiverRating)
     ;
 
     // Create DTO
@@ -312,9 +310,9 @@ it('can accept matches with valid input', function () {
 
     // Mock the getActiveRatingForUserLeague method for checking access
     $this->mockRatingService
-        ->shouldReceive('getActiveRatingForUserLeague')
+        ->allows('getActiveRatingForUserLeague')
         ->with($receiver, $league)
-        ->andReturn($receiverRating)
+        ->andReturns($receiverRating)
     ;
 
     // Accept should succeed when receiver is accepting
@@ -367,9 +365,9 @@ it('prevents accepting if not the receiver or match not in pending status', func
 
     // Test 1: Sender cannot accept their own match
     $this->mockRatingService
-        ->shouldReceive('getActiveRatingForUserLeague')
+        ->allows('getActiveRatingForUserLeague')
         ->with($sender, $league)
-        ->andReturn($senderRating)
+        ->andReturns($senderRating)
     ;
 
     expect($this->service->accept($sender, $match))->toBeFalse();
@@ -378,9 +376,9 @@ it('prevents accepting if not the receiver or match not in pending status', func
     $match->update(['status' => GameStatus::IN_PROGRESS]);
 
     $this->mockRatingService
-        ->shouldReceive('getActiveRatingForUserLeague')
+        ->allows('getActiveRatingForUserLeague')
         ->with($receiver, $league)
-        ->andReturn($receiverRating)
+        ->andReturns($receiverRating)
     ;
 
     expect($this->service->accept($receiver, $match))->toBeFalse();
@@ -425,16 +423,15 @@ it('can send match results with valid input', function () {
 
     // Mock the getActiveRatingForUserLeague method
     $this->mockRatingService
-        ->shouldReceive('getActiveRatingForUserLeague')
+        ->allows('getActiveRatingForUserLeague')
         ->with($sender, $league)
-        ->andReturn($senderRating)
+        ->andReturns($senderRating)
     ;
 
     // Mock the updateRatings method since it handles the rating changes
     $this->mockRatingService
-        ->shouldReceive('updateRatings')
-        ->once()
-        ->andReturn([
+        ->expects('updateRatings')
+        ->andReturns([
             $senderRating->id   => 1020,
             $receiverRating->id => 1080,
         ])
@@ -513,16 +510,15 @@ it('completes match when both players confirm the same result', function () {
 
     // Mock the getActiveRatingForUserLeague method
     $this->mockRatingService
-        ->shouldReceive('getActiveRatingForUserLeague')
+        ->allows('getActiveRatingForUserLeague')
         ->with($receiver, $league)
-        ->andReturn($receiverRating)
+        ->andReturns($receiverRating)
     ;
 
     // Mock the updateRatings method
     $this->mockRatingService
-        ->shouldReceive('updateRatings')
-        ->once()
-        ->andReturn([
+        ->expects('updateRatings')
+        ->andReturns([
             $senderRating->id   => 1020,
             $receiverRating->id => 1080,
         ])
@@ -601,9 +597,9 @@ it('handles conflicting match results', function () {
 
     // Mock the getActiveRatingForUserLeague method
     $this->mockRatingService
-        ->shouldReceive('getActiveRatingForUserLeague')
+        ->allows('getActiveRatingForUserLeague')
         ->with($receiver, $league)
-        ->andReturn($receiverRating)
+        ->andReturns($receiverRating)
     ;
 
     // Create a different result DTO from receiver

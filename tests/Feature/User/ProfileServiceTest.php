@@ -17,7 +17,7 @@ class ProfileServiceTest extends TestCase
     private ProfileService $service;
 
     /** @test */
-    public function it_updates_user_profile()
+    public function it_updates_user_profile(): void
     {
         // Arrange
         $user = User::factory()->create([
@@ -38,9 +38,8 @@ class ProfileServiceTest extends TestCase
 
         $request = $this->mock(UpdateProfileRequest::class);
         $request
-            ->shouldReceive('validated')
-            ->once()
-            ->andReturn($updatedData)
+            ->expects('validated')
+            ->andReturns($updatedData)
         ;
 
         // Act
@@ -55,7 +54,7 @@ class ProfileServiceTest extends TestCase
     }
 
     /** @test */
-    public function it_keeps_email_verified_when_email_not_changed()
+    public function it_keeps_email_verified_when_email_not_changed(): void
     {
         // Arrange
         $verifiedAt = now()->subDay();
@@ -78,9 +77,8 @@ class ProfileServiceTest extends TestCase
 
         $request = $this->mock(UpdateProfileRequest::class);
         $request
-            ->shouldReceive('validated')
-            ->once()
-            ->andReturn($updatedData)
+            ->expects('validated')
+            ->andReturns($updatedData)
         ;
 
         // Act
@@ -94,7 +92,7 @@ class ProfileServiceTest extends TestCase
     }
 
     /** @test */
-    public function it_updates_user_password()
+    public function it_updates_user_password(): void
     {
         // Arrange
         $user = User::factory()->create([
@@ -108,9 +106,8 @@ class ProfileServiceTest extends TestCase
 
         $request = $this->mock(UpdatePasswordRequest::class);
         $request
-            ->shouldReceive('validated')
-            ->once()
-            ->andReturn($passwordData)
+            ->expects('validated')
+            ->andReturns($passwordData)
         ;
 
         // Act
@@ -125,7 +122,7 @@ class ProfileServiceTest extends TestCase
     }
 
     /** @test */
-    public function it_deletes_user_account()
+    public function it_deletes_user_account(): void
     {
         // Arrange
         $user = User::factory()->create();
@@ -141,7 +138,7 @@ class ProfileServiceTest extends TestCase
     }
 
     /** @test */
-    public function it_handles_city_and_club_references()
+    public function it_handles_city_and_club_references(): void
     {
         // Arrange
         $user = User::factory()->create();
@@ -161,9 +158,8 @@ class ProfileServiceTest extends TestCase
 
         $request = $this->mock(UpdateProfileRequest::class);
         $request
-            ->shouldReceive('validated')
-            ->once()
-            ->andReturn($updatedData)
+            ->expects('validated')
+            ->andReturns($updatedData)
         ;
 
         // Act

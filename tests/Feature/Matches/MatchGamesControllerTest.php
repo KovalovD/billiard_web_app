@@ -11,6 +11,7 @@ use App\Matches\Enums\GameStatus;
 use App\Matches\Http\Controllers\MatchGamesController;
 use App\Matches\Models\MatchGame;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Tests\TestCase;
 
 class MatchGamesControllerTest extends TestCase
@@ -21,23 +22,21 @@ class MatchGamesControllerTest extends TestCase
     private $mockMatchGamesService;
 
     /** @test */
-    public function it_sends_match_game()
+    public function it_sends_match_game(): void
     {
         // Arrange
         $league = League::factory()->create();
         $sender = User::factory()->create();
         $receiver = User::factory()->create();
 
-        $this->mockAuth::shouldReceive('user')
-            ->once()
-            ->andReturn($sender)
+        $this->mockAuth::expects('user')
+            ->andReturns($sender)
         ;
 
         $request = $this->mock(SendGameRequest::class);
         $request
-            ->shouldReceive('validated')
-            ->once()
-            ->andReturn([
+            ->expects('validated')
+            ->andReturns([
                 'stream_url' => 'https://example.com/stream',
                 'details'    => 'Test match details',
                 'club_id'    => null,
@@ -54,14 +53,13 @@ class MatchGamesControllerTest extends TestCase
         ]);
 
         $this->mockMatchGamesService
-            ->shouldReceive('send')
-            ->once()
-            ->with(Mockery::on(function ($dto) use ($sendGameDto) {
+            ->expects('send')
+            ->with(Mockery::on(static function ($dto) use ($sendGameDto) {
                 return $dto->sender === $sendGameDto->sender &&
                     $dto->receiver === $sendGameDto->receiver &&
                     $dto->league === $sendGameDto->league;
             }))
-            ->andReturn(true)
+            ->andReturns(true)
         ;
 
         // Act
@@ -72,7 +70,7 @@ class MatchGamesControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_accepts_match()
+    public function it_accepts_match(): void
     {
         // Arrange
         $league = League::factory()->create();
@@ -82,16 +80,14 @@ class MatchGamesControllerTest extends TestCase
             'status'    => GameStatus::PENDING,
         ]);
 
-        $this->mockAuth::shouldReceive('user')
-            ->once()
-            ->andReturn($user)
+        $this->mockAuth::expects('user')
+            ->andReturns($user)
         ;
 
         $this->mockMatchGamesService
-            ->shouldReceive('accept')
-            ->once()
+            ->expects('accept')
             ->with($user, $matchGame)
-            ->andReturn(true)
+            ->andReturns(true)
         ;
 
         // Act
@@ -101,8 +97,10 @@ class MatchGamesControllerTest extends TestCase
         $this->assertTrue($result);
     }
 
-    /** @test */
-    public function it_declines_match()
+    /** @test
+     * @throws Throwable
+     */
+    public function it_declines_match(): void
     {
         // Arrange
         $league = League::factory()->create();
@@ -112,16 +110,14 @@ class MatchGamesControllerTest extends TestCase
             'status'    => GameStatus::PENDING,
         ]);
 
-        $this->mockAuth::shouldReceive('user')
-            ->once()
-            ->andReturn($user)
+        $this->mockAuth::expects('user')
+            ->andReturns($user)
         ;
 
         $this->mockMatchGamesService
-            ->shouldReceive('decline')
-            ->once()
+            ->expects('decline')
             ->with($user, $matchGame)
-            ->andReturn(true)
+            ->andReturns(true)
         ;
 
         // Act
@@ -131,8 +127,10 @@ class MatchGamesControllerTest extends TestCase
         $this->assertTrue($result);
     }
 
-    /** @test */
-    public function it_sends_match_result()
+    /** @test
+     * @throws Throwable
+     */
+    public function it_sends_match_result(): void
     {
         // Arrange
         $league = League::factory()->create();
@@ -142,24 +140,21 @@ class MatchGamesControllerTest extends TestCase
             'status'    => GameStatus::IN_PROGRESS,
         ]);
 
-        $this->mockAuth::shouldReceive('user')
-            ->once()
-            ->andReturn($user)
+        $this->mockAuth::expects('user')
+            ->andReturns($user)
         ;
 
         $request = $this->mock(SendResultRequest::class);
         $request
-            ->shouldReceive('validated')
-            ->once()
+            ->expects('validated')
             ->with('first_user_score')
-            ->andReturn(5)
+            ->andReturns(5)
         ;
 
         $request
-            ->shouldReceive('validated')
-            ->once()
+            ->expects('validated')
             ->with('second_user_score')
-            ->andReturn(3)
+            ->andReturns(3)
         ;
 
         $resultDto = SendResultDTO::fromArray([
@@ -169,14 +164,13 @@ class MatchGamesControllerTest extends TestCase
         ]);
 
         $this->mockMatchGamesService
-            ->shouldReceive('sendResult')
-            ->once()
-            ->with($user, Mockery::on(function ($dto) use ($resultDto) {
+            ->expects('sendResult')
+            ->with($user, Mockery::on(static function ($dto) use ($resultDto) {
                 return $dto->first_user_score === $resultDto->first_user_score &&
                     $dto->second_user_score === $resultDto->second_user_score &&
                     $dto->matchGame === $resultDto->matchGame;
             }))
-            ->andReturn(true)
+            ->andReturns(true)
         ;
 
         // Act
@@ -187,23 +181,21 @@ class MatchGamesControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_fails_when_sending_invalid_match_game()
+    public function it_fails_when_sending_invalid_match_game(): void
     {
         // Arrange
         $league = League::factory()->create();
         $sender = User::factory()->create();
         $receiver = User::factory()->create();
 
-        $this->mockAuth::shouldReceive('user')
-            ->once()
-            ->andReturn($sender)
+        $this->mockAuth::expects('user')
+            ->andReturns($sender)
         ;
 
         $request = $this->mock(SendGameRequest::class);
         $request
-            ->shouldReceive('validated')
-            ->once()
-            ->andReturn([
+            ->expects('validated')
+            ->andReturns([
                 'stream_url' => 'https://example.com/stream',
                 'details'    => 'Test match details',
                 'club_id'    => null,
@@ -211,9 +203,8 @@ class MatchGamesControllerTest extends TestCase
         ;
 
         $this->mockMatchGamesService
-            ->shouldReceive('send')
-            ->once()
-            ->andReturn(false)
+            ->expects('send')
+            ->andReturns(false)
         ; // Service returns false (validation failure)
 
         // Act
@@ -223,8 +214,10 @@ class MatchGamesControllerTest extends TestCase
         $this->assertFalse($result);
     }
 
-    /** @test */
-    public function it_fails_when_sending_equal_scores()
+    /** @test
+     * @throws Throwable
+     */
+    public function it_fails_when_sending_equal_scores(): void
     {
         // Arrange
         $league = League::factory()->create();
@@ -234,30 +227,26 @@ class MatchGamesControllerTest extends TestCase
             'status'    => GameStatus::IN_PROGRESS,
         ]);
 
-        $this->mockAuth::shouldReceive('user')
-            ->once()
-            ->andReturn($user)
+        $this->mockAuth::expects('user')
+            ->andReturns($user)
         ;
 
         $request = $this->mock(SendResultRequest::class);
         $request
-            ->shouldReceive('validated')
-            ->once()
+            ->expects('validated')
             ->with('first_user_score')
-            ->andReturn(5)
+            ->andReturns(5)
         ;
 
         $request
-            ->shouldReceive('validated')
-            ->once()
+            ->expects('validated')
             ->with('second_user_score')
-            ->andReturn(5)
+            ->andReturns(5)
         ; // Equal scores
 
         $this->mockMatchGamesService
-            ->shouldReceive('sendResult')
-            ->once()
-            ->andReturn(false)
+            ->expects('sendResult')
+            ->andReturns(false)
         ; // Service returns false (validation failure)
 
         // Act
@@ -275,6 +264,6 @@ class MatchGamesControllerTest extends TestCase
         $this->controller = new MatchGamesController($this->mockMatchGamesService);
 
         // Mock Auth facade
-        $this->mockAuth = $this->mock('Illuminate\Support\Facades\Auth');
+        $this->mockAuth = $this->mock(Auth::class);
     }
 }

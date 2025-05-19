@@ -1,5 +1,7 @@
 <?php
 
+namespace Tests\Feature\Core;
+
 use App\Auth\Http\Middleware\EnsureFrontendRequestsAreAuthenticated;
 use App\Core\Http\Middleware\AdminMiddleware;
 use App\Core\Models\User;
@@ -11,16 +13,48 @@ class MiddlewareTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
-    public function admin_middleware_allows_admin_users()
+    /**
+     * Set up routes for testing before each test
+     */
+    protected function setUp(): void
     {
-        // Create an admin user
-        $user = User::factory()->create(['is_admin' => true]);
+        parent::setUp();
 
-        // Create a test route using the middleware
+        // Register test routes - in setUp to avoid persisting routes between tests
+        $this->setUpTestRoutes();
+    }
+
+    /**
+     * Define test routes for middleware testing
+     */
+    private function setUpTestRoutes(): void
+    {
+        // Create a test route for admin middleware
         Route::middleware(AdminMiddleware::class)->get('/admin-test', function () {
             return response('Admin access granted');
         });
+
+        // Create a test route for auth middleware
+        Route::middleware(EnsureFrontendRequestsAreAuthenticated::class)->get('/auth-test', function () {
+            return response('Access granted');
+        });
+
+        // Create a test route with debug enabled
+        Route::middleware(EnsureFrontendRequestsAreAuthenticated::class)->get('/auth-test-debug', function () {
+            return response('Debug test');
+        });
+
+        // Create a test route for API auth middleware
+        Route::middleware(EnsureFrontendRequestsAreAuthenticated::class)->prefix('api')->get('/auth-test', function () {
+            return response('API access granted');
+        });
+    }
+
+    /** @test */
+    public function admin_middleware_allows_admin_users(): void
+    {
+        // Create an admin user
+        $user = User::factory()->create(['is_admin' => true]);
 
         // Make the request as an admin user
         $this
@@ -32,15 +66,10 @@ class MiddlewareTest extends TestCase
     }
 
     /** @test */
-    public function admin_middleware_blocks_non_admin_users()
+    public function admin_middleware_blocks_non_admin_users(): void
     {
         // Create a non-admin user
         $user = User::factory()->create(['is_admin' => false]);
-
-        // Create a test route using the middleware
-        Route::middleware(AdminMiddleware::class)->get('/admin-test', function () {
-            return response('Admin access granted');
-        });
 
         // Make the request as a non-admin user
         $this
@@ -51,13 +80,8 @@ class MiddlewareTest extends TestCase
     }
 
     /** @test */
-    public function admin_middleware_blocks_unauthenticated_users()
+    public function admin_middleware_blocks_unauthenticated_users(): void
     {
-        // Create a test route using the middleware
-        Route::middleware(AdminMiddleware::class)->get('/admin-test', function () {
-            return response('Admin access granted');
-        });
-
         // Make the request without authentication
         $this
             ->get('/admin-test')
@@ -66,13 +90,8 @@ class MiddlewareTest extends TestCase
     }
 
     /** @test */
-    public function auth_middleware_redirects_web_requests_when_not_authenticated()
+    public function auth_middleware_redirects_web_requests_when_not_authenticated(): void
     {
-        // Create a test route using the middleware
-        Route::middleware(EnsureFrontendRequestsAreAuthenticated::class)->get('/auth-test', function () {
-            return response('Access granted');
-        });
-
         // Disable debugging
         config(['app.debug' => false]);
 
@@ -87,13 +106,8 @@ class MiddlewareTest extends TestCase
     }
 
     /** @test */
-    public function auth_middleware_returns_json_response_for_api_requests_when_not_authenticated()
+    public function auth_middleware_returns_json_response_for_api_requests_when_not_authenticated(): void
     {
-        // Create a test route using the middleware
-        Route::middleware(EnsureFrontendRequestsAreAuthenticated::class)->get('/api/auth-test', function () {
-            return response('Access granted');
-        });
-
         // Disable debugging
         config(['app.debug' => false]);
 
@@ -112,15 +126,10 @@ class MiddlewareTest extends TestCase
     }
 
     /** @test */
-    public function auth_middleware_allows_authenticated_requests()
+    public function auth_middleware_allows_authenticated_requests(): void
     {
         // Create a user
         $user = User::factory()->create();
-
-        // Create a test route using the middleware
-        Route::middleware(EnsureFrontendRequestsAreAuthenticated::class)->get('/auth-test', function () {
-            return response('Access granted');
-        });
 
         // Make the request as an authenticated user
         $this
@@ -132,18 +141,10 @@ class MiddlewareTest extends TestCase
     }
 
     /** @test */
-    public function auth_middleware_logs_debug_output_when_enabled()
+    public function auth_middleware_logs_debug_output_when_enabled(): void
     {
-        // This test would need a mock logger to verify the logging behavior
-        // For simplicity, we'll just test that the middleware processes correctly with debugging enabled
-
         // Create a user
         $user = User::factory()->create();
-
-        // Create a test route using the middleware
-        Route::middleware(EnsureFrontendRequestsAreAuthenticated::class)->get('/auth-test-debug', function () {
-            return response('Debug test');
-        });
 
         // Enable debugging
         config(['app.debug' => true]);
@@ -155,5 +156,7 @@ class MiddlewareTest extends TestCase
             ->assertStatus(200)
             ->assertSee('Debug test')
         ;
+
+        // We can't directly test the log output, but the test passes if the route works
     }
 }

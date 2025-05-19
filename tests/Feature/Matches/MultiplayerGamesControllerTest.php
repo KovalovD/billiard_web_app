@@ -12,6 +12,7 @@ use App\Matches\Models\MultiplayerGame;
 use App\Matches\Services\MultiplayerGameService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 use Tests\TestCase;
 
 class MultiplayerGamesControllerTest extends TestCase
@@ -21,8 +22,10 @@ class MultiplayerGamesControllerTest extends TestCase
     private $controller;
     private $mockMultiplayerGameService;
 
-    /** @test */
-    public function it_gets_all_multiplayer_games_for_league()
+    /** @test
+     * @throws JsonException
+     */
+    public function it_gets_all_multiplayer_games_for_league(): void
     {
         // Arrange
         $game = Game::factory()->create(['is_multiplayer' => true]);
@@ -47,10 +50,9 @@ class MultiplayerGamesControllerTest extends TestCase
         ]);
 
         $this->mockMultiplayerGameService
-            ->shouldReceive('getAll')
-            ->once()
+            ->expects('getAll')
             ->with($league)
-            ->andReturn($multiplayerGames)
+            ->andReturns($multiplayerGames)
         ;
 
         // Act
@@ -60,14 +62,16 @@ class MultiplayerGamesControllerTest extends TestCase
         $this->assertInstanceOf(JsonResponse::class, $result);
         $this->assertEquals(200, $result->status());
 
-        $data = json_decode($result->getContent());
+        $data = json_decode($result->getContent(), false, 512, JSON_THROW_ON_ERROR);
         $this->assertCount(2, $data);
         $this->assertEquals('Test Game 1', $data[0]->name);
         $this->assertEquals('Test Game 2', $data[1]->name);
     }
 
-    /** @test */
-    public function it_creates_multiplayer_game()
+    /** @test
+     * @throws JsonException
+     */
+    public function it_creates_multiplayer_game(): void
     {
         // Arrange
         $game = Game::factory()->create(['is_multiplayer' => true]);
@@ -94,16 +98,14 @@ class MultiplayerGamesControllerTest extends TestCase
 
         $request = $this->mock(CreateMultiplayerGameRequest::class);
         $request
-            ->shouldReceive('validated')
-            ->once()
-            ->andReturn($gameData)
+            ->expects('validated')
+            ->andReturns($gameData)
         ;
 
         $this->mockMultiplayerGameService
-            ->shouldReceive('create')
-            ->once()
+            ->expects('create')
             ->with($league, $gameData)
-            ->andReturn($createdGame)
+            ->andReturns($createdGame)
         ;
 
         // Act
@@ -113,14 +115,16 @@ class MultiplayerGamesControllerTest extends TestCase
         $this->assertInstanceOf(JsonResponse::class, $result);
         $this->assertEquals(200, $result->status());
 
-        $data = json_decode($result->getContent());
+        $data = json_decode($result->getContent(), false, 512, JSON_THROW_ON_ERROR);
         $this->assertEquals('New Multiplayer Game', $data->name);
         $this->assertEquals(10, $data->max_players);
-        $this->assertEquals(true, $data->allow_player_targeting);
+        $this->assertTrue($data->allow_player_targeting);
     }
 
-    /** @test */
-    public function it_shows_specific_multiplayer_game()
+    /** @test
+     * @throws JsonException
+     */
+    public function it_shows_specific_multiplayer_game(): void
     {
         // Arrange
         $game = Game::factory()->create(['is_multiplayer' => true]);
@@ -143,13 +147,15 @@ class MultiplayerGamesControllerTest extends TestCase
         $this->assertInstanceOf(JsonResponse::class, $result);
         $this->assertEquals(200, $result->status());
 
-        $data = json_decode($result->getContent());
+        $data = json_decode($result->getContent(), false, 512, JSON_THROW_ON_ERROR);
         $this->assertEquals('Test Game', $data->name);
         $this->assertEquals('in_progress', $data->status);
     }
 
-    /** @test */
-    public function it_joins_multiplayer_game()
+    /** @test
+     * @throws JsonException
+     */
+    public function it_joins_multiplayer_game(): void
     {
         // Arrange
         $game = Game::factory()->create(['is_multiplayer' => true]);
@@ -167,18 +173,16 @@ class MultiplayerGamesControllerTest extends TestCase
 
         $user = User::factory()->create();
 
-        $this->mockAuth::shouldReceive('user')
-            ->once()
-            ->andReturn($user)
+        $this->mockAuth::expects('user')
+            ->andReturns($user)
         ;
 
         $request = $this->mock(JoinMultiplayerGameRequest::class);
 
         $this->mockMultiplayerGameService
-            ->shouldReceive('join')
-            ->once()
+            ->expects('join')
             ->with($league, $multiplayerGame, $user)
-            ->andReturn($multiplayerGame)
+            ->andReturns($multiplayerGame)
         ; // Return updated game
 
         // Act
@@ -188,12 +192,14 @@ class MultiplayerGamesControllerTest extends TestCase
         $this->assertInstanceOf(JsonResponse::class, $result);
         $this->assertEquals(200, $result->status());
 
-        $data = json_decode($result->getContent());
+        $data = json_decode($result->getContent(), false, 512, JSON_THROW_ON_ERROR);
         $this->assertEquals('Test Game', $data->name);
     }
 
-    /** @test */
-    public function it_leaves_multiplayer_game()
+    /** @test
+     * @throws JsonException
+     */
+    public function it_leaves_multiplayer_game(): void
     {
         // Arrange
         $game = Game::factory()->create(['is_multiplayer' => true]);
@@ -211,16 +217,14 @@ class MultiplayerGamesControllerTest extends TestCase
 
         $user = User::factory()->create();
 
-        $this->mockAuth::shouldReceive('user')
-            ->once()
-            ->andReturn($user)
+        $this->mockAuth::expects('user')
+            ->andReturns($user)
         ;
 
         $this->mockMultiplayerGameService
-            ->shouldReceive('leave')
-            ->once()
+            ->expects('leave')
             ->with($multiplayerGame, $user)
-            ->andReturn($multiplayerGame)
+            ->andReturns($multiplayerGame)
         ; // Return updated game
 
         // Act
@@ -230,12 +234,14 @@ class MultiplayerGamesControllerTest extends TestCase
         $this->assertInstanceOf(JsonResponse::class, $result);
         $this->assertEquals(200, $result->status());
 
-        $data = json_decode($result->getContent());
+        $data = json_decode($result->getContent(), false, 512, JSON_THROW_ON_ERROR);
         $this->assertEquals('Test Game', $data->name);
     }
 
-    /** @test */
-    public function it_starts_multiplayer_game()
+    /** @test
+     * @throws JsonException
+     */
+    public function it_starts_multiplayer_game(): void
     {
         // Arrange
         $game = Game::factory()->create(['is_multiplayer' => true]);
@@ -260,10 +266,9 @@ class MultiplayerGamesControllerTest extends TestCase
         ]);
 
         $this->mockMultiplayerGameService
-            ->shouldReceive('start')
-            ->once()
+            ->expects('start')
             ->with($multiplayerGame)
-            ->andReturn($startedGame)
+            ->andReturns($startedGame)
         ;
 
         // Act
@@ -273,12 +278,14 @@ class MultiplayerGamesControllerTest extends TestCase
         $this->assertInstanceOf(JsonResponse::class, $result);
         $this->assertEquals(200, $result->status());
 
-        $data = json_decode($result->getContent());
+        $data = json_decode($result->getContent(), false, 512, JSON_THROW_ON_ERROR);
         $this->assertEquals('in_progress', $data->status);
     }
 
-    /** @test */
-    public function it_cancels_multiplayer_game()
+    /** @test
+     * @throws JsonException
+     */
+    public function it_cancels_multiplayer_game(): void
     {
         // Arrange
         $game = Game::factory()->create(['is_multiplayer' => true]);
@@ -295,8 +302,7 @@ class MultiplayerGamesControllerTest extends TestCase
         ]);
 
         $this->mockMultiplayerGameService
-            ->shouldReceive('cancel')
-            ->once()
+            ->expects('cancel')
             ->with($multiplayerGame)
         ;
 
@@ -307,12 +313,14 @@ class MultiplayerGamesControllerTest extends TestCase
         $this->assertInstanceOf(JsonResponse::class, $result);
         $this->assertEquals(200, $result->status());
 
-        $data = json_decode($result->getContent());
+        $data = json_decode($result->getContent(), false, 512, JSON_THROW_ON_ERROR);
         $this->assertEquals('Game cancelled successfully.', $data->message);
     }
 
-    /** @test */
-    public function it_sets_moderator()
+    /** @test
+     * @throws JsonException
+     */
+    public function it_sets_moderator(): void
     {
         // Arrange
         $game = Game::factory()->create(['is_multiplayer' => true]);
@@ -331,9 +339,8 @@ class MultiplayerGamesControllerTest extends TestCase
         $user = User::factory()->create();
         $moderatorUser = User::factory()->create();
 
-        $this->mockAuth::shouldReceive('user')
-            ->once()
-            ->andReturn($user)
+        $this->mockAuth::expects('user')
+            ->andReturns($user)
         ;
 
         $updatedGame = MultiplayerGame::factory()->make([
@@ -348,10 +355,9 @@ class MultiplayerGamesControllerTest extends TestCase
         $request->user_id = $moderatorUser->id;
 
         $this->mockMultiplayerGameService
-            ->shouldReceive('setModerator')
-            ->once()
+            ->expects('setModerator')
             ->with($multiplayerGame, $moderatorUser->id, $user)
-            ->andReturn($updatedGame)
+            ->andReturns($updatedGame)
         ;
 
         // Act
@@ -361,12 +367,14 @@ class MultiplayerGamesControllerTest extends TestCase
         $this->assertInstanceOf(JsonResponse::class, $result);
         $this->assertEquals(200, $result->status());
 
-        $data = json_decode($result->getContent());
+        $data = json_decode($result->getContent(), false, 512, JSON_THROW_ON_ERROR);
         $this->assertEquals($moderatorUser->id, $data->moderator_user_id);
     }
 
-    /** @test */
-    public function it_performs_game_action()
+    /** @test
+     * @throws Throwable
+     */
+    public function it_performs_game_action(): void
     {
         // Arrange
         $game = Game::factory()->create(['is_multiplayer' => true]);
@@ -385,45 +393,39 @@ class MultiplayerGamesControllerTest extends TestCase
         $user = User::factory()->create();
         $targetUser = User::factory()->create();
 
-        $this->mockAuth::shouldReceive('user')
-            ->once()
-            ->andReturn($user)
+        $this->mockAuth::expects('user')
+            ->andReturns($user)
         ;
 
         $request = $this->mock(PerformGameActionRequest::class);
         $request
-            ->shouldReceive('validated')
-            ->once()
+            ->expects('validated')
             ->with('action')
-            ->andReturn('decrement_lives')
+            ->andReturns('decrement_lives')
         ;
 
         $request
-            ->shouldReceive('validated')
-            ->once()
+            ->expects('validated')
             ->with('target_user_id')
-            ->andReturn($targetUser->id)
+            ->andReturns($targetUser->id)
         ;
 
         $request
-            ->shouldReceive('validated')
-            ->once()
+            ->expects('validated')
             ->with('card_type')
-            ->andReturn(null)
+            ->andReturns(null)
         ;
 
         $request
-            ->shouldReceive('validated')
-            ->once()
+            ->expects('validated')
             ->with('acting_user_id')
-            ->andReturn(null)
+            ->andReturns(null)
         ;
 
         $this->mockMultiplayerGameService
-            ->shouldReceive('performAction')
-            ->once()
+            ->expects('performAction')
             ->with($user, $multiplayerGame, 'decrement_lives', $targetUser->id, null, null)
-            ->andReturn($multiplayerGame)
+            ->andReturns($multiplayerGame)
         ;
 
         // Act
@@ -435,7 +437,7 @@ class MultiplayerGamesControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_finishes_game()
+    public function it_finishes_game(): void
     {
         // Arrange
         $game = Game::factory()->create(['is_multiplayer' => true]);
@@ -453,14 +455,12 @@ class MultiplayerGamesControllerTest extends TestCase
 
         $user = User::factory()->create();
 
-        $this->mockAuth::shouldReceive('user')
-            ->once()
-            ->andReturn($user)
+        $this->mockAuth::expects('user')
+            ->andReturns($user)
         ;
 
         $this->mockMultiplayerGameService
-            ->shouldReceive('finishGame')
-            ->once()
+            ->expects('finishGame')
             ->with($multiplayerGame, $user)
         ;
 
@@ -479,6 +479,6 @@ class MultiplayerGamesControllerTest extends TestCase
         $this->controller = new MultiplayerGamesController($this->mockMultiplayerGameService);
 
         // Mock Auth facade
-        $this->mockAuth = $this->mock('Illuminate\Support\Facades\Auth');
+        $this->mockAuth = $this->mock(Auth::class);
     }
 }

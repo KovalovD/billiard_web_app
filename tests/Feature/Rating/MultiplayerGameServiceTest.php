@@ -390,12 +390,12 @@ it('correctly calculates prizes and rating points', function () {
     expect($players[0]->prize_amount)
         ->toBe(300) // 1st place
         ->and($players[0]->rating_points)->toBe(5)
-    ; // 5th from bottom
-
-    expect($players[1]->prize_amount)
+        ->and($players[1]->prize_amount)
         ->toBe(100) // 2nd place
         ->and($players[1]->rating_points)->toBe(4)
-    ; // 4th from bottom
+    ; // 5th from bottom
+
+    // 4th from bottom
 
     // 3rd and beyond get no prizes
     for ($i = 2; $i < 5; $i++) {
@@ -457,8 +457,7 @@ it('applies rating points to league ratings', function () {
 
     // Mock the RatingService for applyRatingPointsForMultiplayerGame
     $this->mockRatingService
-        ->shouldReceive('applyRatingPointsForMultiplayerGame')
-        ->once()
+        ->expects('applyRatingPointsForMultiplayerGame')
         ->with($multiplayerGame)
     ;
 
@@ -518,8 +517,7 @@ it('can finish a game and apply ratings', function () {
 
     // Mock the RatingService for applyRatingPointsForMultiplayerGame
     $this->mockRatingService
-        ->shouldReceive('applyRatingPointsForMultiplayerGame')
-        ->once()
+        ->expects('applyRatingPointsForMultiplayerGame')
         ->with($multiplayerGame)
     ;
 
