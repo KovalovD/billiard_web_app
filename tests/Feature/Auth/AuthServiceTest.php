@@ -6,6 +6,7 @@ use App\Auth\DataTransferObjects\RegisterDTO;
 use App\Auth\Repositories\AuthRepository;
 use App\Auth\Services\AuthService;
 use App\Core\Models\User;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -18,8 +19,10 @@ class AuthServiceTest extends TestCase
 
     private $mockRepository;
 
-    /** @test */
-    public function it_registers_new_user()
+    /** @test
+     * @throws Exception
+     */
+    public function it_registers_new_user(): void
     {
         // Arrange
         $registerDTO = new RegisterDTO([
@@ -35,9 +38,8 @@ class AuthServiceTest extends TestCase
         $tokenSpy->plainTextToken = 'test-token-123';
 
         $this->mockRepository
-            ->shouldReceive('createToken')
-            ->once()
-            ->andReturn($tokenSpy)
+            ->expects('createToken')
+            ->andReturns($tokenSpy)
         ;
 
         // Create the service with our mock repository
@@ -45,7 +47,7 @@ class AuthServiceTest extends TestCase
 
         // Swap the Auth facade with our test implementation
         $this->swap('auth', new class {
-            public function login($user, $remember = false)
+            public function login($user, $remember = false): bool
             {
                 return true;
             }
@@ -72,8 +74,10 @@ class AuthServiceTest extends TestCase
         $this->assertTrue(Hash::check('password123', $user->password));
     }
 
-    /** @test */
-    public function it_logs_in_user()
+    /** @test
+     * @throws Exception
+     */
+    public function it_logs_in_user(): void
     {
         // Arrange
         $user = User::factory()->create([
@@ -92,9 +96,8 @@ class AuthServiceTest extends TestCase
         $tokenSpy->plainTextToken = 'test-token-123';
 
         $this->mockRepository
-            ->shouldReceive('createToken')
-            ->once()
-            ->andReturn($tokenSpy)
+            ->expects('createToken')
+            ->andReturns($tokenSpy)
         ;
 
         // Create a mock auth implementation
@@ -106,7 +109,7 @@ class AuthServiceTest extends TestCase
                 $this->user = $user;
             }
 
-            public function attempt($credentials, $remember)
+            public function attempt($credentials, $remember): bool
             {
                 return true;
             }
@@ -133,8 +136,10 @@ class AuthServiceTest extends TestCase
         $this->assertEquals('test-token-123', $result['token']);
     }
 
-    /** @test */
-    public function it_throws_exception_when_login_fails()
+    /** @test
+     * @throws Exception
+     */
+    public function it_throws_exception_when_login_fails(): void
     {
         // Arrange
         $loginDTO = new LoginDTO([
@@ -145,7 +150,7 @@ class AuthServiceTest extends TestCase
 
         // Create a mock auth implementation that fails authentication
         $authImpl = new class {
-            public function attempt($credentials, $remember)
+            public function attempt($credentials, $remember): bool
             {
                 return false;
             }
@@ -163,13 +168,13 @@ class AuthServiceTest extends TestCase
     }
 
     /** @test */
-    public function it_logs_out_user()
+    public function it_logs_out_user(): void
     {
         // Arrange
         $user = User::factory()->create();
 
         // Create a spy for the tokens relationship
-        $tokensSpy = $this->spy('\Illuminate\Database\Eloquent\Relations\MorphMany');
+        $tokensSpy = $this->spy(MorphMany::class);
 
         // Replace the tokens relationship on the user
         $user = $this->partialMock(User::class, function ($mock) use ($tokensSpy) {
@@ -181,17 +186,16 @@ class AuthServiceTest extends TestCase
         ]);
 
         $this->mockRepository
-            ->shouldReceive('invalidateToken')
-            ->once()
+            ->expects('invalidateToken')
             ->with($user, 'web')
         ;
 
         // Create mock implementations for Auth and Session
         $authImpl = new class {
-            public function guard()
+            public function guard(): object
             {
                 return new class {
-                    public function logout()
+                    public function logout(): void
                     {
                         // Do nothing in the test
                     }
@@ -200,12 +204,12 @@ class AuthServiceTest extends TestCase
         };
 
         $sessionImpl = new class {
-            public function invalidate()
+            public function invalidate(): void
             {
                 // Do nothing in the test
             }
 
-            public function regenerateToken()
+            public function regenerateToken(): void
             {
                 // Do nothing in the test
             }
@@ -232,7 +236,7 @@ class AuthServiceTest extends TestCase
     }
 
     /** @test */
-    public function it_handles_mobile_device_logout()
+    public function it_handles_mobile_device_logout(): void
     {
         // Arrange
         $user = User::factory()->create();
@@ -242,8 +246,7 @@ class AuthServiceTest extends TestCase
         ]);
 
         $this->mockRepository
-            ->shouldReceive('invalidateToken')
-            ->once()
+            ->expects('invalidateToken')
             ->with($user, 'mobile-device')
         ;
 
@@ -261,7 +264,7 @@ class AuthServiceTest extends TestCase
     }
 
     /** @test */
-    public function it_handles_logout_exception()
+    public function it_handles_logout_exception(): void
     {
         // Arrange
         $user = User::factory()->create();
@@ -271,8 +274,7 @@ class AuthServiceTest extends TestCase
         ]);
 
         $this->mockRepository
-            ->shouldReceive('invalidateToken')
-            ->once()
+            ->expects('invalidateToken')
             ->andThrow(new Exception('Test exception'))
         ;
 

@@ -19,7 +19,7 @@ class AdminPlayersControllerTest extends TestCase
     private $mockRatingService;
 
     /** @test */
-    public function it_gets_pending_players()
+    public function it_gets_pending_players(): void
     {
         // Arrange
         $league = League::factory()->create();
@@ -57,7 +57,7 @@ class AdminPlayersControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_confirms_player()
+    public function it_confirms_player(): void
     {
         // Arrange
         $league = League::factory()->create();
@@ -73,8 +73,7 @@ class AdminPlayersControllerTest extends TestCase
         ]);
 
         $this->mockRatingService
-            ->shouldReceive('rearrangePositions')
-            ->once()
+            ->expects('rearrangePositions')
             ->with($league->id)
         ;
 
@@ -86,11 +85,11 @@ class AdminPlayersControllerTest extends TestCase
         $this->assertEquals(200, $result->status());
 
         // Check if the rating was updated
-        $this->assertEquals(true, $rating->fresh()->is_confirmed);
+        $this->assertTrue($rating->fresh()->is_confirmed);
     }
 
     /** @test */
-    public function it_rejects_player()
+    public function it_rejects_player(): void
     {
         // Arrange
         $league = League::factory()->create();
@@ -106,8 +105,7 @@ class AdminPlayersControllerTest extends TestCase
         ]);
 
         $this->mockRatingService
-            ->shouldReceive('rearrangePositions')
-            ->once()
+            ->expects('rearrangePositions')
             ->with($league->id)
         ;
 
@@ -120,12 +118,12 @@ class AdminPlayersControllerTest extends TestCase
 
         // Check if the rating was updated
         $updatedRating = $rating->fresh();
-        $this->assertEquals(false, $updatedRating->is_active);
-        $this->assertEquals(false, $updatedRating->is_confirmed);
+        $this->assertFalse($updatedRating->is_active);
+        $this->assertFalse($updatedRating->is_confirmed);
     }
 
     /** @test */
-    public function it_prevents_confirming_player_from_different_league()
+    public function it_prevents_confirming_player_from_different_league(): void
     {
         // Arrange
         $league1 = League::factory()->create();
@@ -150,7 +148,7 @@ class AdminPlayersControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_bulk_confirms_players()
+    public function it_bulk_confirms_players(): void
     {
         // Arrange
         $league = League::factory()->create();
@@ -170,16 +168,14 @@ class AdminPlayersControllerTest extends TestCase
         }
 
         $this->mockRatingService
-            ->shouldReceive('rearrangePositions')
-            ->once()
+            ->expects('rearrangePositions')
             ->with($league->id)
         ;
 
         $request = $this->mock(\Illuminate\Http\Request::class);
         $request
-            ->shouldReceive('validate')
-            ->once()
-            ->andReturn(['rating_ids' => $ratingIds])
+            ->expects('validate')
+            ->andReturns(['rating_ids' => $ratingIds])
         ;
 
         $request->rating_ids = $ratingIds;
@@ -193,12 +189,12 @@ class AdminPlayersControllerTest extends TestCase
 
         // Check if ratings were updated
         foreach ($ratingIds as $id) {
-            $this->assertEquals(true, Rating::find($id)->is_confirmed);
+            $this->assertTrue(Rating::find($id)->is_confirmed);
         }
     }
 
     /** @test */
-    public function it_deactivates_confirmed_player()
+    public function it_deactivates_confirmed_player(): void
     {
         // Arrange
         $league = League::factory()->create();
@@ -214,8 +210,7 @@ class AdminPlayersControllerTest extends TestCase
         ]);
 
         $this->mockRatingService
-            ->shouldReceive('rearrangePositions')
-            ->once()
+            ->expects('rearrangePositions')
             ->with($league->id)
         ;
 
@@ -228,12 +223,12 @@ class AdminPlayersControllerTest extends TestCase
 
         // Check if the rating was updated
         $updatedRating = $rating->fresh();
-        $this->assertEquals(false, $updatedRating->is_active);
-        $this->assertEquals(false, $updatedRating->is_confirmed);
+        $this->assertFalse($updatedRating->is_active);
+        $this->assertFalse($updatedRating->is_confirmed);
     }
 
     /** @test */
-    public function it_prevents_deactivating_already_inactive_player()
+    public function it_prevents_deactivating_already_inactive_player(): void
     {
         // Arrange
         $league = League::factory()->create();
@@ -257,7 +252,7 @@ class AdminPlayersControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_gets_confirmed_players()
+    public function it_gets_confirmed_players(): void
     {
         // Arrange
         $league = League::factory()->create();
@@ -295,7 +290,7 @@ class AdminPlayersControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_bulk_deactivates_players()
+    public function it_bulk_deactivates_players(): void
     {
         // Arrange
         $league = League::factory()->create();
@@ -315,16 +310,14 @@ class AdminPlayersControllerTest extends TestCase
         }
 
         $this->mockRatingService
-            ->shouldReceive('rearrangePositions')
-            ->once()
+            ->expects('rearrangePositions')
             ->with($league->id)
         ;
 
         $request = $this->mock(\Illuminate\Http\Request::class);
         $request
-            ->shouldReceive('validate')
-            ->once()
-            ->andReturn(['rating_ids' => $ratingIds])
+            ->expects('validate')
+            ->andReturns(['rating_ids' => $ratingIds])
         ;
 
         $request->rating_ids = $ratingIds;
@@ -339,8 +332,8 @@ class AdminPlayersControllerTest extends TestCase
         // Check if ratings were updated
         foreach ($ratingIds as $id) {
             $updatedRating = Rating::find($id);
-            $this->assertEquals(false, $updatedRating->is_active);
-            $this->assertEquals(false, $updatedRating->is_confirmed);
+            $this->assertFalse($updatedRating->is_active);
+            $this->assertFalse($updatedRating->is_confirmed);
         }
     }
 

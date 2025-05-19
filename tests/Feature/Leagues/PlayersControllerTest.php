@@ -6,6 +6,7 @@ use App\Leagues\Models\League;
 use App\Leagues\Models\Rating;
 use App\Leagues\Services\RatingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Tests\TestCase;
 
 class PlayersControllerTest extends TestCase
@@ -15,23 +16,23 @@ class PlayersControllerTest extends TestCase
     private $controller;
     private $mockRatingService;
 
-    /** @test */
-    public function it_enters_user_to_league()
+    /** @test
+     * @throws Throwable
+     */
+    public function it_enters_user_to_league(): void
     {
         // Arrange
         $league = League::factory()->create();
         $user = User::factory()->create();
 
-        $this->mockAuth::shouldReceive('user')
-            ->once()
-            ->andReturn($user)
+        $this->mockAuth::expects('user')
+            ->andReturns($user)
         ;
 
         $this->mockRatingService
-            ->shouldReceive('addPlayer')
-            ->once()
+            ->expects('addPlayer')
             ->with($league, $user)
-            ->andReturn(true)
+            ->andReturns(true)
         ;
 
         // Act
@@ -41,8 +42,10 @@ class PlayersControllerTest extends TestCase
         $this->assertTrue($result);
     }
 
-    /** @test */
-    public function it_enters_user_to_league_with_failure()
+    /** @test
+     * @throws Throwable
+     */
+    public function it_enters_user_to_league_with_failure(): void
     {
         // Arrange
         $league = League::factory()->create([
@@ -50,16 +53,14 @@ class PlayersControllerTest extends TestCase
         ]);
         $user = User::factory()->create();
 
-        $this->mockAuth::shouldReceive('user')
-            ->once()
-            ->andReturn($user)
+        $this->mockAuth::expects('user')
+            ->andReturns($user)
         ;
 
         $this->mockRatingService
-            ->shouldReceive('addPlayer')
-            ->once()
+            ->expects('addPlayer')
             ->with($league, $user)
-            ->andReturn(false)
+            ->andReturns(false)
         ; // League is full or other failure
 
         // Act
@@ -69,8 +70,10 @@ class PlayersControllerTest extends TestCase
         $this->assertFalse($result);
     }
 
-    /** @test */
-    public function it_leaves_league()
+    /** @test
+     * @throws Throwable
+     */
+    public function it_leaves_league(): void
     {
         // Arrange
         $league = League::factory()->create();
@@ -86,14 +89,12 @@ class PlayersControllerTest extends TestCase
             'is_confirmed' => true,
         ]);
 
-        $this->mockAuth::shouldReceive('user')
-            ->once()
-            ->andReturn($user)
+        $this->mockAuth::expects('user')
+            ->andReturns($user)
         ;
 
         $this->mockRatingService
-            ->shouldReceive('disablePlayer')
-            ->once()
+            ->expects('disablePlayer')
             ->with($league, $user)
         ;
 
@@ -104,20 +105,21 @@ class PlayersControllerTest extends TestCase
         $this->assertTrue($result);
     }
 
-    /** @test */
-    public function it_handles_invalid_league_or_user()
+    /** @test
+     * @throws Throwable
+     */
+    public function it_handles_invalid_league_or_user(): void
     {
         // Arrange
         $league = League::factory()->create();
         $user = User::factory()->create();
 
-        $this->mockAuth::shouldReceive('user')
-            ->andReturn($user)
+        $this->mockAuth::allows('user')
+            ->andReturns($user)
         ;
 
         $this->mockRatingService
-            ->shouldReceive('addPlayer')
-            ->once()
+            ->expects('addPlayer')
             ->with($league, $user)
             ->andThrow(new Exception('Invalid operation'))
         ;
@@ -127,8 +129,10 @@ class PlayersControllerTest extends TestCase
         $this->controller->enter($league);
     }
 
-    /** @test */
-    public function it_prevents_operations_on_closed_leagues()
+    /** @test
+     * @throws Throwable
+     */
+    public function it_prevents_operations_on_closed_leagues(): void
     {
         // Arrange
         $league = League::factory()->create([
@@ -136,15 +140,14 @@ class PlayersControllerTest extends TestCase
         ]);
         $user = User::factory()->create();
 
-        $this->mockAuth::shouldReceive('user')
-            ->andReturn($user)
+        $this->mockAuth::allows('user')
+            ->andReturns($user)
         ;
 
         $this->mockRatingService
-            ->shouldReceive('addPlayer')
-            ->once()
+            ->expects('addPlayer')
             ->with($league, $user)
-            ->andReturn(false)
+            ->andReturns(false)
         ; // Shouldn't be able to join finished league
 
         // Act
@@ -162,6 +165,6 @@ class PlayersControllerTest extends TestCase
         $this->controller = new PlayersController($this->mockRatingService);
 
         // Mock Auth facade
-        $this->mockAuth = $this->mock('Illuminate\Support\Facades\Auth');
+        $this->mockAuth = $this->mock(Auth::class);
     }
 }

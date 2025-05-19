@@ -4,7 +4,6 @@ use App\Auth\DataTransferObjects\LoginDTO;
 use App\Auth\DataTransferObjects\LogoutDTO;
 use App\Auth\DataTransferObjects\RegisterDTO;
 use App\Auth\Http\Controllers\AuthController;
-use App\Auth\Services\AuthServiceInterface;
 use App\Core\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\JsonResponse;
@@ -18,8 +17,10 @@ class AuthControllerTest extends TestCase
     private $controller;
     private $stubAuthService;
 
-    /** @test */
-    public function it_logs_in_user()
+    /** @test
+     * @throws JsonException
+     */
+    public function it_logs_in_user(): void
     {
         // Arrange
         $user = User::factory()->create();
@@ -27,7 +28,7 @@ class AuthControllerTest extends TestCase
 
         // Use PHP's ReflectionClass to create a request without Mockery
         $request = new class {
-            public function fromRequest()
+            public function fromRequest(): LoginDTO
             {
                 return new LoginDTO([
                     'email'      => 'user@example.com',
@@ -49,18 +50,20 @@ class AuthControllerTest extends TestCase
         $this->assertInstanceOf(JsonResponse::class, $result);
         $this->assertEquals(200, $result->status());
 
-        $data = json_decode($result->getContent(), true);
+        $data = json_decode($result->getContent(), true, 512, JSON_THROW_ON_ERROR);
         $this->assertArrayHasKey('user', $data);
         $this->assertArrayHasKey('token', $data);
         $this->assertEquals($token, $data['token']);
     }
 
-    /** @test */
-    public function it_handles_login_validation_exception()
+    /** @test
+     * @throws JsonException
+     */
+    public function it_handles_login_validation_exception(): void
     {
         // Arrange
         $request = new class {
-            public function fromRequest()
+            public function fromRequest(): LoginDTO
             {
                 return new LoginDTO([
                     'email'      => 'user@example.com',
@@ -81,21 +84,23 @@ class AuthControllerTest extends TestCase
         $this->assertInstanceOf(JsonResponse::class, $result);
         $this->assertEquals(422, $result->status());
 
-        $data = json_decode($result->getContent(), true);
+        $data = json_decode($result->getContent(), true, 512, JSON_THROW_ON_ERROR);
         $this->assertEquals('Invalid credentials', $data['message']);
         $this->assertArrayHasKey('errors', $data);
         $this->assertArrayHasKey('email', $data['errors']);
     }
 
-    /** @test */
-    public function it_registers_new_user()
+    /** @test
+     * @throws JsonException
+     */
+    public function it_registers_new_user(): void
     {
         // Arrange
         $user = User::factory()->create();
         $token = 'test-token-123';
 
         $request = new class {
-            public function fromRequest()
+            public function fromRequest(): RegisterDTO
             {
                 return new RegisterDTO([
                     'firstname' => 'John',
@@ -119,18 +124,20 @@ class AuthControllerTest extends TestCase
         $this->assertInstanceOf(JsonResponse::class, $result);
         $this->assertEquals(200, $result->status());
 
-        $data = json_decode($result->getContent(), true);
+        $data = json_decode($result->getContent(), true, 512, JSON_THROW_ON_ERROR);
         $this->assertArrayHasKey('user', $data);
         $this->assertArrayHasKey('token', $data);
         $this->assertEquals($token, $data['token']);
     }
 
-    /** @test */
-    public function it_handles_registration_validation_exception()
+    /** @test
+     * @throws JsonException
+     */
+    public function it_handles_registration_validation_exception(): void
     {
         // Arrange
         $request = new class {
-            public function fromRequest()
+            public function fromRequest(): RegisterDTO
             {
                 return new RegisterDTO([
                     'firstname' => 'John',
@@ -153,19 +160,21 @@ class AuthControllerTest extends TestCase
         $this->assertInstanceOf(JsonResponse::class, $result);
         $this->assertEquals(422, $result->status());
 
-        $data = json_decode($result->getContent(), true);
+        $data = json_decode($result->getContent(), true, 512, JSON_THROW_ON_ERROR);
         $this->assertEquals('Validation failed', $data['message']);
         $this->assertArrayHasKey('errors', $data);
     }
 
-    /** @test */
-    public function it_logs_out_user()
+    /** @test
+     * @throws JsonException
+     */
+    public function it_logs_out_user(): void
     {
         // Arrange
         $user = User::factory()->create();
 
         $request = new class {
-            public function fromRequest()
+            public function fromRequest(): LogoutDTO
             {
                 return new LogoutDTO([
                     'deviceName' => 'web',
@@ -188,17 +197,19 @@ class AuthControllerTest extends TestCase
         $this->assertInstanceOf(JsonResponse::class, $result);
         $this->assertEquals(200, $result->status());
 
-        $data = json_decode($result->getContent(), true);
+        $data = json_decode($result->getContent(), true, 512, JSON_THROW_ON_ERROR);
         $this->assertTrue($data['success']);
         $this->assertEquals('Successfully logged out.', $data['message']);
     }
 
-    /** @test */
-    public function it_handles_logout_with_no_user()
+    /** @test
+     * @throws JsonException
+     */
+    public function it_handles_logout_with_no_user(): void
     {
         // Arrange
         $request = new class {
-            public function fromRequest()
+            public function fromRequest(): LogoutDTO
             {
                 return new LogoutDTO([
                     'deviceName' => 'web',
@@ -216,13 +227,15 @@ class AuthControllerTest extends TestCase
         $this->assertInstanceOf(JsonResponse::class, $result);
         $this->assertEquals(401, $result->status());
 
-        $data = json_decode($result->getContent(), true);
+        $data = json_decode($result->getContent(), true, 512, JSON_THROW_ON_ERROR);
         $this->assertFalse($data['success']);
         $this->assertEquals('No authenticated user found', $data['message']);
     }
 
-    /** @test */
-    public function it_gets_authenticated_user()
+    /** @test
+     * @throws JsonException
+     */
+    public function it_gets_authenticated_user(): void
     {
         // Arrange
         $user = User::factory()->create();
@@ -238,13 +251,15 @@ class AuthControllerTest extends TestCase
         $this->assertEquals(200, $result->status());
 
         // UserResource should contain the user's data
-        $data = json_decode($result->getContent(), true);
+        $data = json_decode($result->getContent(), true, 512, JSON_THROW_ON_ERROR);
         $this->assertEquals($user->id, $data['id']);
         $this->assertEquals($user->email, $data['email']);
     }
 
-    /** @test */
-    public function it_returns_error_when_getting_user_without_auth()
+    /** @test
+     * @throws JsonException
+     */
+    public function it_returns_error_when_getting_user_without_auth(): void
     {
         // Ensure no user is authenticated
         $this->app['auth']->forgetGuards();
@@ -256,7 +271,7 @@ class AuthControllerTest extends TestCase
         $this->assertInstanceOf(JsonResponse::class, $result);
         $this->assertEquals(401, $result->status());
 
-        $data = json_decode($result->getContent(), true);
+        $data = json_decode($result->getContent(), true, 512, JSON_THROW_ON_ERROR);
         $this->assertEquals('Unauthenticated', $data['error']);
     }
 
@@ -265,7 +280,7 @@ class AuthControllerTest extends TestCase
         parent::setUp();
 
         // Create a stub implementation that doesn't use Mockery
-        $this->stubAuthService = new class implements AuthServiceInterface {
+        $this->stubAuthService = new class {
             public $loginResult;
             public $registerResult;
             public $logoutResult;

@@ -18,7 +18,7 @@ class DataTransferObjectsTest extends TestCase
     use RefreshDatabase;
 
     /** @test */
-    public function base_dto_can_be_created_from_array()
+    public function base_dto_can_be_created_from_array(): void
     {
         // Create a test DTO that extends BaseDTO
         $testDTO = new class(['name' => 'Test', 'value' => 123]) extends BaseDTO {
@@ -31,7 +31,7 @@ class DataTransferObjectsTest extends TestCase
     }
 
     /** @test */
-    public function base_dto_can_be_converted_to_array()
+    public function base_dto_can_be_converted_to_array(): void
     {
         // Create a test DTO
         $testDTO = new class(['name' => 'Test', 'value' => 123, 'private' => 'hidden']) extends BaseDTO {
@@ -50,7 +50,7 @@ class DataTransferObjectsTest extends TestCase
     }
 
     /** @test */
-    public function base_dto_can_exclude_properties_when_converting_to_array()
+    public function base_dto_can_exclude_properties_when_converting_to_array(): void
     {
         // Create a test DTO
         $testDTO = new class(['name' => 'Test', 'value' => 123, 'extra' => 'data']) extends BaseDTO {
@@ -67,14 +67,13 @@ class DataTransferObjectsTest extends TestCase
     }
 
     /** @test */
-    public function base_dto_can_be_created_from_request()
+    public function base_dto_can_be_created_from_request(): void
     {
         // Create a mock FormRequest
         $request = $this->mock(FormRequest::class);
         $request
-            ->shouldReceive('validated')
-            ->once()
-            ->andReturn(['name' => 'Test', 'value' => 123])
+            ->expects('validated')
+            ->andReturns(['name' => 'Test', 'value' => 123])
         ;
 
         // Create the DTO from the request
@@ -82,10 +81,6 @@ class DataTransferObjectsTest extends TestCase
             public string $name;
             public int $value;
 
-            public static function fromRequest(FormRequest $request): static
-            {
-                return parent::fromRequest($request);
-            }
         };
 
         $result = $testDTO::fromRequest($request);
@@ -94,8 +89,11 @@ class DataTransferObjectsTest extends TestCase
         $this->assertEquals(123, $result->value);
     }
 
-    /** @test */
-    public function put_league_dto_prepares_data_correctly()
+    /** @test
+     * @throws JsonException
+     * @throws JsonException
+     */
+    public function put_league_dto_prepares_data_correctly(): void
     {
         // Test date values
         $startDate = '2023-01-01';
@@ -105,12 +103,12 @@ class DataTransferObjectsTest extends TestCase
         $winnerRules = json_encode([
             ['range' => [0, 50], 'strong' => 25, 'weak' => 25],
             ['range' => [51, 100], 'strong' => 20, 'weak' => 30],
-        ]);
+        ], JSON_THROW_ON_ERROR);
 
         $loserRules = json_encode([
             ['range' => [0, 50], 'strong' => -25, 'weak' => -25],
             ['range' => [51, 100], 'strong' => -20, 'weak' => -30],
-        ]);
+        ], JSON_THROW_ON_ERROR);
 
         // Prepare input data
         $inputData = [
@@ -147,7 +145,7 @@ class DataTransferObjectsTest extends TestCase
     }
 
     /** @test */
-    public function send_game_dto_handles_all_properties()
+    public function send_game_dto_handles_all_properties(): void
     {
         // Create test objects
         $sender = User::factory()->create();
@@ -175,7 +173,7 @@ class DataTransferObjectsTest extends TestCase
     }
 
     /** @test */
-    public function send_result_dto_handles_all_properties()
+    public function send_result_dto_handles_all_properties(): void
     {
         // Create test objects
         $matchGame = MatchGame::factory()->create();
@@ -194,7 +192,7 @@ class DataTransferObjectsTest extends TestCase
     }
 
     /** @test */
-    public function dto_ignores_unknown_properties()
+    public function dto_ignores_unknown_properties(): void
     {
         // Create a test DTO with unknown properties in the input
         $testDTO = new class(['name' => 'Test', 'unknown' => 'value']) extends BaseDTO {
