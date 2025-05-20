@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 use JsonException;
 use Mockery;
+use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use Throwable;
@@ -123,14 +124,53 @@ class MultiplayerGamesControllerTest extends TestCase
     }
 
     /**
+     * Helper method to create a mock MultiplayerGame object
+     *
+     * @param  int  $id  The game ID
+     * @param  string  $name  The game name
+     * @param  string  $status  The game status
+     * @param  array  $additionalProps  Additional properties for the mock
+     * @return MockInterface
+     */
+    private function createMockGame(int $id, string $name, string $status, array $additionalProps = []): MockInterface
+    {
+        $game = Mockery::mock(MultiplayerGame::class);
+
+        $properties = array_merge([
+            'id'                   => $id,
+            'name'                 => $name,
+            'status'               => $status,
+            'league_id'            => 1,
+            'game_id'              => 1,
+            'active_players_count' => 0,
+            'total_players_count'  => 0,
+            'players'              => collect([]),
+        ], $additionalProps);
+
+        foreach ($properties as $key => $value) {
+            $game->allows('getAttribute')->with($key)->andReturn($value);
+        }
+
+        // Mock common methods
+        $game->allows('load')->andReturnSelf();
+
+        // For JSON serialization
+        $game->allows('jsonSerialize')->andReturn($properties);
+        $game->allows('toArray')->andReturn($properties);
+
+        return $game;
+    }
+
+    /**
      * @throws JsonException
      */
     #[Test] public function it_gets_all_multiplayer_games_for_league(): void
     {
         // Arrange
+        // Use a proper mocked MultiplayerGame that can be serialized to JSON
         $multiplayerGames = collect([
-            (object) ['id' => 1, 'name' => 'Test Game 1', 'status' => 'registration'],
-            (object) ['id' => 2, 'name' => 'Test Game 2', 'status' => 'in_progress'],
+            $this->createMockGame(1, 'Test Game 1', 'registration'),
+            $this->createMockGame(2, 'Test Game 2', 'in_progress'),
         ]);
 
         // Mock league
@@ -169,15 +209,14 @@ class MultiplayerGamesControllerTest extends TestCase
             'entrance_fee'           => 300,
         ];
 
-        $createdGame = (object) array_merge(
-            [
-                'id'        => 1,
-                'league_id' => 1,
-                'game_id'   => 1,
-                'status'    => 'registration',
-            ],
-            $gameData,
-        );
+        // Create a MultiplayerGame instance that properly works with the resource
+        $createdGame = $this->createMockGame(1, 'New Multiplayer Game', 'registration', array_merge([
+            'league_id'              => 1,
+            'game_id'                => 1,
+            'max_players'            => 10,
+            'allow_player_targeting' => true,
+            'entrance_fee'           => 300,
+        ], $gameData));
 
         // Mock league
         $league = Mockery::mock(League::class);
@@ -214,12 +253,8 @@ class MultiplayerGamesControllerTest extends TestCase
     #[Test] public function it_shows_specific_multiplayer_game(): void
     {
         // Arrange
-        $multiplayerGame = Mockery::mock(MultiplayerGame::class);
-        $multiplayerGame->allows('getAttribute')->with('id')->andReturns(1);
-        $multiplayerGame->allows('getAttribute')->with('name')->andReturns('Test Game');
-        $multiplayerGame->allows('getAttribute')->with('status')->andReturns('in_progress');
-        $multiplayerGame->allows('getAttribute')->with('game_id')->andReturns(1);
-        $multiplayerGame->allows('load')->andReturnSelf();
+        // Create a better mock object for the MultiplayerGame
+        $multiplayerGame = $this->createMockGame(1, 'Test Game', 'in_progress');
 
         $league = Mockery::mock(League::class);
         $league->allows('getAttribute')->with('id')->andReturns(1);
@@ -245,10 +280,8 @@ class MultiplayerGamesControllerTest extends TestCase
         $user = Mockery::mock(User::class);
         $user->allows('getAttribute')->with('id')->andReturns(1);
 
-        $multiplayerGame = Mockery::mock(MultiplayerGame::class);
-        $multiplayerGame->allows('getAttribute')->with('id')->andReturns(1);
-        $multiplayerGame->allows('getAttribute')->with('name')->andReturns('Test Game');
-        $multiplayerGame->allows('getAttribute')->with('status')->andReturns('registration');
+        // Create a better mock for MultiplayerGame
+        $multiplayerGame = $this->createMockGame(1, 'Test Game', 'registration');
 
         $league = Mockery::mock(League::class);
         $league->allows('getAttribute')->with('id')->andReturns(1);
@@ -286,9 +319,8 @@ class MultiplayerGamesControllerTest extends TestCase
         $user = Mockery::mock(User::class);
         $user->allows('getAttribute')->with('id')->andReturns(1);
 
-        $multiplayerGame = Mockery::mock(MultiplayerGame::class);
-        $multiplayerGame->allows('getAttribute')->with('id')->andReturns(1);
-        $multiplayerGame->allows('getAttribute')->with('name')->andReturns('Test Game');
+        // Create a better mock for MultiplayerGame
+        $multiplayerGame = $this->createMockGame(1, 'Test Game', 'registration');
 
         $league = Mockery::mock(League::class);
         $league->allows('getAttribute')->with('id')->andReturns(1);
@@ -321,13 +353,10 @@ class MultiplayerGamesControllerTest extends TestCase
     #[Test] public function it_starts_multiplayer_game(): void
     {
         // Arrange
-        $multiplayerGame = Mockery::mock(MultiplayerGame::class);
-        $multiplayerGame->allows('getAttribute')->with('id')->andReturns(1);
+        // Create a more compatible mock object
+        $multiplayerGame = $this->createMockGame(1, 'Test Game', 'registration');
 
-        $startedGame = Mockery::mock(MultiplayerGame::class);
-        $startedGame->allows('getAttribute')->with('id')->andReturns(1);
-        $startedGame->allows('getAttribute')->with('name')->andReturns('Test Game');
-        $startedGame->allows('getAttribute')->with('status')->andReturns('in_progress');
+        $startedGame = $this->createMockGame(1, 'Test Game', 'in_progress');
 
         $league = Mockery::mock(League::class);
         $league->allows('getAttribute')->with('id')->andReturns(1);
@@ -355,8 +384,7 @@ class MultiplayerGamesControllerTest extends TestCase
     #[Test] public function it_cancels_multiplayer_game(): void
     {
         // Arrange
-        $multiplayerGame = Mockery::mock(MultiplayerGame::class);
-        $multiplayerGame->allows('getAttribute')->with('id')->andReturns(1);
+        $multiplayerGame = $this->createMockGame(1, 'Test Game', 'registration');
 
         $league = Mockery::mock(League::class);
         $league->allows('getAttribute')->with('id')->andReturns(1);
@@ -389,13 +417,13 @@ class MultiplayerGamesControllerTest extends TestCase
         $moderatorUser = Mockery::mock(User::class);
         $moderatorUser->allows('getAttribute')->with('id')->andReturns(2);
 
-        $multiplayerGame = Mockery::mock(MultiplayerGame::class);
-        $multiplayerGame->allows('getAttribute')->with('id')->andReturns(1);
+        // Create a better mock
+        $multiplayerGame = $this->createMockGame(1, 'Test Game', 'in_progress');
 
-        $updatedGame = Mockery::mock(MultiplayerGame::class);
-        $updatedGame->allows('getAttribute')->with('id')->andReturns(1);
-        $updatedGame->allows('getAttribute')->with('name')->andReturns('Test Game');
-        $updatedGame->allows('getAttribute')->with('moderator_user_id')->andReturns($moderatorUser->id);
+        // Updated game with moderator
+        $updatedGame = $this->createMockGame(1, 'Test Game', 'in_progress', [
+            'moderator_user_id' => 2,
+        ]);
 
         $league = Mockery::mock(League::class);
         $league->allows('getAttribute')->with('id')->andReturns(1);
@@ -437,9 +465,8 @@ class MultiplayerGamesControllerTest extends TestCase
         $targetUser = Mockery::mock(User::class);
         $targetUser->allows('getAttribute')->with('id')->andReturns(2);
 
-        $multiplayerGame = Mockery::mock(MultiplayerGame::class);
-        $multiplayerGame->allows('getAttribute')->with('id')->andReturns(1);
-        $multiplayerGame->allows('getAttribute')->with('name')->andReturns('Test Game');
+        // Better MultiplayerGame mock
+        $multiplayerGame = $this->createMockGame(1, 'Test Game', 'in_progress');
 
         $league = Mockery::mock(League::class);
         $league->allows('getAttribute')->with('id')->andReturns(1);
@@ -494,9 +521,7 @@ class MultiplayerGamesControllerTest extends TestCase
         $user = Mockery::mock(User::class);
         $user->allows('getAttribute')->with('id')->andReturns(1);
 
-        $multiplayerGame = Mockery::mock(MultiplayerGame::class);
-        $multiplayerGame->allows('getAttribute')->with('id')->andReturns(1);
-        $multiplayerGame->allows('getAttribute')->with('status')->andReturns('completed');
+        $multiplayerGame = $this->createMockGame(1, 'Test Game', 'completed');
 
         $league = Mockery::mock(League::class);
         $league->allows('getAttribute')->with('id')->andReturns(1);
@@ -516,5 +541,82 @@ class MultiplayerGamesControllerTest extends TestCase
 
         // Assert - No assertions needed since method has void return type
         $this->addToAssertionCount(1);
+    }
+
+    /**
+     * @throws JsonException
+     */
+    #[Test] public function it_gets_financial_summary(): void
+    {
+        // Arrange
+        $multiplayerGame = $this->createMockGame(1, 'Test Game', 'completed');
+
+        $league = Mockery::mock(League::class);
+        $league->allows('getAttribute')->with('id')->andReturns(1);
+
+        $financialSummary = [
+            'entrance_fee'          => 300,
+            'total_prize_pool'      => 1800,
+            'first_place_prize'     => 1080,
+            'second_place_prize'    => 360,
+            'grand_final_fund'      => 360,
+            'penalty_fee'           => 50,
+            'penalty_players_count' => 3,
+            'time_fund_total'       => 150,
+        ];
+
+        $this->mockMultiplayerGameService
+            ->expects('getFinancialSummary')
+            ->with($multiplayerGame)
+            ->andReturns($financialSummary)
+        ;
+
+        // Act
+        $result = $this->controller->getFinancialSummary($league, $multiplayerGame);
+
+        // Assert
+        $this->assertInstanceOf(JsonResponse::class, $result);
+        $this->assertEquals(200, $result->status());
+        $this->assertEquals($financialSummary, json_decode($result->getContent(), true, 512, JSON_THROW_ON_ERROR));
+    }
+
+    /**
+     * @throws JsonException
+     */
+    #[Test] public function it_gets_rating_summary(): void
+    {
+        // Arrange
+        $multiplayerGame = $this->createMockGame(1, 'Test Game', 'completed');
+
+        $league = Mockery::mock(League::class);
+        $league->allows('getAttribute')->with('id')->andReturns(1);
+
+        $ratingSummary = [
+            'players'       => [
+                [
+                    'player_id'     => 1, 'user' => ['id' => 1, 'name' => 'Player 1'], 'finish_position' => 1,
+                    'rating_points' => 50,
+                ],
+                [
+                    'player_id'     => 2, 'user' => ['id' => 2, 'name' => 'Player 2'], 'finish_position' => 2,
+                    'rating_points' => 40,
+                ],
+            ],
+            'total_players' => 2,
+        ];
+
+        $this->mockMultiplayerGameService
+            ->expects('getRatingSummary')
+            ->with($multiplayerGame)
+            ->andReturns($ratingSummary)
+        ;
+
+        // Act
+        $result = $this->controller->getRatingSummary($league, $multiplayerGame);
+
+        // Assert
+        $this->assertInstanceOf(JsonResponse::class, $result);
+        $this->assertEquals(200, $result->status());
+        $this->assertEquals($ratingSummary, json_decode($result->getContent(), true, 512, JSON_THROW_ON_ERROR));
     }
 }
