@@ -5,12 +5,11 @@ namespace Tests\Feature\User;
 use App\Core\Models\User;
 use App\User\Http\Controllers\UserStatsController;
 use App\User\Services\UserStatsService;
-use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use JsonException;
-use PHPUnit\Framework\MockObject\Exception;
+use Mockery;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class UserStatsControllerTest extends TestCase
@@ -19,6 +18,7 @@ class UserStatsControllerTest extends TestCase
 
     private $controller;
     private $statsService;
+    private $authMock;
 
     protected function setUp(): void
     {
@@ -27,12 +27,22 @@ class UserStatsControllerTest extends TestCase
         // Create mock service
         $this->statsService = $this->mock(UserStatsService::class);
         $this->controller = new UserStatsController($this->statsService);
+
+        // Create a separate auth mock
+        $this->authMock = Mockery::mock('alias:Illuminate\Support\Facades\Auth');
     }
 
-    /** @test
-     * @throws Exception
-     */
-    public function it_returns_user_ratings(): void
+    protected function tearDown(): void
+    {
+        // Clean up mockery instances
+        $this->statsService = null;
+        $this->authMock = null;
+        $this->controller = null;
+
+        parent::tearDown();
+    }
+
+    #[Test] public function it_returns_user_ratings(): void
     {
         // Arrange
         $user = User::factory()->create();
@@ -41,9 +51,8 @@ class UserStatsControllerTest extends TestCase
             (object) ['id' => 2, 'league_id' => 2, 'user_id' => $user->id, 'rating' => 1100],
         ]);
 
-        // Mock Auth facade with app container to avoid redeclaration issues
-        $this->app->instance('auth', $auth = $this->createMock(Guard::class));
-        $auth->method('user')->willReturn($user);
+        // Use the local auth mock
+        $this->authMock->allows('user')->andReturn($user);
 
         $this->statsService
             ->expects('getUserRatings')
@@ -59,10 +68,7 @@ class UserStatsControllerTest extends TestCase
         $this->assertEquals(2, $result->count());
     }
 
-    /** @test
-     * @throws Exception
-     */
-    public function it_returns_user_matches(): void
+    #[Test] public function it_returns_user_matches(): void
     {
         // Arrange
         $user = User::factory()->create();
@@ -72,9 +78,8 @@ class UserStatsControllerTest extends TestCase
             (object) ['id' => 3, 'league_id' => 2, 'status' => 'completed'],
         ]);
 
-        // Mock Auth facade with app container
-        $this->app->instance('auth', $auth = $this->createMock(Guard::class));
-        $auth->method('user')->willReturn($user);
+        // Use the local auth mock
+        $this->authMock->allows('user')->andReturn($user);
 
         $this->statsService
             ->expects('getUserMatches')
@@ -90,10 +95,7 @@ class UserStatsControllerTest extends TestCase
         $this->assertEquals(3, $result->count());
     }
 
-    /** @test
-     * @throws JsonException|Exception
-     */
-    public function it_returns_user_stats(): void
+    #[Test] public function it_returns_user_stats(): void
     {
         // Arrange
         $user = User::factory()->create();
@@ -108,9 +110,8 @@ class UserStatsControllerTest extends TestCase
             'average_rating'    => 1100,
         ];
 
-        // Mock Auth facade with app container
-        $this->app->instance('auth', $auth = $this->createMock(Guard::class));
-        $auth->method('user')->willReturn($user);
+        // Use the local auth mock
+        $this->authMock->allows('user')->andReturn($user);
 
         $this->statsService
             ->expects('getUserStats')
@@ -124,16 +125,10 @@ class UserStatsControllerTest extends TestCase
         // Assert
         $this->assertInstanceOf(JsonResponse::class, $result);
         $this->assertEquals(200, $result->status());
-
-        $data = json_decode($result->getContent(), true, 512, JSON_THROW_ON_ERROR);
-        $this->assertEquals($mockStats, $data);
+        $this->assertEquals($mockStats, $result->getData(true));
     }
 
-    /** @test
-     * @throws JsonException
-     * @throws Exception
-     */
-    public function it_returns_game_type_stats(): void
+    #[Test] public function it_returns_game_type_stats(): void
     {
         // Arrange
         $user = User::factory()->create();
@@ -152,9 +147,8 @@ class UserStatsControllerTest extends TestCase
             ],
         ];
 
-        // Mock Auth facade with app container
-        $this->app->instance('auth', $auth = $this->createMock(Guard::class));
-        $auth->method('user')->willReturn($user);
+        // Use the local auth mock
+        $this->authMock->allows('user')->andReturn($user);
 
         $this->statsService
             ->expects('getGameTypeStats')
@@ -168,8 +162,6 @@ class UserStatsControllerTest extends TestCase
         // Assert
         $this->assertInstanceOf(JsonResponse::class, $result);
         $this->assertEquals(200, $result->status());
-
-        $data = json_decode($result->getContent(), true, 512, JSON_THROW_ON_ERROR);
-        $this->assertEquals($mockGameTypeStats, $data);
+        $this->assertEquals($mockGameTypeStats, $result->getData(true));
     }
 }

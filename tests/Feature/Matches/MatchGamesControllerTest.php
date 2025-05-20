@@ -10,8 +10,8 @@ use App\Leagues\Services\MatchGamesService;
 use App\Matches\Enums\GameStatus;
 use App\Matches\Http\Controllers\MatchGamesController;
 use App\Matches\Models\MatchGame;
-use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Mockery;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -23,6 +23,7 @@ class MatchGamesControllerTest extends TestCase
 
     private $controller;
     private $mockMatchGamesService;
+    private $authMock;
 
     protected function setUp(): void
     {
@@ -30,6 +31,19 @@ class MatchGamesControllerTest extends TestCase
 
         $this->mockMatchGamesService = $this->mock(MatchGamesService::class);
         $this->controller = new MatchGamesController($this->mockMatchGamesService);
+
+        // Create a separate local Auth mock
+        $this->authMock = $this->mockStaticFacade(Auth::class);
+    }
+
+    protected function tearDown(): void
+    {
+        // Explicitly unset any mockery instances
+        $this->mockMatchGamesService = null;
+        $this->authMock = null;
+        $this->controller = null;
+
+        parent::tearDown();
     }
 
     #[Test] public function it_sends_match_game(): void
@@ -39,9 +53,8 @@ class MatchGamesControllerTest extends TestCase
         $sender = User::factory()->create();
         $receiver = User::factory()->create();
 
-        // Create mock Auth
-        $this->app->instance('auth', $auth = Mockery::mock(Guard::class));
-        $auth->allows('user')->andReturns($sender);
+        // Use the local auth mock
+        $this->authMock->allows('user')->andReturn($sender);
 
         $request = $this->mock(SendGameRequest::class);
         $request
@@ -75,9 +88,8 @@ class MatchGamesControllerTest extends TestCase
             'status'    => GameStatus::PENDING,
         ]);
 
-        // Create mock Auth
-        $this->app->instance('auth', $auth = Mockery::mock(Guard::class));
-        $auth->allows('user')->andReturns($user);
+        // Use the local auth mock
+        $this->authMock->allows('user')->andReturn($user);
 
         $this->mockMatchGamesService
             ->expects('accept')
@@ -105,9 +117,8 @@ class MatchGamesControllerTest extends TestCase
             'status'    => GameStatus::PENDING,
         ]);
 
-        // Create mock Auth
-        $this->app->instance('auth', $auth = Mockery::mock(Guard::class));
-        $auth->allows('user')->andReturns($user);
+        // Use the local auth mock
+        $this->authMock->allows('user')->andReturn($user);
 
         $this->mockMatchGamesService
             ->expects('decline')
@@ -135,9 +146,8 @@ class MatchGamesControllerTest extends TestCase
             'status'    => GameStatus::IN_PROGRESS,
         ]);
 
-        // Create mock Auth
-        $this->app->instance('auth', $auth = Mockery::mock(Guard::class));
-        $auth->allows('user')->andReturns($user);
+        // Use the local auth mock
+        $this->authMock->allows('user')->andReturn($user);
 
         // Create a Mockery mock instead of PHPUnit mock
         $request = Mockery::mock(SendResultRequest::class);
@@ -174,9 +184,8 @@ class MatchGamesControllerTest extends TestCase
         $sender = User::factory()->create();
         $receiver = User::factory()->create();
 
-        // Create mock Auth
-        $this->app->instance('auth', $auth = Mockery::mock(Guard::class));
-        $auth->allows('user')->andReturns($sender);
+        // Use the local auth mock
+        $this->authMock->allows('user')->andReturn($sender);
 
         $request = $this->mock(SendGameRequest::class);
         $request
@@ -213,9 +222,8 @@ class MatchGamesControllerTest extends TestCase
             'status'    => GameStatus::IN_PROGRESS,
         ]);
 
-        // Create mock Auth
-        $this->app->instance('auth', $auth = Mockery::mock(Guard::class));
-        $auth->allows('user')->andReturns($user);
+        // Use the local auth mock
+        $this->authMock->allows('user')->andReturn($user);
 
         // Create a Mockery mock instead of PHPUnit mock
         $request = Mockery::mock(SendResultRequest::class);

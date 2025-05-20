@@ -1,17 +1,21 @@
 <?php
 
+namespace Tests\Feature\Core;
+
 use App\Leagues\Enums\RatingType;
 use App\Matches\Enums\GameStatus;
 use App\Matches\Enums\GameType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use ValueError;
 
 class EnumsTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
-    public function game_type_enum_has_correct_values()
+    #[Test]
+    public function game_type_enum_has_correct_values(): void
     {
         // Check the enum cases have the expected values
         $this->assertEquals('pool', GameType::Pool->value);
@@ -30,8 +34,8 @@ class EnumsTest extends TestCase
         }
     }
 
-    /** @test */
-    public function game_status_enum_has_correct_values()
+    #[Test]
+    public function game_status_enum_has_correct_values(): void
     {
         // Check the enum cases have the expected values
         $this->assertEquals('pending', GameStatus::PENDING->value);
@@ -52,8 +56,8 @@ class EnumsTest extends TestCase
         }
     }
 
-    /** @test */
-    public function game_status_has_not_allowed_to_invite_statuses_method()
+    #[Test]
+    public function game_status_has_not_allowed_to_invite_statuses_method(): void
     {
         $notAllowedStatuses = GameStatus::notAllowedToInviteStatuses();
 
@@ -64,8 +68,8 @@ class EnumsTest extends TestCase
         $this->assertNotContains(GameStatus::COMPLETED, $notAllowedStatuses);
     }
 
-    /** @test */
-    public function rating_type_enum_has_correct_values()
+    #[Test]
+    public function rating_type_enum_has_correct_values(): void
     {
         // Check the enum cases have the expected values
         $this->assertEquals('elo', RatingType::Elo->value);
@@ -82,24 +86,24 @@ class EnumsTest extends TestCase
         }
     }
 
-    /** @test */
-    public function can_perform_enum_comparisons()
+    #[Test]
+    public function can_perform_enum_comparisons(): void
     {
         // Game types
-        $this->assertTrue(GameType::Pool === GameType::Pool);
-        $this->assertFalse(GameType::Pool === GameType::Snooker);
+        $this->assertSame(GameType::Pool, GameType::Pool);
+        $this->assertNotSame(GameType::Pool, GameType::Snooker);
 
         // Game statuses
-        $this->assertTrue(GameStatus::PENDING === GameStatus::PENDING);
-        $this->assertFalse(GameStatus::PENDING === GameStatus::IN_PROGRESS);
+        $this->assertSame(GameStatus::PENDING, GameStatus::PENDING);
+        $this->assertNotSame(GameStatus::PENDING, GameStatus::IN_PROGRESS);
 
         // Rating types
-        $this->assertTrue(RatingType::Elo === RatingType::Elo);
-        $this->assertFalse(RatingType::Elo === RatingType::KillerPool);
+        $this->assertSame(RatingType::Elo, RatingType::Elo);
+        $this->assertNotSame(RatingType::Elo, RatingType::KillerPool);
     }
 
-    /** @test */
-    public function can_use_enum_values_in_conditions()
+    #[Test]
+    public function can_use_enum_values_in_conditions(): void
     {
         // Test with GameType
         $gameType = GameType::Pool;
@@ -135,8 +139,8 @@ class EnumsTest extends TestCase
         $this->assertEquals('killer_pool', $result);
     }
 
-    /** @test */
-    public function can_create_enum_from_database_string()
+    #[Test]
+    public function can_create_enum_from_database_string(): void
     {
         // Simulate how Laravel casts enum values from database strings
         $gameType = GameType::from('snooker');
@@ -148,8 +152,8 @@ class EnumsTest extends TestCase
         $this->assertEquals(RatingType::Elo, $ratingType);
     }
 
-    /** @test */
-    public function enums_can_be_converted_to_strings()
+    #[Test]
+    public function enums_can_be_converted_to_strings(): void
     {
         $gameType = GameType::Pyramid;
         $gameStatus = GameStatus::COMPLETED;
@@ -160,8 +164,8 @@ class EnumsTest extends TestCase
         $this->assertEquals('killer_pool', $ratingType->value);
     }
 
-    /** @test */
-    public function invalid_enum_values_throw_exceptions()
+    #[Test]
+    public function invalid_enum_values_throw_exceptions(): void
     {
         $this->expectException(ValueError::class);
         GameType::from('invalid_game_type');
