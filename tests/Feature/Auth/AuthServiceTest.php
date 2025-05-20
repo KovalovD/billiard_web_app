@@ -1,16 +1,20 @@
 <?php
 
+namespace Tests\Feature\Auth;
+
 use App\Auth\DataTransferObjects\LoginDTO;
 use App\Auth\DataTransferObjects\LogoutDTO;
 use App\Auth\DataTransferObjects\RegisterDTO;
 use App\Auth\Repositories\AuthRepository;
 use App\Auth\Services\AuthService;
 use App\Core\Models\User;
+use Exception;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Laravel\Sanctum\NewAccessToken;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class AuthServiceTest extends TestCase
@@ -19,10 +23,10 @@ class AuthServiceTest extends TestCase
 
     private $mockRepository;
 
-    /** @test
+    /**
      * @throws Exception
      */
-    public function it_registers_new_user(): void
+    #[Test] public function it_registers_new_user(): void
     {
         // Arrange
         $registerDTO = new RegisterDTO([
@@ -167,8 +171,7 @@ class AuthServiceTest extends TestCase
         $service->login($loginDTO);
     }
 
-    /** @test */
-    public function it_logs_out_user(): void
+    #[Test] public function it_logs_out_user(): void
     {
         // Arrange
         $user = User::factory()->create();
@@ -235,8 +238,7 @@ class AuthServiceTest extends TestCase
         $tokensSpy->shouldHaveReceived('delete');
     }
 
-    /** @test */
-    public function it_handles_mobile_device_logout(): void
+    #[Test] public function it_handles_mobile_device_logout(): void
     {
         // Arrange
         $user = User::factory()->create();
@@ -263,8 +265,7 @@ class AuthServiceTest extends TestCase
         $this->assertEquals('Successfully logged out.', $result['message']);
     }
 
-    /** @test */
-    public function it_handles_logout_exception(): void
+    #[Test] public function it_handles_logout_exception(): void
     {
         // Arrange
         $user = User::factory()->create();

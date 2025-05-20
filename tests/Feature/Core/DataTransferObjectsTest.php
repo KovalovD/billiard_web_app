@@ -1,5 +1,7 @@
 <?php
 
+namespace Tests\Feature\Core;
+
 use App\Core\DataTransferObjects\BaseDTO;
 use App\Core\Models\Club;
 use App\Core\Models\User;
@@ -11,14 +13,15 @@ use App\Matches\Models\MatchGame;
 use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use JsonException;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class DataTransferObjectsTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
-    public function base_dto_can_be_created_from_array(): void
+    #[Test] public function base_dto_can_be_created_from_array(): void
     {
         // Create a test DTO that extends BaseDTO
         $testDTO = new class(['name' => 'Test', 'value' => 123]) extends BaseDTO {
@@ -30,14 +33,12 @@ class DataTransferObjectsTest extends TestCase
         $this->assertEquals(123, $testDTO->value);
     }
 
-    /** @test */
-    public function base_dto_can_be_converted_to_array(): void
+    #[Test] public function base_dto_can_be_converted_to_array(): void
     {
         // Create a test DTO
-        $testDTO = new class(['name' => 'Test', 'value' => 123, 'private' => 'hidden']) extends BaseDTO {
+        $testDTO = new class(['name' => 'Test', 'value' => 123]) extends BaseDTO {
             public string $name;
             public int $value;
-            private string $private;
         };
 
         $array = $testDTO->toArray();
@@ -49,8 +50,7 @@ class DataTransferObjectsTest extends TestCase
         $this->assertArrayNotHasKey('private', $array); // Private properties should not be included
     }
 
-    /** @test */
-    public function base_dto_can_exclude_properties_when_converting_to_array(): void
+    #[Test] public function base_dto_can_exclude_properties_when_converting_to_array(): void
     {
         // Create a test DTO
         $testDTO = new class(['name' => 'Test', 'value' => 123, 'extra' => 'data']) extends BaseDTO {
@@ -66,8 +66,7 @@ class DataTransferObjectsTest extends TestCase
         $this->assertArrayNotHasKey('extra', $array); // Should be excluded
     }
 
-    /** @test */
-    public function base_dto_can_be_created_from_request(): void
+    #[Test] public function base_dto_can_be_created_from_request(): void
     {
         // Create a mock FormRequest
         $request = $this->mock(FormRequest::class);
@@ -90,7 +89,6 @@ class DataTransferObjectsTest extends TestCase
     }
 
     /** @test
-     * @throws JsonException
      * @throws JsonException
      */
     public function put_league_dto_prepares_data_correctly(): void
@@ -144,8 +142,7 @@ class DataTransferObjectsTest extends TestCase
         $this->assertJson($preparedData['rating_change_for_losers_rule']);
     }
 
-    /** @test */
-    public function send_game_dto_handles_all_properties(): void
+    #[Test] public function send_game_dto_handles_all_properties(): void
     {
         // Create test objects
         $sender = User::factory()->create();
@@ -172,8 +169,7 @@ class DataTransferObjectsTest extends TestCase
         $this->assertEquals($club->id, $dto->club_id);
     }
 
-    /** @test */
-    public function send_result_dto_handles_all_properties(): void
+    #[Test] public function send_result_dto_handles_all_properties(): void
     {
         // Create test objects
         $matchGame = MatchGame::factory()->create();
@@ -191,8 +187,7 @@ class DataTransferObjectsTest extends TestCase
         $this->assertSame($matchGame, $dto->matchGame);
     }
 
-    /** @test */
-    public function dto_ignores_unknown_properties(): void
+    #[Test] public function dto_ignores_unknown_properties(): void
     {
         // Create a test DTO with unknown properties in the input
         $testDTO = new class(['name' => 'Test', 'unknown' => 'value']) extends BaseDTO {

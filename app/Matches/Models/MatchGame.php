@@ -7,11 +7,16 @@ use App\Core\Models\Game;
 use App\Leagues\Models\League;
 use App\Leagues\Models\Rating;
 use App\Matches\Enums\GameStatus;
+use Database\Factories\MatchGameFactory;
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class MatchGame extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'game_id',
         'first_rating_id',
@@ -78,5 +83,10 @@ class MatchGame extends Model
         return $this->game->is_multiplayer
             ? []
             : [$this->firstRating, $this->secondRating];
+    }
+
+    public static function newFactory(): MatchGameFactory|Factory
+    {
+        return MatchGameFactory::new();
     }
 }
