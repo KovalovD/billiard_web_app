@@ -1,5 +1,7 @@
 <?php
 
+namespace Tests\Feature\Core;
+
 use App\Auth\Http\Requests\LoginRequest;
 use App\Auth\Http\Requests\LogoutRequest;
 use App\Auth\Http\Requests\RegisterRequest;
@@ -14,13 +16,16 @@ use App\User\Http\Requests\UpdateProfileRequest;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Validator;
+use PHPUnit\Framework\Attributes\Test;
+use ReflectionException;
+use ReflectionMethod;
 use Tests\TestCase;
 
 class FormRequestsTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function base_form_request_handles_failed_validation(): void
     {
         // Create a mock validator
@@ -53,7 +58,7 @@ class FormRequestsTest extends TestCase
         $request->testFailedValidation($validator);
     }
 
-    /** @test */
+    #[Test]
     public function login_request_has_expected_rules(): void
     {
         $request = new LoginRequest();
@@ -69,9 +74,10 @@ class FormRequestsTest extends TestCase
         $this->assertEquals(['sometimes', 'string'], $rules['deviceName']);
     }
 
-    /** @test
+    /**
      * @throws ReflectionException
      */
+    #[Test]
     public function login_request_prepares_devicename_from_header(): void
     {
         $request = new LoginRequest();
@@ -84,7 +90,7 @@ class FormRequestsTest extends TestCase
         $this->assertEquals('Test User Agent', $request->deviceName);
     }
 
-    /** @test */
+    #[Test]
     public function logout_request_has_expected_rules(): void
     {
         $request = new LogoutRequest();
@@ -95,9 +101,10 @@ class FormRequestsTest extends TestCase
         $this->assertEquals(['sometimes', 'string'], $rules['deviceName']);
     }
 
-    /** @test
+    /**
      * @throws ReflectionException
      */
+    #[Test]
     public function logout_request_prepares_devicename_from_header(): void
     {
         $request = new LogoutRequest();
@@ -110,7 +117,7 @@ class FormRequestsTest extends TestCase
         $this->assertEquals('Test User Agent', $request->deviceName);
     }
 
-    /** @test */
+    #[Test]
     public function register_request_has_expected_rules(): void
     {
         $request = new RegisterRequest();
@@ -132,7 +139,7 @@ class FormRequestsTest extends TestCase
         $this->assertContains('confirmed', $rules['password']);
     }
 
-    /** @test */
+    #[Test]
     public function put_league_request_has_expected_rules(): void
     {
         $request = new PutLeagueRequest();
@@ -154,9 +161,10 @@ class FormRequestsTest extends TestCase
         $this->assertEquals(['required', 'integer', 'min:1'], $rules['invite_days_expire']);
     }
 
-    /** @test
+    /**
      * @throws ReflectionException
      */
+    #[Test]
     public function put_league_request_handles_zero_max_players(): void
     {
         $request = new PutLeagueRequest();
@@ -172,7 +180,7 @@ class FormRequestsTest extends TestCase
         $this->assertEquals(0, $request->max_players);
     }
 
-    /** @test */
+    #[Test]
     public function send_game_request_has_expected_rules(): void
     {
         $request = new SendGameRequest();
@@ -188,7 +196,7 @@ class FormRequestsTest extends TestCase
         $this->assertEquals(['nullable', 'integer', 'exists:clubs,id'], $rules['club_id']);
     }
 
-    /** @test */
+    #[Test]
     public function send_result_request_has_expected_rules(): void
     {
         $request = new SendResultRequest();
@@ -202,7 +210,7 @@ class FormRequestsTest extends TestCase
         $this->assertEquals(['required', 'integer'], $rules['second_user_score']);
     }
 
-    /** @test */
+    #[Test]
     public function create_multiplayer_game_request_has_expected_rules(): void
     {
         $request = new CreateMultiplayerGameRequest();
@@ -225,9 +233,10 @@ class FormRequestsTest extends TestCase
         $this->assertEquals(['nullable', 'integer', 'min:0'], $rules['entrance_fee']);
     }
 
-    /** @test
+    /**
      * @throws ReflectionException
      */
+    #[Test]
     public function create_multiplayer_game_request_corrects_prize_percentages(): void
     {
         $request = new CreateMultiplayerGameRequest();
@@ -249,7 +258,7 @@ class FormRequestsTest extends TestCase
         $this->assertEquals(20, $request->grand_final_percent);
     }
 
-    /** @test */
+    #[Test]
     public function update_password_request_has_expected_rules(): void
     {
         $request = new UpdatePasswordRequest();
@@ -264,7 +273,7 @@ class FormRequestsTest extends TestCase
         $this->assertContains('confirmed', $rules['password']);
     }
 
-    /** @test */
+    #[Test]
     public function update_profile_request_has_expected_rules(): void
     {
         $request = new UpdateProfileRequest();

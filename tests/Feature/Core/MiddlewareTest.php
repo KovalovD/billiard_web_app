@@ -7,6 +7,7 @@ use App\Core\Http\Middleware\AdminMiddleware;
 use App\Core\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class MiddlewareTest extends TestCase
@@ -50,7 +51,7 @@ class MiddlewareTest extends TestCase
         });
     }
 
-    /** @test */
+    #[Test]
     public function admin_middleware_allows_admin_users(): void
     {
         // Create an admin user
@@ -65,7 +66,7 @@ class MiddlewareTest extends TestCase
         ;
     }
 
-    /** @test */
+    #[Test]
     public function admin_middleware_blocks_non_admin_users(): void
     {
         // Create a non-admin user
@@ -79,7 +80,7 @@ class MiddlewareTest extends TestCase
         ; // Forbidden
     }
 
-    /** @test */
+    #[Test]
     public function admin_middleware_blocks_unauthenticated_users(): void
     {
         // Make the request without authentication
@@ -89,7 +90,7 @@ class MiddlewareTest extends TestCase
         ; // Forbidden
     }
 
-    /** @test */
+    #[Test]
     public function auth_middleware_redirects_web_requests_when_not_authenticated(): void
     {
         // Disable debugging
@@ -105,7 +106,7 @@ class MiddlewareTest extends TestCase
         ;
     }
 
-    /** @test */
+    #[Test]
     public function auth_middleware_returns_json_response_for_api_requests_when_not_authenticated(): void
     {
         // Disable debugging
@@ -125,7 +126,7 @@ class MiddlewareTest extends TestCase
         ;
     }
 
-    /** @test */
+    #[Test]
     public function auth_middleware_allows_authenticated_requests(): void
     {
         // Create a user
@@ -140,7 +141,7 @@ class MiddlewareTest extends TestCase
         ;
     }
 
-    /** @test */
+    #[Test]
     public function auth_middleware_logs_debug_output_when_enabled(): void
     {
         // Create a user

@@ -5,12 +5,17 @@ namespace App\Matches\Models;
 use App\Core\Models\Game;
 use App\Core\Models\User;
 use App\Leagues\Models\League;
+use Database\Factories\MultiplayerGameFactory;
+use Faker\Factory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class MultiplayerGame extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'league_id',
         'game_id',
@@ -119,5 +124,10 @@ class MultiplayerGame extends Model
     public function isUserModerator(User $user): bool
     {
         return $user->id === $this->moderator_user_id || $user->is_admin;
+    }
+
+    protected static function newFactory(): MultiplayerGameFactory|Factory
+    {
+        return MultiplayerGameFactory::new();
     }
 }

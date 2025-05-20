@@ -1,5 +1,7 @@
 <?php
 
+namespace Tests\Feature\Matches;
+
 use App\Core\Models\Game;
 use App\Core\Models\User;
 use App\Leagues\Enums\RatingType;
@@ -12,8 +14,12 @@ use App\Matches\Models\MultiplayerGame;
 use App\Matches\Services\MultiplayerGameService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use JsonException;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use Throwable;
 
 class MultiplayerGamesControllerTest extends TestCase
 {
@@ -22,10 +28,10 @@ class MultiplayerGamesControllerTest extends TestCase
     private $controller;
     private $mockMultiplayerGameService;
 
-    /** @test
+    /**
      * @throws JsonException
      */
-    public function it_gets_all_multiplayer_games_for_league(): void
+    #[Test] public function it_gets_all_multiplayer_games_for_league(): void
     {
         // Arrange
         $game = Game::factory()->create(['is_multiplayer' => true]);
@@ -68,10 +74,10 @@ class MultiplayerGamesControllerTest extends TestCase
         $this->assertEquals('Test Game 2', $data[1]->name);
     }
 
-    /** @test
+    /**
      * @throws JsonException
      */
-    public function it_creates_multiplayer_game(): void
+    #[Test] public function it_creates_multiplayer_game(): void
     {
         // Arrange
         $game = Game::factory()->create(['is_multiplayer' => true]);
@@ -121,10 +127,10 @@ class MultiplayerGamesControllerTest extends TestCase
         $this->assertTrue($data->allow_player_targeting);
     }
 
-    /** @test
+    /**
      * @throws JsonException
      */
-    public function it_shows_specific_multiplayer_game(): void
+    #[Test] public function it_shows_specific_multiplayer_game(): void
     {
         // Arrange
         $game = Game::factory()->create(['is_multiplayer' => true]);
@@ -152,10 +158,10 @@ class MultiplayerGamesControllerTest extends TestCase
         $this->assertEquals('in_progress', $data->status);
     }
 
-    /** @test
+    /**
      * @throws JsonException
      */
-    public function it_joins_multiplayer_game(): void
+    #[Test] public function it_joins_multiplayer_game(): void
     {
         // Arrange
         $game = Game::factory()->create(['is_multiplayer' => true]);
@@ -196,10 +202,10 @@ class MultiplayerGamesControllerTest extends TestCase
         $this->assertEquals('Test Game', $data->name);
     }
 
-    /** @test
+    /**
      * @throws JsonException
      */
-    public function it_leaves_multiplayer_game(): void
+    #[Test] public function it_leaves_multiplayer_game(): void
     {
         // Arrange
         $game = Game::factory()->create(['is_multiplayer' => true]);
@@ -238,10 +244,10 @@ class MultiplayerGamesControllerTest extends TestCase
         $this->assertEquals('Test Game', $data->name);
     }
 
-    /** @test
+    /**
      * @throws JsonException
      */
-    public function it_starts_multiplayer_game(): void
+    #[Test] public function it_starts_multiplayer_game(): void
     {
         // Arrange
         $game = Game::factory()->create(['is_multiplayer' => true]);
@@ -282,10 +288,10 @@ class MultiplayerGamesControllerTest extends TestCase
         $this->assertEquals('in_progress', $data->status);
     }
 
-    /** @test
+    /**
      * @throws JsonException
      */
-    public function it_cancels_multiplayer_game(): void
+    #[Test] public function it_cancels_multiplayer_game(): void
     {
         // Arrange
         $game = Game::factory()->create(['is_multiplayer' => true]);
@@ -317,10 +323,10 @@ class MultiplayerGamesControllerTest extends TestCase
         $this->assertEquals('Game cancelled successfully.', $data->message);
     }
 
-    /** @test
+    /**
      * @throws JsonException
      */
-    public function it_sets_moderator(): void
+    #[Test] public function it_sets_moderator(): void
     {
         // Arrange
         $game = Game::factory()->create(['is_multiplayer' => true]);
@@ -351,7 +357,7 @@ class MultiplayerGamesControllerTest extends TestCase
             'moderator_user_id' => $moderatorUser->id,
         ]);
 
-        $request = $this->mock(\Illuminate\Http\Request::class);
+        $request = $this->mock(Request::class);
         $request->user_id = $moderatorUser->id;
 
         $this->mockMultiplayerGameService
@@ -371,10 +377,10 @@ class MultiplayerGamesControllerTest extends TestCase
         $this->assertEquals($moderatorUser->id, $data->moderator_user_id);
     }
 
-    /** @test
+    /**
      * @throws Throwable
      */
-    public function it_performs_game_action(): void
+    #[Test] public function it_performs_game_action(): void
     {
         // Arrange
         $game = Game::factory()->create(['is_multiplayer' => true]);
@@ -436,8 +442,7 @@ class MultiplayerGamesControllerTest extends TestCase
         $this->assertEquals(200, $result->status());
     }
 
-    /** @test */
-    public function it_finishes_game(): void
+    #[Test] public function it_finishes_game(): void
     {
         // Arrange
         $game = Game::factory()->create(['is_multiplayer' => true]);
@@ -479,6 +484,6 @@ class MultiplayerGamesControllerTest extends TestCase
         $this->controller = new MultiplayerGamesController($this->mockMultiplayerGameService);
 
         // Mock Auth facade
-        $this->mockAuth = $this->mock(Auth::class);
+        $this->mockAuth = $this->mockStaticFacade(Auth::class);
     }
 }

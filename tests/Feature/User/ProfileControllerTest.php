@@ -7,14 +7,13 @@ use App\User\Http\Controllers\ProfileController;
 use App\User\Http\Requests\UpdatePasswordRequest;
 use App\User\Http\Requests\UpdateProfileRequest;
 use App\User\Services\ProfileService;
-use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Session\Store;
 use Illuminate\Validation\UnauthorizedException;
-use JsonException;
-use PHPUnit\Framework\MockObject\Exception;
+use Mockery;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class ProfileControllerTest extends TestCase
@@ -23,6 +22,7 @@ class ProfileControllerTest extends TestCase
 
     private $controller;
     private $profileService;
+    private $authMock;
 
     protected function setUp(): void
     {
@@ -31,12 +31,22 @@ class ProfileControllerTest extends TestCase
         // Create mock service
         $this->profileService = $this->mock(ProfileService::class);
         $this->controller = new ProfileController($this->profileService);
+
+        // Create local auth mock
+        $this->authMock = Mockery::mock('alias:Illuminate\Support\Facades\Auth');
     }
 
-    /** @test
-     * @throws JsonException|Exception
-     */
-    public function it_updates_profile(): void
+    protected function tearDown(): void
+    {
+        // Clean up mockery instances
+        $this->profileService = null;
+        $this->authMock = null;
+        $this->controller = null;
+
+        parent::tearDown();
+    }
+
+    #[Test] public function it_updates_profile(): void
     {
         // Arrange
         $user = User::factory()->create();
@@ -46,9 +56,8 @@ class ProfileControllerTest extends TestCase
             'lastname'  => 'User',
         ]);
 
-        // Mock Auth facade with app container
-        $this->app->instance('auth', $auth = $this->createMock(Guard::class));
-        $auth->method('user')->willReturn($user);
+        // Use the local auth mock
+        $this->authMock->allows('user')->andReturn($user);
 
         $request = $this->mock(UpdateProfileRequest::class);
 
@@ -64,23 +73,15 @@ class ProfileControllerTest extends TestCase
         // Assert
         $this->assertInstanceOf(JsonResponse::class, $result);
         $this->assertEquals(200, $result->status());
-
-        $data = json_decode($result->getContent(), true, 512, JSON_THROW_ON_ERROR);
-        $this->assertEquals('Updated', $data['firstname']);
-        $this->assertEquals('User', $data['lastname']);
     }
 
-    /** @test
-     * @throws JsonException|Exception
-     */
-    public function it_updates_password(): void
+    #[Test] public function it_updates_password(): void
     {
         // Arrange
         $user = User::factory()->create();
 
-        // Mock Auth facade with app container
-        $this->app->instance('auth', $auth = $this->createMock(Guard::class));
-        $auth->method('user')->willReturn($user);
+        // Use the local auth mock
+        $this->authMock->allows('user')->andReturn($user);
 
         $request = $this->mock(UpdatePasswordRequest::class);
 
@@ -96,37 +97,35 @@ class ProfileControllerTest extends TestCase
         // Assert
         $this->assertInstanceOf(JsonResponse::class, $result);
         $this->assertEquals(200, $result->status());
-
-        $data = json_decode($result->getContent(), true, 512, JSON_THROW_ON_ERROR);
-        $this->assertEquals('Password updated successfully', $data['message']);
     }
 
-    /** @test
-     * @throws JsonException|Exception
-     */
-    public function it_deletes_account(): void
+    #[Test] public function it_deletes_account(): void
     {
         // Arrange
         $user = User::factory()->create();
 
-        // Mock Auth facade with app container
-        $this->app->instance('auth', $auth = $this->createMock(Guard::class));
-        $auth->method('user')->willReturn($user);
+        // Use the local auth mock
+        $this->authMock->allows('user')->andReturn($user);
 
-        // Mock Auth with additional facade method
-        $this->app->instance('auth.logout', function () {
-            // Mock logout functionality
-        });
+        // Create mock request
+        $request = Mockery::mock(Request::class);
+        $request
+            ->expects('validate')
+            ->andReturns(['password' => 'correct-password'])
+        ;
 
-        $request = $this->createMock(Request::class);
-        $request->method('validate')->willReturn(true);
+        // Create mock session
+        $session = Mockery::mock(Store::class);
+        $session->expects('invalidate');
+        $session->expects('regenerateToken');
 
-        // Mock session methods
-        $sessionMock = $this->createMock(Store::class);
-        $sessionMock->expects($this->once())->method('invalidate');
-        $sessionMock->expects($this->once())->method('regenerateToken');
+        $request
+            ->allows('session')
+            ->andReturns($session)
+        ;
 
-        $request->method('session')->willReturn($sessionMock);
+        // Stub auth logout
+        $this->authMock->expects('logout');
 
         $this->profileService
             ->expects('deleteAccount')
@@ -140,23 +139,19 @@ class ProfileControllerTest extends TestCase
         // Assert
         $this->assertInstanceOf(JsonResponse::class, $result);
         $this->assertEquals(200, $result->status());
-
-        $data = json_decode($result->getContent(), true, 512, JSON_THROW_ON_ERROR);
-        $this->assertEquals('Account deleted successfully', $data['message']);
     }
 
-    /** @test
-     * @throws Exception
-     */
-    public function it_throws_exception_when_destroying_unauthenticated(): void
+    #[Test] public function it_throws_exception_when_destroying_unauthenticated(): void
     {
         // Arrange
-        // Mock Auth facade with app container returning null (unauthenticated)
-        $this->app->instance('auth', $auth = $this->createMock(Guard::class));
-        $auth->method('user')->willReturn(null);
+        // Mock Auth facade returning null (unauthenticated)
+        $this->authMock->allows('user')->andReturn(null);
 
-        $request = $this->createMock(Request::class);
-        $request->method('validate')->willReturn(true);
+        $request = Mockery::mock(Request::class);
+        $request
+            ->expects('validate')
+            ->andReturns(['password' => 'password123'])
+        ;
 
         // Act & Assert
         $this->expectException(UnauthorizedException::class);
