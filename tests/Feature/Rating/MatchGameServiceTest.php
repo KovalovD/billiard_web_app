@@ -2,8 +2,6 @@
 
 use App\Core\Models\Game;
 use App\Core\Models\User;
-use App\Leagues\DataTransferObjects\SendGameDTO;
-use App\Leagues\DataTransferObjects\SendResultDTO;
 use App\Leagues\Models\League;
 use App\Leagues\Models\Rating;
 use App\Leagues\Services\MatchGamesService;
@@ -60,7 +58,7 @@ it('can send a match game with valid input', function () {
     ;
 
     // Create DTO
-    $dto = new SendGameDTO([
+    $dto = new App\Leagues\DataTransferObjects\SendGameDTO([
         'sender'     => $sender,
         'receiver'   => $receiver,
         'league'     => $league,
@@ -128,7 +126,7 @@ it('handles validation for rating criteria when sending match', function () {
     ;
 
     // Create DTO
-    $dto = new SendGameDTO([
+    $dto = new App\Leagues\DataTransferObjects\SendGameDTO([
         'sender'   => $sender,
         'receiver' => $receiver,
         'league'   => $league,
@@ -197,7 +195,7 @@ it('prevents sending match if player already has ongoing matches', function () {
     ;
 
     // Create DTO
-    $dto = new SendGameDTO([
+    $dto = new App\Leagues\DataTransferObjects\SendGameDTO([
         'sender'   => $sender,
         'receiver' => $receiver,
         'league'   => $league,
@@ -261,7 +259,7 @@ it('prevents sending match if last opponent was the same', function () {
     ;
 
     // Create DTO
-    $dto = new SendGameDTO([
+    $dto = new App\Leagues\DataTransferObjects\SendGameDTO([
         'sender'   => $sender,
         'receiver' => $receiver,
         'league'   => $league,
@@ -310,8 +308,8 @@ it('can accept matches with valid input', function () {
 
     // Mock the getActiveRatingForUserLeague method for checking access
     $this->mockRatingService
-        ->allows('getActiveRatingForUserLeague')
-        ->with($receiver, $league)
+        ->expects('getActiveRatingForUserLeague')
+        ->with($receiver, $match->league)
         ->andReturns($receiverRating)
     ;
 
@@ -323,7 +321,9 @@ it('can accept matches with valid input', function () {
 
     expect($match->status)
         ->toBe(GameStatus::IN_PROGRESS)
-        ->and($match->invitation_accepted_at)->not->toBeNull();
+        ->and($match->invitation_accepted_at)->not
+        ->toBeNull()
+    ;
 });
 
 it('prevents accepting if not the receiver or match not in pending status', function () {
@@ -365,8 +365,8 @@ it('prevents accepting if not the receiver or match not in pending status', func
 
     // Test 1: Sender cannot accept their own match
     $this->mockRatingService
-        ->allows('getActiveRatingForUserLeague')
-        ->with($sender, $league)
+        ->expects('getActiveRatingForUserLeague')
+        ->with($sender, $match->league)
         ->andReturns($senderRating)
     ;
 
@@ -376,8 +376,8 @@ it('prevents accepting if not the receiver or match not in pending status', func
     $match->update(['status' => GameStatus::IN_PROGRESS]);
 
     $this->mockRatingService
-        ->allows('getActiveRatingForUserLeague')
-        ->with($receiver, $league)
+        ->expects('getActiveRatingForUserLeague')
+        ->with($receiver, $match->league)
         ->andReturns($receiverRating)
     ;
 
@@ -421,24 +421,18 @@ it('can send match results with valid input', function () {
         'invitation_sent_at' => now(),
     ]);
 
+    // Setup the league relationship on the match for access check
+    $match->league = $league;
+
     // Mock the getActiveRatingForUserLeague method
     $this->mockRatingService
-        ->allows('getActiveRatingForUserLeague')
+        ->expects('getActiveRatingForUserLeague')
         ->with($sender, $league)
         ->andReturns($senderRating)
     ;
 
-    // Mock the updateRatings method since it handles the rating changes
-    $this->mockRatingService
-        ->expects('updateRatings')
-        ->andReturns([
-            $senderRating->id   => 1020,
-            $receiverRating->id => 1080,
-        ])
-    ;
-
     // Create result DTO (first user wins)
-    $resultDTO = new SendResultDTO([
+    $resultDTO = new App\Leagues\DataTransferObjects\SendResultDTO([
         'first_user_score'  => 5,
         'second_user_score' => 3,
         'matchGame'         => $match,
@@ -508,9 +502,12 @@ it('completes match when both players confirm the same result', function () {
         ],
     ]);
 
+    // Setup the league relationship on the match for access check
+    $match->league = $league;
+
     // Mock the getActiveRatingForUserLeague method
     $this->mockRatingService
-        ->allows('getActiveRatingForUserLeague')
+        ->expects('getActiveRatingForUserLeague')
         ->with($receiver, $league)
         ->andReturns($receiverRating)
     ;
@@ -525,7 +522,7 @@ it('completes match when both players confirm the same result', function () {
     ;
 
     // Create the same result DTO from receiver
-    $resultDTO = new SendResultDTO([
+    $resultDTO = new App\Leagues\DataTransferObjects\SendResultDTO([
         'first_user_score'  => 5,
         'second_user_score' => 3,
         'matchGame'         => $match,
@@ -595,15 +592,18 @@ it('handles conflicting match results', function () {
         ],
     ]);
 
+    // Setup the league relationship on the match for access check
+    $match->league = $league;
+
     // Mock the getActiveRatingForUserLeague method
     $this->mockRatingService
-        ->allows('getActiveRatingForUserLeague')
+        ->expects('getActiveRatingForUserLeague')
         ->with($receiver, $league)
         ->andReturns($receiverRating)
     ;
 
     // Create a different result DTO from receiver
-    $resultDTO = new SendResultDTO([
+    $resultDTO = new App\Leagues\DataTransferObjects\SendResultDTO([
         'first_user_score'  => 3,
         'second_user_score' => 5, // Different result
         'matchGame'         => $match,
