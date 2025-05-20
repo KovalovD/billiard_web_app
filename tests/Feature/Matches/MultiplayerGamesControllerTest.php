@@ -125,6 +125,7 @@ class MultiplayerGamesControllerTest extends TestCase
 
     /**
      * Helper method to create a mock MultiplayerGame object
+     * Fixed to properly handle model attribute access methods used by the resource
      *
      * @param  int  $id  The game ID
      * @param  string  $name  The game name
@@ -137,22 +138,37 @@ class MultiplayerGamesControllerTest extends TestCase
         $game = Mockery::mock(MultiplayerGame::class);
 
         $properties = array_merge([
-            'id'                   => $id,
-            'name'                 => $name,
-            'status'               => $status,
-            'league_id'            => 1,
-            'game_id'              => 1,
+            'id'                  => $id,
+            'name'                => $name,
+            'status'              => $status,
+            'league_id'           => 1,
+            'game_id'             => 1,
             'active_players_count' => 0,
-            'total_players_count'  => 0,
-            'players'              => collect([]),
+            'total_players_count' => 0,
+            'players'             => collect([]),
         ], $additionalProps);
 
-        foreach ($properties as $key => $value) {
-            $game->allows('getAttribute')->with($key)->andReturn($value);
-        }
+        // Mock all methods needed by the resource
+        $game->allows('getAttribute')->andReturnUsing(function ($key) use ($properties) {
+            return $properties[$key] ?? null;
+        });
+
+        // Fix for the property access checks
+        $game->allows('offsetExists')->andReturnUsing(function ($key) use ($properties) {
+            return array_key_exists($key, $properties);
+        });
+
+        $game->allows('offsetGet')->andReturnUsing(function ($key) use ($properties) {
+            return $properties[$key] ?? null;
+        });
+
+        $game->allows('__get')->andReturnUsing(function ($key) use ($properties) {
+            return $properties[$key] ?? null;
+        });
 
         // Mock common methods
         $game->allows('load')->andReturnSelf();
+        $game->allows('players')->andReturn(collect([]));
 
         // For JSON serialization
         $game->allows('jsonSerialize')->andReturn($properties);
@@ -594,11 +610,15 @@ class MultiplayerGamesControllerTest extends TestCase
         $ratingSummary = [
             'players'       => [
                 [
-                    'player_id'     => 1, 'user' => ['id' => 1, 'name' => 'Player 1'], 'finish_position' => 1,
+                    'player_id'       => 1,
+                    'user'            => ['id' => 1, 'name' => 'Player 1'],
+                    'finish_position' => 1,
                     'rating_points' => 50,
                 ],
                 [
-                    'player_id'     => 2, 'user' => ['id' => 2, 'name' => 'Player 2'], 'finish_position' => 2,
+                    'player_id'       => 2,
+                    'user'            => ['id' => 2, 'name' => 'Player 2'],
+                    'finish_position' => 2,
                     'rating_points' => 40,
                 ],
             ],

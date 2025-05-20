@@ -310,10 +310,4 @@ class LeaguesControllerTest extends TestCase
         $this->assertInstanceOf(JsonResponse::class, $result);
         $this->assertEquals($myLeaguesData, $result->original);
     }
-
-    #[Test] public function it_loads_user_rating_for_league(): void
-    {
-        // This test is simplified to avoid facade mocking issues
-        $this->markTestSkipped('Skipping test that requires complex Auth facade mocking');
-    }
 }

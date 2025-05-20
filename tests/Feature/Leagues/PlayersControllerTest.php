@@ -131,15 +131,6 @@ class PlayersControllerTest extends TestCase
     /**
      * @throws Throwable
      */
-    #[Test] public function it_handles_invalid_league_or_user(): void
-    {
-        // Skip this test because it relies on mocking exception behavior
-        $this->markTestSkipped('Skipping test that requires complex Exception mocking');
-    }
-
-    /**
-     * @throws Throwable
-     */
     #[Test] public function it_prevents_operations_on_closed_leagues(): void
     {
         // Arrange

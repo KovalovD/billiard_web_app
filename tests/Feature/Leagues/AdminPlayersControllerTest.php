@@ -292,12 +292,6 @@ class AdminPlayersControllerTest extends TestCase
         $this->assertEquals(3, $result->count());
     }
 
-    #[Test] public function it_bulk_deactivates_players(): void
-    {
-        // Skip this test to avoid Mockery issues
-        $this->markTestSkipped('Skipping test with request validation mock');
-    }
-
     protected function tearDown(): void
     {
         // Explicitly clean up mockery

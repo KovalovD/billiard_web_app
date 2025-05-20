@@ -25,6 +25,7 @@ class LeagueFactory extends Factory
     {
         return [
             'game_id'                        => Game::factory()->create(),
+            'max_players' => 10000,
             'name'                           => $this->faker->words(2, true), // например: "Furious League"
             'start_rating'                   => 1000,
             'rating_type'                    => 'elo',
