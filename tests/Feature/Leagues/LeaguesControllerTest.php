@@ -1,5 +1,7 @@
 <?php
 
+namespace Tests\Feature\Leagues;
+
 use App\Core\Models\Game;
 use App\Core\Models\User;
 use App\Leagues\Http\Controllers\LeaguesController;
@@ -13,10 +15,13 @@ use App\Leagues\Services\LeaguesService;
 use App\Leagues\Services\RatingService;
 use App\Matches\Enums\GameStatus;
 use App\Matches\Models\MatchGame;
+use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use JsonException;
+use PHPUnit\Framework\MockObject\Exception;
 use Tests\TestCase;
 
 class LeaguesControllerTest extends TestCase
@@ -75,8 +80,7 @@ class LeaguesControllerTest extends TestCase
     }
 
     /** @test
-     * @throws JsonException
-     * @throws JsonException
+     * @throws JsonException|Exception
      */
     public function it_creates_new_league(): void
     {
@@ -102,8 +106,8 @@ class LeaguesControllerTest extends TestCase
 
         $newLeague = League::factory()->create($leagueData);
 
-        $request = $this->mock(PutLeagueRequest::class);
-        $request->allows('validated')->andReturns($leagueData);
+        $request = $this->createMock(PutLeagueRequest::class);
+        $request->method('validated')->willReturn($leagueData);
 
         $this->mockLeaguesService
             ->expects('store')
@@ -119,8 +123,7 @@ class LeaguesControllerTest extends TestCase
     }
 
     /** @test
-     * @throws JsonException
-     * @throws JsonException
+     * @throws JsonException|Exception
      */
     public function it_updates_league(): void
     {
@@ -147,8 +150,8 @@ class LeaguesControllerTest extends TestCase
             ['name' => 'Updated League Name'],
         ));
 
-        $request = $this->mock(PutLeagueRequest::class);
-        $request->allows('validated')->andReturns($updateData);
+        $request = $this->createMock(PutLeagueRequest::class);
+        $request->method('validated')->willReturn($updateData);
 
         $this->mockLeaguesService
             ->expects('update')
@@ -241,7 +244,9 @@ class LeaguesControllerTest extends TestCase
         $this->assertInstanceOf(MatchGameResource::class, $result[0]);
     }
 
-    /** @test */
+    /** @test
+     * @throws Exception
+     */
     public function it_returns_user_leagues_and_challenges(): void
     {
         // Arrange
@@ -271,7 +276,9 @@ class LeaguesControllerTest extends TestCase
             ],
         ];
 
-        $this->actingAs($user);
+        // Create mock Auth
+        $this->app->instance('auth', $auth = $this->createMock(Guard::class));
+        $auth->method('user')->willReturn($user);
 
         $this->mockLeaguesService
             ->expects('myLeaguesAndChallenges')
@@ -286,7 +293,11 @@ class LeaguesControllerTest extends TestCase
         $this->assertEquals($myLeaguesData, $result->original);
     }
 
-    /** @test */
+    /** @test
+     * @throws Exception
+     * @throws Exception
+     * @throws Exception
+     */
     public function it_loads_user_rating_for_league(): void
     {
         // Arrange
@@ -298,21 +309,37 @@ class LeaguesControllerTest extends TestCase
             'is_active' => true,
         ]);
 
-        $this->actingAs($user);
+        // Create mock Auth
+        $this->app->instance('auth', $auth = $this->createMock(Guard::class));
+        $auth->method('user')->willReturn($user);
 
-        // Mock the user's relationship
-        $mockCollection = $this->mock(Collection::class);
-        $mockRelation = $this->mock(HasMany::class);
+        // Create a Collection mock that will be returned by activeRatings
+        $mockCollection = $this->createMock(Collection::class);
+        $mockCollection->method('merge')->willReturn($mockCollection);
+        $mockCollection->method('where')->willReturn($mockCollection);
+        $mockCollection->method('first')->willReturn(null);
 
-        $mockRelation
-            ->expects('with->where->first')
-            ->andReturns($rating)
+        // Create a HasMany mock for the activeRatings relation
+        $mockActiveRatings = $this->createMock(HasMany::class);
+
+        // Set up the method chain for the relationshipe
+        $mockActiveRatings
+            ->method('with')
+            ->willReturnSelf()
+        ;
+        $mockActiveRatings
+            ->method('where')
+            ->willReturnSelf()
+        ;
+        $mockActiveRatings
+            ->method('first')
+            ->willReturn($rating)
         ;
 
+        // Set up the user to return our mock relation
         $user
-            ->expects('activeRatings')
-            ->once()
-            ->andReturn($mockRelation)
+            ->method('activeRatings')
+            ->willReturn($mockActiveRatings)
         ;
 
         // Act

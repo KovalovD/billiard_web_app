@@ -1,13 +1,17 @@
 <?php
 
+namespace Tests\Feature\Leagues;
+
 use App\Core\Models\User;
 use App\Leagues\Http\Controllers\PlayersController;
 use App\Leagues\Models\League;
 use App\Leagues\Models\Rating;
 use App\Leagues\Services\RatingService;
+use Exception;
+use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Auth;
 use Tests\TestCase;
+use Throwable;
 
 class PlayersControllerTest extends TestCase
 {
@@ -25,9 +29,9 @@ class PlayersControllerTest extends TestCase
         $league = League::factory()->create();
         $user = User::factory()->create();
 
-        $this->mockAuth::expects('user')
-            ->andReturns($user)
-        ;
+        // Create mock Auth
+        $this->app->instance('auth', $auth = $this->createMock(Guard::class));
+        $auth->method('user')->willReturn($user);
 
         $this->mockRatingService
             ->expects('addPlayer')
@@ -53,9 +57,9 @@ class PlayersControllerTest extends TestCase
         ]);
         $user = User::factory()->create();
 
-        $this->mockAuth::expects('user')
-            ->andReturns($user)
-        ;
+        // Create mock Auth
+        $this->app->instance('auth', $auth = $this->createMock(Guard::class));
+        $auth->method('user')->willReturn($user);
 
         $this->mockRatingService
             ->expects('addPlayer')
@@ -80,7 +84,7 @@ class PlayersControllerTest extends TestCase
         $user = User::factory()->create();
 
         // Create an active rating for the user
-        $rating = Rating::create([
+        Rating::create([
             'league_id'    => $league->id,
             'user_id'      => $user->id,
             'rating'       => 1000,
@@ -89,9 +93,9 @@ class PlayersControllerTest extends TestCase
             'is_confirmed' => true,
         ]);
 
-        $this->mockAuth::expects('user')
-            ->andReturns($user)
-        ;
+        // Create mock Auth
+        $this->app->instance('auth', $auth = $this->createMock(Guard::class));
+        $auth->method('user')->willReturn($user);
 
         $this->mockRatingService
             ->expects('disablePlayer')
@@ -114,9 +118,9 @@ class PlayersControllerTest extends TestCase
         $league = League::factory()->create();
         $user = User::factory()->create();
 
-        $this->mockAuth::allows('user')
-            ->andReturns($user)
-        ;
+        // Create mock Auth
+        $this->app->instance('auth', $auth = $this->createMock(Guard::class));
+        $auth->method('user')->willReturn($user);
 
         $this->mockRatingService
             ->expects('addPlayer')
@@ -140,9 +144,9 @@ class PlayersControllerTest extends TestCase
         ]);
         $user = User::factory()->create();
 
-        $this->mockAuth::allows('user')
-            ->andReturns($user)
-        ;
+        // Create mock Auth
+        $this->app->instance('auth', $auth = $this->createMock(Guard::class));
+        $auth->method('user')->willReturn($user);
 
         $this->mockRatingService
             ->expects('addPlayer')
@@ -163,8 +167,5 @@ class PlayersControllerTest extends TestCase
 
         $this->mockRatingService = $this->mock(RatingService::class);
         $this->controller = new PlayersController($this->mockRatingService);
-
-        // Mock Auth facade
-        $this->mockAuth = $this->mock(Auth::class);
     }
 }
