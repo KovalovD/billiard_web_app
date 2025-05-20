@@ -5,10 +5,10 @@ namespace Tests\Feature\User;
 use App\Core\Models\User;
 use App\User\Http\Controllers\UserStatsController;
 use App\User\Services\UserStatsService;
+use Auth;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Mockery;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -29,7 +29,7 @@ class UserStatsControllerTest extends TestCase
         $this->controller = new UserStatsController($this->statsService);
 
         // Create a separate auth mock
-        $this->authMock = Mockery::mock('alias:Illuminate\Support\Facades\Auth');
+        $this->authMock = $this->mockStaticFacade(Auth::class);
     }
 
     protected function tearDown(): void

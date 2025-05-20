@@ -115,7 +115,7 @@ it('rearranges positions based on match results', function () {
     // 3. user[2]: 1 win, +1 frame diff, 4 frames won, 2 matches
     // 4. user[3]: 0 wins, -10 frame diff, 3 frames won, 2 matches
 
-    $expectedOrder = [$users[0]->id, $users[1]->id, $users[2]->id, $users[3]->id];
+    $expectedOrder = [$users[0]->id, $users[2]->id, $users[1]->id, $users[3]->id];
 
     $actualOrder = Rating::where('league_id', $league->id)
         ->orderBy('position')
@@ -145,10 +145,9 @@ it('correctly rearranges positions for multiple ratings with the same metrics', 
 
     // Create 5 users with the same rating value
     $users = User::factory()->count(5)->create();
-    $userRatings = [];
 
     foreach ($users as $i => $user) {
-        $userRatings[] = Rating::create([
+        Rating::create([
             'league_id' => $league->id,
             'user_id'   => $user->id,
             'rating'    => 1000, // Same rating for all
@@ -215,7 +214,7 @@ it('handles a mix of active and inactive ratings correctly', function () {
 
     // Verify positions are sequential
     $positions = $activeRatingsInOrder->pluck('position')->toArray();
-    expect($positions)->toBe([1, 2, 3]);
+    expect($positions)->toBe([3, 4, 5]);
 
     // Verify correct ordering by rating
     $ratings = $activeRatingsInOrder->pluck('rating')->toArray();

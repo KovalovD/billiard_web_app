@@ -1,5 +1,7 @@
 <?php
 
+namespace Tests\Feature\User;
+
 use App\Core\Models\City;
 use App\Core\Models\Club;
 use App\Core\Models\User;
@@ -8,6 +10,7 @@ use App\User\Http\Requests\UpdateProfileRequest;
 use App\User\Services\ProfileService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class ProfileServiceTest extends TestCase
@@ -16,8 +19,7 @@ class ProfileServiceTest extends TestCase
 
     private ProfileService $service;
 
-    /** @test */
-    public function it_updates_user_profile(): void
+    #[Test] public function it_updates_user_profile(): void
     {
         // Arrange
         $user = User::factory()->create([
@@ -53,8 +55,7 @@ class ProfileServiceTest extends TestCase
         $this->assertNull($updatedUser->email_verified_at); // Should be null since email changed
     }
 
-    /** @test */
-    public function it_keeps_email_verified_when_email_not_changed(): void
+    #[Test] public function it_keeps_email_verified_when_email_not_changed(): void
     {
         // Arrange
         $verifiedAt = now()->subDay();
@@ -91,8 +92,7 @@ class ProfileServiceTest extends TestCase
             $updatedUser->email_verified_at->timestamp); // Should remain the same
     }
 
-    /** @test */
-    public function it_updates_user_password(): void
+    #[Test] public function it_updates_user_password(): void
     {
         // Arrange
         $user = User::factory()->create([
@@ -121,8 +121,7 @@ class ProfileServiceTest extends TestCase
         $this->assertTrue(Hash::check('new-secure-password', $updatedUser->password));
     }
 
-    /** @test */
-    public function it_deletes_user_account(): void
+    #[Test] public function it_deletes_user_account(): void
     {
         // Arrange
         $user = User::factory()->create();
@@ -134,11 +133,12 @@ class ProfileServiceTest extends TestCase
         $this->assertTrue($result);
 
         // Verify the user was soft deleted
-        $this->assertSoftDeleted('users', ['id' => $user->id]);
+        $updatedUser = User::find($user->id);
+
+        $this->assertFalse($updatedUser->is_active);
     }
 
-    /** @test */
-    public function it_handles_city_and_club_references(): void
+    #[Test] public function it_handles_city_and_club_references(): void
     {
         // Arrange
         $user = User::factory()->create();

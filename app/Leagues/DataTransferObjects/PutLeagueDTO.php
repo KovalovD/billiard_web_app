@@ -4,6 +4,7 @@ namespace App\Leagues\DataTransferObjects;
 
 use App\Core\DataTransferObjects\BaseDTO;
 use Carbon\Carbon;
+use JsonException;
 
 class PutLeagueDTO extends BaseDTO
 {
@@ -21,6 +22,9 @@ class PutLeagueDTO extends BaseDTO
     public int $max_score;
     public int $invite_days_expire;
 
+    /**
+     * @throws JsonException
+     */
     public static function prepareDataBeforeCreation(array $array): array
     {
         // Convert date strings to Carbon instances
@@ -41,11 +45,11 @@ class PutLeagueDTO extends BaseDTO
         // Parse JSON strings for rating rules
         if (isset($array['rating_change_for_winners_rule']) && is_string($array['rating_change_for_winners_rule'])) {
             $array['rating_change_for_winners_rule'] = json_encode(json_decode($array['rating_change_for_winners_rule'],
-                true));
+                true, 512, JSON_THROW_ON_ERROR), JSON_THROW_ON_ERROR);
         }
         if (isset($array['rating_change_for_losers_rule']) && is_string($array['rating_change_for_losers_rule'])) {
             $array['rating_change_for_losers_rule'] = json_encode(json_decode($array['rating_change_for_losers_rule'],
-                true));
+                true, 512, JSON_THROW_ON_ERROR), JSON_THROW_ON_ERROR);
         }
 
         return $array;

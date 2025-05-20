@@ -7,6 +7,7 @@ use App\User\Http\Controllers\ProfileController;
 use App\User\Http\Requests\UpdatePasswordRequest;
 use App\User\Http\Requests\UpdateProfileRequest;
 use App\User\Services\ProfileService;
+use Auth;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -33,7 +34,7 @@ class ProfileControllerTest extends TestCase
         $this->controller = new ProfileController($this->profileService);
 
         // Create local auth mock
-        $this->authMock = Mockery::mock('alias:Illuminate\Support\Facades\Auth');
+        $this->authMock = $this->mockStaticFacade(Auth::class);
     }
 
     protected function tearDown(): void

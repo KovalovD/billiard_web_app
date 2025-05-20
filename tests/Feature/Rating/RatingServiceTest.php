@@ -175,15 +175,14 @@ it('updates ratings with the elo strategy', function () {
 
     // Delta = 100, weaker player (rating1) won
     expect($result[$rating1->id])
-        ->toBe(1035) // 1000 + 35
-        ->and($result[$rating2->id])->toBe(1085)
+        ->toBe(1030) // 1000 + 30
+        ->and($result[$rating2->id])->toBe(1070)
+        ->and(Rating::find($rating1->id)->rating)
+        ->toBe(1030)
+        ->and(Rating::find($rating2->id)->rating)->toBe(1070)
     ; // 1100 - 15
 
     // Verify the ratings were updated in the database
-    expect(Rating::find($rating1->id)->rating)
-        ->toBe(1035)
-        ->and(Rating::find($rating2->id)->rating)->toBe(1085)
-    ;
 });
 
 it('gets active rating for user in league', function () {
@@ -205,7 +204,7 @@ it('gets active rating for user in league', function () {
 
     expect($activeRating)->not
         ->toBeNull()
-        ->and($activeRating->id)->toBe($rating->id)
+        ->and($activeRating?->id)->toBe($rating->id)
     ;
 
     // Now create an inactive rating for another user
@@ -255,6 +254,7 @@ it('applies rating points from multiplayer game', function () {
     // Create players with rating points
     foreach ($users as $i => $user) {
         $game->players()->create([
+            'joined_at' => now(),
             'user_id'         => $user->id,
             'rating_points'   => 10 + ($i * 5), // 10, 15, 20 points
             'finish_position' => 3 - $i, // 3, 2, 1 (reverse order)

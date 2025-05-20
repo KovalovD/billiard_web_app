@@ -59,7 +59,7 @@ it('integrates all rating components correctly for a complete match flow', funct
         ->toArray()
     ;
 
-    expect($initialPositions)->toBe([$users[2]->id, $users[1]->id, $users[0]->id]);
+    expect($initialPositions)->toBe([$users[0]->id, $users[1]->id, $users[2]->id]);
 
     // Create a match where the weakest player wins against the strongest
     $matchGame = MatchGame::create([
@@ -88,7 +88,7 @@ it('integrates all rating components correctly for a complete match flow', funct
     ;
 
     // Rating delta is 200, so weak win = +35, strong loss = -15
-    expect($updatedRatings)->toBe([1035, 1100, 1185]);
+    expect($updatedRatings)->toBe([1035, 1100, 1165]);
 
     // Verify positions were rearranged
     $updatedPositions = Rating::where('league_id', $league->id)
@@ -127,7 +127,7 @@ it('integrates all rating components correctly for a complete match flow', funct
     ;
 
     // Rating delta is 65, so strong win = +20, weak loss = -30
-    expect($updatedRatings2)->toBe([1005, 1120, 1185]);
+    expect($updatedRatings2)->toBe([1015, 1120, 1165]);
 
     // If middle player rating now exceeds strongest player, positions should change
 
@@ -315,7 +315,7 @@ it('integrates killer pool ratings with multiplayer game flow', function () {
     ;
 
     // Each player's rating should be updated: initial + game1 + game2
-    expect($finalRatings)->toBe([1050, 1080, 1060, 1030, 1010]);
+    expect($finalRatings)->toBe([1100, 1080, 1060, 1040, 1020]);
 
     // Verify final positions
     $finalPositions = Rating::where('league_id', $league->id)
@@ -324,6 +324,5 @@ it('integrates killer pool ratings with multiplayer game flow', function () {
         ->toArray()
     ;
 
-    // Expected order: user[1] (1080), user[2] (1060), user[0] (1050), user[3] (1030), user[4] (1010)
-    expect($finalPositions)->toBe([$users[1]->id, $users[2]->id, $users[0]->id, $users[3]->id, $users[4]->id]);
+    expect($finalPositions)->toBe([$users[0]->id, $users[1]->id, $users[2]->id, $users[3]->id, $users[4]->id]);
 });

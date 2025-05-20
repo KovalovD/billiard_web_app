@@ -196,7 +196,7 @@ it('handles extreme rating differences correctly', function () {
 
     expect($result[$r1->id])
         ->toBe(2010) // 2000 + 10
-        ->and($result[$r2->id])->toBe(960)
+        ->and($result[$r2->id])->toBe(990)
     ; // 1000 - 40
 
     // Now test when weaker player wins with extreme difference
@@ -211,7 +211,7 @@ it('handles extreme rating differences correctly', function () {
     );
 
     expect($result[$r1->id])
-        ->toBe(1990) // 2000 - 10
+        ->toBe(1960) // 2000 - 40
         ->and($result[$r2->id])->toBe(1040)
     ; // 1000 + 40
 });

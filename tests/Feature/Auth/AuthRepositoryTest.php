@@ -7,6 +7,7 @@ use App\Core\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\NewAccessToken;
 use Laravel\Sanctum\PersonalAccessToken;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class AuthRepositoryTest extends TestCase
@@ -15,8 +16,7 @@ class AuthRepositoryTest extends TestCase
 
     private AuthRepository $repository;
 
-    /** @test */
-    public function it_creates_token_for_user(): void
+    #[Test] public function it_creates_token_for_user(): void
     {
         // Arrange
         $user = User::factory()->create();
@@ -37,8 +37,7 @@ class AuthRepositoryTest extends TestCase
         ]);
     }
 
-    /** @test */
-    public function it_invalidates_only_specified_device_token(): void
+    #[Test] public function it_invalidates_only_specified_device_token(): void
     {
         // Arrange
         $user = User::factory()->create();
@@ -46,8 +45,8 @@ class AuthRepositoryTest extends TestCase
         $deviceName2 = 'device-2';
 
         // Create tokens for different devices
-        $token1 = $user->createToken($deviceName1)->plainTextToken;
-        $token2 = $user->createToken($deviceName2)->plainTextToken;
+        $user->createToken($deviceName1)->plainTextToken;
+        $user->createToken($deviceName2)->plainTextToken;
 
         // Verify both tokens exist
         $this->assertDatabaseHas('personal_access_tokens', [
@@ -77,15 +76,14 @@ class AuthRepositoryTest extends TestCase
         ]);
     }
 
-    /** @test */
-    public function it_creates_new_token_after_invalidating_existing(): void
+    #[Test] public function it_creates_new_token_after_invalidating_existing(): void
     {
         // Arrange
         $user = User::factory()->create();
         $deviceName = 'test-device';
 
         // Create a token for the user
-        $oldToken = $user->createToken($deviceName);
+        $user->createToken($deviceName);
 
         // Get the token's ID for comparison
         $oldTokenId = PersonalAccessToken::where('tokenable_id', $user->id)
@@ -118,8 +116,7 @@ class AuthRepositoryTest extends TestCase
         );
     }
 
-    /** @test */
-    public function it_handles_invalidating_nonexistent_token(): void
+    #[Test] public function it_handles_invalidating_nonexistent_token(): void
     {
         // Arrange
         $user = User::factory()->create();

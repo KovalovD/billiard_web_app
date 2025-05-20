@@ -233,32 +233,37 @@ it('can start a multiplayer game with at least 2 players', function () {
     }
 });
 
-it('prevents starting a multiplayer game with fewer than 2 players', function () {
-    // Create a league with a game
-    $game = Game::factory()->create(['is_multiplayer' => true]);
+it('prevents starting a multiplayer game with fewer than 2 players by throwing an exception', function () {
+    // Arrange: Создаем лигу с игрой
+    $gameDefinition = Game::factory()->create(['is_multiplayer' => true]);
     $league = League::factory()->create([
-        'game_id'     => $game->id,
+        'game_id' => $gameDefinition->id,
         'rating_type' => RatingType::KillerPool,
     ]);
 
-    // Create a multiplayer game with only 1 player
+    // Arrange: Создаем многопользовательскую игру с начальным статусом 'registration'
     $multiplayerGame = MultiplayerGame::create([
         'league_id' => $league->id,
-        'game_id'   => $game->id,
+        'game_id' => $gameDefinition->id,
         'name'      => 'Test Game',
         'status'    => 'registration',
     ]);
 
-    // Add one player
+    // Arrange: Добавляем только одного игрока
     $multiplayerGame->players()->create([
         'user_id'   => User::factory()->create()->id,
         'joined_at' => now(),
     ]);
 
-    // Start the game should return the unmodified game
-    $startedGame = $this->service->start($multiplayerGame);
+    // Act & Assert: Ожидаем, что будет выброшено RuntimeException с конкретным сообщением
+    expect(fn() => $this->service->start($multiplayerGame))
+        ->toThrow(RuntimeException::class, 'Unable to start the game.')
+    ;
 
-    expect($startedGame->status)->toBe('registration');
+    // Assert (Optional): Дополнительно можно проверить, что статус игры не изменился.
+    // Для этого нужно перезагрузить модель из базы данных.
+    $multiplayerGame->refresh();
+    expect($multiplayerGame->status)->toBe('registration');
 });
 
 it('can correctly apply player elimination and identify the winner', function () {

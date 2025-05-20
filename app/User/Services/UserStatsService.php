@@ -6,7 +6,7 @@ use App\Core\Models\User;
 use App\Leagues\Models\Rating;
 use App\Matches\Enums\GameStatus;
 use App\Matches\Models\MatchGame;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class UserStatsService
