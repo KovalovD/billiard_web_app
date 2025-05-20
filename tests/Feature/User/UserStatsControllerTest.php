@@ -5,12 +5,12 @@ namespace Tests\Feature\User;
 use App\Core\Models\User;
 use App\User\Http\Controllers\UserStatsController;
 use App\User\Services\UserStatsService;
+use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\Auth;
 use JsonException;
-use Mockery;
+use PHPUnit\Framework\MockObject\Exception;
 use Tests\TestCase;
 
 class UserStatsControllerTest extends TestCase
@@ -24,12 +24,14 @@ class UserStatsControllerTest extends TestCase
     {
         parent::setUp();
 
-        // Create fresh mocks for each test
-        $this->statsService = Mockery::mock(UserStatsService::class);
+        // Create mock service
+        $this->statsService = $this->mock(UserStatsService::class);
         $this->controller = new UserStatsController($this->statsService);
     }
 
-    /** @test */
+    /** @test
+     * @throws Exception
+     */
     public function it_returns_user_ratings(): void
     {
         // Arrange
@@ -39,13 +41,9 @@ class UserStatsControllerTest extends TestCase
             (object) ['id' => 2, 'league_id' => 2, 'user_id' => $user->id, 'rating' => 1100],
         ]);
 
-        // Create a one-time Auth facade mock
-        $auth = Mockery::mock(Auth::class);
-        $auth
-            ->expects('user')
-            ->andReturns($user)
-        ;
-        $this->app->instance(Auth::class, $auth);
+        // Mock Auth facade with app container to avoid redeclaration issues
+        $this->app->instance('auth', $auth = $this->createMock(Guard::class));
+        $auth->method('user')->willReturn($user);
 
         $this->statsService
             ->expects('getUserRatings')
@@ -61,7 +59,9 @@ class UserStatsControllerTest extends TestCase
         $this->assertEquals(2, $result->count());
     }
 
-    /** @test */
+    /** @test
+     * @throws Exception
+     */
     public function it_returns_user_matches(): void
     {
         // Arrange
@@ -72,13 +72,9 @@ class UserStatsControllerTest extends TestCase
             (object) ['id' => 3, 'league_id' => 2, 'status' => 'completed'],
         ]);
 
-        // Create a one-time Auth facade mock
-        $auth = Mockery::mock(Auth::class);
-        $auth
-            ->expects('user')
-            ->andReturns($user)
-        ;
-        $this->app->instance(Auth::class, $auth);
+        // Mock Auth facade with app container
+        $this->app->instance('auth', $auth = $this->createMock(Guard::class));
+        $auth->method('user')->willReturn($user);
 
         $this->statsService
             ->expects('getUserMatches')
@@ -95,7 +91,7 @@ class UserStatsControllerTest extends TestCase
     }
 
     /** @test
-     * @throws JsonException
+     * @throws JsonException|Exception
      */
     public function it_returns_user_stats(): void
     {
@@ -112,13 +108,9 @@ class UserStatsControllerTest extends TestCase
             'average_rating'    => 1100,
         ];
 
-        // Create a one-time Auth facade mock
-        $auth = Mockery::mock(Auth::class);
-        $auth
-            ->expects('user')
-            ->andReturns($user)
-        ;
-        $this->app->instance(Auth::class, $auth);
+        // Mock Auth facade with app container
+        $this->app->instance('auth', $auth = $this->createMock(Guard::class));
+        $auth->method('user')->willReturn($user);
 
         $this->statsService
             ->expects('getUserStats')
@@ -139,6 +131,7 @@ class UserStatsControllerTest extends TestCase
 
     /** @test
      * @throws JsonException
+     * @throws Exception
      */
     public function it_returns_game_type_stats(): void
     {
@@ -159,13 +152,9 @@ class UserStatsControllerTest extends TestCase
             ],
         ];
 
-        // Create a one-time Auth facade mock
-        $auth = Mockery::mock(Auth::class);
-        $auth
-            ->expects('user')
-            ->andReturns($user)
-        ;
-        $this->app->instance(Auth::class, $auth);
+        // Mock Auth facade with app container
+        $this->app->instance('auth', $auth = $this->createMock(Guard::class));
+        $auth->method('user')->willReturn($user);
 
         $this->statsService
             ->expects('getGameTypeStats')

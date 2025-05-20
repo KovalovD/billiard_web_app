@@ -21,14 +21,55 @@ abstract class TestCase extends BaseTestCase
     }
 
     /**
-     * Create a mock instance for the specified class that fails gracefully.
+     * Create a mock instance for the specified class.
      *
      * @param  string  $class
      * @return MockInterface
      */
-    protected function mockSafe(string $class): MockInterface
+    protected function mock(string $class): MockInterface
     {
-        // Create a fresh mock instead of potentially reusing an existing one
-        return Mockery::mock($class);
+        // Use a container-specific mock to avoid contamination between tests
+        return $this->app->instance($class, Mockery::mock($class));
+    }
+
+    /**
+     * Create a spy instance for the specified class.
+     *
+     * @param  string  $class
+     * @return MockInterface
+     */
+    protected function spy(string $class): MockInterface
+    {
+        return Mockery::spy($class);
+    }
+
+    /**
+     * Create a partial mock for the specified class.
+     *
+     * @param  string  $class
+     * @param  callable|null  $expectations
+     * @return MockInterface
+     */
+    protected function partialMock(string $class, callable $expectations = null): MockInterface
+    {
+        $mock = Mockery::mock($class)->makePartial();
+
+        if ($expectations) {
+            $expectations($mock);
+        }
+
+        return $this->app->instance($class, $mock);
+    }
+
+    /**
+     * Swap the given facade for a mock.
+     *
+     * @param  string  $facade
+     * @param  object  $mock
+     * @return void
+     */
+    protected function swap(string $facade, $mock): void
+    {
+        $this->app->instance($facade, $mock);
     }
 }
