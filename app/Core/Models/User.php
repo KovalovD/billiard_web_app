@@ -32,6 +32,8 @@ class User extends Authenticatable
         'is_admin',
         'home_city_id',
         'home_club_id',
+        'email_verified_at',
+        'is_active',
     ];
 
     /**
@@ -62,6 +64,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password'          => 'hashed',
             'is_admin'          => 'boolean',
+            'is_active' => 'boolean',
         ];
     }
 

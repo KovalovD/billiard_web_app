@@ -224,25 +224,23 @@ class RatingService
     }
 
     /**
-     * Disable player with optimized transaction
-     *
-     * @param  League  $league
-     * @param  User  $user
      * @throws Throwable
      */
-    public function disablePlayer(League $league, User $user): void
+    public function disablePlayer(League $league, User $user): bool
     {
-        DB::transaction(function () use ($league, $user) {
-            $updated = Rating::where('league_id', $league->id)
-                ->where('user_id', $user->id)
-                ->where('is_active', true)
-                ->update(['is_active' => false])
-            ;
+        $updated = Rating::where('league_id', $league->id)
+            ->where('user_id', $user->id)
+            ->where('is_active', true)
+            ->update(['is_active' => false])
+        ;
 
-            if ($updated > 0) {
+        if ($updated > 0) {
+            DB::transaction(function () use ($league) {
                 $this->rearrangePositions($league->id);
-            }
-        });
+            });
+        }
+
+        return true;
     }
 
     /**

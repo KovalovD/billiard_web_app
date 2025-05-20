@@ -78,10 +78,10 @@ class AuthServiceTest extends TestCase
         $this->assertTrue(Hash::check('password123', $user->password));
     }
 
-    /** @test
+    /**
      * @throws Exception
      */
-    public function it_logs_in_user(): void
+    #[Test] public function it_logs_in_user(): void
     {
         // Arrange
         $user = User::factory()->create([
@@ -140,10 +140,10 @@ class AuthServiceTest extends TestCase
         $this->assertEquals('test-token-123', $result['token']);
     }
 
-    /** @test
+    /**
      * @throws Exception
      */
-    public function it_throws_exception_when_login_fails(): void
+    #[Test] public function it_throws_exception_when_login_fails(): void
     {
         // Arrange
         $loginDTO = new LoginDTO([

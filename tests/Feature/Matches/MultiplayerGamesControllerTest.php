@@ -179,7 +179,8 @@ class MultiplayerGamesControllerTest extends TestCase
 
         $user = User::factory()->create();
 
-        $this->mockAuth::expects('user')
+        $this->mockAuth
+            ->expects('user')
             ->andReturns($user)
         ;
 
@@ -223,7 +224,8 @@ class MultiplayerGamesControllerTest extends TestCase
 
         $user = User::factory()->create();
 
-        $this->mockAuth::expects('user')
+        $this->mockAuth
+            ->expects('user')
             ->andReturns($user)
         ;
 
@@ -345,7 +347,8 @@ class MultiplayerGamesControllerTest extends TestCase
         $user = User::factory()->create();
         $moderatorUser = User::factory()->create();
 
-        $this->mockAuth::expects('user')
+        $this->mockAuth
+            ->expects('user')
             ->andReturns($user)
         ;
 
@@ -399,7 +402,8 @@ class MultiplayerGamesControllerTest extends TestCase
         $user = User::factory()->create();
         $targetUser = User::factory()->create();
 
-        $this->mockAuth::expects('user')
+        $this->mockAuth
+            ->expects('user')
             ->andReturns($user)
         ;
 
@@ -460,7 +464,8 @@ class MultiplayerGamesControllerTest extends TestCase
 
         $user = User::factory()->create();
 
-        $this->mockAuth::expects('user')
+        $this->mockAuth
+            ->expects('user')
             ->andReturns($user)
         ;
 
@@ -486,4 +491,6 @@ class MultiplayerGamesControllerTest extends TestCase
         // Mock Auth facade
         $this->mockAuth = $this->mockStaticFacade(Auth::class);
     }
+
+    protected array $connectionsToTransact = [];
 }

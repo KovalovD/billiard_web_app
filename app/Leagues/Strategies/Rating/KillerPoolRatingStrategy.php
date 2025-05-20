@@ -22,7 +22,11 @@ class KillerPoolRatingStrategy implements RatingStrategy
         $result = [];
 
         foreach ($ratings as $rating) {
-            $result[$rating['id']] = $rating['rating'] + $winnersRules[$rating['user_id']] ?? 0;
+            if (!empty($winnersRules[$rating['user_id']])) {
+                $result[$rating['id']] = $rating['rating'] + $winnersRules[$rating['user_id']] ?? 0;
+            } else {
+                $result[$rating['id']] = $rating['rating'];
+            }
         }
 
         return $result;

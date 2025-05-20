@@ -228,10 +228,10 @@ it('gets overall statistics for a user', function () {
         ->and($stats['completed_matches'])->toBe(4) // Only completed matches
         ->and($stats['wins'])->toBe(3) // 2 in league 1, 1 in league 2
         ->and($stats['losses'])->toBe(1) // 1 in league 1
-        ->and($stats['win_rate'])->toBe(75) // 3 wins out of 4 completed = 75%
+        ->and($stats['win_rate'])->toBe(75.0) // 3 wins out of 4 completed = 75%
         ->and($stats['leagues_count'])->toBe(2)
         ->and($stats['highest_rating'])->toBe(1100) // Highest rating in league 2
-        ->and($stats['average_rating'])->toBe(1050)
+        ->and($stats['average_rating'])->toBe(1050.0)
     ; // Average of 1000 and 1100
 });
 
@@ -370,11 +370,11 @@ it('gets game type statistics for a user', function () {
         ->and($gameTypeStats['pool']['matches'])->toBe(3)
         ->and($gameTypeStats['pool']['wins'])->toBe(2)
         ->and($gameTypeStats['pool']['losses'])->toBe(1)
-        ->and($gameTypeStats['pool']['win_rate'])->toBe(67) // 2/3 = 67%
+        ->and($gameTypeStats['pool']['win_rate'])->toBe(67.0) // 2/3 = 67%
         ->and($gameTypeStats['snooker']['matches'])->toBe(3)
         ->and($gameTypeStats['snooker']['wins'])->toBe(1)
         ->and($gameTypeStats['snooker']['losses'])->toBe(2)
-        ->and($gameTypeStats['snooker']['win_rate'])->toBe(33)
+        ->and($gameTypeStats['snooker']['win_rate'])->toBe(33.0)
     ; // 1/3 = 33%
 });
 

@@ -88,10 +88,10 @@ class DataTransferObjectsTest extends TestCase
         $this->assertEquals(123, $result->value);
     }
 
-    /** @test
+    /**
      * @throws JsonException
      */
-    public function put_league_dto_prepares_data_correctly(): void
+    #[Test] public function put_league_dto_prepares_data_correctly(): void
     {
         // Test date values
         $startDate = '2023-01-01';

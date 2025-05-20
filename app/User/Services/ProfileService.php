@@ -37,7 +37,8 @@ class ProfileService
     public function deleteAccount(User $user): bool
     {
         // Soft delete the user
-        $user->delete();
+        $user->update(['is_active' => false]);
+        $user->refresh();
 
         return true;
     }
