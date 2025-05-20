@@ -25,6 +25,8 @@ class MultiplayerGameResource extends JsonResource
                 'name'                 => $this->resource->name ?? '',
                 'status'               => $this->resource->status ?? '',
                 'moderator_user_id'    => $this->resource->moderator_user_id ?? null,
+                'max_players'            => $this->resource->max_players ?? null,
+                'allow_player_targeting' => $this->resource->allow_player_targeting ?? false,
                 'active_players_count' => 0,
                 'total_players_count'  => 0,
                 'active_players'       => [],
