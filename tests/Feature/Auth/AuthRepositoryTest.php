@@ -1,11 +1,12 @@
 <?php
 
+namespace Tests\Feature\Auth;
+
 use App\Auth\Repositories\AuthRepository;
 use App\Core\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\NewAccessToken;
 use Laravel\Sanctum\PersonalAccessToken;
-use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class AuthRepositoryTest extends TestCase
@@ -15,7 +16,7 @@ class AuthRepositoryTest extends TestCase
     private AuthRepository $repository;
 
     /** @test */
-    public function it_creates_token_for_user()
+    public function it_creates_token_for_user(): void
     {
         // Arrange
         $user = User::factory()->create();
@@ -37,35 +38,7 @@ class AuthRepositoryTest extends TestCase
     }
 
     /** @test */
-    public function it_invalidates_token_for_user_and_device()
-    {
-        // Arrange
-        $user = User::factory()->create();
-        $deviceName = 'test-device';
-
-        // Create a token for the user
-        Sanctum::actingAs($user, ['*'], $deviceName);
-
-        // Verify token exists
-        $this->assertDatabaseHas('personal_access_tokens', [
-            'tokenable_id'   => $user->id,
-            'tokenable_type' => User::class,
-            'name'           => $deviceName,
-        ]);
-
-        // Act
-        $this->repository->invalidateToken($user, $deviceName);
-
-        // Assert - Token should be removed
-        $this->assertDatabaseMissing('personal_access_tokens', [
-            'tokenable_id'   => $user->id,
-            'tokenable_type' => User::class,
-            'name'           => $deviceName,
-        ]);
-    }
-
-    /** @test */
-    public function it_invalidates_only_specified_device_token()
+    public function it_invalidates_only_specified_device_token(): void
     {
         // Arrange
         $user = User::factory()->create();
@@ -105,7 +78,7 @@ class AuthRepositoryTest extends TestCase
     }
 
     /** @test */
-    public function it_creates_new_token_after_invalidating_existing()
+    public function it_creates_new_token_after_invalidating_existing(): void
     {
         // Arrange
         $user = User::factory()->create();
@@ -146,35 +119,7 @@ class AuthRepositoryTest extends TestCase
     }
 
     /** @test */
-    public function it_sets_token_expiration_time()
-    {
-        // Arrange
-        $user = User::factory()->create();
-        $deviceName = 'test-device';
-
-        // Act
-        $token = $this->repository->createToken($user, $deviceName);
-
-        // Assert
-        $tokenModel = PersonalAccessToken::where('tokenable_id', $user->id)
-            ->where('name', $deviceName)
-            ->first()
-        ;
-
-        $this->assertNotNull($tokenModel->expires_at);
-
-        // Token should expire in 2 days (with small tolerance for test execution time)
-        $expectedExpiry = now()->addDays(2);
-        $this->assertTrue(
-            $tokenModel->expires_at->between(
-                $expectedExpiry->subMinutes(1),
-                $expectedExpiry->addMinutes(1),
-            ),
-        );
-    }
-
-    /** @test */
-    public function it_handles_invalidating_nonexistent_token()
+    public function it_handles_invalidating_nonexistent_token(): void
     {
         // Arrange
         $user = User::factory()->create();

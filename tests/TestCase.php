@@ -2,6 +2,7 @@
 
 namespace Tests;
 
+use Closure;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Mockery;
 use Mockery\MockInterface;
@@ -20,56 +21,38 @@ abstract class TestCase extends BaseTestCase
         Mockery::close();
     }
 
-    /**
-     * Create a mock instance for the specified class.
-     *
-     * @param  string  $class
-     * @return MockInterface
-     */
-    protected function mock(string $class): MockInterface
+    protected function mock($abstract, ?Closure $mock = null)
     {
         // Use a container-specific mock to avoid contamination between tests
-        return $this->app->instance($class, Mockery::mock($class));
+        return $this->app->instance($abstract, Mockery::mock($abstract));
     }
 
-    /**
-     * Create a spy instance for the specified class.
-     *
-     * @param  string  $class
-     * @return MockInterface
-     */
-    protected function spy(string $class): MockInterface
+
+    protected function spy($abstract, ?Closure $mock = null): MockInterface
     {
-        return Mockery::spy($class);
+        return Mockery::spy($abstract);
     }
 
-    /**
-     * Create a partial mock for the specified class.
-     *
-     * @param  string  $class
-     * @param  callable|null  $expectations
-     * @return MockInterface
-     */
-    protected function partialMock(string $class, callable $expectations = null): MockInterface
+    protected function partialMock($abstract, ?Closure $mock = null): MockInterface
     {
-        $mock = Mockery::mock($class)->makePartial();
+        $abstractMock = Mockery::mock($abstract)->makePartial();
 
-        if ($expectations) {
-            $expectations($mock);
+        if ($mock) {
+            $mock($abstractMock);
         }
 
-        return $this->app->instance($class, $mock);
+        return $this->app->instance($abstract, $abstractMock);
     }
 
     /**
      * Swap the given facade for a mock.
      *
-     * @param  string  $facade
-     * @param  object  $mock
+     * @param  mixed  $abstract
+     * @param  mixed  $instance
      * @return void
      */
-    protected function swap(string $facade, $mock): void
+    protected function swap($abstract, $instance): void
     {
-        $this->app->instance($facade, $mock);
+        $this->app->instance($abstract, $instance);
     }
 }

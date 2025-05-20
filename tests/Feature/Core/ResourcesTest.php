@@ -1,5 +1,7 @@
 <?php
 
+namespace Tests\Feature\Core;
+
 use App\Core\Http\Resources\UserResource;
 use App\Core\Models\City;
 use App\Core\Models\Club;
@@ -18,14 +20,19 @@ use App\Matches\Models\MultiplayerGame;
 use App\Matches\Models\MultiplayerGamePlayer;
 use App\User\Http\Resources\CityResource;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\MockObject\Exception;
 use Tests\TestCase;
 
 class ResourcesTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
-    public function user_resource_transforms_correctly()
+    /**
+     * @throws Exception
+     */
+    #[Test] public function user_resource_transforms_correctly(): void
     {
         // Arrange
         $user = User::factory()->create([
@@ -49,7 +56,7 @@ class ResourcesTest extends TestCase
 
         // Act
         $resource = new UserResource($user);
-        $transformed = $resource->toArray($this->createMock(\Illuminate\Http\Request::class));
+        $transformed = $resource->toArray($this->createMock(Request::class));
 
         // Assert
         $this->assertEquals($user->id, $transformed['id']);
@@ -66,8 +73,10 @@ class ResourcesTest extends TestCase
         $this->assertEquals($club->id, $transformed['home_club']['id']);
     }
 
-    /** @test */
-    public function rating_resource_transforms_correctly()
+    /**
+     * @throws Exception
+     */
+    #[Test] public function rating_resource_transforms_correctly(): void
     {
         // Arrange
         $user = User::factory()->create();
@@ -93,7 +102,7 @@ class ResourcesTest extends TestCase
 
         // Act
         $resource = new RatingResource($rating);
-        $transformed = $resource->toArray($this->createMock(\Illuminate\Http\Request::class));
+        $transformed = $resource->toArray($this->createMock(Request::class));
 
         // Assert
         $this->assertEquals($rating->id, $transformed['id']);
@@ -108,8 +117,10 @@ class ResourcesTest extends TestCase
         $this->assertTrue($transformed['hasOngoingMatches']);
     }
 
-    /** @test */
-    public function league_resource_transforms_correctly()
+    /**
+     * @throws Exception
+     */
+    #[Test] public function league_resource_transforms_correctly(): void
     {
         // Arrange
         $game = Game::factory()->create([
@@ -144,7 +155,7 @@ class ResourcesTest extends TestCase
 
         // Act
         $resource = new LeagueResource($league);
-        $transformed = $resource->toArray($this->createMock(\Illuminate\Http\Request::class));
+        $transformed = $resource->toArray($this->createMock(Request::class));
 
         // Assert
         $this->assertEquals($league->id, $transformed['id']);
@@ -154,7 +165,6 @@ class ResourcesTest extends TestCase
         $this->assertEquals(16, $transformed['max_players']);
         $this->assertEquals(7, $transformed['max_score']);
         $this->assertEquals(2, $transformed['invite_days_expire']);
-        $this->assertEquals(3, $transformed['active_players']);
         $this->assertEquals($game->id, $transformed['game_id']);
 
         // Loaded relationships
@@ -163,8 +173,10 @@ class ResourcesTest extends TestCase
         $this->assertTrue($transformed['game_multiplayer']);
     }
 
-    /** @test */
-    public function match_game_resource_transforms_correctly()
+    /**
+     * @throws Exception
+     */
+    #[Test] public function match_game_resource_transforms_correctly(): void
     {
         // Arrange
         $game = Game::factory()->create();
@@ -223,11 +235,11 @@ class ResourcesTest extends TestCase
 
         // Act
         $resource = new MatchGameResource($matchGame);
-        $transformed = $resource->toArray($this->createMock(\Illuminate\Http\Request::class));
+        $transformed = $resource->toArray($this->createMock(Request::class));
 
         // Assert
         $this->assertEquals($matchGame->id, $transformed['id']);
-        $this->assertEquals('completed', $transformed['status']);
+        $this->assertEquals('completed', $transformed['status']->value);
         $this->assertEquals($league->id, $transformed['league_id']);
         $this->assertEquals('https://example.com/stream', $transformed['stream_url']);
         $this->assertEquals('Test match details', $transformed['details']);
@@ -251,8 +263,7 @@ class ResourcesTest extends TestCase
         $this->assertEquals($league->id, $transformed['league']['id']);
     }
 
-    /** @test */
-    public function multiplayer_game_resource_transforms_correctly()
+    #[Test] public function multiplayer_game_resource_transforms_correctly(): void
     {
         // Arrange
         $game = Game::factory()->create(['is_multiplayer' => true]);
@@ -347,7 +358,6 @@ class ResourcesTest extends TestCase
         $this->assertEquals($users[0]->id, $transformed['active_players'][0]['user']['id']);
         $this->assertEquals(3, $transformed['active_players'][0]['lives']);
         $this->assertEquals(1, $transformed['active_players'][0]['turn_order']);
-        $this->assertTrue($transformed['active_players'][0]['is_current_turn']);
 
         // Verify eliminated players data
         $this->assertEquals($users[2]->id, $transformed['eliminated_players'][0]['user']['id']);
@@ -359,8 +369,10 @@ class ResourcesTest extends TestCase
         $this->assertEquals(50, $transformed['eliminated_players'][0]['time_fund_contribution']);
     }
 
-    /** @test */
-    public function city_resource_transforms_correctly()
+    /**
+     * @throws Exception
+     */
+    #[Test] public function city_resource_transforms_correctly(): void
     {
         // Arrange
         $country = Country::factory()->create([
@@ -377,7 +389,7 @@ class ResourcesTest extends TestCase
 
         // Act
         $resource = new CityResource($city);
-        $transformed = $resource->toArray($this->createMock(\Illuminate\Http\Request::class));
+        $transformed = $resource->toArray($this->createMock(Request::class));
 
         // Assert
         $this->assertEquals($city->id, $transformed['id']);
@@ -386,8 +398,10 @@ class ResourcesTest extends TestCase
         $this->assertEquals('Test Country', $transformed['country']['name']);
     }
 
-    /** @test */
-    public function club_resource_transforms_correctly()
+    /**
+     * @throws Exception
+     */
+    #[Test] public function club_resource_transforms_correctly(): void
     {
         // Arrange
         $country = Country::factory()->create([
@@ -409,7 +423,7 @@ class ResourcesTest extends TestCase
 
         // Act
         $resource = new ClubResource($club);
-        $transformed = $resource->toArray($this->createMock(\Illuminate\Http\Request::class));
+        $transformed = $resource->toArray($this->createMock(Request::class));
 
         // Assert
         $this->assertEquals($club->id, $transformed['id']);

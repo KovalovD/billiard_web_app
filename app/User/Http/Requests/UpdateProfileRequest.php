@@ -11,6 +11,8 @@ class UpdateProfileRequest extends BaseFormRequest
 {
     public function rules(): array
     {
+        $userId = $this->user() ? $this->user()->id : null;
+
         return [
             'firstname'    => ['required', 'string', 'max:255'],
             'lastname'     => ['required', 'string', 'max:255'],
@@ -18,13 +20,13 @@ class UpdateProfileRequest extends BaseFormRequest
                 'required',
                 'email',
                 'max:255',
-                Rule::unique(User::class)->ignore($this->user()->id),
+                Rule::unique(User::class)->ignore($userId),
             ],
             'phone'        => [
                 'required',
                 'string',
                 'max:15',
-                Rule::unique(User::class)->ignore($this->user()->id),
+                Rule::unique(User::class)->ignore($userId),
                 new PhoneNumber(),
             ],
             'home_city_id' => ['nullable', 'exists:cities,id'],
