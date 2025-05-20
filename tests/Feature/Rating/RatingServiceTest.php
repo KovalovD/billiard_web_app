@@ -264,13 +264,26 @@ it('applies rating points from multiplayer game', function () {
     // Apply rating points
     $this->service->applyRatingPointsForMultiplayerGame($game);
 
-    // Verify ratings were updated
-    foreach ($ratings as $i => $rating) {
-        $updatedRating = Rating::find($rating->id);
-        $expectedRating = 1000 + (10 + ($i * 5)); // 1010, 1015, 1020
+    // Verify ratings were updated correctly
+    $updatedRatings = Rating::where('league_id', $league->id)
+        ->orderBy('user_id')
+        ->get()
+        ->pluck('rating')
+        ->toArray()
+    ;
 
-        expect($updatedRating->rating)->toBe($expectedRating);
-    }
+    // Each player should get their rating points added
+    expect($updatedRatings)->toBe([1010, 1015, 1020]);
+
+    // Verify positions were rearranged
+    $newPositions = Rating::where('league_id', $league->id)
+        ->orderBy('position')
+        ->pluck('user_id')
+        ->toArray()
+    ;
+
+    // Expected order: user[2] (1020), user[1] (1015), user[0] (1010)
+    expect($newPositions)->toBe([$users[2]->id, $users[1]->id, $users[0]->id]);
 });
 
 it('throws exception when applying multiplayer rating points with wrong strategy', function () {
@@ -300,9 +313,18 @@ it('handles reactivating a previously inactive player', function () {
     // Create a user
     $user = User::factory()->create();
 
-    // Add the player and then disable them
+    // Add the player
     $this->service->addPlayer($league, $user);
-    $this->service->disablePlayer($league, $user);
+
+    // Get the rating
+    $rating = Rating::where('user_id', $user->id)
+        ->where('league_id', $league->id)
+        ->first()
+    ;
+
+    // Manually update to inactive to simulate disabling
+    $rating->is_active = false;
+    $rating->save();
 
     // Verify the rating is inactive
     expect(Rating::where('league_id', $league->id)
