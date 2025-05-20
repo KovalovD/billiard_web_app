@@ -2,9 +2,7 @@
 
 namespace Tests\Feature\Matches;
 
-use App\Core\Models\Game;
 use App\Core\Models\User;
-use App\Leagues\Enums\RatingType;
 use App\Leagues\Models\League;
 use App\Matches\Http\Controllers\MultiplayerGamesController;
 use App\Matches\Http\Requests\CreateMultiplayerGameRequest;
@@ -12,21 +10,117 @@ use App\Matches\Http\Requests\JoinMultiplayerGameRequest;
 use App\Matches\Http\Requests\PerformGameActionRequest;
 use App\Matches\Models\MultiplayerGame;
 use App\Matches\Services\MultiplayerGameService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use JsonException;
+use Mockery;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use Throwable;
 
 class MultiplayerGamesControllerTest extends TestCase
 {
-    use RefreshDatabase;
+    // Don't use RefreshDatabase trait to avoid transaction issues
 
     private $controller;
     private $mockMultiplayerGameService;
+    private $mockAuth;
+
+    // Set to empty array to prevent transactional behavior that causes issues
+    protected array $connectionsToTransact = [];
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Ensure necessary tables exist
+        $this->ensureTablesExist();
+
+        // Create mock service
+        $this->mockMultiplayerGameService = $this->mock(MultiplayerGameService::class);
+        $this->controller = new MultiplayerGamesController($this->mockMultiplayerGameService);
+
+        // Mock Auth facade
+        $this->mockAuth = $this->mockStaticFacade(Auth::class);
+    }
+
+    protected function tearDown(): void
+    {
+        // Explicitly clean up mockery
+        Mockery::close();
+
+        parent::tearDown();
+    }
+
+    /**
+     * Create necessary tables if they don't exist
+     */
+    private function ensureTablesExist(): void
+    {
+        // Check if the games table exists
+        if (!Schema::hasTable('games')) {
+            // Create games table for testing
+            Schema::create('games', static function ($table) {
+                $table->id();
+                $table->string('name');
+                $table->string('type');
+                $table->boolean('is_multiplayer')->default(false);
+                $table->json('rules')->nullable();
+            });
+        }
+
+        // Check if leagues table exists
+        if (!Schema::hasTable('leagues')) {
+            Schema::create('leagues', static function ($table) {
+                $table->id();
+                $table->string('name');
+                $table->foreignId('game_id')->nullable();
+                $table->string('picture')->nullable();
+                $table->text('details')->nullable();
+                $table->boolean('has_rating')->default(true);
+                $table->timestamp('started_at')->nullable();
+                $table->timestamp('finished_at')->nullable();
+                $table->integer('start_rating')->default(1000);
+                $table->json('rating_change_for_winners_rule')->nullable();
+                $table->json('rating_change_for_losers_rule')->nullable();
+                $table->string('rating_type')->default('elo');
+                $table->integer('max_players')->default(0);
+                $table->integer('max_score')->default(7);
+                $table->integer('invite_days_expire')->default(2);
+                $table->timestamps();
+                $table->softDeletes();
+            });
+        }
+
+        // Create multiplayer_games table if it doesn't exist
+        if (!Schema::hasTable('multiplayer_games')) {
+            Schema::create('multiplayer_games', static function ($table) {
+                $table->id();
+                $table->foreignId('league_id');
+                $table->foreignId('game_id');
+                $table->string('name');
+                $table->string('status')->default('registration');
+                $table->integer('initial_lives')->nullable();
+                $table->integer('max_players')->nullable();
+                $table->timestamp('registration_ends_at')->nullable();
+                $table->timestamp('started_at')->nullable();
+                $table->timestamp('completed_at')->nullable();
+                $table->foreignId('moderator_user_id')->nullable();
+                $table->foreignId('current_player_id')->nullable();
+                $table->integer('next_turn_order')->nullable();
+                $table->boolean('allow_player_targeting')->default(false);
+                $table->integer('entrance_fee')->nullable();
+                $table->integer('first_place_percent')->nullable();
+                $table->integer('second_place_percent')->nullable();
+                $table->integer('grand_final_percent')->nullable();
+                $table->integer('penalty_fee')->nullable();
+                $table->json('prize_pool')->nullable();
+                $table->timestamps();
+            });
+        }
+    }
 
     /**
      * @throws JsonException
@@ -34,26 +128,14 @@ class MultiplayerGamesControllerTest extends TestCase
     #[Test] public function it_gets_all_multiplayer_games_for_league(): void
     {
         // Arrange
-        $game = Game::factory()->create(['is_multiplayer' => true]);
-        $league = League::factory()->create([
-            'game_id'     => $game->id,
-            'rating_type' => RatingType::KillerPool,
+        $multiplayerGames = collect([
+            (object) ['id' => 1, 'name' => 'Test Game 1', 'status' => 'registration'],
+            (object) ['id' => 2, 'name' => 'Test Game 2', 'status' => 'in_progress'],
         ]);
 
-        $multiplayerGames = collect([
-            MultiplayerGame::factory()->create([
-                'league_id' => $league->id,
-                'game_id'   => $game->id,
-                'name'      => 'Test Game 1',
-                'status'    => 'registration',
-            ]),
-            MultiplayerGame::factory()->create([
-                'league_id' => $league->id,
-                'game_id'   => $game->id,
-                'name'      => 'Test Game 2',
-                'status'    => 'in_progress',
-            ]),
-        ]);
+        // Mock league
+        $league = Mockery::mock(League::class);
+        $league->allows('getAttribute')->with('id')->andReturns(1);
 
         $this->mockMultiplayerGameService
             ->expects('getAll')
@@ -80,12 +162,6 @@ class MultiplayerGamesControllerTest extends TestCase
     #[Test] public function it_creates_multiplayer_game(): void
     {
         // Arrange
-        $game = Game::factory()->create(['is_multiplayer' => true]);
-        $league = League::factory()->create([
-            'game_id'     => $game->id,
-            'rating_type' => RatingType::KillerPool,
-        ]);
-
         $gameData = [
             'name'                   => 'New Multiplayer Game',
             'max_players'            => 10,
@@ -93,14 +169,19 @@ class MultiplayerGamesControllerTest extends TestCase
             'entrance_fee'           => 300,
         ];
 
-        $createdGame = MultiplayerGame::factory()->create(array_merge(
+        $createdGame = (object) array_merge(
             [
-                'league_id' => $league->id,
-                'game_id'   => $game->id,
+                'id'        => 1,
+                'league_id' => 1,
+                'game_id'   => 1,
                 'status'    => 'registration',
             ],
             $gameData,
-        ));
+        );
+
+        // Mock league
+        $league = Mockery::mock(League::class);
+        $league->allows('getAttribute')->with('id')->andReturns(1);
 
         $request = $this->mock(CreateMultiplayerGameRequest::class);
         $request
@@ -133,18 +214,15 @@ class MultiplayerGamesControllerTest extends TestCase
     #[Test] public function it_shows_specific_multiplayer_game(): void
     {
         // Arrange
-        $game = Game::factory()->create(['is_multiplayer' => true]);
-        $league = League::factory()->create([
-            'game_id'     => $game->id,
-            'rating_type' => RatingType::KillerPool,
-        ]);
+        $multiplayerGame = Mockery::mock(MultiplayerGame::class);
+        $multiplayerGame->allows('getAttribute')->with('id')->andReturns(1);
+        $multiplayerGame->allows('getAttribute')->with('name')->andReturns('Test Game');
+        $multiplayerGame->allows('getAttribute')->with('status')->andReturns('in_progress');
+        $multiplayerGame->allows('getAttribute')->with('game_id')->andReturns(1);
+        $multiplayerGame->allows('load')->andReturnSelf();
 
-        $multiplayerGame = MultiplayerGame::factory()->create([
-            'league_id' => $league->id,
-            'game_id'   => $game->id,
-            'name'      => 'Test Game',
-            'status'    => 'in_progress',
-        ]);
+        $league = Mockery::mock(League::class);
+        $league->allows('getAttribute')->with('id')->andReturns(1);
 
         // Act
         $result = $this->controller->show($league, $multiplayerGame);
@@ -164,20 +242,16 @@ class MultiplayerGamesControllerTest extends TestCase
     #[Test] public function it_joins_multiplayer_game(): void
     {
         // Arrange
-        $game = Game::factory()->create(['is_multiplayer' => true]);
-        $league = League::factory()->create([
-            'game_id'     => $game->id,
-            'rating_type' => RatingType::KillerPool,
-        ]);
+        $user = Mockery::mock(User::class);
+        $user->allows('getAttribute')->with('id')->andReturns(1);
 
-        $multiplayerGame = MultiplayerGame::factory()->create([
-            'league_id' => $league->id,
-            'game_id'   => $game->id,
-            'name'      => 'Test Game',
-            'status'    => 'registration',
-        ]);
+        $multiplayerGame = Mockery::mock(MultiplayerGame::class);
+        $multiplayerGame->allows('getAttribute')->with('id')->andReturns(1);
+        $multiplayerGame->allows('getAttribute')->with('name')->andReturns('Test Game');
+        $multiplayerGame->allows('getAttribute')->with('status')->andReturns('registration');
 
-        $user = User::factory()->create();
+        $league = Mockery::mock(League::class);
+        $league->allows('getAttribute')->with('id')->andReturns(1);
 
         $this->mockAuth
             ->expects('user')
@@ -190,7 +264,7 @@ class MultiplayerGamesControllerTest extends TestCase
             ->expects('join')
             ->with($league, $multiplayerGame, $user)
             ->andReturns($multiplayerGame)
-        ; // Return updated game
+        ;
 
         // Act
         $result = $this->controller->join($request, $league, $multiplayerGame);
@@ -209,20 +283,15 @@ class MultiplayerGamesControllerTest extends TestCase
     #[Test] public function it_leaves_multiplayer_game(): void
     {
         // Arrange
-        $game = Game::factory()->create(['is_multiplayer' => true]);
-        $league = League::factory()->create([
-            'game_id'     => $game->id,
-            'rating_type' => RatingType::KillerPool,
-        ]);
+        $user = Mockery::mock(User::class);
+        $user->allows('getAttribute')->with('id')->andReturns(1);
 
-        $multiplayerGame = MultiplayerGame::factory()->create([
-            'league_id' => $league->id,
-            'game_id'   => $game->id,
-            'name'      => 'Test Game',
-            'status'    => 'registration',
-        ]);
+        $multiplayerGame = Mockery::mock(MultiplayerGame::class);
+        $multiplayerGame->allows('getAttribute')->with('id')->andReturns(1);
+        $multiplayerGame->allows('getAttribute')->with('name')->andReturns('Test Game');
 
-        $user = User::factory()->create();
+        $league = Mockery::mock(League::class);
+        $league->allows('getAttribute')->with('id')->andReturns(1);
 
         $this->mockAuth
             ->expects('user')
@@ -233,7 +302,7 @@ class MultiplayerGamesControllerTest extends TestCase
             ->expects('leave')
             ->with($multiplayerGame, $user)
             ->andReturns($multiplayerGame)
-        ; // Return updated game
+        ;
 
         // Act
         $result = $this->controller->leave($league, $multiplayerGame);
@@ -252,26 +321,16 @@ class MultiplayerGamesControllerTest extends TestCase
     #[Test] public function it_starts_multiplayer_game(): void
     {
         // Arrange
-        $game = Game::factory()->create(['is_multiplayer' => true]);
-        $league = League::factory()->create([
-            'game_id'     => $game->id,
-            'rating_type' => RatingType::KillerPool,
-        ]);
+        $multiplayerGame = Mockery::mock(MultiplayerGame::class);
+        $multiplayerGame->allows('getAttribute')->with('id')->andReturns(1);
 
-        $multiplayerGame = MultiplayerGame::factory()->create([
-            'league_id' => $league->id,
-            'game_id'   => $game->id,
-            'name'      => 'Test Game',
-            'status'    => 'registration',
-        ]);
+        $startedGame = Mockery::mock(MultiplayerGame::class);
+        $startedGame->allows('getAttribute')->with('id')->andReturns(1);
+        $startedGame->allows('getAttribute')->with('name')->andReturns('Test Game');
+        $startedGame->allows('getAttribute')->with('status')->andReturns('in_progress');
 
-        $startedGame = MultiplayerGame::factory()->create([
-            'league_id'  => $league->id,
-            'game_id'    => $game->id,
-            'name'       => 'Test Game',
-            'status'     => 'in_progress',
-            'started_at' => now(),
-        ]);
+        $league = Mockery::mock(League::class);
+        $league->allows('getAttribute')->with('id')->andReturns(1);
 
         $this->mockMultiplayerGameService
             ->expects('start')
@@ -296,18 +355,11 @@ class MultiplayerGamesControllerTest extends TestCase
     #[Test] public function it_cancels_multiplayer_game(): void
     {
         // Arrange
-        $game = Game::factory()->create(['is_multiplayer' => true]);
-        $league = League::factory()->create([
-            'game_id'     => $game->id,
-            'rating_type' => RatingType::KillerPool,
-        ]);
+        $multiplayerGame = Mockery::mock(MultiplayerGame::class);
+        $multiplayerGame->allows('getAttribute')->with('id')->andReturns(1);
 
-        $multiplayerGame = MultiplayerGame::factory()->create([
-            'league_id' => $league->id,
-            'game_id'   => $game->id,
-            'name'      => 'Test Game',
-            'status'    => 'registration',
-        ]);
+        $league = Mockery::mock(League::class);
+        $league->allows('getAttribute')->with('id')->andReturns(1);
 
         $this->mockMultiplayerGameService
             ->expects('cancel')
@@ -331,36 +383,29 @@ class MultiplayerGamesControllerTest extends TestCase
     #[Test] public function it_sets_moderator(): void
     {
         // Arrange
-        $game = Game::factory()->create(['is_multiplayer' => true]);
-        $league = League::factory()->create([
-            'game_id'     => $game->id,
-            'rating_type' => RatingType::KillerPool,
-        ]);
+        $user = Mockery::mock(User::class);
+        $user->allows('getAttribute')->with('id')->andReturns(1);
 
-        $multiplayerGame = MultiplayerGame::factory()->create([
-            'league_id' => $league->id,
-            'game_id'   => $game->id,
-            'name'      => 'Test Game',
-            'status'    => 'in_progress',
-        ]);
+        $moderatorUser = Mockery::mock(User::class);
+        $moderatorUser->allows('getAttribute')->with('id')->andReturns(2);
 
-        $user = User::factory()->create();
-        $moderatorUser = User::factory()->create();
+        $multiplayerGame = Mockery::mock(MultiplayerGame::class);
+        $multiplayerGame->allows('getAttribute')->with('id')->andReturns(1);
+
+        $updatedGame = Mockery::mock(MultiplayerGame::class);
+        $updatedGame->allows('getAttribute')->with('id')->andReturns(1);
+        $updatedGame->allows('getAttribute')->with('name')->andReturns('Test Game');
+        $updatedGame->allows('getAttribute')->with('moderator_user_id')->andReturns($moderatorUser->id);
+
+        $league = Mockery::mock(League::class);
+        $league->allows('getAttribute')->with('id')->andReturns(1);
 
         $this->mockAuth
             ->expects('user')
             ->andReturns($user)
         ;
 
-        $updatedGame = MultiplayerGame::factory()->make([
-            'league_id'         => $league->id,
-            'game_id'           => $game->id,
-            'name'              => 'Test Game',
-            'status'            => 'in_progress',
-            'moderator_user_id' => $moderatorUser->id,
-        ]);
-
-        $request = $this->mock(Request::class);
+        $request = Mockery::mock(Request::class);
         $request->user_id = $moderatorUser->id;
 
         $this->mockMultiplayerGameService
@@ -386,21 +431,18 @@ class MultiplayerGamesControllerTest extends TestCase
     #[Test] public function it_performs_game_action(): void
     {
         // Arrange
-        $game = Game::factory()->create(['is_multiplayer' => true]);
-        $league = League::factory()->create([
-            'game_id'     => $game->id,
-            'rating_type' => RatingType::KillerPool,
-        ]);
+        $user = Mockery::mock(User::class);
+        $user->allows('getAttribute')->with('id')->andReturns(1);
 
-        $multiplayerGame = MultiplayerGame::factory()->create([
-            'league_id' => $league->id,
-            'game_id'   => $game->id,
-            'name'      => 'Test Game',
-            'status'    => 'in_progress',
-        ]);
+        $targetUser = Mockery::mock(User::class);
+        $targetUser->allows('getAttribute')->with('id')->andReturns(2);
 
-        $user = User::factory()->create();
-        $targetUser = User::factory()->create();
+        $multiplayerGame = Mockery::mock(MultiplayerGame::class);
+        $multiplayerGame->allows('getAttribute')->with('id')->andReturns(1);
+        $multiplayerGame->allows('getAttribute')->with('name')->andReturns('Test Game');
+
+        $league = Mockery::mock(League::class);
+        $league->allows('getAttribute')->with('id')->andReturns(1);
 
         $this->mockAuth
             ->expects('user')
@@ -449,20 +491,15 @@ class MultiplayerGamesControllerTest extends TestCase
     #[Test] public function it_finishes_game(): void
     {
         // Arrange
-        $game = Game::factory()->create(['is_multiplayer' => true]);
-        $league = League::factory()->create([
-            'game_id'     => $game->id,
-            'rating_type' => RatingType::KillerPool,
-        ]);
+        $user = Mockery::mock(User::class);
+        $user->allows('getAttribute')->with('id')->andReturns(1);
 
-        $multiplayerGame = MultiplayerGame::factory()->create([
-            'league_id' => $league->id,
-            'game_id'   => $game->id,
-            'name'      => 'Test Game',
-            'status'    => 'completed',
-        ]);
+        $multiplayerGame = Mockery::mock(MultiplayerGame::class);
+        $multiplayerGame->allows('getAttribute')->with('id')->andReturns(1);
+        $multiplayerGame->allows('getAttribute')->with('status')->andReturns('completed');
 
-        $user = User::factory()->create();
+        $league = Mockery::mock(League::class);
+        $league->allows('getAttribute')->with('id')->andReturns(1);
 
         $this->mockAuth
             ->expects('user')
@@ -480,17 +517,4 @@ class MultiplayerGamesControllerTest extends TestCase
         // Assert - No assertions needed since method has void return type
         $this->addToAssertionCount(1);
     }
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $this->mockMultiplayerGameService = $this->mock(MultiplayerGameService::class);
-        $this->controller = new MultiplayerGamesController($this->mockMultiplayerGameService);
-
-        // Mock Auth facade
-        $this->mockAuth = $this->mockStaticFacade(Auth::class);
-    }
-
-    protected array $connectionsToTransact = [];
 }

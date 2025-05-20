@@ -79,17 +79,16 @@ class Rating extends Model
         $matches = $this->ongoingMatchesAsFirstPlayer->merge($this->ongoingMatchesAsSecondPlayer);
 
         // Sort matches: MUST_BE_CONFIRMED first, then IN_PROGRESS, then PENDING
-        return $matches->sort(function (MatchGame $a, MatchGame $b) {
-            $order = [
+        return $matches->sortBy(function (MatchGame $match) {
+            // Define a priority order for statuses
+            $priorities = [
                 GameStatus::MUST_BE_CONFIRMED->value => 0,
-                GameStatus::IN_PROGRESS->value       => 1,
-                GameStatus::PENDING->value           => 2,
+                GameStatus::IN_PROGRESS->value => 1,
+                GameStatus::PENDING->value     => 2,
             ];
 
-            $aOrder = $order[$a->status->value] ?? 3;
-            $bOrder = $order[$b->status->value] ?? 3;
-
-            return $aOrder <=> $bOrder;
+            // Return the priority value for sorting
+            return $priorities[$match->status->value] ?? 3;
         });
     }
 
