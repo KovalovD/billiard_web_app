@@ -313,7 +313,7 @@ it('handles reactivating a previously inactive player', function () {
     // Create a user
     $user = User::factory()->create();
 
-    // Add the player
+    // Add the player initially
     $this->service->addPlayer($league, $user);
 
     // Get the rating
@@ -322,9 +322,14 @@ it('handles reactivating a previously inactive player', function () {
         ->first()
     ;
 
+    // Verify the rating exists before proceeding
+    expect($rating)->not->toBeNull();
+
     // Manually update to inactive to simulate disabling
-    $rating->is_active = false;
-    $rating->save();
+    if ($rating) {
+        $rating->is_active = false;
+        $rating->save();
+    }
 
     // Verify the rating is inactive
     expect(Rating::where('league_id', $league->id)
