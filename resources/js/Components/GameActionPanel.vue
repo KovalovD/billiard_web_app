@@ -108,8 +108,10 @@ const handleRecordTurn = () => {
                           class="ml-2 px-2 py-0.5 text-xs text-white bg-green-600 rounded-full font-semibold dark:bg-green-700">Current Turn</span>
                 </h3>
             </div>
+        </div>
 
-            <div class="flex items-center space-x-4">
+        <div class="border-t pt-3">
+            <div class="flex items-center space-x-4 mb-2">
                 <LivesTracker :lives="player.lives"/>
 
                 <div class="flex space-x-1">
@@ -132,9 +134,6 @@ const handleRecordTurn = () => {
                     </Button>
                 </div>
             </div>
-        </div>
-
-        <div class="border-t pt-3">
             <h4 class="mb-2 text-sm font-medium">Available Cards:</h4>
             <PlayerCards
                 :disabled="isLoading"
