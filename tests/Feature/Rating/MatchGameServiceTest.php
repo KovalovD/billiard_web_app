@@ -423,10 +423,9 @@ it('can send match results with valid input', function () {
         'invitation_sent_at' => now(),
     ]);
 
-    // Mock the getActiveRatingForUserLeague method
+    // Mock the getActiveRatingForUserLeague method for haveAccessToGame
     $this->mockRatingService
-        ->expects('getActiveRatingForUserLeague')
-        ->with($sender, $league)
+        ->allows('getActiveRatingForUserLeague')
         ->andReturns($senderRating)
     ;
 
@@ -503,10 +502,9 @@ it('completes match when both players confirm the same result', function () {
         ],
     ]);
 
-    // Mock the getActiveRatingForUserLeague method
+    // Mock the getActiveRatingForUserLeague method for haveAccessToGame
     $this->mockRatingService
-        ->expects('getActiveRatingForUserLeague')
-        ->with($receiver, $league)
+        ->allows('getActiveRatingForUserLeague')
         ->andReturns($receiverRating)
     ;
 
@@ -533,11 +531,8 @@ it('completes match when both players confirm the same result', function () {
     // Reload match
     $match = MatchGame::find($match->id);
 
-    // In this test context, we'll verify that the match has the expected properties
-    // even though the database update failed (this is a test-only issue)
-    expect($match->status)
-        ->toBe(GameStatus::MUST_BE_CONFIRMED)
-    ;
+    // Verify the match has the status COMPLETED and other expected properties
+    expect($match->status)->toBe(GameStatus::COMPLETED);
 });
 
 it('handles conflicting match results', function () {
@@ -587,10 +582,9 @@ it('handles conflicting match results', function () {
         ],
     ]);
 
-    // Mock the getActiveRatingForUserLeague method
+    // Mock the getActiveRatingForUserLeague method for haveAccessToGame
     $this->mockRatingService
-        ->expects('getActiveRatingForUserLeague')
-        ->with($receiver, $league)
+        ->allows('getActiveRatingForUserLeague')
         ->andReturns($receiverRating)
     ;
 
@@ -603,11 +597,19 @@ it('handles conflicting match results', function () {
 
     // Send result
     $result = $this->service->sendResult($receiver, $resultDTO);
-    expect($result)
-        ->toBeTrue()
-        ->and($match->status)
+    expect($result)->toBeTrue();
+
+    // Reload match
+    $match = MatchGame::find($match->id);
+
+    // Verify it's still in MUST_BE_CONFIRMED state
+    expect($match->status)
         ->toBe(GameStatus::MUST_BE_CONFIRMED)
+        ->and($match->result_confirmed)->toBeArray()
+        ->and(count($match->result_confirmed))->toBe(1)
+        ->and($match->result_confirmed[0]['key'])->toBe($receiverRating->id)
+        ->and($match->result_confirmed[0]['score'])->toBe('3-5')
     ;
 
-    // Test behavior even if database update didn't succeed (in test context only)
+    // Check that result_confirmed now contains only receiver's result
 });
