@@ -79,6 +79,7 @@ it('updates an existing league', function () {
         'name'        => 'Original Name',
         'max_players' => 8,
         'max_score'   => 5,
+        'invite_days_expire' => 3,
     ]);
 
     // Create update data
@@ -95,7 +96,7 @@ it('updates an existing league', function () {
         'rating_change_for_losers_rule'  => $league->rating_change_for_losers_rule,
         'max_players'                    => 16, // Updated
         'max_score'                      => 10,   // Updated
-        'invite_days_expire'             => $league->invite_days_expire,
+        'invite_days_expire' => 4, // Must be provided
     ]);
 
     // Update the league
@@ -106,6 +107,7 @@ it('updates an existing league', function () {
         ->and($updatedLeague->max_players)->toBe(16)
         ->and($updatedLeague->max_score)->toBe(10)
         ->and($updatedLeague->details)->toBe('Updated details')
+        ->and($updatedLeague->invite_days_expire)->toBe(4)
     ;
 
     // Verify database was updated
