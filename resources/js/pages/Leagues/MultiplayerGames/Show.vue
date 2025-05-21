@@ -47,8 +47,6 @@ const showFinishModal = ref(false);
 const showModeratorModal = ref(false);
 const actionFeedback = ref<{ type: 'success' | 'error', message: string } | null>(null);
 const activeTab = ref<'game' | 'prizes' | 'ratings' | 'timefund'>('game');
-
-// Add to existing refs
 const showAddPlayerModal = ref(false);
 
 // Add method to handle player addition
@@ -90,6 +88,30 @@ const isModerator = computed(() => {
 const currentTurnPlayer = computed(() => {
     if (!game.value) return null;
     return game.value.active_players.find(player => player.is_current_turn) || null;
+});
+
+// Get the next turn player
+const nextTurnPlayer = computed(() => {
+    if (!game.value || !game.value.active_players.length) return null;
+
+    const currentPlayer = currentTurnPlayer.value;
+    if (!currentPlayer || currentPlayer.turn_order === null) return null;
+
+    // Sort players by turn order
+    const sortedPlayers = [...game.value.active_players].sort((a, b) => {
+        if (a.turn_order === null && b.turn_order !== null) return 1;
+        if (a.turn_order !== null && b.turn_order === null) return -1;
+        if (a.turn_order === null && b.turn_order === null) return 0;
+        return (a.turn_order || 0) - (b.turn_order || 0);
+    });
+
+    // Find current player index
+    const currentIndex = sortedPlayers.findIndex(p => p.id === currentPlayer.id);
+    if (currentIndex === -1) return null;
+
+    // Next player is the one after current in the circular list
+    const nextIndex = (currentIndex + 1) % sortedPlayers.length;
+    return sortedPlayers[nextIndex];
 });
 
 // Format date for display
@@ -138,7 +160,6 @@ const fetchLeague = async () => {
     isLoadingLeague.value = true;
     try {
         league.value = await apiClient<League>(`/api/leagues/${props.leagueId}`);
-// eslint-disable-next-line
     } catch (err) {
         // Error handling is managed by the composable
     } finally {
@@ -158,7 +179,6 @@ const fetchGame = async () => {
             // Auto-select the current user's player or current turn player when first loading
             selectDefaultActingPlayer();
         }
-// eslint-disable-next-line
     } catch (err) {
         // Error handling is managed by the composable
     } finally {
@@ -443,8 +463,12 @@ onMounted(() => {
             </div>
 
             <!-- Loading state -->
+            <div v-if="isLoadingGame" class="flex justify-center py-12">
+                <div class="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
+                <span class="ml-2 text-gray-600">Loading game...</span>
+            </div>
 
-            <div v-if="game">
+            <div v-else-if="game">
                 <!-- Registration phase -->
                 <div v-if="game.status === 'registration'">
                     <GameRegistry :game="game" :league-id="leagueId" @updated="fetchGame"/>
@@ -520,6 +544,8 @@ onMounted(() => {
                                             :players="game.active_players"
                                             :selected-player-id="selectedActingPlayer?.id"
                                             :show-controls="isModerator && game.status === 'in_progress'"
+                                            :current-turn-player-id="game.current_turn_player_id"
+                                            :next-turn-player-id="nextTurnPlayer?.user.id"
                                             title=""
                                             @select-player="selectPlayer"
                                         />
@@ -572,6 +598,7 @@ onMounted(() => {
                                         :is-loading="isActionLoading"
                                         :player="selectedActingPlayer"
                                         :target-players="game.active_players.filter(p => p.id !== selectedActingPlayer?.id)"
+                                        :next-player="nextTurnPlayer"
                                         @decrement-lives="() => handleAction('decrement_lives', selectedActingPlayer?.user.id, selectedActingPlayer?.user.id)"
                                         @increment-lives="() => handleAction('increment_lives', selectedActingPlayer?.user.id, selectedActingPlayer?.user.id)"
                                         @record-turn="() => handleAction('record_turn', undefined, selectedActingPlayer?.user.id)"
@@ -668,7 +695,6 @@ onMounted(() => {
                             </div>
                         </div>
                     </div>
-
                     <!-- Prizes tab -->
                     <div v-if="activeTab === 'prizes'" class="space-y-6">
                         <PrizeSummaryCard :game="game"/>
