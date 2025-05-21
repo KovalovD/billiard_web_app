@@ -122,7 +122,7 @@ endpoints:
         name: matchGame_id
         description: 'The ID of the matchGame.'
         required: true
-        example: 16
+        example: 2
         type: integer
         enumValues: [ ]
         exampleWasSpecified: false
@@ -130,7 +130,7 @@ endpoints:
         custom: [ ]
     cleanUrlParameters:
       league_id: 1
-      matchGame_id: 16
+      matchGame_id: 2
     queryParameters: [ ]
     cleanQueryParameters: [ ]
     bodyParameters: [ ]
@@ -177,7 +177,7 @@ endpoints:
         name: matchGame_id
         description: 'The ID of the matchGame.'
         required: true
-        example: 16
+        example: 2
         type: integer
         enumValues: [ ]
         exampleWasSpecified: false
@@ -185,7 +185,7 @@ endpoints:
         custom: [ ]
     cleanUrlParameters:
       league_id: 1
-      matchGame_id: 16
+      matchGame_id: 2
     queryParameters: [ ]
     cleanQueryParameters: [ ]
     bodyParameters: [ ]
@@ -232,7 +232,7 @@ endpoints:
         name: matchGame_id
         description: 'The ID of the matchGame.'
         required: true
-        example: 16
+        example: 2
         type: integer
         enumValues: [ ]
         exampleWasSpecified: false
@@ -240,7 +240,7 @@ endpoints:
         custom: [ ]
     cleanUrlParameters:
       league_id: 1
-      matchGame_id: 16
+      matchGame_id: 2
     queryParameters: [ ]
     cleanQueryParameters: [ ]
     bodyParameters:

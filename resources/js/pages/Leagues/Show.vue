@@ -24,6 +24,7 @@ import {
 import {computed, onMounted, ref, watch} from 'vue';
 import MultiplayerGameCard from "@/Components/MultiplayerGameCard.vue";
 import {useMultiplayerGames} from "@/composables/useMultiplayerGames";
+import AddPlayerModal from "@/Components/AddPlayerModal.vue";
 
 const {getMultiplayerGames} = useMultiplayerGames();
 
@@ -187,6 +188,17 @@ const handleJoinLeague = async () => {
     } else if (joinError.value) {
         displayMessage(`Failed to join league: ${joinError.value.message || 'Unknown error'}`);
     }
+};
+
+// State for Add Player modal
+const showAddPlayerModal = ref(false);
+
+// Handle player added
+const handlePlayerAdded = async () => {
+    // Refresh the players list
+    await fetchPlayers();
+    // Show a success message
+    displayMessage('Player added successfully');
 };
 
 const handleLeaveLeague = async () => {
@@ -533,7 +545,13 @@ watch(
                 <!-- Players & Ratings Card -->
                 <Card class="mb-8">
                     <CardHeader>
-                        <CardTitle>Players & Ratings</CardTitle>
+                        <div class="flex items-center justify-between w-full">
+                            <CardTitle>Players & Ratings</CardTitle>
+                            <Button v-if="isAdmin" variant="outline" @click="showAddPlayerModal = true">
+                                <UserPlusIcon class="mr-2 h-4 w-4"/>
+                                Add Player
+                            </Button>
+                        </div>
                     </CardHeader>
                     <CardContent>
                         <div v-if="isLoadingPlayers" class="py-4 text-center">
@@ -735,6 +753,15 @@ watch(
         @close="showResultModal = false"
         @error="(error: ApiError) => displayMessage(error.message)"
         @success="handleResultSuccess"
+    />
+
+    <AddPlayerModal
+        v-if="isAdmin"
+        :entity-id="leagueId"
+        :entity-type="'league'"
+        :show="showAddPlayerModal"
+        @added="handlePlayerAdded"
+        @close="showAddPlayerModal = false"
     />
 
     <!-- Generic Message Modal -->

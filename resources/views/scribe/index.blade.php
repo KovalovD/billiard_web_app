@@ -95,6 +95,73 @@
                 <a href="#endpoints">Endpoints</a>
             </li>
             <ul id="tocify-subheader-endpoints" class="tocify-subheader">
+                <li class="tocify-item level-2" data-unique="endpoints-GETapi-leagues--league_id--multiplayer-games">
+                    <a href="#endpoints-GETapi-leagues--league_id--multiplayer-games">GET
+                        api/leagues/{league_id}/multiplayer-games</a>
+                </li>
+                <li class="tocify-item level-2"
+                    data-unique="endpoints-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id-">
+                    <a href="#endpoints-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id-">GET
+                        api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}</a>
+                </li>
+                <li class="tocify-item level-2"
+                    data-unique="endpoints-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--join">
+                    <a href="#endpoints-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--join">POST
+                        api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}/join</a>
+                </li>
+                <li class="tocify-item level-2"
+                    data-unique="endpoints-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--leave">
+                    <a href="#endpoints-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--leave">POST
+                        api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}/leave</a>
+                </li>
+                <li class="tocify-item level-2"
+                    data-unique="endpoints-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--action">
+                    <a href="#endpoints-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--action">POST
+                        api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}/action</a>
+                </li>
+                <li class="tocify-item level-2"
+                    data-unique="endpoints-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--finish">
+                    <a href="#endpoints-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--finish">POST
+                        api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}/finish</a>
+                </li>
+                <li class="tocify-item level-2"
+                    data-unique="endpoints-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--set-moderator">
+                    <a href="#endpoints-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--set-moderator">POST
+                        api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}/set-moderator</a>
+                </li>
+                <li class="tocify-item level-2"
+                    data-unique="endpoints-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--financial-summary">
+                    <a href="#endpoints-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--financial-summary">Get
+                        financial summary for a game</a>
+                </li>
+                <li class="tocify-item level-2"
+                    data-unique="endpoints-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--rating-summary">
+                    <a href="#endpoints-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--rating-summary">Get
+                        rating summary for a game</a>
+                </li>
+                <li class="tocify-item level-2" data-unique="endpoints-POSTapi-leagues--league_id--multiplayer-games">
+                    <a href="#endpoints-POSTapi-leagues--league_id--multiplayer-games">POST
+                        api/leagues/{league_id}/multiplayer-games</a>
+                </li>
+                <li class="tocify-item level-2"
+                    data-unique="endpoints-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--start">
+                    <a href="#endpoints-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--start">POST
+                        api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}/start</a>
+                </li>
+                <li class="tocify-item level-2"
+                    data-unique="endpoints-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--cancel">
+                    <a href="#endpoints-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--cancel">POST
+                        api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}/cancel</a>
+                </li>
+                <li class="tocify-item level-2" data-unique="endpoints-POSTapi-admin-leagues--league_id--add-player">
+                    <a href="#endpoints-POSTapi-admin-leagues--league_id--add-player">Add a new player to a league with
+                        automatic registration</a>
+                </li>
+                <li class="tocify-item level-2"
+                    data-unique="endpoints-POSTapi-admin-leagues--league_id--multiplayer-games--multiplayerGame_id--add-player">
+                    <a href="#endpoints-POSTapi-admin-leagues--league_id--multiplayer-games--multiplayerGame_id--add-player">Add
+                        a new player to a multiplayer game with automatic registration</a>
+                </li>
                 <li class="tocify-item level-2" data-unique="endpoints-GETapi-cities">
                     <a href="#endpoints-GETapi-cities">Get list of cities</a>
                 </li>
@@ -134,6 +201,9 @@
                     data-unique="endpoints-POSTapi-leagues--league_id--admin-bulk-deactivate">
                     <a href="#endpoints-POSTapi-leagues--league_id--admin-bulk-deactivate">Bulk deactivate multiple
                         players</a>
+                </li>
+                <li class="tocify-item level-2" data-unique="endpoints-PUTapi-profile">
+                    <a href="#endpoints-PUTapi-profile">Update the authenticated user's profile</a>
                 </li>
                 <li class="tocify-item level-2" data-unique="endpoints-PUTapi-profile-password">
                     <a href="#endpoints-PUTapi-profile-password">Update the authenticated user's password</a>
@@ -243,7 +313,7 @@
     </ul>
 
     <ul class="toc-footer" id="last-updated">
-        <li>Last updated: May 6, 2025</li>
+        <li>Last updated: May 21, 2025</li>
     </ul>
 </div>
 
@@ -886,6 +956,2338 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
         <h1 id="endpoints">Endpoints</h1>
 
+
+        <h2 id="endpoints-GETapi-leagues--league_id--multiplayer-games">GET
+            api/leagues/{league_id}/multiplayer-games</h2>
+
+        <p>
+        </p>
+
+
+        <span id="example-requests-GETapi-leagues--league_id--multiplayer-games">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "http://localhost:8001/api/leagues/1/multiplayer-games" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost:8001/api/leagues/1/multiplayer-games"
+);
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+        <span id="example-responses-GETapi-leagues--league_id--multiplayer-games">
+            <blockquote>
+            <p>Example response (401):</p>
+        </blockquote>
+                <details class="annotation">
+            <summary style="cursor: pointer;">
+                <small onclick="textContent = parentElement.parentElement.open ? 'Show headers' : 'Hide headers'">Show headers</small>
+            </summary>
+            <pre><code class="language-http">cache-control: no-cache, private
+content-type: application/json
+access-control-allow-origin: http://localhost:8001
+access-control-allow-credentials: true
+ </code></pre></details>         <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;message&quot;: &quot;Unauthenticated.&quot;
+}</code>
+ </pre>
+    </span>
+        <span id="execution-results-GETapi-leagues--league_id--multiplayer-games" hidden>
+    <blockquote>Received response<span
+            id="execution-response-status-GETapi-leagues--league_id--multiplayer-games"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-leagues--league_id--multiplayer-games"
+                            data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+        <span id="execution-error-GETapi-leagues--league_id--multiplayer-games" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-leagues--league_id--multiplayer-games">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+        <form id="form-GETapi-leagues--league_id--multiplayer-games" data-method="GET"
+              data-path="api/leagues/{league_id}/multiplayer-games"
+              data-authed="0"
+              data-hasfiles="0"
+              data-isarraybody="0"
+              autocomplete="off"
+              onsubmit="event.preventDefault(); executeTryOut('GETapi-leagues--league_id--multiplayer-games', this);">
+            <h3>
+                Request&nbsp;&nbsp;&nbsp;
+                <button type="button"
+                        style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-tryout-GETapi-leagues--league_id--multiplayer-games"
+                        onclick="tryItOut('GETapi-leagues--league_id--multiplayer-games');">Try it out ⚡
+                </button>
+                <button type="button"
+                        style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-canceltryout-GETapi-leagues--league_id--multiplayer-games"
+                        onclick="cancelTryOut('GETapi-leagues--league_id--multiplayer-games');" hidden>Cancel 🛑
+                </button>&nbsp;&nbsp;
+                <button type="submit"
+                        style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-executetryout-GETapi-leagues--league_id--multiplayer-games"
+                        data-initial-text="Send Request 💥"
+                        data-loading-text="⏱ Sending..."
+                        hidden>Send Request 💥
+                </button>
+            </h3>
+            <p>
+                <small class="badge badge-green">GET</small>
+                <b><code>api/leagues/{league_id}/multiplayer-games</code></b>
+            </p>
+            <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+                &nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="Content-Type" data-endpoint="GETapi-leagues--league_id--multiplayer-games"
+                       value="application/json"
+                       data-component="header">
+                <br>
+                <p>Example: <code>application/json</code></p>
+            </div>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+                &nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="Accept" data-endpoint="GETapi-leagues--league_id--multiplayer-games"
+                       value="application/json"
+                       data-component="header">
+                <br>
+                <p>Example: <code>application/json</code></p>
+            </div>
+            <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>league_id</code></b>&nbsp;&nbsp;
+                <small>integer</small>&nbsp;
+                &nbsp;
+                <input type="number" style="display: none"
+                       step="any" name="league_id" data-endpoint="GETapi-leagues--league_id--multiplayer-games"
+                       value="1"
+                       data-component="url">
+                <br>
+                <p>The ID of the league. Example: <code>1</code></p>
+            </div>
+        </form>
+
+        <h2 id="endpoints-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id-">GET
+            api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}</h2>
+
+        <p>
+        </p>
+
+
+        <span id="example-requests-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id-">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "http://localhost:8001/api/leagues/1/multiplayer-games/5" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost:8001/api/leagues/1/multiplayer-games/5"
+);
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+        <span id="example-responses-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id-">
+            <blockquote>
+            <p>Example response (401):</p>
+        </blockquote>
+                <details class="annotation">
+            <summary style="cursor: pointer;">
+                <small onclick="textContent = parentElement.parentElement.open ? 'Show headers' : 'Hide headers'">Show headers</small>
+            </summary>
+            <pre><code class="language-http">cache-control: no-cache, private
+content-type: application/json
+access-control-allow-origin: http://localhost:8001
+access-control-allow-credentials: true
+ </code></pre></details>         <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;message&quot;: &quot;Unauthenticated.&quot;
+}</code>
+ </pre>
+    </span>
+        <span id="execution-results-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id-" hidden>
+    <blockquote>Received response<span
+            id="execution-response-status-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id-"></span>:
+    </blockquote>
+    <pre class="json"><code
+            id="execution-response-content-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id-"
+            data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+        <span id="execution-error-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id-" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id-">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+        <form id="form-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id-" data-method="GET"
+              data-path="api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}"
+              data-authed="0"
+              data-hasfiles="0"
+              data-isarraybody="0"
+              autocomplete="off"
+              onsubmit="event.preventDefault(); executeTryOut('GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id-', this);">
+            <h3>
+                Request&nbsp;&nbsp;&nbsp;
+                <button type="button"
+                        style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-tryout-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id-"
+                        onclick="tryItOut('GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id-');">Try it
+                    out ⚡
+                </button>
+                <button type="button"
+                        style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-canceltryout-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id-"
+                        onclick="cancelTryOut('GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id-');"
+                        hidden>Cancel 🛑
+                </button>&nbsp;&nbsp;
+                <button type="submit"
+                        style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-executetryout-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id-"
+                        data-initial-text="Send Request 💥"
+                        data-loading-text="⏱ Sending..."
+                        hidden>Send Request 💥
+                </button>
+            </h3>
+            <p>
+                <small class="badge badge-green">GET</small>
+                <b><code>api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}</code></b>
+            </p>
+            <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+                &nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="Content-Type"
+                       data-endpoint="GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id-"
+                       value="application/json"
+                       data-component="header">
+                <br>
+                <p>Example: <code>application/json</code></p>
+            </div>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+                &nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="Accept" data-endpoint="GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id-"
+                       value="application/json"
+                       data-component="header">
+                <br>
+                <p>Example: <code>application/json</code></p>
+            </div>
+            <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>league_id</code></b>&nbsp;&nbsp;
+                <small>integer</small>&nbsp;
+                &nbsp;
+                <input type="number" style="display: none"
+                       step="any" name="league_id"
+                       data-endpoint="GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id-"
+                       value="1"
+                       data-component="url">
+                <br>
+                <p>The ID of the league. Example: <code>1</code></p>
+            </div>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>multiplayerGame_id</code></b>&nbsp;&nbsp;
+                <small>integer</small>&nbsp;
+                &nbsp;
+                <input type="number" style="display: none"
+                       step="any" name="multiplayerGame_id"
+                       data-endpoint="GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id-"
+                       value="5"
+                       data-component="url">
+                <br>
+                <p>The ID of the multiplayerGame. Example: <code>5</code></p>
+            </div>
+        </form>
+
+        <h2 id="endpoints-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--join">POST
+            api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}/join</h2>
+
+        <p>
+        </p>
+
+
+        <span id="example-requests-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--join">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "http://localhost:8001/api/leagues/1/multiplayer-games/5/join" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost:8001/api/leagues/1/multiplayer-games/5/join"
+);
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "POST",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+        <span id="example-responses-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--join">
+</span>
+        <span id="execution-results-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--join" hidden>
+    <blockquote>Received response<span
+            id="execution-response-status-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--join"></span>:
+    </blockquote>
+    <pre class="json"><code
+            id="execution-response-content-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--join"
+            data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+        <span id="execution-error-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--join" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--join">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+        <form id="form-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--join" data-method="POST"
+              data-path="api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}/join"
+              data-authed="0"
+              data-hasfiles="0"
+              data-isarraybody="0"
+              autocomplete="off"
+              onsubmit="event.preventDefault(); executeTryOut('POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--join', this);">
+            <h3>
+                Request&nbsp;&nbsp;&nbsp;
+                <button type="button"
+                        style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-tryout-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--join"
+                        onclick="tryItOut('POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--join');">
+                    Try it out ⚡
+                </button>
+                <button type="button"
+                        style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-canceltryout-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--join"
+                        onclick="cancelTryOut('POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--join');"
+                        hidden>Cancel 🛑
+                </button>&nbsp;&nbsp;
+                <button type="submit"
+                        style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-executetryout-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--join"
+                        data-initial-text="Send Request 💥"
+                        data-loading-text="⏱ Sending..."
+                        hidden>Send Request 💥
+                </button>
+            </h3>
+            <p>
+                <small class="badge badge-black">POST</small>
+                <b><code>api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}/join</code></b>
+            </p>
+            <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+                &nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="Content-Type"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--join"
+                       value="application/json"
+                       data-component="header">
+                <br>
+                <p>Example: <code>application/json</code></p>
+            </div>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+                &nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="Accept"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--join"
+                       value="application/json"
+                       data-component="header">
+                <br>
+                <p>Example: <code>application/json</code></p>
+            </div>
+            <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>league_id</code></b>&nbsp;&nbsp;
+                <small>integer</small>&nbsp;
+                &nbsp;
+                <input type="number" style="display: none"
+                       step="any" name="league_id"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--join"
+                       value="1"
+                       data-component="url">
+                <br>
+                <p>The ID of the league. Example: <code>1</code></p>
+            </div>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>multiplayerGame_id</code></b>&nbsp;&nbsp;
+                <small>integer</small>&nbsp;
+                &nbsp;
+                <input type="number" style="display: none"
+                       step="any" name="multiplayerGame_id"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--join"
+                       value="5"
+                       data-component="url">
+                <br>
+                <p>The ID of the multiplayerGame. Example: <code>5</code></p>
+            </div>
+        </form>
+
+        <h2 id="endpoints-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--leave">POST
+            api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}/leave</h2>
+
+        <p>
+        </p>
+
+
+        <span id="example-requests-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--leave">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "http://localhost:8001/api/leagues/1/multiplayer-games/5/leave" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost:8001/api/leagues/1/multiplayer-games/5/leave"
+);
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "POST",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+        <span id="example-responses-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--leave">
+</span>
+        <span id="execution-results-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--leave" hidden>
+    <blockquote>Received response<span
+            id="execution-response-status-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--leave"></span>:
+    </blockquote>
+    <pre class="json"><code
+            id="execution-response-content-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--leave"
+            data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+        <span id="execution-error-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--leave" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--leave">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+        <form id="form-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--leave" data-method="POST"
+              data-path="api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}/leave"
+              data-authed="0"
+              data-hasfiles="0"
+              data-isarraybody="0"
+              autocomplete="off"
+              onsubmit="event.preventDefault(); executeTryOut('POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--leave', this);">
+            <h3>
+                Request&nbsp;&nbsp;&nbsp;
+                <button type="button"
+                        style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-tryout-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--leave"
+                        onclick="tryItOut('POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--leave');">
+                    Try it out ⚡
+                </button>
+                <button type="button"
+                        style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-canceltryout-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--leave"
+                        onclick="cancelTryOut('POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--leave');"
+                        hidden>Cancel 🛑
+                </button>&nbsp;&nbsp;
+                <button type="submit"
+                        style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-executetryout-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--leave"
+                        data-initial-text="Send Request 💥"
+                        data-loading-text="⏱ Sending..."
+                        hidden>Send Request 💥
+                </button>
+            </h3>
+            <p>
+                <small class="badge badge-black">POST</small>
+                <b><code>api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}/leave</code></b>
+            </p>
+            <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+                &nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="Content-Type"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--leave"
+                       value="application/json"
+                       data-component="header">
+                <br>
+                <p>Example: <code>application/json</code></p>
+            </div>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+                &nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="Accept"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--leave"
+                       value="application/json"
+                       data-component="header">
+                <br>
+                <p>Example: <code>application/json</code></p>
+            </div>
+            <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>league_id</code></b>&nbsp;&nbsp;
+                <small>integer</small>&nbsp;
+                &nbsp;
+                <input type="number" style="display: none"
+                       step="any" name="league_id"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--leave"
+                       value="1"
+                       data-component="url">
+                <br>
+                <p>The ID of the league. Example: <code>1</code></p>
+            </div>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>multiplayerGame_id</code></b>&nbsp;&nbsp;
+                <small>integer</small>&nbsp;
+                &nbsp;
+                <input type="number" style="display: none"
+                       step="any" name="multiplayerGame_id"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--leave"
+                       value="5"
+                       data-component="url">
+                <br>
+                <p>The ID of the multiplayerGame. Example: <code>5</code></p>
+            </div>
+        </form>
+
+        <h2 id="endpoints-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--action">POST
+            api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}/action</h2>
+
+        <p>
+        </p>
+
+
+        <span id="example-requests-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--action">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "http://localhost:8001/api/leagues/1/multiplayer-games/5/action" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --data "{
+    \"action\": \"record_turn\",
+    \"target_user_id\": 16,
+    \"acting_user_id\": 16,
+    \"card_type\": \"hand_shot\"
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost:8001/api/leagues/1/multiplayer-games/5/action"
+);
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+let body = {
+    "action": "record_turn",
+    "target_user_id": 16,
+    "acting_user_id": 16,
+    "card_type": "hand_shot"
+};
+
+fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+        <span id="example-responses-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--action">
+</span>
+        <span id="execution-results-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--action" hidden>
+    <blockquote>Received response<span
+            id="execution-response-status-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--action"></span>:
+    </blockquote>
+    <pre class="json"><code
+            id="execution-response-content-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--action"
+            data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+        <span id="execution-error-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--action" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--action">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+        <form id="form-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--action" data-method="POST"
+              data-path="api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}/action"
+              data-authed="0"
+              data-hasfiles="0"
+              data-isarraybody="0"
+              autocomplete="off"
+              onsubmit="event.preventDefault(); executeTryOut('POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--action', this);">
+            <h3>
+                Request&nbsp;&nbsp;&nbsp;
+                <button type="button"
+                        style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-tryout-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--action"
+                        onclick="tryItOut('POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--action');">
+                    Try it out ⚡
+                </button>
+                <button type="button"
+                        style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-canceltryout-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--action"
+                        onclick="cancelTryOut('POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--action');"
+                        hidden>Cancel 🛑
+                </button>&nbsp;&nbsp;
+                <button type="submit"
+                        style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-executetryout-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--action"
+                        data-initial-text="Send Request 💥"
+                        data-loading-text="⏱ Sending..."
+                        hidden>Send Request 💥
+                </button>
+            </h3>
+            <p>
+                <small class="badge badge-black">POST</small>
+                <b><code>api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}/action</code></b>
+            </p>
+            <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+                &nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="Content-Type"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--action"
+                       value="application/json"
+                       data-component="header">
+                <br>
+                <p>Example: <code>application/json</code></p>
+            </div>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+                &nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="Accept"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--action"
+                       value="application/json"
+                       data-component="header">
+                <br>
+                <p>Example: <code>application/json</code></p>
+            </div>
+            <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>league_id</code></b>&nbsp;&nbsp;
+                <small>integer</small>&nbsp;
+                &nbsp;
+                <input type="number" style="display: none"
+                       step="any" name="league_id"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--action"
+                       value="1"
+                       data-component="url">
+                <br>
+                <p>The ID of the league. Example: <code>1</code></p>
+            </div>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>multiplayerGame_id</code></b>&nbsp;&nbsp;
+                <small>integer</small>&nbsp;
+                &nbsp;
+                <input type="number" style="display: none"
+                       step="any" name="multiplayerGame_id"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--action"
+                       value="5"
+                       data-component="url">
+                <br>
+                <p>The ID of the multiplayerGame. Example: <code>5</code></p>
+            </div>
+            <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+            <div style=" padding-left: 28px;  clear: unset;">
+                <b style="line-height: 2;"><code>action</code></b>&nbsp;&nbsp;
+                <small>string</small>&nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="action"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--action"
+                       value="record_turn"
+                       data-component="body">
+                <br>
+                <p>Example: <code>record_turn</code></p>
+                Must be one of:
+                <ul style="list-style-type: square;">
+                    <li><code>increment_lives</code></li>
+                    <li><code>decrement_lives</code></li>
+                    <li><code>use_card</code></li>
+                    <li><code>record_turn</code></li>
+                </ul>
+            </div>
+            <div style=" padding-left: 28px;  clear: unset;">
+                <b style="line-height: 2;"><code>target_user_id</code></b>&nbsp;&nbsp;
+                <small>integer</small>&nbsp;
+                <i>optional</i> &nbsp;
+                <input type="number" style="display: none"
+                       step="any" name="target_user_id"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--action"
+                       value="16"
+                       data-component="body">
+                <br>
+                <p>The <code>id</code> of an existing record in the users table. Example: <code>16</code></p>
+            </div>
+            <div style=" padding-left: 28px;  clear: unset;">
+                <b style="line-height: 2;"><code>acting_user_id</code></b>&nbsp;&nbsp;
+                <small>integer</small>&nbsp;
+                <i>optional</i> &nbsp;
+                <input type="number" style="display: none"
+                       step="any" name="acting_user_id"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--action"
+                       value="16"
+                       data-component="body">
+                <br>
+                <p>The <code>id</code> of an existing record in the users table. Example: <code>16</code></p>
+            </div>
+            <div style=" padding-left: 28px;  clear: unset;">
+                <b style="line-height: 2;"><code>card_type</code></b>&nbsp;&nbsp;
+                <small>string</small>&nbsp;
+                <i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                       name="card_type"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--action"
+                       value="hand_shot"
+                       data-component="body">
+                <br>
+                <p>This field is required when <code>action</code> is <code>use_card</code>. Example:
+                    <code>hand_shot</code></p>
+                Must be one of:
+                <ul style="list-style-type: square;">
+                    <li><code>skip_turn</code></li>
+                    <li><code>pass_turn</code></li>
+                    <li><code>hand_shot</code></li>
+                </ul>
+            </div>
+        </form>
+
+        <h2 id="endpoints-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--finish">POST
+            api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}/finish</h2>
+
+        <p>
+        </p>
+
+
+        <span id="example-requests-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--finish">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "http://localhost:8001/api/leagues/1/multiplayer-games/5/finish" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost:8001/api/leagues/1/multiplayer-games/5/finish"
+);
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "POST",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+        <span id="example-responses-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--finish">
+</span>
+        <span id="execution-results-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--finish" hidden>
+    <blockquote>Received response<span
+            id="execution-response-status-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--finish"></span>:
+    </blockquote>
+    <pre class="json"><code
+            id="execution-response-content-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--finish"
+            data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+        <span id="execution-error-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--finish" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--finish">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+        <form id="form-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--finish" data-method="POST"
+              data-path="api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}/finish"
+              data-authed="0"
+              data-hasfiles="0"
+              data-isarraybody="0"
+              autocomplete="off"
+              onsubmit="event.preventDefault(); executeTryOut('POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--finish', this);">
+            <h3>
+                Request&nbsp;&nbsp;&nbsp;
+                <button type="button"
+                        style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-tryout-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--finish"
+                        onclick="tryItOut('POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--finish');">
+                    Try it out ⚡
+                </button>
+                <button type="button"
+                        style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-canceltryout-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--finish"
+                        onclick="cancelTryOut('POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--finish');"
+                        hidden>Cancel 🛑
+                </button>&nbsp;&nbsp;
+                <button type="submit"
+                        style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-executetryout-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--finish"
+                        data-initial-text="Send Request 💥"
+                        data-loading-text="⏱ Sending..."
+                        hidden>Send Request 💥
+                </button>
+            </h3>
+            <p>
+                <small class="badge badge-black">POST</small>
+                <b><code>api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}/finish</code></b>
+            </p>
+            <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+                &nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="Content-Type"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--finish"
+                       value="application/json"
+                       data-component="header">
+                <br>
+                <p>Example: <code>application/json</code></p>
+            </div>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+                &nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="Accept"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--finish"
+                       value="application/json"
+                       data-component="header">
+                <br>
+                <p>Example: <code>application/json</code></p>
+            </div>
+            <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>league_id</code></b>&nbsp;&nbsp;
+                <small>integer</small>&nbsp;
+                &nbsp;
+                <input type="number" style="display: none"
+                       step="any" name="league_id"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--finish"
+                       value="1"
+                       data-component="url">
+                <br>
+                <p>The ID of the league. Example: <code>1</code></p>
+            </div>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>multiplayerGame_id</code></b>&nbsp;&nbsp;
+                <small>integer</small>&nbsp;
+                &nbsp;
+                <input type="number" style="display: none"
+                       step="any" name="multiplayerGame_id"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--finish"
+                       value="5"
+                       data-component="url">
+                <br>
+                <p>The ID of the multiplayerGame. Example: <code>5</code></p>
+            </div>
+        </form>
+
+        <h2 id="endpoints-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--set-moderator">POST
+            api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}/set-moderator</h2>
+
+        <p>
+        </p>
+
+
+        <span id="example-requests-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--set-moderator">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "http://localhost:8001/api/leagues/1/multiplayer-games/5/set-moderator" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost:8001/api/leagues/1/multiplayer-games/5/set-moderator"
+);
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "POST",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+        <span id="example-responses-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--set-moderator">
+</span>
+        <span id="execution-results-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--set-moderator"
+              hidden>
+    <blockquote>Received response<span
+            id="execution-response-status-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--set-moderator"></span>:
+    </blockquote>
+    <pre class="json"><code
+            id="execution-response-content-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--set-moderator"
+            data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+        <span id="execution-error-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--set-moderator"
+              hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code
+            id="execution-error-message-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--set-moderator">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+        <form id="form-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--set-moderator"
+              data-method="POST"
+              data-path="api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}/set-moderator"
+              data-authed="0"
+              data-hasfiles="0"
+              data-isarraybody="0"
+              autocomplete="off"
+              onsubmit="event.preventDefault(); executeTryOut('POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--set-moderator', this);">
+            <h3>
+                Request&nbsp;&nbsp;&nbsp;
+                <button type="button"
+                        style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-tryout-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--set-moderator"
+                        onclick="tryItOut('POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--set-moderator');">
+                    Try it out ⚡
+                </button>
+                <button type="button"
+                        style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-canceltryout-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--set-moderator"
+                        onclick="cancelTryOut('POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--set-moderator');"
+                        hidden>Cancel 🛑
+                </button>&nbsp;&nbsp;
+                <button type="submit"
+                        style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-executetryout-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--set-moderator"
+                        data-initial-text="Send Request 💥"
+                        data-loading-text="⏱ Sending..."
+                        hidden>Send Request 💥
+                </button>
+            </h3>
+            <p>
+                <small class="badge badge-black">POST</small>
+                <b><code>api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}/set-moderator</code></b>
+            </p>
+            <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+                &nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="Content-Type"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--set-moderator"
+                       value="application/json"
+                       data-component="header">
+                <br>
+                <p>Example: <code>application/json</code></p>
+            </div>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+                &nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="Accept"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--set-moderator"
+                       value="application/json"
+                       data-component="header">
+                <br>
+                <p>Example: <code>application/json</code></p>
+            </div>
+            <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>league_id</code></b>&nbsp;&nbsp;
+                <small>integer</small>&nbsp;
+                &nbsp;
+                <input type="number" style="display: none"
+                       step="any" name="league_id"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--set-moderator"
+                       value="1"
+                       data-component="url">
+                <br>
+                <p>The ID of the league. Example: <code>1</code></p>
+            </div>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>multiplayerGame_id</code></b>&nbsp;&nbsp;
+                <small>integer</small>&nbsp;
+                &nbsp;
+                <input type="number" style="display: none"
+                       step="any" name="multiplayerGame_id"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--set-moderator"
+                       value="5"
+                       data-component="url">
+                <br>
+                <p>The ID of the multiplayerGame. Example: <code>5</code></p>
+            </div>
+        </form>
+
+        <h2 id="endpoints-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--financial-summary">Get
+            financial summary for a game</h2>
+
+        <p>
+        </p>
+
+
+        <span id="example-requests-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--financial-summary">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "http://localhost:8001/api/leagues/1/multiplayer-games/5/financial-summary" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost:8001/api/leagues/1/multiplayer-games/5/financial-summary"
+);
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+        <span
+            id="example-responses-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--financial-summary">
+            <blockquote>
+            <p>Example response (401):</p>
+        </blockquote>
+                <details class="annotation">
+            <summary style="cursor: pointer;">
+                <small onclick="textContent = parentElement.parentElement.open ? 'Show headers' : 'Hide headers'">Show headers</small>
+            </summary>
+            <pre><code class="language-http">cache-control: no-cache, private
+content-type: application/json
+access-control-allow-origin: http://localhost:8001
+access-control-allow-credentials: true
+ </code></pre></details>         <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;message&quot;: &quot;Unauthenticated.&quot;
+}</code>
+ </pre>
+    </span>
+        <span id="execution-results-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--financial-summary"
+              hidden>
+    <blockquote>Received response<span
+            id="execution-response-status-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--financial-summary"></span>:
+    </blockquote>
+    <pre class="json"><code
+            id="execution-response-content-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--financial-summary"
+            data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+        <span id="execution-error-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--financial-summary"
+              hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code
+            id="execution-error-message-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--financial-summary">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+        <form id="form-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--financial-summary"
+              data-method="GET"
+              data-path="api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}/financial-summary"
+              data-authed="0"
+              data-hasfiles="0"
+              data-isarraybody="0"
+              autocomplete="off"
+              onsubmit="event.preventDefault(); executeTryOut('GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--financial-summary', this);">
+            <h3>
+                Request&nbsp;&nbsp;&nbsp;
+                <button type="button"
+                        style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-tryout-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--financial-summary"
+                        onclick="tryItOut('GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--financial-summary');">
+                    Try it out ⚡
+                </button>
+                <button type="button"
+                        style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-canceltryout-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--financial-summary"
+                        onclick="cancelTryOut('GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--financial-summary');"
+                        hidden>Cancel 🛑
+                </button>&nbsp;&nbsp;
+                <button type="submit"
+                        style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-executetryout-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--financial-summary"
+                        data-initial-text="Send Request 💥"
+                        data-loading-text="⏱ Sending..."
+                        hidden>Send Request 💥
+                </button>
+            </h3>
+            <p>
+                <small class="badge badge-green">GET</small>
+                <b><code>api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}/financial-summary</code></b>
+            </p>
+            <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+                &nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="Content-Type"
+                       data-endpoint="GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--financial-summary"
+                       value="application/json"
+                       data-component="header">
+                <br>
+                <p>Example: <code>application/json</code></p>
+            </div>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+                &nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="Accept"
+                       data-endpoint="GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--financial-summary"
+                       value="application/json"
+                       data-component="header">
+                <br>
+                <p>Example: <code>application/json</code></p>
+            </div>
+            <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>league_id</code></b>&nbsp;&nbsp;
+                <small>integer</small>&nbsp;
+                &nbsp;
+                <input type="number" style="display: none"
+                       step="any" name="league_id"
+                       data-endpoint="GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--financial-summary"
+                       value="1"
+                       data-component="url">
+                <br>
+                <p>The ID of the league. Example: <code>1</code></p>
+            </div>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>multiplayerGame_id</code></b>&nbsp;&nbsp;
+                <small>integer</small>&nbsp;
+                &nbsp;
+                <input type="number" style="display: none"
+                       step="any" name="multiplayerGame_id"
+                       data-endpoint="GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--financial-summary"
+                       value="5"
+                       data-component="url">
+                <br>
+                <p>The ID of the multiplayerGame. Example: <code>5</code></p>
+            </div>
+        </form>
+
+        <h2 id="endpoints-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--rating-summary">Get rating
+            summary for a game</h2>
+
+        <p>
+        </p>
+
+
+        <span id="example-requests-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--rating-summary">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "http://localhost:8001/api/leagues/1/multiplayer-games/5/rating-summary" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost:8001/api/leagues/1/multiplayer-games/5/rating-summary"
+);
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+        <span id="example-responses-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--rating-summary">
+            <blockquote>
+            <p>Example response (401):</p>
+        </blockquote>
+                <details class="annotation">
+            <summary style="cursor: pointer;">
+                <small onclick="textContent = parentElement.parentElement.open ? 'Show headers' : 'Hide headers'">Show headers</small>
+            </summary>
+            <pre><code class="language-http">cache-control: no-cache, private
+content-type: application/json
+access-control-allow-origin: http://localhost:8001
+access-control-allow-credentials: true
+ </code></pre></details>         <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;message&quot;: &quot;Unauthenticated.&quot;
+}</code>
+ </pre>
+    </span>
+        <span id="execution-results-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--rating-summary"
+              hidden>
+    <blockquote>Received response<span
+            id="execution-response-status-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--rating-summary"></span>:
+    </blockquote>
+    <pre class="json"><code
+            id="execution-response-content-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--rating-summary"
+            data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+        <span id="execution-error-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--rating-summary"
+              hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code
+            id="execution-error-message-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--rating-summary">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+        <form id="form-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--rating-summary"
+              data-method="GET"
+              data-path="api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}/rating-summary"
+              data-authed="0"
+              data-hasfiles="0"
+              data-isarraybody="0"
+              autocomplete="off"
+              onsubmit="event.preventDefault(); executeTryOut('GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--rating-summary', this);">
+            <h3>
+                Request&nbsp;&nbsp;&nbsp;
+                <button type="button"
+                        style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-tryout-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--rating-summary"
+                        onclick="tryItOut('GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--rating-summary');">
+                    Try it out ⚡
+                </button>
+                <button type="button"
+                        style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-canceltryout-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--rating-summary"
+                        onclick="cancelTryOut('GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--rating-summary');"
+                        hidden>Cancel 🛑
+                </button>&nbsp;&nbsp;
+                <button type="submit"
+                        style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-executetryout-GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--rating-summary"
+                        data-initial-text="Send Request 💥"
+                        data-loading-text="⏱ Sending..."
+                        hidden>Send Request 💥
+                </button>
+            </h3>
+            <p>
+                <small class="badge badge-green">GET</small>
+                <b><code>api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}/rating-summary</code></b>
+            </p>
+            <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+                &nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="Content-Type"
+                       data-endpoint="GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--rating-summary"
+                       value="application/json"
+                       data-component="header">
+                <br>
+                <p>Example: <code>application/json</code></p>
+            </div>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+                &nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="Accept"
+                       data-endpoint="GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--rating-summary"
+                       value="application/json"
+                       data-component="header">
+                <br>
+                <p>Example: <code>application/json</code></p>
+            </div>
+            <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>league_id</code></b>&nbsp;&nbsp;
+                <small>integer</small>&nbsp;
+                &nbsp;
+                <input type="number" style="display: none"
+                       step="any" name="league_id"
+                       data-endpoint="GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--rating-summary"
+                       value="1"
+                       data-component="url">
+                <br>
+                <p>The ID of the league. Example: <code>1</code></p>
+            </div>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>multiplayerGame_id</code></b>&nbsp;&nbsp;
+                <small>integer</small>&nbsp;
+                &nbsp;
+                <input type="number" style="display: none"
+                       step="any" name="multiplayerGame_id"
+                       data-endpoint="GETapi-leagues--league_id--multiplayer-games--multiplayerGame_id--rating-summary"
+                       value="5"
+                       data-component="url">
+                <br>
+                <p>The ID of the multiplayerGame. Example: <code>5</code></p>
+            </div>
+        </form>
+
+        <h2 id="endpoints-POSTapi-leagues--league_id--multiplayer-games">POST
+            api/leagues/{league_id}/multiplayer-games</h2>
+
+        <p>
+        </p>
+
+
+        <span id="example-requests-POSTapi-leagues--league_id--multiplayer-games">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "http://localhost:8001/api/leagues/1/multiplayer-games" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --data "{
+    \"name\": \"b\",
+    \"max_players\": 4,
+    \"registration_ends_at\": \"2051-06-14\",
+    \"allow_player_targeting\": false,
+    \"entrance_fee\": 39,
+    \"first_place_percent\": 7,
+    \"second_place_percent\": 16,
+    \"grand_final_percent\": 17,
+    \"penalty_fee\": 8
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost:8001/api/leagues/1/multiplayer-games"
+);
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+let body = {
+    "name": "b",
+    "max_players": 4,
+    "registration_ends_at": "2051-06-14",
+    "allow_player_targeting": false,
+    "entrance_fee": 39,
+    "first_place_percent": 7,
+    "second_place_percent": 16,
+    "grand_final_percent": 17,
+    "penalty_fee": 8
+};
+
+fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+        <span id="example-responses-POSTapi-leagues--league_id--multiplayer-games">
+</span>
+        <span id="execution-results-POSTapi-leagues--league_id--multiplayer-games" hidden>
+    <blockquote>Received response<span
+            id="execution-response-status-POSTapi-leagues--league_id--multiplayer-games"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-POSTapi-leagues--league_id--multiplayer-games"
+                            data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+        <span id="execution-error-POSTapi-leagues--league_id--multiplayer-games" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-POSTapi-leagues--league_id--multiplayer-games">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+        <form id="form-POSTapi-leagues--league_id--multiplayer-games" data-method="POST"
+              data-path="api/leagues/{league_id}/multiplayer-games"
+              data-authed="0"
+              data-hasfiles="0"
+              data-isarraybody="0"
+              autocomplete="off"
+              onsubmit="event.preventDefault(); executeTryOut('POSTapi-leagues--league_id--multiplayer-games', this);">
+            <h3>
+                Request&nbsp;&nbsp;&nbsp;
+                <button type="button"
+                        style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-tryout-POSTapi-leagues--league_id--multiplayer-games"
+                        onclick="tryItOut('POSTapi-leagues--league_id--multiplayer-games');">Try it out ⚡
+                </button>
+                <button type="button"
+                        style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-canceltryout-POSTapi-leagues--league_id--multiplayer-games"
+                        onclick="cancelTryOut('POSTapi-leagues--league_id--multiplayer-games');" hidden>Cancel 🛑
+                </button>&nbsp;&nbsp;
+                <button type="submit"
+                        style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-executetryout-POSTapi-leagues--league_id--multiplayer-games"
+                        data-initial-text="Send Request 💥"
+                        data-loading-text="⏱ Sending..."
+                        hidden>Send Request 💥
+                </button>
+            </h3>
+            <p>
+                <small class="badge badge-black">POST</small>
+                <b><code>api/leagues/{league_id}/multiplayer-games</code></b>
+            </p>
+            <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+                &nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="Content-Type" data-endpoint="POSTapi-leagues--league_id--multiplayer-games"
+                       value="application/json"
+                       data-component="header">
+                <br>
+                <p>Example: <code>application/json</code></p>
+            </div>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+                &nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="Accept" data-endpoint="POSTapi-leagues--league_id--multiplayer-games"
+                       value="application/json"
+                       data-component="header">
+                <br>
+                <p>Example: <code>application/json</code></p>
+            </div>
+            <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>league_id</code></b>&nbsp;&nbsp;
+                <small>integer</small>&nbsp;
+                &nbsp;
+                <input type="number" style="display: none"
+                       step="any" name="league_id" data-endpoint="POSTapi-leagues--league_id--multiplayer-games"
+                       value="1"
+                       data-component="url">
+                <br>
+                <p>The ID of the league. Example: <code>1</code></p>
+            </div>
+            <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+            <div style=" padding-left: 28px;  clear: unset;">
+                <b style="line-height: 2;"><code>name</code></b>&nbsp;&nbsp;
+                <small>string</small>&nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="name" data-endpoint="POSTapi-leagues--league_id--multiplayer-games"
+                       value="b"
+                       data-component="body">
+                <br>
+                <p>Must not be greater than 255 characters. Example: <code>b</code></p>
+            </div>
+            <div style=" padding-left: 28px;  clear: unset;">
+                <b style="line-height: 2;"><code>max_players</code></b>&nbsp;&nbsp;
+                <small>integer</small>&nbsp;
+                <i>optional</i> &nbsp;
+                <input type="number" style="display: none"
+                       step="any" name="max_players" data-endpoint="POSTapi-leagues--league_id--multiplayer-games"
+                       value="4"
+                       data-component="body">
+                <br>
+                <p>Must be at least 2. Must not be greater than 24. Example: <code>4</code></p>
+            </div>
+            <div style=" padding-left: 28px;  clear: unset;">
+                <b style="line-height: 2;"><code>registration_ends_at</code></b>&nbsp;&nbsp;
+                <small>string</small>&nbsp;
+                <i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                       name="registration_ends_at" data-endpoint="POSTapi-leagues--league_id--multiplayer-games"
+                       value="2051-06-14"
+                       data-component="body">
+                <br>
+                <p>Must be a valid date. Must be a date after <code>now</code>. Example: <code>2051-06-14</code></p>
+            </div>
+            <div style=" padding-left: 28px;  clear: unset;">
+                <b style="line-height: 2;"><code>allow_player_targeting</code></b>&nbsp;&nbsp;
+                <small>boolean</small>&nbsp;
+                <i>optional</i> &nbsp;
+                <label data-endpoint="POSTapi-leagues--league_id--multiplayer-games" style="display: none">
+                    <input type="radio" name="allow_player_targeting"
+                           value="true"
+                           data-endpoint="POSTapi-leagues--league_id--multiplayer-games"
+                           data-component="body">
+                    <code>true</code>
+                </label>
+                <label data-endpoint="POSTapi-leagues--league_id--multiplayer-games" style="display: none">
+                    <input type="radio" name="allow_player_targeting"
+                           value="false"
+                           data-endpoint="POSTapi-leagues--league_id--multiplayer-games"
+                           data-component="body">
+                    <code>false</code>
+                </label>
+                <br>
+                <p>Example: <code>false</code></p>
+            </div>
+            <div style=" padding-left: 28px;  clear: unset;">
+                <b style="line-height: 2;"><code>entrance_fee</code></b>&nbsp;&nbsp;
+                <small>integer</small>&nbsp;
+                <i>optional</i> &nbsp;
+                <input type="number" style="display: none"
+                       step="any" name="entrance_fee" data-endpoint="POSTapi-leagues--league_id--multiplayer-games"
+                       value="39"
+                       data-component="body">
+                <br>
+                <p>Must be at least 0. Example: <code>39</code></p>
+            </div>
+            <div style=" padding-left: 28px;  clear: unset;">
+                <b style="line-height: 2;"><code>first_place_percent</code></b>&nbsp;&nbsp;
+                <small>integer</small>&nbsp;
+                <i>optional</i> &nbsp;
+                <input type="number" style="display: none"
+                       step="any" name="first_place_percent"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games"
+                       value="7"
+                       data-component="body">
+                <br>
+                <p>Must be at least 0. Must not be greater than 100. Example: <code>7</code></p>
+            </div>
+            <div style=" padding-left: 28px;  clear: unset;">
+                <b style="line-height: 2;"><code>second_place_percent</code></b>&nbsp;&nbsp;
+                <small>integer</small>&nbsp;
+                <i>optional</i> &nbsp;
+                <input type="number" style="display: none"
+                       step="any" name="second_place_percent"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games"
+                       value="16"
+                       data-component="body">
+                <br>
+                <p>Must be at least 0. Must not be greater than 100. Example: <code>16</code></p>
+            </div>
+            <div style=" padding-left: 28px;  clear: unset;">
+                <b style="line-height: 2;"><code>grand_final_percent</code></b>&nbsp;&nbsp;
+                <small>integer</small>&nbsp;
+                <i>optional</i> &nbsp;
+                <input type="number" style="display: none"
+                       step="any" name="grand_final_percent"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games"
+                       value="17"
+                       data-component="body">
+                <br>
+                <p>Must be at least 0. Must not be greater than 100. Example: <code>17</code></p>
+            </div>
+            <div style=" padding-left: 28px;  clear: unset;">
+                <b style="line-height: 2;"><code>penalty_fee</code></b>&nbsp;&nbsp;
+                <small>integer</small>&nbsp;
+                <i>optional</i> &nbsp;
+                <input type="number" style="display: none"
+                       step="any" name="penalty_fee" data-endpoint="POSTapi-leagues--league_id--multiplayer-games"
+                       value="8"
+                       data-component="body">
+                <br>
+                <p>Must be at least 0. Example: <code>8</code></p>
+            </div>
+        </form>
+
+        <h2 id="endpoints-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--start">POST
+            api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}/start</h2>
+
+        <p>
+        </p>
+
+
+        <span id="example-requests-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--start">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "http://localhost:8001/api/leagues/1/multiplayer-games/5/start" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost:8001/api/leagues/1/multiplayer-games/5/start"
+);
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "POST",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+        <span id="example-responses-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--start">
+</span>
+        <span id="execution-results-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--start" hidden>
+    <blockquote>Received response<span
+            id="execution-response-status-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--start"></span>:
+    </blockquote>
+    <pre class="json"><code
+            id="execution-response-content-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--start"
+            data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+        <span id="execution-error-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--start" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--start">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+        <form id="form-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--start" data-method="POST"
+              data-path="api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}/start"
+              data-authed="0"
+              data-hasfiles="0"
+              data-isarraybody="0"
+              autocomplete="off"
+              onsubmit="event.preventDefault(); executeTryOut('POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--start', this);">
+            <h3>
+                Request&nbsp;&nbsp;&nbsp;
+                <button type="button"
+                        style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-tryout-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--start"
+                        onclick="tryItOut('POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--start');">
+                    Try it out ⚡
+                </button>
+                <button type="button"
+                        style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-canceltryout-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--start"
+                        onclick="cancelTryOut('POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--start');"
+                        hidden>Cancel 🛑
+                </button>&nbsp;&nbsp;
+                <button type="submit"
+                        style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-executetryout-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--start"
+                        data-initial-text="Send Request 💥"
+                        data-loading-text="⏱ Sending..."
+                        hidden>Send Request 💥
+                </button>
+            </h3>
+            <p>
+                <small class="badge badge-black">POST</small>
+                <b><code>api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}/start</code></b>
+            </p>
+            <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+                &nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="Content-Type"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--start"
+                       value="application/json"
+                       data-component="header">
+                <br>
+                <p>Example: <code>application/json</code></p>
+            </div>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+                &nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="Accept"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--start"
+                       value="application/json"
+                       data-component="header">
+                <br>
+                <p>Example: <code>application/json</code></p>
+            </div>
+            <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>league_id</code></b>&nbsp;&nbsp;
+                <small>integer</small>&nbsp;
+                &nbsp;
+                <input type="number" style="display: none"
+                       step="any" name="league_id"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--start"
+                       value="1"
+                       data-component="url">
+                <br>
+                <p>The ID of the league. Example: <code>1</code></p>
+            </div>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>multiplayerGame_id</code></b>&nbsp;&nbsp;
+                <small>integer</small>&nbsp;
+                &nbsp;
+                <input type="number" style="display: none"
+                       step="any" name="multiplayerGame_id"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--start"
+                       value="5"
+                       data-component="url">
+                <br>
+                <p>The ID of the multiplayerGame. Example: <code>5</code></p>
+            </div>
+        </form>
+
+        <h2 id="endpoints-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--cancel">POST
+            api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}/cancel</h2>
+
+        <p>
+        </p>
+
+
+        <span id="example-requests-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--cancel">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "http://localhost:8001/api/leagues/1/multiplayer-games/5/cancel" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost:8001/api/leagues/1/multiplayer-games/5/cancel"
+);
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "POST",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+        <span id="example-responses-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--cancel">
+</span>
+        <span id="execution-results-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--cancel" hidden>
+    <blockquote>Received response<span
+            id="execution-response-status-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--cancel"></span>:
+    </blockquote>
+    <pre class="json"><code
+            id="execution-response-content-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--cancel"
+            data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+        <span id="execution-error-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--cancel" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--cancel">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+        <form id="form-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--cancel" data-method="POST"
+              data-path="api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}/cancel"
+              data-authed="0"
+              data-hasfiles="0"
+              data-isarraybody="0"
+              autocomplete="off"
+              onsubmit="event.preventDefault(); executeTryOut('POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--cancel', this);">
+            <h3>
+                Request&nbsp;&nbsp;&nbsp;
+                <button type="button"
+                        style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-tryout-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--cancel"
+                        onclick="tryItOut('POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--cancel');">
+                    Try it out ⚡
+                </button>
+                <button type="button"
+                        style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-canceltryout-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--cancel"
+                        onclick="cancelTryOut('POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--cancel');"
+                        hidden>Cancel 🛑
+                </button>&nbsp;&nbsp;
+                <button type="submit"
+                        style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-executetryout-POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--cancel"
+                        data-initial-text="Send Request 💥"
+                        data-loading-text="⏱ Sending..."
+                        hidden>Send Request 💥
+                </button>
+            </h3>
+            <p>
+                <small class="badge badge-black">POST</small>
+                <b><code>api/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}/cancel</code></b>
+            </p>
+            <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+                &nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="Content-Type"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--cancel"
+                       value="application/json"
+                       data-component="header">
+                <br>
+                <p>Example: <code>application/json</code></p>
+            </div>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+                &nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="Accept"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--cancel"
+                       value="application/json"
+                       data-component="header">
+                <br>
+                <p>Example: <code>application/json</code></p>
+            </div>
+            <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>league_id</code></b>&nbsp;&nbsp;
+                <small>integer</small>&nbsp;
+                &nbsp;
+                <input type="number" style="display: none"
+                       step="any" name="league_id"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--cancel"
+                       value="1"
+                       data-component="url">
+                <br>
+                <p>The ID of the league. Example: <code>1</code></p>
+            </div>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>multiplayerGame_id</code></b>&nbsp;&nbsp;
+                <small>integer</small>&nbsp;
+                &nbsp;
+                <input type="number" style="display: none"
+                       step="any" name="multiplayerGame_id"
+                       data-endpoint="POSTapi-leagues--league_id--multiplayer-games--multiplayerGame_id--cancel"
+                       value="5"
+                       data-component="url">
+                <br>
+                <p>The ID of the multiplayerGame. Example: <code>5</code></p>
+            </div>
+        </form>
+
+        <h2 id="endpoints-POSTapi-admin-leagues--league_id--add-player">Add a new player to a league with automatic
+            registration</h2>
+
+        <p>
+        </p>
+
+
+        <span id="example-requests-POSTapi-admin-leagues--league_id--add-player">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "http://localhost:8001/api/admin/leagues/1/add-player" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --data "{
+    \"firstname\": \"b\",
+    \"lastname\": \"n\",
+    \"email\": \"ashly64@example.com\",
+    \"phone\": \"v\",
+    \"password\": \"BNvYgxwmi\\/#iw\\/kX\"
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost:8001/api/admin/leagues/1/add-player"
+);
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+let body = {
+    "firstname": "b",
+    "lastname": "n",
+    "email": "ashly64@example.com",
+    "phone": "v",
+    "password": "BNvYgxwmi\/#iw\/kX"
+};
+
+fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+        <span id="example-responses-POSTapi-admin-leagues--league_id--add-player">
+</span>
+        <span id="execution-results-POSTapi-admin-leagues--league_id--add-player" hidden>
+    <blockquote>Received response<span
+            id="execution-response-status-POSTapi-admin-leagues--league_id--add-player"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-POSTapi-admin-leagues--league_id--add-player"
+                            data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+        <span id="execution-error-POSTapi-admin-leagues--league_id--add-player" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-POSTapi-admin-leagues--league_id--add-player">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+        <form id="form-POSTapi-admin-leagues--league_id--add-player" data-method="POST"
+              data-path="api/admin/leagues/{league_id}/add-player"
+              data-authed="0"
+              data-hasfiles="0"
+              data-isarraybody="0"
+              autocomplete="off"
+              onsubmit="event.preventDefault(); executeTryOut('POSTapi-admin-leagues--league_id--add-player', this);">
+            <h3>
+                Request&nbsp;&nbsp;&nbsp;
+                <button type="button"
+                        style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-tryout-POSTapi-admin-leagues--league_id--add-player"
+                        onclick="tryItOut('POSTapi-admin-leagues--league_id--add-player');">Try it out ⚡
+                </button>
+                <button type="button"
+                        style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-canceltryout-POSTapi-admin-leagues--league_id--add-player"
+                        onclick="cancelTryOut('POSTapi-admin-leagues--league_id--add-player');" hidden>Cancel 🛑
+                </button>&nbsp;&nbsp;
+                <button type="submit"
+                        style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-executetryout-POSTapi-admin-leagues--league_id--add-player"
+                        data-initial-text="Send Request 💥"
+                        data-loading-text="⏱ Sending..."
+                        hidden>Send Request 💥
+                </button>
+            </h3>
+            <p>
+                <small class="badge badge-black">POST</small>
+                <b><code>api/admin/leagues/{league_id}/add-player</code></b>
+            </p>
+            <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+                &nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="Content-Type" data-endpoint="POSTapi-admin-leagues--league_id--add-player"
+                       value="application/json"
+                       data-component="header">
+                <br>
+                <p>Example: <code>application/json</code></p>
+            </div>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+                &nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="Accept" data-endpoint="POSTapi-admin-leagues--league_id--add-player"
+                       value="application/json"
+                       data-component="header">
+                <br>
+                <p>Example: <code>application/json</code></p>
+            </div>
+            <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>league_id</code></b>&nbsp;&nbsp;
+                <small>integer</small>&nbsp;
+                &nbsp;
+                <input type="number" style="display: none"
+                       step="any" name="league_id" data-endpoint="POSTapi-admin-leagues--league_id--add-player"
+                       value="1"
+                       data-component="url">
+                <br>
+                <p>The ID of the league. Example: <code>1</code></p>
+            </div>
+            <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+            <div style=" padding-left: 28px;  clear: unset;">
+                <b style="line-height: 2;"><code>firstname</code></b>&nbsp;&nbsp;
+                <small>string</small>&nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="firstname" data-endpoint="POSTapi-admin-leagues--league_id--add-player"
+                       value="b"
+                       data-component="body">
+                <br>
+                <p>Must not be greater than 255 characters. Example: <code>b</code></p>
+            </div>
+            <div style=" padding-left: 28px;  clear: unset;">
+                <b style="line-height: 2;"><code>lastname</code></b>&nbsp;&nbsp;
+                <small>string</small>&nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="lastname" data-endpoint="POSTapi-admin-leagues--league_id--add-player"
+                       value="n"
+                       data-component="body">
+                <br>
+                <p>Must not be greater than 255 characters. Example: <code>n</code></p>
+            </div>
+            <div style=" padding-left: 28px;  clear: unset;">
+                <b style="line-height: 2;"><code>email</code></b>&nbsp;&nbsp;
+                <small>string</small>&nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="email" data-endpoint="POSTapi-admin-leagues--league_id--add-player"
+                       value="ashly64@example.com"
+                       data-component="body">
+                <br>
+                <p>Must be a valid email address. Must not be greater than 255 characters. Example: <code>ashly64@example.com</code>
+                </p>
+            </div>
+            <div style=" padding-left: 28px;  clear: unset;">
+                <b style="line-height: 2;"><code>phone</code></b>&nbsp;&nbsp;
+                <small>string</small>&nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="phone" data-endpoint="POSTapi-admin-leagues--league_id--add-player"
+                       value="v"
+                       data-component="body">
+                <br>
+                <p>Must not be greater than 15 characters. Example: <code>v</code></p>
+            </div>
+            <div style=" padding-left: 28px;  clear: unset;">
+                <b style="line-height: 2;"><code>password</code></b>&nbsp;&nbsp;
+                <small>string</small>&nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="password" data-endpoint="POSTapi-admin-leagues--league_id--add-player"
+                       value="BNvYgxwmi/#iw/kX"
+                       data-component="body">
+                <br>
+                <p>Must be at least 8 characters. Example: <code>BNvYgxwmi/#iw/kX</code></p>
+            </div>
+        </form>
+
+        <h2 id="endpoints-POSTapi-admin-leagues--league_id--multiplayer-games--multiplayerGame_id--add-player">Add a new
+            player to a multiplayer game with automatic registration</h2>
+
+        <p>
+        </p>
+
+
+        <span id="example-requests-POSTapi-admin-leagues--league_id--multiplayer-games--multiplayerGame_id--add-player">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "http://localhost:8001/api/admin/leagues/1/multiplayer-games/5/add-player" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --data "{
+    \"firstname\": \"b\",
+    \"lastname\": \"n\",
+    \"email\": \"ashly64@example.com\",
+    \"phone\": \"v\",
+    \"password\": \"BNvYgxwmi\\/#iw\\/kX\"
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost:8001/api/admin/leagues/1/multiplayer-games/5/add-player"
+);
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+let body = {
+    "firstname": "b",
+    "lastname": "n",
+    "email": "ashly64@example.com",
+    "phone": "v",
+    "password": "BNvYgxwmi\/#iw\/kX"
+};
+
+fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+        <span
+            id="example-responses-POSTapi-admin-leagues--league_id--multiplayer-games--multiplayerGame_id--add-player">
+</span>
+        <span id="execution-results-POSTapi-admin-leagues--league_id--multiplayer-games--multiplayerGame_id--add-player"
+              hidden>
+    <blockquote>Received response<span
+            id="execution-response-status-POSTapi-admin-leagues--league_id--multiplayer-games--multiplayerGame_id--add-player"></span>:
+    </blockquote>
+    <pre class="json"><code
+            id="execution-response-content-POSTapi-admin-leagues--league_id--multiplayer-games--multiplayerGame_id--add-player"
+            data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+        <span id="execution-error-POSTapi-admin-leagues--league_id--multiplayer-games--multiplayerGame_id--add-player"
+              hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code
+            id="execution-error-message-POSTapi-admin-leagues--league_id--multiplayer-games--multiplayerGame_id--add-player">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+        <form id="form-POSTapi-admin-leagues--league_id--multiplayer-games--multiplayerGame_id--add-player"
+              data-method="POST"
+              data-path="api/admin/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}/add-player"
+              data-authed="0"
+              data-hasfiles="0"
+              data-isarraybody="0"
+              autocomplete="off"
+              onsubmit="event.preventDefault(); executeTryOut('POSTapi-admin-leagues--league_id--multiplayer-games--multiplayerGame_id--add-player', this);">
+            <h3>
+                Request&nbsp;&nbsp;&nbsp;
+                <button type="button"
+                        style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-tryout-POSTapi-admin-leagues--league_id--multiplayer-games--multiplayerGame_id--add-player"
+                        onclick="tryItOut('POSTapi-admin-leagues--league_id--multiplayer-games--multiplayerGame_id--add-player');">
+                    Try it out ⚡
+                </button>
+                <button type="button"
+                        style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-canceltryout-POSTapi-admin-leagues--league_id--multiplayer-games--multiplayerGame_id--add-player"
+                        onclick="cancelTryOut('POSTapi-admin-leagues--league_id--multiplayer-games--multiplayerGame_id--add-player');"
+                        hidden>Cancel 🛑
+                </button>&nbsp;&nbsp;
+                <button type="submit"
+                        style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-executetryout-POSTapi-admin-leagues--league_id--multiplayer-games--multiplayerGame_id--add-player"
+                        data-initial-text="Send Request 💥"
+                        data-loading-text="⏱ Sending..."
+                        hidden>Send Request 💥
+                </button>
+            </h3>
+            <p>
+                <small class="badge badge-black">POST</small>
+                <b><code>api/admin/leagues/{league_id}/multiplayer-games/{multiplayerGame_id}/add-player</code></b>
+            </p>
+            <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+                &nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="Content-Type"
+                       data-endpoint="POSTapi-admin-leagues--league_id--multiplayer-games--multiplayerGame_id--add-player"
+                       value="application/json"
+                       data-component="header">
+                <br>
+                <p>Example: <code>application/json</code></p>
+            </div>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+                &nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="Accept"
+                       data-endpoint="POSTapi-admin-leagues--league_id--multiplayer-games--multiplayerGame_id--add-player"
+                       value="application/json"
+                       data-component="header">
+                <br>
+                <p>Example: <code>application/json</code></p>
+            </div>
+            <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>league_id</code></b>&nbsp;&nbsp;
+                <small>integer</small>&nbsp;
+                &nbsp;
+                <input type="number" style="display: none"
+                       step="any" name="league_id"
+                       data-endpoint="POSTapi-admin-leagues--league_id--multiplayer-games--multiplayerGame_id--add-player"
+                       value="1"
+                       data-component="url">
+                <br>
+                <p>The ID of the league. Example: <code>1</code></p>
+            </div>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>multiplayerGame_id</code></b>&nbsp;&nbsp;
+                <small>integer</small>&nbsp;
+                &nbsp;
+                <input type="number" style="display: none"
+                       step="any" name="multiplayerGame_id"
+                       data-endpoint="POSTapi-admin-leagues--league_id--multiplayer-games--multiplayerGame_id--add-player"
+                       value="5"
+                       data-component="url">
+                <br>
+                <p>The ID of the multiplayerGame. Example: <code>5</code></p>
+            </div>
+            <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+            <div style=" padding-left: 28px;  clear: unset;">
+                <b style="line-height: 2;"><code>firstname</code></b>&nbsp;&nbsp;
+                <small>string</small>&nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="firstname"
+                       data-endpoint="POSTapi-admin-leagues--league_id--multiplayer-games--multiplayerGame_id--add-player"
+                       value="b"
+                       data-component="body">
+                <br>
+                <p>Must not be greater than 255 characters. Example: <code>b</code></p>
+            </div>
+            <div style=" padding-left: 28px;  clear: unset;">
+                <b style="line-height: 2;"><code>lastname</code></b>&nbsp;&nbsp;
+                <small>string</small>&nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="lastname"
+                       data-endpoint="POSTapi-admin-leagues--league_id--multiplayer-games--multiplayerGame_id--add-player"
+                       value="n"
+                       data-component="body">
+                <br>
+                <p>Must not be greater than 255 characters. Example: <code>n</code></p>
+            </div>
+            <div style=" padding-left: 28px;  clear: unset;">
+                <b style="line-height: 2;"><code>email</code></b>&nbsp;&nbsp;
+                <small>string</small>&nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="email"
+                       data-endpoint="POSTapi-admin-leagues--league_id--multiplayer-games--multiplayerGame_id--add-player"
+                       value="ashly64@example.com"
+                       data-component="body">
+                <br>
+                <p>Must be a valid email address. Must not be greater than 255 characters. Example: <code>ashly64@example.com</code>
+                </p>
+            </div>
+            <div style=" padding-left: 28px;  clear: unset;">
+                <b style="line-height: 2;"><code>phone</code></b>&nbsp;&nbsp;
+                <small>string</small>&nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="phone"
+                       data-endpoint="POSTapi-admin-leagues--league_id--multiplayer-games--multiplayerGame_id--add-player"
+                       value="v"
+                       data-component="body">
+                <br>
+                <p>Must not be greater than 15 characters. Example: <code>v</code></p>
+            </div>
+            <div style=" padding-left: 28px;  clear: unset;">
+                <b style="line-height: 2;"><code>password</code></b>&nbsp;&nbsp;
+                <small>string</small>&nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="password"
+                       data-endpoint="POSTapi-admin-leagues--league_id--multiplayer-games--multiplayerGame_id--add-player"
+                       value="BNvYgxwmi/#iw/kX"
+                       data-component="body">
+                <br>
+                <p>Must be at least 8 characters. Example: <code>BNvYgxwmi/#iw/kX</code></p>
+            </div>
+        </form>
 
         <h2 id="endpoints-GETapi-cities">Get list of cities</h2>
 
@@ -2310,6 +4712,196 @@ You can check the Dev Tools console for debugging information.</code></pre>
             </div>
         </form>
 
+        <h2 id="endpoints-PUTapi-profile">Update the authenticated user&#039;s profile</h2>
+
+        <p>
+        </p>
+
+
+        <span id="example-requests-PUTapi-profile">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request PUT \
+    "http://localhost:8001/api/profile" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --data "{
+    \"firstname\": \"b\",
+    \"lastname\": \"n\",
+    \"email\": \"ashly64@example.com\",
+    \"phone\": \"v\"
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost:8001/api/profile"
+);
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+let body = {
+    "firstname": "b",
+    "lastname": "n",
+    "email": "ashly64@example.com",
+    "phone": "v"
+};
+
+fetch(url, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+        <span id="example-responses-PUTapi-profile">
+</span>
+        <span id="execution-results-PUTapi-profile" hidden>
+    <blockquote>Received response<span
+            id="execution-response-status-PUTapi-profile"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-PUTapi-profile"
+                            data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+        <span id="execution-error-PUTapi-profile" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-PUTapi-profile">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+        <form id="form-PUTapi-profile" data-method="PUT"
+              data-path="api/profile"
+              data-authed="0"
+              data-hasfiles="0"
+              data-isarraybody="0"
+              autocomplete="off"
+              onsubmit="event.preventDefault(); executeTryOut('PUTapi-profile', this);">
+            <h3>
+                Request&nbsp;&nbsp;&nbsp;
+                <button type="button"
+                        style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-tryout-PUTapi-profile"
+                        onclick="tryItOut('PUTapi-profile');">Try it out ⚡
+                </button>
+                <button type="button"
+                        style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-canceltryout-PUTapi-profile"
+                        onclick="cancelTryOut('PUTapi-profile');" hidden>Cancel 🛑
+                </button>&nbsp;&nbsp;
+                <button type="submit"
+                        style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                        id="btn-executetryout-PUTapi-profile"
+                        data-initial-text="Send Request 💥"
+                        data-loading-text="⏱ Sending..."
+                        hidden>Send Request 💥
+                </button>
+            </h3>
+            <p>
+                <small class="badge badge-darkblue">PUT</small>
+                <b><code>api/profile</code></b>
+            </p>
+            <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+                &nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="Content-Type" data-endpoint="PUTapi-profile"
+                       value="application/json"
+                       data-component="header">
+                <br>
+                <p>Example: <code>application/json</code></p>
+            </div>
+            <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+                &nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="Accept" data-endpoint="PUTapi-profile"
+                       value="application/json"
+                       data-component="header">
+                <br>
+                <p>Example: <code>application/json</code></p>
+            </div>
+            <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+            <div style=" padding-left: 28px;  clear: unset;">
+                <b style="line-height: 2;"><code>firstname</code></b>&nbsp;&nbsp;
+                <small>string</small>&nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="firstname" data-endpoint="PUTapi-profile"
+                       value="b"
+                       data-component="body">
+                <br>
+                <p>Must not be greater than 255 characters. Example: <code>b</code></p>
+            </div>
+            <div style=" padding-left: 28px;  clear: unset;">
+                <b style="line-height: 2;"><code>lastname</code></b>&nbsp;&nbsp;
+                <small>string</small>&nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="lastname" data-endpoint="PUTapi-profile"
+                       value="n"
+                       data-component="body">
+                <br>
+                <p>Must not be greater than 255 characters. Example: <code>n</code></p>
+            </div>
+            <div style=" padding-left: 28px;  clear: unset;">
+                <b style="line-height: 2;"><code>email</code></b>&nbsp;&nbsp;
+                <small>string</small>&nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="email" data-endpoint="PUTapi-profile"
+                       value="ashly64@example.com"
+                       data-component="body">
+                <br>
+                <p>Must be a valid email address. Must not be greater than 255 characters. Example: <code>ashly64@example.com</code>
+                </p>
+            </div>
+            <div style=" padding-left: 28px;  clear: unset;">
+                <b style="line-height: 2;"><code>phone</code></b>&nbsp;&nbsp;
+                <small>string</small>&nbsp;
+                &nbsp;
+                <input type="text" style="display: none"
+                       name="phone" data-endpoint="PUTapi-profile"
+                       value="v"
+                       data-component="body">
+                <br>
+                <p>Must not be greater than 15 characters. Example: <code>v</code></p>
+            </div>
+            <div style=" padding-left: 28px;  clear: unset;">
+                <b style="line-height: 2;"><code>home_city_id</code></b>&nbsp;&nbsp;
+                <small>string</small>&nbsp;
+                <i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                       name="home_city_id" data-endpoint="PUTapi-profile"
+                       value=""
+                       data-component="body">
+                <br>
+                <p>The <code>id</code> of an existing record in the cities table.</p>
+            </div>
+            <div style=" padding-left: 28px;  clear: unset;">
+                <b style="line-height: 2;"><code>home_club_id</code></b>&nbsp;&nbsp;
+                <small>string</small>&nbsp;
+                <i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                       name="home_club_id" data-endpoint="PUTapi-profile"
+                       value=""
+                       data-component="body">
+                <br>
+                <p>The <code>id</code> of an existing record in the clubs table.</p>
+            </div>
+        </form>
+
         <h2 id="endpoints-PUTapi-profile-password">Update the authenticated user&#039;s password</h2>
 
         <p>
@@ -3206,14 +5798,15 @@ access-control-allow-credentials: true
         ],
         &quot;created_at&quot;: null,
         &quot;updated_at&quot;: null,
-        &quot;matches_count&quot;: 0,
+        &quot;matches_count&quot;: 1,
         &quot;invite_days_expire&quot;: 3,
         &quot;max_players&quot;: 0,
         &quot;max_score&quot;: 0,
-        &quot;active_players&quot;: 2,
+        &quot;active_players&quot;: 3,
         &quot;game_id&quot;: 3,
         &quot;game&quot;: &quot;Пул 8&quot;,
-        &quot;game_type&quot;: &quot;pool&quot;
+        &quot;game_type&quot;: &quot;pool&quot;,
+        &quot;game_multiplayer&quot;: false
     },
     {
         &quot;id&quot;: 2,
@@ -3223,7 +5816,7 @@ access-control-allow-credentials: true
         &quot;has_rating&quot;: true,
         &quot;started_at&quot;: null,
         &quot;finished_at&quot;: null,
-        &quot;start_rating&quot;: 1000,
+        &quot;start_rating&quot;: 0,
         &quot;rating_change_for_winners_rule&quot;: [
             {
                 &quot;weak&quot;: 25,
@@ -3298,10 +5891,11 @@ access-control-allow-credentials: true
         &quot;invite_days_expire&quot;: 3,
         &quot;max_players&quot;: 0,
         &quot;max_score&quot;: 0,
-        &quot;active_players&quot;: 0,
+        &quot;active_players&quot;: 9,
         &quot;game_id&quot;: 5,
         &quot;game&quot;: &quot;Killer pool&quot;,
-        &quot;game_type&quot;: &quot;pool&quot;
+        &quot;game_type&quot;: &quot;pool&quot;,
+        &quot;game_multiplayer&quot;: true
     }
 ]</code>
  </pre>
@@ -3504,14 +6098,15 @@ access-control-allow-credentials: true
     ],
     &quot;created_at&quot;: null,
     &quot;updated_at&quot;: null,
-    &quot;matches_count&quot;: 0,
+    &quot;matches_count&quot;: 1,
     &quot;invite_days_expire&quot;: 3,
     &quot;max_players&quot;: 0,
     &quot;max_score&quot;: 0,
-    &quot;active_players&quot;: 2,
+    &quot;active_players&quot;: 3,
     &quot;game_id&quot;: 3,
     &quot;game&quot;: &quot;Пул 8&quot;,
-    &quot;game_type&quot;: &quot;pool&quot;
+    &quot;game_type&quot;: &quot;pool&quot;,
+    &quot;game_multiplayer&quot;: false
 }</code>
  </pre>
     </span>
@@ -3619,9 +6214,9 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"name\": \"b\",
     \"picture\": \"n\",
     \"details\": \"architecto\",
-    \"has_rating\": true,
-    \"started_at\": \"2025-05-06T19:11:02\",
-    \"finished_at\": \"2051-05-30\",
+    \"has_rating\": false,
+    \"started_at\": \"2025-05-21T09:41:14\",
+    \"finished_at\": \"2051-06-14\",
     \"start_rating\": 39,
     \"rating_change_for_winners_rule\": \"architecto\",
     \"rating_change_for_losers_rule\": \"architecto\",
@@ -3647,9 +6242,9 @@ let body = {
     "name": "b",
     "picture": "n",
     "details": "architecto",
-    "has_rating": true,
-    "started_at": "2025-05-06T19:11:02",
-    "finished_at": "2051-05-30",
+    "has_rating": false,
+    "started_at": "2025-05-21T09:41:14",
+    "finished_at": "2051-06-14",
     "start_rating": 39,
     "rating_change_for_winners_rule": "architecto",
     "rating_change_for_losers_rule": "architecto",
@@ -3812,7 +6407,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                     <code>false</code>
                 </label>
                 <br>
-                <p>Example: <code>true</code></p>
+                <p>Example: <code>false</code></p>
             </div>
             <div style=" padding-left: 28px;  clear: unset;">
                 <b style="line-height: 2;"><code>started_at</code></b>&nbsp;&nbsp;
@@ -3820,10 +6415,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
                 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                        name="started_at" data-endpoint="POSTapi-leagues"
-                       value="2025-05-06T19:11:02"
+                       value="2025-05-21T09:41:14"
                        data-component="body">
                 <br>
-                <p>Must be a valid date. Example: <code>2025-05-06T19:11:02</code></p>
+                <p>Must be a valid date. Example: <code>2025-05-21T09:41:14</code></p>
             </div>
             <div style=" padding-left: 28px;  clear: unset;">
                 <b style="line-height: 2;"><code>finished_at</code></b>&nbsp;&nbsp;
@@ -3831,10 +6426,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
                 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                        name="finished_at" data-endpoint="POSTapi-leagues"
-                       value="2051-05-30"
+                       value="2051-06-14"
                        data-component="body">
                 <br>
-                <p>Must be a valid date. Must be a date after or equal to <code>started_at</code>. Example: <code>2051-05-30</code>
+                <p>Must be a valid date. Must be a date after or equal to <code>started_at</code>. Example: <code>2051-06-14</code>
                 </p>
             </div>
             <div style=" padding-left: 28px;  clear: unset;">
@@ -3927,8 +6522,8 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"picture\": \"n\",
     \"details\": \"architecto\",
     \"has_rating\": false,
-    \"started_at\": \"2025-05-06T19:11:02\",
-    \"finished_at\": \"2051-05-30\",
+    \"started_at\": \"2025-05-21T09:41:14\",
+    \"finished_at\": \"2051-06-14\",
     \"start_rating\": 39,
     \"rating_change_for_winners_rule\": \"architecto\",
     \"rating_change_for_losers_rule\": \"architecto\",
@@ -3955,8 +6550,8 @@ let body = {
     "picture": "n",
     "details": "architecto",
     "has_rating": false,
-    "started_at": "2025-05-06T19:11:02",
-    "finished_at": "2051-05-30",
+    "started_at": "2025-05-21T09:41:14",
+    "finished_at": "2051-06-14",
     "start_rating": 39,
     "rating_change_for_winners_rule": "architecto",
     "rating_change_for_losers_rule": "architecto",
@@ -4143,10 +6738,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
                 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                        name="started_at" data-endpoint="PUTapi-leagues--id-"
-                       value="2025-05-06T19:11:02"
+                       value="2025-05-21T09:41:14"
                        data-component="body">
                 <br>
-                <p>Must be a valid date. Example: <code>2025-05-06T19:11:02</code></p>
+                <p>Must be a valid date. Example: <code>2025-05-21T09:41:14</code></p>
             </div>
             <div style=" padding-left: 28px;  clear: unset;">
                 <b style="line-height: 2;"><code>finished_at</code></b>&nbsp;&nbsp;
@@ -4154,10 +6749,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
                 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                        name="finished_at" data-endpoint="PUTapi-leagues--id-"
-                       value="2051-05-30"
+                       value="2051-06-14"
                        data-component="body">
                 <br>
-                <p>Must be a valid date. Must be a date after or equal to <code>started_at</code>. Example: <code>2051-05-30</code>
+                <p>Must be a valid date. Must be a date after or equal to <code>started_at</code>. Example: <code>2051-06-14</code>
                 </p>
             </div>
             <div style=" padding-left: 28px;  clear: unset;">
@@ -5217,7 +7812,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://localhost:8001/api/leagues/1/players/match-games/16/accept" \
+    "http://localhost:8001/api/leagues/1/players/match-games/2/accept" \
     --header "Authorization: Bearer 123456" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
@@ -5225,7 +7820,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost:8001/api/leagues/1/players/match-games/16/accept"
+    "http://localhost:8001/api/leagues/1/players/match-games/2/accept"
 );
 
 const headers = {
@@ -5349,10 +7944,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
                 <input type="number" style="display: none"
                        step="any" name="matchGame_id"
                        data-endpoint="POSTapi-leagues--league_id--players-match-games--matchGame_id--accept"
-                       value="16"
+                       value="2"
                        data-component="url">
                 <br>
-                <p>The ID of the matchGame. Example: <code>16</code></p>
+                <p>The ID of the matchGame. Example: <code>2</code></p>
             </div>
         </form>
 
@@ -5370,7 +7965,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://localhost:8001/api/leagues/1/players/match-games/16/decline" \
+    "http://localhost:8001/api/leagues/1/players/match-games/2/decline" \
     --header "Authorization: Bearer 123456" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
@@ -5378,7 +7973,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost:8001/api/leagues/1/players/match-games/16/decline"
+    "http://localhost:8001/api/leagues/1/players/match-games/2/decline"
 );
 
 const headers = {
@@ -5502,10 +8097,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
                 <input type="number" style="display: none"
                        step="any" name="matchGame_id"
                        data-endpoint="POSTapi-leagues--league_id--players-match-games--matchGame_id--decline"
-                       value="16"
+                       value="2"
                        data-component="url">
                 <br>
-                <p>The ID of the matchGame. Example: <code>16</code></p>
+                <p>The ID of the matchGame. Example: <code>2</code></p>
             </div>
         </form>
 
@@ -5523,7 +8118,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://localhost:8001/api/leagues/1/players/match-games/16/send-result" \
+    "http://localhost:8001/api/leagues/1/players/match-games/2/send-result" \
     --header "Authorization: Bearer 123456" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
@@ -5536,7 +8131,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost:8001/api/leagues/1/players/match-games/16/send-result"
+    "http://localhost:8001/api/leagues/1/players/match-games/2/send-result"
 );
 
 const headers = {
@@ -5666,10 +8261,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
                 <input type="number" style="display: none"
                        step="any" name="matchGame_id"
                        data-endpoint="POSTapi-leagues--league_id--players-match-games--matchGame_id--send-result"
-                       value="16"
+                       value="2"
                        data-component="url">
                 <br>
-                <p>The ID of the matchGame. Example: <code>16</code></p>
+                <p>The ID of the matchGame. Example: <code>2</code></p>
             </div>
             <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
             <div style=" padding-left: 28px;  clear: unset;">

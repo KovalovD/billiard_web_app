@@ -30,10 +30,10 @@ class AuthService
      * Register a new user
      *
      * @param  RegisterDTO  $registerDTO
+     * @param  bool  $selfRegistration
      * @return array{user: User, token: string}
-     * @throws Exception
      */
-    public function register(RegisterDTO $registerDTO): array
+    public function register(RegisterDTO $registerDTO, bool $selfRegistration = true): array
     {
         try {
             // Create the user
@@ -46,10 +46,12 @@ class AuthService
             ]);
 
             // Log in the user
-            Auth::login($user, true);
-
-            // Create token using repository
-            $token = $this->repository->createToken($user, 'web')->plainTextToken;
+            if ($selfRegistration) {
+                Auth::login($user, true);
+                $token = $this->repository->createToken($user, 'web')->plainTextToken;
+            } else {
+                $token = '';
+            }
 
             return [
                 'user'  => $user,
@@ -70,7 +72,8 @@ class AuthService
     public function login(LoginDTO $loginDTO): array
     {
         // Attempt authentication
-        if (!Auth::attempt(['email' => $loginDTO->email, 'password' => $loginDTO->password], true)) {
+        if (!Auth::attempt(['email' => $loginDTO->email, 'password' => $loginDTO->password, 'is_active' => true],
+            true)) {
             throw ValidationException::withMessages([
                 'email' => ['These credentials do not match our records.'],
             ]);
