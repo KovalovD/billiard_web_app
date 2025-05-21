@@ -8,6 +8,7 @@ import RatingSummaryCard from '@/Components/RatingSummaryCard.vue';
 import GameActionPanel from '@/Components/GameActionPanel.vue';
 import TimeFundCard from '@/Components/TimeFundCard.vue';
 import MultiplayerGameSummary from '@/Components/MultiplayerGameSummary.vue';
+import {ArrowLeftIcon, TrophyIcon, UserIcon, UserPlusIcon} from 'lucide-vue-next';
 import {Button, Card, CardContent, CardHeader, CardTitle} from '@/Components/ui';
 import {useAuth} from '@/composables/useAuth';
 import {useMultiplayerGames} from '@/composables/useMultiplayerGames';
@@ -15,9 +16,9 @@ import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
 import type {League, MultiplayerGame, MultiplayerGamePlayer} from '@/types/api';
 import {Head, Link} from '@inertiajs/vue3';
-import {ArrowLeftIcon, TrophyIcon, UserIcon} from 'lucide-vue-next';
 import {computed, onMounted, ref, watch} from 'vue';
 import GameFinishModal from "@/Components/GameFinishModal.vue";
+import AddPlayerModal from "@/Components/AddPlayerModal.vue";
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -46,6 +47,18 @@ const showFinishModal = ref(false);
 const showModeratorModal = ref(false);
 const actionFeedback = ref<{ type: 'success' | 'error', message: string } | null>(null);
 const activeTab = ref<'game' | 'prizes' | 'ratings' | 'timefund'>('game');
+
+// Add to existing refs
+const showAddPlayerModal = ref(false);
+
+// Add method to handle player addition
+const handlePlayerAdded = async () => {
+    await fetchGame();
+    actionFeedback.value = {
+        type: 'success',
+        message: 'Player added successfully'
+    };
+};
 
 // Computed properties
 const formattedStatusMessage = computed(() => {
@@ -387,7 +400,6 @@ onMounted(() => {
                         <TrophyIcon class="mr-2 h-4 w-4"/>
                         Finish Game
                     </Button>
-
                     <Button
                         v-if="game?.status === 'in_progress' && (isAdmin || isModerator)"
                         variant="outline"
@@ -396,9 +408,16 @@ onMounted(() => {
                         <UserIcon class="mr-2 h-4 w-4"/>
                         Change Moderator
                     </Button>
+                    <Button
+                        v-if="isAdmin && game?.status === 'registration'"
+                        variant="outline"
+                        @click="showAddPlayerModal = true"
+                    >
+                        <UserPlusIcon class="mr-2 h-4 w-4"/>
+                        Add Player
+                    </Button>
                 </div>
             </div>
-
             <!-- Status Message -->
             <div
                 v-if="formattedStatusMessage"
@@ -684,5 +703,15 @@ onMounted(() => {
         :show="showFinishModal"
         @close="showFinishModal = false"
         @finished="handleGameFinished"
+    />
+
+    <AddPlayerModal
+        v-if="isAdmin && game"
+        :entity-id="gameId"
+        :entity-type="'match'"
+        :league-id="leagueId"
+        :show="showAddPlayerModal"
+        @added="handlePlayerAdded"
+        @close="showAddPlayerModal = false"
     />
 </template>

@@ -5,7 +5,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const navButton = document.getElementById('nav-button');
     const menuWrapper = document.querySelector('.tocify-wrapper');
-
     function toggleSidebar(event) {
         event.preventDefault();
         if (menuWrapper) {
@@ -13,14 +12,12 @@ document.addEventListener('DOMContentLoaded', function () {
             navButton.classList.toggle('open');
         }
     }
-
     function closeSidebar() {
         if (menuWrapper) {
             menuWrapper.classList.remove('open');
             navButton.classList.remove('open');
         }
     }
-
     navButton.addEventListener('click', toggleSidebar);
 
     window.hljs.highlightAll();
