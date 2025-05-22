@@ -53,8 +53,6 @@ const error = ref<string | null>(null);
 
 // Modal states
 const showAddModal = ref(false);
-const showUpdateModal = ref(false);
-const selectedTournament = ref<OfficialRatingTournament | null>(null);
 
 // Form data
 const addForm = ref({
@@ -63,10 +61,6 @@ const addForm = ref({
     is_counting: true
 });
 
-const updateForm = ref({
-    rating_coefficient: 1.0,
-    is_counting: true
-});
 
 // API composables
 const fetchRatingApi = officialRatingsApi.fetchOfficialRating(props.ratingId);
@@ -78,10 +72,6 @@ const recalculateApi = officialRatingsApi.recalculateRatingPositions(props.ratin
 // Computed
 const activeTournaments = computed(() => {
     return tournaments.value.filter(t => t.is_counting);
-});
-
-const inactiveTournaments = computed(() => {
-    return tournaments.value.filter(t => !t.is_counting);
 });
 
 const filteredAvailableTournaments = computed(() => {
@@ -132,15 +122,6 @@ const openAddModal = () => {
         is_counting: true
     };
     showAddModal.value = true;
-};
-
-const openUpdateModal = (tournament: OfficialRatingTournament) => {
-    selectedTournament.value = tournament;
-    updateForm.value = {
-        rating_coefficient: tournament.rating_coefficient,
-        is_counting: tournament.is_counting
-    };
-    showUpdateModal.value = true;
 };
 
 const addTournament = async () => {

@@ -176,10 +176,6 @@ const handleCancel = () => {
     router.visit(`/tournaments/${props.tournamentId}`);
 };
 
-const formatDate = (dateString: string): string => {
-    return dateString;
-};
-
 onMounted(() => {
     loadTournament();
     fetchGames();

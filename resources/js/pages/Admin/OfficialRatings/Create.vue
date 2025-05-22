@@ -60,6 +60,7 @@ const fetchGames = async () => {
     isLoadingGames.value = true;
     try {
         games.value = await apiClient<Game[]>('/api/available-games');
+        // eslint-disable-next-line
     } catch (err: any) {
         error.value = 'Failed to load games';
     } finally {

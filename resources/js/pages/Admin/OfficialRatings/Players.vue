@@ -53,7 +53,6 @@ const error = ref<string | null>(null);
 // Modal states
 const showAddModal = ref(false);
 const showAddNewModal = ref(false);
-const selectedPlayer = ref<OfficialRatingPlayer | null>(null);
 
 // Form data
 const addForm = ref({
@@ -89,10 +88,6 @@ const filteredPlayers = computed(() => {
         return players.value;
     }
     return players.value.filter(p => p.is_active);
-});
-
-const topPlayers = computed(() => {
-    return filteredPlayers.value.slice(0, 10);
 });
 
 const getPositionBadgeClass = (position: number): string => {
