@@ -68,6 +68,11 @@ class DatabaseSeeder extends Seeder
                 'type'           => GameType::Pool,
                 'is_multiplayer' => 1,
             ],
+            [
+                'name'           => 'Пул 8,9,10,14+1',
+                'type'           => GameType::Pool,
+                'is_multiplayer' => 0,
+            ],
         ]);
 
         Country::create([

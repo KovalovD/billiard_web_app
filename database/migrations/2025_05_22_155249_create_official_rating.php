@@ -14,7 +14,7 @@ return new class extends Migration {
             $table->text('description')->nullable(); // Описание
             $table->foreignIdFor(Game::class)->constrained(); // Вид бильярда
             $table->boolean('is_active')->default(true); // Активен ли рейтинг
-            $table->integer('initial_rating')->default(1000); // Начальный рейтинг
+            $table->integer('initial_rating')->default(0); // Начальный рейтинг
             $table->string('calculation_method')->default('tournament_points'); // Метод расчета
             $table->json('rating_rules')->nullable(); // Правила начисления очков
             $table->timestamps();
