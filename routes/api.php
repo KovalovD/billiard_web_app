@@ -1,5 +1,6 @@
 <?php
 
+use App\Core\Http\Controllers\GameController;
 use App\Core\Http\Middleware\AdminMiddleware;
 use App\Leagues\Http\Controllers\AdminPlayersController;
 use App\Leagues\Http\Controllers\LeaguesController;
@@ -37,6 +38,8 @@ Route::middleware(['auth:sanctum', AdminMiddleware::class])->group(function () {
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('my-leagues-and-challenges', [LeaguesController::class, 'myLeaguesAndChallenges']);
+    Route::get('available-games', [GameController::class, 'availableGames']);
+
     Route::get('games', [LeaguesController::class, 'availableGames']);
 
     Route::group(['prefix' => 'profile'], static function () {

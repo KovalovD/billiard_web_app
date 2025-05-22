@@ -59,7 +59,7 @@ const calculationMethods = [
 const fetchGames = async () => {
     isLoadingGames.value = true;
     try {
-        games.value = await apiClient<Game[]>('/api/leagues/available-games');
+        games.value = await apiClient<Game[]>('/api/available-games');
     } catch (err: any) {
         error.value = 'Failed to load games';
     } finally {

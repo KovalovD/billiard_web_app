@@ -86,7 +86,7 @@ watch(() => form.value.city_id, (newCityId) => {
 const fetchGames = async () => {
     isLoadingGames.value = true;
     try {
-        games.value = await apiClient<Game[]>('/api/leagues/available-games');
+        games.value = await apiClient<Game[]>('/api/available-games');
     } catch (error) {
         console.error('Failed to load games:', error);
     } finally {

@@ -77,7 +77,7 @@ const fetchData = async () => {
     try {
         const [ratingResponse, gamesResponse] = await Promise.all([
             fetchOfficialRating(props.ratingId).execute(),
-            apiClient<Game[]>('/api/leagues/available-games')
+            apiClient<Game[]>('/api/available-games')
         ]);
 
         if (ratingResponse) {
@@ -85,13 +85,13 @@ const fetchData = async () => {
 
             // Initialize form with existing data
             form.value = {
-                name: rating.value.name,
-                description: rating.value.description,
-                game_id: rating.value.game?.id || 0,
-                is_active: rating.value.is_active,
-                initial_rating: rating.value.initial_rating,
-                calculation_method: rating.value.calculation_method,
-                rating_rules: rating.value.rating_rules
+                name: rating.value?.name,
+                description: rating.value?.description,
+                game_id: rating.value?.game?.id || 0,
+                is_active: rating.value?.is_active,
+                initial_rating: rating.value?.initial_rating,
+                calculation_method: rating.value?.calculation_method,
+                rating_rules: rating.value?.rating_rules
             };
         }
 
