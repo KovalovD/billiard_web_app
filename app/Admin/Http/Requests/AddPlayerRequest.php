@@ -3,7 +3,7 @@
 namespace App\Admin\Http\Requests;
 
 use App\Core\Http\Requests\BaseFormRequest;
-use App\Rules\PhoneNumber;
+use App\Core\Rules\PhoneNumber;
 
 class AddPlayerRequest extends BaseFormRequest
 {

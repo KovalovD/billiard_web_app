@@ -283,3 +283,126 @@ export interface UserStats {
     highest_rating: number;
     average_rating: number;
 }
+
+export interface Tournament {
+    id: number;
+    name: string;
+    regulation?: string | null;
+    details?: string | null;
+    status: 'upcoming' | 'active' | 'completed' | 'cancelled';
+    status_display: string;
+    start_date: string;
+    end_date: string;
+    max_participants?: number | null;
+    entry_fee: number;
+    prize_pool: number;
+    prize_distribution?: any[] | null;
+    organizer?: string | null;
+    format?: string | null;
+    players_count: number;
+    is_registration_open: boolean;
+    is_active: boolean;
+    is_completed: boolean;
+    created_at: string;
+    updated_at: string;
+    game?: Game;
+    city?: City;
+    club?: Club;
+    players?: TournamentPlayer[];
+    winner?: TournamentPlayer;
+    top_players?: TournamentPlayer[];
+}
+
+export interface TournamentPlayer {
+    id: number;
+    tournament_id: number;
+    user_id: number;
+    position?: number | null;
+    rating_points: number;
+    prize_amount: number;
+    status: 'registered' | 'confirmed' | 'eliminated' | 'dnf';
+    status_display: string;
+    is_winner: boolean;
+    is_in_top_three: boolean;
+    registered_at: string;
+    created_at: string;
+    updated_at: string;
+    user?: User;
+    tournament?: Tournament;
+}
+
+export interface OfficialRating {
+    id: number;
+    name: string;
+    description?: string | null;
+    is_active: boolean;
+    initial_rating: number;
+    calculation_method: 'tournament_points' | 'elo' | 'custom';
+    rating_rules?: any[] | null;
+    players_count: number;
+    tournaments_count: number;
+    created_at: string;
+    updated_at: string;
+    game?: Game;
+    players?: OfficialRatingPlayer[];
+    tournaments?: OfficialRatingTournament[];
+    top_players?: OfficialRatingPlayer[];
+}
+
+export interface OfficialRatingPlayer {
+    id: number;
+    official_rating_id: number;
+    user_id: number;
+    rating_points: number;
+    position: number;
+    tournaments_played: number;
+    tournaments_won: number;
+    win_rate: number;
+    last_tournament_at?: string | null;
+    is_active: boolean;
+    is_top_player: boolean;
+    created_at: string;
+    updated_at: string;
+    user?: User;
+    official_rating?: OfficialRating;
+}
+
+export interface OfficialRatingTournament {
+    id: number;
+    name: string;
+    start_date: string;
+    end_date: string;
+    status: string;
+    city?: string;
+    country?: string;
+    club?: string;
+    players_count: number;
+    rating_coefficient: number;
+    is_counting: boolean;
+}
+
+export interface CreateTournamentPayload {
+    name: string;
+    regulation?: string;
+    details?: string;
+    game_id: number;
+    city_id?: number;
+    club_id?: number;
+    start_date: string;
+    end_date: string;
+    max_participants?: number;
+    entry_fee?: number;
+    prize_pool?: number;
+    prize_distribution?: any[];
+    organizer?: string;
+    format?: string;
+}
+
+export interface CreateOfficialRatingPayload {
+    name: string;
+    description?: string;
+    game_id: number;
+    initial_rating?: number;
+    calculation_method?: 'tournament_points' | 'elo' | 'custom';
+    rating_rules?: any[];
+}
