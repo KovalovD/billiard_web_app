@@ -16,6 +16,7 @@
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.10.1",
         "micromagicman/laravel-telegram-webapp": "^4.0",
+        "phpoffice/phpspreadsheet": "^4.2",
         "tightenco/ziggy": "^2.4"
     },
     "require-dev": {

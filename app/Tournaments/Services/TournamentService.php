@@ -42,7 +42,7 @@ class TournamentService
             $query->whereYear('start_date', $filters['year']);
         }
 
-        return $query->orderBy('start_date', 'desc')->get();
+        return $query->orderBy('end_date', 'desc')->get();
     }
 
     /**

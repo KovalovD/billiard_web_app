@@ -21,7 +21,6 @@ return new class extends Migration {
             $table->boolean('is_active')->default(true); // Активен ли игрок
             $table->timestamps();
 
-            $table->unique(['official_rating_id', 'user_id']);
             $table->index(['official_rating_id', 'position']);
         });
     }

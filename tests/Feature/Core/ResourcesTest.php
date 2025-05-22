@@ -14,6 +14,7 @@ use App\Leagues\Http\Resources\MatchGameResource;
 use App\Leagues\Http\Resources\RatingResource;
 use App\Leagues\Models\League;
 use App\Leagues\Models\Rating;
+use App\Matches\Enums\GameType;
 use App\Matches\Http\Resources\MultiplayerGameResource;
 use App\Matches\Models\MatchGame;
 use App\Matches\Models\MultiplayerGame;
@@ -169,7 +170,7 @@ class ResourcesTest extends TestCase
 
         // Loaded relationships
         $this->assertEquals('Test Game', $transformed['game']);
-        $this->assertEquals('pool', $transformed['game_type']);
+        $this->assertEquals(GameType::Pool, $transformed['game_type']);
         $this->assertTrue($transformed['game_multiplayer']);
     }
 

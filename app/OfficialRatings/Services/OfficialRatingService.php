@@ -269,12 +269,12 @@ class OfficialRatingService
                 }
 
                 // Calculate rating points based on position and coefficient
-                $basePoints = $this->calculateRatingPoints($tournamentPlayer->position, $tournamentPlayers->count());
+                $basePoints = $tournamentPlayer->rating_points * $ratingTournament->pivot->rating_coefficient;
                 $adjustedPoints = (int) ($basePoints * $ratingTournament->pivot->rating_coefficient);
 
                 // Update player stats
                 $won = $tournamentPlayer->position === 1;
-                $ratingPlayer->addTournament($adjustedPoints, $won);
+                $ratingPlayer->addTournament($adjustedPoints, $tournament->end_date, $won);
 
                 $updatedCount++;
             }
@@ -284,25 +284,5 @@ class OfficialRatingService
 
             return $updatedCount;
         });
-    }
-
-    /**
-     * Calculate rating points based on tournament position
-     */
-    private function calculateRatingPoints(int $position, int $totalPlayers): int
-    {
-        // Simple point system - can be made more sophisticated
-        $basePoints = max(0, $totalPlayers - $position + 1);
-
-        // Bonus for top positions
-        if ($position === 1) {
-            $basePoints += (int) ($totalPlayers * 0.5); // Winner bonus
-        } elseif ($position === 2) {
-            $basePoints += (int) ($totalPlayers * 0.3); // Second place bonus
-        } elseif ($position === 3) {
-            $basePoints += (int) ($totalPlayers * 0.1); // Third place bonus
-        }
-
-        return $basePoints;
     }
 }
