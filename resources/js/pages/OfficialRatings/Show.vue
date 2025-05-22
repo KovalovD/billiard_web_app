@@ -35,16 +35,8 @@ const isLoadingTournaments = ref(true);
 const error = ref<string | null>(null);
 const activeTab = ref<'players' | 'tournaments'>('players');
 
-const topPlayers = computed(() => {
-    return players.value.filter(p => p.is_active).slice(0, 10);
-});
-
 const allActivePlayers = computed(() => {
     return players.value.filter(p => p.is_active);
-});
-
-const activeTournaments = computed(() => {
-    return tournaments.value.filter(t => t.is_counting);
 });
 
 const getPositionBadgeClass = (position: number): string => {
