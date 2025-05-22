@@ -73,8 +73,6 @@ const fetchRatingApi = officialRatingsApi.fetchOfficialRating(props.ratingId);
 const fetchTournamentsApi = officialRatingsApi.fetchRatingTournaments(props.ratingId);
 const fetchAvailableTournamentsApi = tournamentsApi.fetchTournaments();
 const addTournamentApi = officialRatingsApi.addTournamentToRating(props.ratingId);
-const removeTournamentApi = officialRatingsApi.removeTournamentFromRating(props.ratingId);
-const updateFromTournamentApi = officialRatingsApi.updateRatingFromTournament(props.ratingId);
 const recalculateApi = officialRatingsApi.recalculateRatingPositions(props.ratingId);
 
 // Computed
@@ -156,24 +154,31 @@ const addTournament = async () => {
 
     if (success) {
         showAddModal.value = false;
-        await fetchTournamentsData();
+        await fetchData();
     }
 };
 
 const removeTournament = async (tournamentId: number) => {
     if (!confirm('Are you sure you want to remove this tournament from the rating?')) return;
 
-    const success = await removeTournamentApi.execute(tournamentId);
+    const {
+        execute: removeTournamentApi
+    } = officialRatingsApi.removeTournamentFromRating(props.ratingId, tournamentId);
+    const success = await removeTournamentApi();
 
     if (success) {
-        await fetchTournamentsData();
+        await fetchData();
     }
 };
 
 const updateFromTournament = async (tournamentId: number) => {
     if (!confirm('This will update player ratings based on tournament results. Continue?')) return;
 
-    const success = await updateFromTournamentApi.execute(tournamentId);
+    const {
+        execute: updateRatingFromTournamentApi
+    } = officialRatingsApi.updateRatingFromTournament(props.ratingId, tournamentId);
+
+    const success = await updateRatingFromTournamentApi();
 
     if (success) {
         // Refresh data after update
@@ -381,7 +386,6 @@ onMounted(fetchData);
                                         <div class="flex gap-2">
                                             <Button
                                                 v-if="tournament.status === 'completed' && tournament.is_counting"
-                                                :disabled="updateFromTournamentApi.isActing.value"
                                                 size="sm"
                                                 variant="outline"
                                                 @click="updateFromTournament(tournament.id)"
@@ -389,7 +393,6 @@ onMounted(fetchData);
                                                 Update Rating
                                             </Button>
                                             <Button
-                                                :disabled="removeTournamentApi.isActing.value"
                                                 size="sm"
                                                 variant="destructive"
                                                 @click="removeTournament(tournament.id)"

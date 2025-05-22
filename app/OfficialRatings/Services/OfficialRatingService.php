@@ -124,7 +124,7 @@ class OfficialRatingService
         float $ratingCoefficient = 1.0,
         bool $isCounting = true,
     ): void {
-        $tournament = Tournament::findOrFail($tournamentId);
+        $tournament = Tournament::with('players')->findOrFail($tournamentId);
 
         // Check if tournament game matches rating game
         if ($tournament->game_id !== $rating->game_id) {
@@ -140,6 +140,10 @@ class OfficialRatingService
             'rating_coefficient' => $ratingCoefficient,
             'is_counting'        => $isCounting,
         ]);
+
+        foreach ($tournament->players as $tournamentPlayer) {
+            $this->addPlayerToRating($rating, $tournamentPlayer->user_id);
+        }
     }
 
     /**

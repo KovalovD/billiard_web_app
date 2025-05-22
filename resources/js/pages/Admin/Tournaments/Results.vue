@@ -6,6 +6,7 @@ import type {Tournament, TournamentPlayer} from '@/types/api';
 import {Head, Link} from '@inertiajs/vue3';
 import {ArrowLeftIcon, SaveIcon, TrophyIcon} from 'lucide-vue-next';
 import {computed, onMounted, ref} from 'vue';
+import {useToNumber} from "@vueuse/core";
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -46,7 +47,7 @@ const isFormValid = computed(() => {
 });
 
 const totalPrizeDistributed = computed(() => {
-    return resultForm.value.reduce((sum, result) => sum + result.prize_amount, 0);
+    return resultForm.value.reduce((sum, result) => useToNumber(sum).value + useToNumber(result.prize_amount).value, 0);
 });
 
 const fetchData = async () => {
@@ -54,23 +55,25 @@ const fetchData = async () => {
     error.value = null;
 
     try {
-        const [tournamentResponse, playersResponse] = await Promise.all([
-            fetchTournament(props.tournamentId).execute(),
-            fetchTournamentPlayers(props.tournamentId).execute()
-        ]);
+        const tournamentApi = fetchTournament(props.tournamentId);
+        const playersApi = fetchTournamentPlayers(props.tournamentId);
 
-        if (tournamentResponse && playersResponse) {
-            tournament.value = tournamentResponse.data.value!;
-            players.value = playersResponse.data.value!;
+        await Promise.all([tournamentApi.execute(), playersApi.execute()]);
 
-            // Initialize form with existing results or empty form
+        if (tournamentApi.data.value && playersApi.data.value) {
+            tournament.value = tournamentApi.data.value;
+            players.value = playersApi.data.value;
+
             initializeForm();
+        } else {
+            throw new Error('Данных нет');
         }
     } catch (err: any) {
-        error.value = err.message || 'Failed to load tournament data';
+        error.value = err.message ?? 'Failed to load tournament data';
     } finally {
         isLoading.value = false;
     }
+
 };
 
 const initializeForm = () => {
@@ -244,7 +247,7 @@ onMounted(() => {
                                 </thead>
                                 <tbody>
                                 <tr
-                                    v-for="(result, index) in resultForm"
+                                    v-for="result in resultForm"
                                     :key="result.player_id"
                                     class="border-b dark:border-gray-700"
                                 >
