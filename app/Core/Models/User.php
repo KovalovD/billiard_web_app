@@ -34,6 +34,7 @@ class User extends Authenticatable
         'home_club_id',
         'email_verified_at',
         'is_active',
+        'sex',
     ];
 
     /**
@@ -88,5 +89,14 @@ class User extends Authenticatable
     public function homeClub(): BelongsTo
     {
         return $this->belongsTo(Club::class);
+    }
+
+    public function getSexName(): string
+    {
+        return match ($this->sex) {
+            'M' => 'Male',
+            'F' => 'Female',
+            default => 'Unknown',
+        };
     }
 }

@@ -22,6 +22,7 @@ class UserResource extends JsonResource
             'is_admin'  => $this->is_admin,
             'home_city' => $this->whenLoaded('homeCity', fn() => new CityResource($this->homeCity)),
             'home_club' => $this->whenLoaded('homeClub', fn() => new ClubResource($this->homeClub)),
+            'sex' => $this->getSexName(),
         ];
     }
 }

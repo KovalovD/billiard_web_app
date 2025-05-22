@@ -27,6 +27,7 @@ return new class extends Migration {
             $table->json('prize_distribution')->nullable(); // Распределение призов
             $table->string('organizer')->nullable(); // Организатор
             $table->string('format')->nullable(); // Формат турнира
+            $table->boolean('is_old')->default(false); // Старый турнир
             $table->timestamps();
         });
     }
