@@ -334,7 +334,7 @@ export interface TournamentPlayer {
 export interface OfficialRating {
     id: number;
     name: string;
-    description?: string | null;
+    description: string | number;
     is_active: boolean;
     initial_rating: number;
     calculation_method: 'tournament_points' | 'elo' | 'custom';
@@ -400,9 +400,10 @@ export interface CreateTournamentPayload {
 
 export interface CreateOfficialRatingPayload {
     name: string;
-    description?: string;
+    description: string | number;
     game_id: number;
-    initial_rating?: number;
+    is_active: boolean;
+    initial_rating: number | null;
     calculation_method?: 'tournament_points' | 'elo' | 'custom';
-    rating_rules?: any[];
+    rating_rules: any[] | null | undefined;
 }

@@ -153,6 +153,12 @@ onMounted(() => {
                             Manage Players
                         </Button>
                     </Link>
+                  <Link :href="`/admin/tournaments/${tournament.id}/results`">
+                    <Button variant="secondary">
+                      <TrophyIcon class="mr-2 h-4 w-4"/>
+                      Manage Results
+                    </Button>
+                  </Link>
                 </div>
             </div>
 

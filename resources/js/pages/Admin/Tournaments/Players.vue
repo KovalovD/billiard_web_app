@@ -60,7 +60,7 @@ const showAddNewModal = ref(false);
 // API calls
 const tournamentApi = fetchTournament(props.tournamentId);
 const playersApi = fetchTournamentPlayers(props.tournamentId);
-const searchApi = searchUsers();
+
 const addExistingApi = addPlayerToTournament(props.tournamentId);
 const addNewApi = addNewPlayerToTournament(props.tournamentId);
 
@@ -84,10 +84,15 @@ const canAddPlayers = computed(() => {
 // Watch search query
 watch(searchQuery, async (newQuery) => {
     if (newQuery.length >= 2) {
+        const {
+            data: success,
+            execute: searchUsersExecute,
+        } = searchUsers(newQuery);
         isSearching.value = true;
-        const success = await searchApi.execute(newQuery);
-        if (success && searchApi.data.value) {
-            searchResults.value = searchApi.data.value;
+        await searchUsersExecute();
+
+        if (success && success.value) {
+            searchResults.value = success.value;
         }
         isSearching.value = false;
     } else {

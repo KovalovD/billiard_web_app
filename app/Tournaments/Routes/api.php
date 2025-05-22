@@ -32,7 +32,7 @@ Route::middleware(['auth:sanctum', AdminMiddleware::class])
 
         // Tournament management
         Route::post('/{tournament}/results', [AdminTournamentsController::class, 'setResults']);
-        Route::patch('/{tournament}/status', [AdminTournamentsController::class, 'changeStatus']);
+        Route::post('/{tournament}/status', [AdminTournamentsController::class, 'changeStatus']);
 
         // Utilities
         Route::get('/search-users', [AdminTournamentsController::class, 'searchUsers']);
