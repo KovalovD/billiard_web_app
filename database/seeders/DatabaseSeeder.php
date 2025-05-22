@@ -113,7 +113,7 @@ class DatabaseSeeder extends Seeder
                 'name'        => 'B2B Killer Pool League',
                 'has_rating'  => true,
                 'game_id'     => 5,
-                'rating_type' => RatingType::Elo,
+                'rating_type' => RatingType::KillerPool,
             ],
         ]);
 

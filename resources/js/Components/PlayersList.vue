@@ -19,12 +19,6 @@ const emit = defineEmits(['select-player', 'increment-lives', 'decrement-lives']
 
 const sortedPlayers = computed(() => {
     return [...props.players].sort((a, b) => {
-        // If highlighting current turn is enabled, put current turn player first
-        if (props.highlightCurrentTurn) {
-            if (a.is_current_turn && !b.is_current_turn) return -1;
-            if (!a.is_current_turn && b.is_current_turn) return 1;
-        }
-
         // Otherwise, sort by turn order
         return (a.turn_order || 999) - (b.turn_order || 999);
     });
