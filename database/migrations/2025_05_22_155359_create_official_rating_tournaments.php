@@ -17,7 +17,6 @@ return new class extends Migration {
             $table->boolean('is_counting')->default(true); // Засчитывается ли в рейтинг
             $table->timestamps();
 
-            $table->unique('official_rating_id', 'official_rating_id_uniq');
             $table->unique('tournament_id', 'tournament_id_uniq');
         });
     }

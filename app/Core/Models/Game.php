@@ -17,11 +17,12 @@ class Game extends Model
     protected $fillable = [
         'name',
         'rules',
-        'type' => GameType::class,
+        'type',
         'is_multiplayer',
     ];
 
     protected $casts = [
+        'type' => GameType::class,
         'is_multiplayer' => 'boolean',
     ];
 

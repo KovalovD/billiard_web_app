@@ -30,6 +30,7 @@ class Tournament extends Model
         'prize_distribution',
         'organizer',
         'format',
+        'is_old',
     ];
 
     protected $casts = [

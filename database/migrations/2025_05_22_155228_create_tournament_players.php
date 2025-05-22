@@ -19,8 +19,6 @@ return new class extends Migration {
             $table->string('status')->default('registered'); // registered, confirmed, eliminated, dnf
             $table->timestamp('registered_at');
             $table->timestamps();
-
-            $table->unique(['tournament_id', 'user_id']);
         });
     }
 

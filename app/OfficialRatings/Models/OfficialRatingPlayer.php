@@ -3,6 +3,7 @@
 namespace App\OfficialRatings\Models;
 
 use App\Core\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -48,11 +49,11 @@ class OfficialRatingPlayer extends Model
         return $this->position <= 10;
     }
 
-    public function addTournament(int $ratingPoints, bool $won = false): void
+    public function addTournament(int $ratingPoints, Carbon $tournamentFinishDate, bool $won = false): void
     {
         $this->increment('tournaments_played');
         $this->rating_points += $ratingPoints;
-        $this->last_tournament_at = now();
+        $this->last_tournament_at = $tournamentFinishDate;
 
         if ($won) {
             $this->increment('tournaments_won');
