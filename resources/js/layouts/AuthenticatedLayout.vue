@@ -96,6 +96,12 @@ onMounted(() => {
                                 <NavLink :active="$page.url === '/dashboard'" :href="'/dashboard'"> Dashboard</NavLink>
                                 <NavLink :active="$page.url.startsWith('/leagues')" :href="'/leagues'"> Leagues
                                 </NavLink>
+                                <NavLink :active="$page.url.startsWith('/tournaments')" :href="'/tournaments'">
+                                    Tournaments
+                                </NavLink>
+                                <NavLink :active="$page.url.startsWith('/official-ratings')"
+                                         :href="'/official-ratings'"> Official Ratings
+                                </NavLink>
                             </div>
                         </div>
 

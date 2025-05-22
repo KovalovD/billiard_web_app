@@ -4,7 +4,7 @@ namespace App\Auth\Http\Requests;
 
 use App\Core\Http\Requests\BaseFormRequest;
 use App\Core\Models\User;
-use App\Rules\PhoneNumber;
+use App\Core\Rules\PhoneNumber;
 use Illuminate\Validation\Rules\Password;
 
 class RegisterRequest extends BaseFormRequest
