@@ -134,7 +134,7 @@ class ImportTournamentsCommand extends Command
 
         $this->rating = OfficialRating::create([
             'name'               => 'Lviv Pool Rating',
-            'description'        => 'Официальный рейтинг по пулу города Львов',
+            'description' => 'Офіційний рейтинг з пулу м.Львів',
             'game_id'            => $poolGame->id,
             'is_active'          => true,
             'initial_rating'     => 0,
@@ -405,3 +405,30 @@ class ImportTournamentsCommand extends Command
         $this->info("Rating update completed. Total players updated: {$updatedCount}");
     }
 }
+
+/*
+SELECT
+    u.id                                  AS user_id,
+    u.firstname,
+    u.lastname,
+    orp.rating_points                     AS rating_pts,
+    orp.tournaments_played                AS t_played,
+    orp.tournaments_won                   AS t_won,
+    (orp.rating_points * (1 + 1 / SQRT(orp.tournaments_played))
+        + 500 * orp.tournaments_won)       AS effective_rating,
+    CASE
+        WHEN (orp.rating_points * (1 + 1 / SQRT(orp.tournaments_played))
+            + 500 * orp.tournaments_won) >= 15000 THEN 'S'
+        WHEN (orp.rating_points * (1 + 1 / SQRT(orp.tournaments_played))
+            + 500 * orp.tournaments_won) >=  8000 THEN 'A'
+        WHEN (orp.rating_points * (1 + 1 / SQRT(orp.tournaments_played))
+            + 500 * orp.tournaments_won) >=  4000 THEN 'B'
+        WHEN (orp.rating_points * (1 + 1 / SQRT(orp.tournaments_played))
+            + 500 * orp.tournaments_won) >=  1000 THEN 'C'
+        ELSE 'D'
+    END                                   AS grade
+FROM   official_rating_players  AS orp
+JOIN   users                    AS u   ON u.id = orp.user_id   -- подставляем ФИО
+WHERE  orp.is_active = 1;
+
+ * */
