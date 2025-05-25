@@ -130,7 +130,7 @@ export function useMultiplayerGames() {
     const performGameAction = async (
         leagueId: number | string,
         gameId: number | string,
-        action: 'increment_lives' | 'decrement_lives' | 'use_card' | 'record_turn',
+        action: 'increment_lives' | 'decrement_lives' | 'use_card' | 'record_turn' | 'set_turn',
         targetUserId?: number,
         cardType?: 'skip_turn' | 'pass_turn' | 'hand_shot',
         actingUserId?: number
