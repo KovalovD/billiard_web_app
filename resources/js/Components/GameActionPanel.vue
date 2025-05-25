@@ -132,6 +132,15 @@ const handleRecordTurn = () => {
                     >
                         +
                     </Button>
+
+                    <Button
+                        v-if="isCurrentTurn"
+                        :disabled="isLoading"
+                        @click="handleRecordTurn"
+                    >
+                        <Spinner v-if="isLoading" class="mr-2 h-4 w-4"/>
+                        End Turn
+                    </Button>
                 </div>
             </div>
             <h4 class="mb-2 text-sm font-medium">Available Cards:</h4>
@@ -159,7 +168,7 @@ const handleRecordTurn = () => {
             </div>
         </div>
 
-        <div class="flex justify-between border-t pt-3">
+        <div class="flex justify-between pt-3">
             <Button
                 v-if="selectedCardType"
                 :disabled="!canPerformAction || isLoading || !isCurrentTurn"
@@ -170,15 +179,6 @@ const handleRecordTurn = () => {
                 Use {{
                     selectedCardType === 'skip_turn' ? 'Skip Turn' : selectedCardType === 'pass_turn' ? 'Pass Turn' : 'Hand Shot'
                 }} Card
-            </Button>
-
-            <Button
-                v-if="isCurrentTurn"
-                :disabled="isLoading"
-                @click="handleRecordTurn"
-            >
-                <Spinner v-if="isLoading" class="mr-2 h-4 w-4"/>
-                End Turn
             </Button>
         </div>
     </div>

@@ -2,7 +2,7 @@
 <script lang="ts" setup>
 import {Button, Card, CardContent, CardHeader, CardTitle} from '@/Components/ui';
 import type {MultiplayerGamePlayer} from '@/types/api';
-import {CheckIcon, MinusIcon, PlusIcon} from 'lucide-vue-next';
+import {CheckIcon} from 'lucide-vue-next';
 import {computed} from 'vue';
 
 interface Props {
@@ -17,10 +17,6 @@ const emit = defineEmits(['increment-lives', 'decrement-lives', 'set-turn']);
 // Sort players by turn order
 const sortedPlayers = computed(() => {
     return [...props.players].sort((a, b) => {
-        // Put current turn player first
-        if (a.user.id === props.currentTurnPlayerId && b.user.id !== props.currentTurnPlayerId) return -1;
-        if (a.user.id !== props.currentTurnPlayerId && b.user.id === props.currentTurnPlayerId) return 1;
-
         // Then sort by turn order
         return (a.turn_order || 999) - (b.turn_order || 999);
     });
@@ -82,24 +78,20 @@ const setCurrentTurn = (player: MultiplayerGamePlayer) => {
 
                             <Button
                                 :disabled="isLoading"
-                                class="h-7 w-7 p-0"
                                 size="sm"
-                                title="Decrement lives"
                                 variant="outline"
                                 @click="decrementLives(player)"
                             >
-                                <MinusIcon class="h-4 w-4"/>
+                                -
                             </Button>
 
                             <Button
                                 :disabled="isLoading"
-                                class="h-7 w-7 p-0"
                                 size="sm"
-                                title="Increment lives"
                                 variant="outline"
                                 @click="incrementLives(player)"
                             >
-                                <PlusIcon class="h-4 w-4"/>
+                                +
                             </Button>
                         </div>
 

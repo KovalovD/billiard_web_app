@@ -274,6 +274,9 @@ class MultiplayerGameService
                 case 'record_turn':
                     $this->handleRecordTurn($game, $actingPlayer);
                     break;
+                case 'set_turn':
+                    $this->handleSetTurn($game, $actingPlayer, $targetUserId);
+                    break;
                 default:
                     DB::rollBack();
                     throw new RuntimeException('Invalid action.');
@@ -286,6 +289,33 @@ class MultiplayerGameService
             DB::rollBack();
             throw $e;
         }
+    }
+
+    public function handleSetTurn(MultiplayerGame $game, MultiplayerGamePlayer $actingPlayer, int $targetUserId): void
+    {
+        $players = $game->activePlayers()->orderBy('turn_order')->get();
+        $nextTurnOrder = $players->where('id', $targetUserId)->first()?->turn_order + 1;
+
+        $nextPlayer = $players->where('turn_order', $nextTurnOrder)->first();
+
+        if (!$nextPlayer) {
+            $players->first();
+        }
+
+        // Update the game with new current and next player
+        $game->update([
+            'current_player_id' => $targetUserId,
+            'next_turn_order'   => $nextPlayer->turn_order,
+        ]);
+
+        // Log a turn for the target player
+        MultiplayerGameLog::create([
+            'multiplayer_game_id' => $game->id,
+            'user_id'             => $actingPlayer->user_id,
+            'action_type'         => 'set_turn',
+            'action_data'         => ['target_user_id' => $targetUserId],
+            'created_at'          => now(),
+        ]);
     }
 
     /**
@@ -613,7 +643,7 @@ class MultiplayerGameService
         }
 
         // Move to next player unless we're using pass_turn (which already handles this)
-        if ($cardType !== 'pass_turn') {
+        if ($cardType === 'skip_turn') {
             $this->moveToNextPlayer($game);
         }
     }

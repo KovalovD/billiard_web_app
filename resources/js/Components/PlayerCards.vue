@@ -3,6 +3,7 @@
 import {Button} from '@/Components/ui';
 import type {MultiplayerGamePlayer} from '@/types/api';
 import {computed} from 'vue';
+import {ArrowDownIcon, ArrowRightIcon, HandIcon} from "lucide-vue-next";
 
 interface Props {
     player: MultiplayerGamePlayer;
@@ -75,7 +76,8 @@ const getCardDescription = (cardType: string): string => {
                 size="sm"
                 @click="selectCard('skip_turn')"
             >
-                <span>{{ getCardDisplayText('skip_turn') }}</span>
+                <ArrowDownIcon class="h-3 w-3 text-orange-600 dark:text-orange-400"/>
+                <span class="pl-2">{{ getCardDisplayText('skip_turn') }}</span>
             </Button>
 
             <Button
@@ -86,7 +88,8 @@ const getCardDescription = (cardType: string): string => {
                 size="sm"
                 @click="selectCard('pass_turn')"
             >
-                <span>{{ getCardDisplayText('pass_turn') }}</span>
+                <ArrowRightIcon class="h-3 w-3 text-blue-600 dark:text-blue-400"/>
+                <span class="pl-2">{{ getCardDisplayText('pass_turn') }}</span>
             </Button>
 
             <Button
@@ -97,7 +100,8 @@ const getCardDescription = (cardType: string): string => {
                 size="sm"
                 @click="selectCard('hand_shot')"
             >
-                <span>{{ getCardDisplayText('hand_shot') }}</span>
+                <HandIcon class="h-3 w-3 text-purple-600 dark:text-purple-400"/>
+                <span class="pl-2">{{ getCardDisplayText('hand_shot') }}</span>
             </Button>
         </div>
 

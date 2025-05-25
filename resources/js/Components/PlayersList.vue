@@ -1,8 +1,7 @@
-// resources/js/Components/PlayersList.vue
 <script lang="ts" setup>
 import LivesTracker from '@/Components/LivesTracker.vue';
 import type {MultiplayerGamePlayer} from '@/types/api';
-import {CheckIcon} from 'lucide-vue-next';
+import {ArrowDownIcon, ArrowRightIcon, CheckIcon, HandIcon} from 'lucide-vue-next';
 import {computed} from 'vue';
 
 interface Props {
@@ -26,6 +25,21 @@ const sortedPlayers = computed(() => {
 
 const selectPlayer = (player: MultiplayerGamePlayer) => {
     emit('select-player', player);
+};
+
+// Get available cards count for a player
+const getAvailableCardsCount = (player: MultiplayerGamePlayer): number => {
+    if (!player.cards) return 0;
+    let count = 0;
+    if (player.cards.skip_turn) count++;
+    if (player.cards.pass_turn) count++;
+    if (player.cards.hand_shot) count++;
+    return count;
+};
+
+// Check if player has specific card
+const hasCard = (player: MultiplayerGamePlayer, cardType: 'skip_turn' | 'pass_turn' | 'hand_shot'): boolean => {
+    return player.cards && player.cards[cardType] === true;
 };
 </script>
 
@@ -61,12 +75,43 @@ const selectPlayer = (player: MultiplayerGamePlayer) => {
                     </div>
                     <div>
                         <p class="font-medium">{{ player.user.firstname }} {{ player.user.lastname }}</p>
+
+                        <!-- Card indicators -->
+                        <div v-if="getAvailableCardsCount(player) > 0" class="mt-1 flex items-center gap-1">
+                            <span class="text-xs text-gray-500 dark:text-gray-400 mr-1">Cards:</span>
+
+                            <!-- Pass Turn card -->
+                            <div
+                                v-if="hasCard(player, 'pass_turn')"
+                                class="flex h-5 w-5 items-center justify-center rounded bg-blue-100 dark:bg-blue-900/30"
+                                title="Pass Turn"
+                            >
+                                <ArrowRightIcon class="h-3 w-3 text-blue-600 dark:text-blue-400"/>
+                            </div>
+
+                            <!-- Skip Turn card -->
+                            <div
+                                v-if="hasCard(player, 'skip_turn')"
+                                class="flex h-5 w-5 items-center justify-center rounded bg-orange-100 dark:bg-orange-900/30"
+                                title="Skip Turn"
+                            >
+                                <ArrowDownIcon class="h-3 w-3 text-orange-600 dark:text-orange-400"/>
+                            </div>
+
+                            <!-- Hand Shot card -->
+                            <div
+                                v-if="hasCard(player, 'hand_shot')"
+                                class="flex h-5 w-5 items-center justify-center rounded bg-purple-100 dark:bg-purple-900/30"
+                                title="Hand Shot"
+                            >
+                                <HandIcon class="h-3 w-3 text-purple-600 dark:text-purple-400"/>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <div class="flex items-center space-x-2">
                     <LivesTracker :lives="player.lives" :size="'sm'"/>
-
                 </div>
             </div>
         </div>

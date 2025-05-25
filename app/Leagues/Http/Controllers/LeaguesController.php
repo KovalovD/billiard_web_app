@@ -128,6 +128,11 @@ readonly class LeaguesController
             ->first()
         ;
 
+
+        if (!$userRating) {
+            return false;
+        }
+
         $lastFinishedMatch = $userRating->matchesAsSecondPlayer
             ->merge($userRating->matchesAsFirstPlayer)
             ->where('status', GameStatus::COMPLETED)
@@ -139,12 +144,7 @@ readonly class LeaguesController
             ? $lastFinishedMatch?->second_rating_id
             : $lastFinishedMatch?->first_rating_id;
 
-
-        if ($userRating) {
-            $userRating->setLastPlayerRatingId($lastPlayerRatingId);
-            return new RatingResource($userRating);
-        }
-
-        return false;
+        $userRating->setLastPlayerRatingId($lastPlayerRatingId);
+        return new RatingResource($userRating);
     }
 }

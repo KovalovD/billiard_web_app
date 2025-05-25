@@ -188,7 +188,7 @@ const selectDefaultActingPlayer = () => {
 
 // Handle game actions
 const handleAction = async (
-    action: 'increment_lives' | 'decrement_lives' | 'record_turn',
+    action: 'increment_lives' | 'decrement_lives' | 'record_turn' | 'set_turn',
     targetUserId?: number,
     actingUserId?: number
 ) => {
@@ -586,7 +586,7 @@ onMounted(() => {
                                         :players="game.active_players"
                                         @decrement-lives="(userId) => handleAction('decrement_lives', userId)"
                                         @increment-lives="(userId) => handleAction('increment_lives', userId)"
-                                        @set-turn="(userId) => handleAction('record_turn', undefined, userId)"
+                                        @set-turn="(userId) => handleAction('set_turn', userId)"
                                     />
                                 </div>
 
