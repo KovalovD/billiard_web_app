@@ -1,12 +1,11 @@
-// resources/js/pages/Tournaments/Index.vue
 <script lang="ts" setup>
-import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Spinner} from '@/Components/ui';
+import {Button, Card, CardContent, CardHeader, CardTitle, Spinner} from '@/Components/ui';
 import {useAuth} from '@/composables/useAuth';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
 import type {Tournament} from '@/types/api';
 import {Head, Link} from '@inertiajs/vue3';
-import {CalendarIcon, MapPinIcon, PlusIcon, TrophyIcon, UsersIcon} from 'lucide-vue-next';
+import {CalendarIcon, EyeIcon, MapPinIcon, PencilIcon, PlusIcon, TrophyIcon, UsersIcon,} from 'lucide-vue-next';
 import {computed, onMounted, ref} from 'vue';
 
 defineOptions({layout: AuthenticatedLayout});
@@ -64,6 +63,20 @@ const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString();
 };
 
+const formatDateRange = (startDate: string, endDate: string): string => {
+    const start = formatDate(startDate);
+    const end = formatDate(endDate);
+    return start === end ? start : `${start} - ${end}`;
+};
+
+const formatPrizePool = (amount: number): string => {
+    if (amount <= 0) return 'N/A';
+    return amount.toLocaleString('uk-UA', {
+        style: 'currency',
+        currency: 'UAH'
+    }).replace('UAH', '₴');
+};
+
 onMounted(() => {
     fetchTournaments();
 });
@@ -106,117 +119,185 @@ onMounted(() => {
                 </button>
             </div>
 
-            <!-- Loading State -->
-            <div v-if="isLoading" class="flex items-center justify-center py-10">
-                <Spinner class="text-primary h-8 w-8"/>
-                <span class="ml-2 text-gray-500 dark:text-gray-400">Loading tournaments...</span>
-            </div>
+            <Card>
+                <CardHeader>
+                    <CardTitle class="flex items-center gap-2">
+                        <TrophyIcon class="h-5 w-5"/>
+                        Tournament Directory
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <!-- Loading State -->
+                    <div v-if="isLoading" class="flex items-center justify-center py-10">
+                        <Spinner class="text-primary h-8 w-8"/>
+                        <span class="ml-2 text-gray-500 dark:text-gray-400">Loading tournaments...</span>
+                    </div>
 
-            <!-- Error State -->
-            <div v-else-if="error"
-                 class="rounded bg-red-100 p-4 text-center text-red-600 dark:bg-red-900/30 dark:text-red-400">
-                Error loading tournaments: {{ error }}
-            </div>
+                    <!-- Error State -->
+                    <div v-else-if="error"
+                         class="rounded bg-red-100 p-4 text-center text-red-600 dark:bg-red-900/30 dark:text-red-400">
+                        Error loading tournaments: {{ error }}
+                    </div>
 
-            <!-- Empty State -->
-            <div v-else-if="filteredTournaments.length === 0"
-                 class="py-10 text-center text-gray-500 dark:text-gray-400">
-                <TrophyIcon class="mx-auto h-12 w-12 mb-4 opacity-50"/>
-                <p class="text-lg">No tournaments found</p>
-                <p class="text-sm">{{
-                        selectedStatus === 'all' ? 'No tournaments have been created yet.' : `No ${selectedStatus} tournaments.`
-                    }}</p>
-            </div>
+                    <!-- Empty State -->
+                    <div v-else-if="filteredTournaments.length === 0"
+                         class="py-10 text-center text-gray-500 dark:text-gray-400">
+                        <TrophyIcon class="mx-auto h-12 w-12 mb-4 opacity-50"/>
+                        <p class="text-lg">No tournaments found</p>
+                        <p class="text-sm">
+                            {{
+                                selectedStatus === 'all' ? 'No tournaments have been created yet.' : `No ${selectedStatus} tournaments.`
+                            }}
+                        </p>
+                    </div>
 
-            <!-- Tournaments Grid -->
-            <div v-else class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                <Card
-                    v-for="tournament in filteredTournaments"
-                    :key="tournament.id"
-                    class="hover:shadow-lg transition-shadow cursor-pointer"
-                >
-                    <CardHeader>
-                        <div class="flex items-start justify-between">
-                            <div class="flex-1">
-                                <CardTitle class="text-lg">{{ tournament.name }}</CardTitle>
-                                <CardDescription class="mt-1">
-                                    <div class="flex items-center gap-1">
-                                        <TrophyIcon class="h-3 w-3"/>
+                    <!-- Tournaments Table -->
+                    <div v-else class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead class="bg-gray-50 dark:bg-gray-800">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                                    Tournament
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                                    Game
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                                    Status
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                                    Date
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                                    Location
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                                    Players
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                                    Prize Pool
+                                </th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                                    Actions
+                                </th>
+                            </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
+                            <tr
+                                v-for="tournament in filteredTournaments"
+                                :key="tournament.id"
+                                class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                            >
+                                <!-- Tournament Name -->
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-8 w-8">
+                                            <div
+                                                class="h-8 w-8 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
+                                                <TrophyIcon class="h-4 w-4 text-yellow-600 dark:text-yellow-400"/>
+                                            </div>
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                {{ tournament.name }}
+                                            </div>
+                                            <div v-if="tournament.organizer"
+                                                 class="text-sm text-gray-500 dark:text-gray-400">
+                                                by {{ tournament.organizer }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <!-- Game -->
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center text-sm text-gray-900 dark:text-gray-100">
+                                        <TrophyIcon class="h-4 w-4 mr-2 text-gray-400"/>
                                         {{ tournament.game?.name || 'N/A' }}
                                     </div>
-                                </CardDescription>
-                            </div>
-                            <span
-                                :class="['rounded-full px-2 py-1 text-xs font-semibold', getStatusBadgeClass(tournament.status)]"
-                            >
-                                {{ tournament.status_display }}
-                            </span>
-                        </div>
-                    </CardHeader>
+                                </td>
 
-                    <CardContent>
-                        <div class="space-y-3">
-                            <!-- Date -->
-                            <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                                <CalendarIcon class="h-4 w-4"/>
-                                <span>{{ formatDate(tournament.start_date) }}</span>
-                                <span v-if="tournament.end_date !== tournament.start_date">
-                                    - {{ formatDate(tournament.end_date) }}
-                                </span>
-                            </div>
+                                <!-- Status -->
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                        <span
+                                            :class="[
+                                                'inline-flex px-2 py-1 text-xs font-medium rounded-full',
+                                                getStatusBadgeClass(tournament.status)
+                                            ]"
+                                        >
+                                            {{ tournament.status_display }}
+                                        </span>
+                                </td>
 
-                            <!-- Location -->
-                            <div v-if="tournament.city"
-                                 class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                                <MapPinIcon class="h-4 w-4"/>
-                                <span>{{ tournament.city.name }}, {{ tournament.city.country?.name }}</span>
-                            </div>
+                                <!-- Date -->
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                                        <CalendarIcon class="h-4 w-4 mr-2"/>
+                                        {{ formatDateRange(tournament.start_date, tournament.end_date) }}
+                                    </div>
+                                </td>
 
-                            <!-- Players -->
-                            <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                                <UsersIcon class="h-4 w-4"/>
-                                <span>
-                                    {{ tournament.players_count }} player{{ tournament.players_count !== 1 ? 's' : '' }}
-                                    <span v-if="tournament.max_participants">
-                                        / {{ tournament.max_participants }}
-                                    </span>
-                                </span>
-                            </div>
+                                <!-- Location -->
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div v-if="tournament.city"
+                                         class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                                        <MapPinIcon class="h-4 w-4 mr-2"/>
+                                        <div>
+                                            <div>{{ tournament.city.name }}</div>
+                                            <div class="text-xs">{{ tournament.city.country?.name }}</div>
+                                        </div>
+                                    </div>
+                                    <div v-else class="text-sm text-gray-400">N/A</div>
+                                </td>
 
-                            <!-- Prize Pool -->
-                            <div v-if="tournament.prize_pool > 0" class="text-sm">
-                                <span class="font-medium text-green-600 dark:text-green-400">
-                                    Prize Pool: {{
-                                        tournament.prize_pool.toLocaleString('uk-UA', {
-                                            style: 'currency',
-                                            currency: 'UAH'
-                                        }).replace('UAH', '₴')
-                                    }}
-                                </span>
-                            </div>
+                                <!-- Players -->
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center text-sm text-gray-900 dark:text-gray-100">
+                                        <UsersIcon class="h-4 w-4 mr-2 text-gray-400"/>
+                                        <div>
+                                            {{ tournament.players_count }}
+                                            <span v-if="tournament.max_participants">
+                                                    / {{ tournament.max_participants }}
+                                                </span>
+                                            <div class="text-xs text-gray-500">
+                                                {{ tournament.players_count !== 1 ? 'players' : 'player' }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
 
-                            <!-- Description -->
-                            <p v-if="tournament.details" class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                                {{ tournament.details }}
-                            </p>
-                        </div>
+                                <!-- Prize Pool -->
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center text-sm">
+                                        <span
+                                            :class="tournament.prize_pool > 0 ? 'text-green-600 dark:text-green-400 font-medium' : 'text-gray-400'">
+                                                {{ formatPrizePool(tournament.prize_pool) }}
+                                            </span>
+                                    </div>
+                                </td>
 
-                        <div class="mt-4 flex justify-between items-center">
-                            <Link :href="`/tournaments/${tournament.id}`">
-                                <Button size="sm" variant="outline">
-                                    View Details
-                                </Button>
-                            </Link>
+                                <!-- Actions -->
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <div class="flex justify-end space-x-2">
+                                        <Link :href="`/tournaments/${tournament.id}`">
+                                            <Button size="sm" variant="outline">
+                                                <EyeIcon class="h-4 w-4"/>
+                                            </Button>
+                                        </Link>
 
-                            <Link v-if="isAdmin" :href="`/admin/tournaments/${tournament.id}/edit`">
-                                <Button size="sm" variant="ghost">
-                                    Edit
-                                </Button>
-                            </Link>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
+                                        <Link v-if="isAdmin" :href="`/admin/tournaments/${tournament.id}/edit`">
+                                            <Button size="sm" variant="outline">
+                                                <PencilIcon class="h-4 w-4"/>
+                                            </Button>
+                                        </Link>
+                                    </div>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </CardContent>
+            </Card>
         </div>
     </div>
 </template>

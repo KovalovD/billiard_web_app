@@ -49,7 +49,7 @@ const completedPlayers = computed(() => {
 });
 
 const registeredPlayers = computed(() => {
-    return sortedPlayers.value.filter(p => p.position === null);
+    return sortedPlayers.value;
 });
 
 const getStatusBadgeClass = (status: string): string => {

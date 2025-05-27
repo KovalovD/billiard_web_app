@@ -5,6 +5,7 @@ namespace App\Leagues\Models;
 use App\Core\Models\Game;
 use App\Leagues\Enums\RatingType;
 use App\Matches\Models\MatchGame;
+use App\Matches\Models\MultiplayerGame;
 use database\factories\LeagueFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -21,7 +22,7 @@ class League extends Model
     public $timestamps = false;
 
     protected $with = ['game'];
-    protected $withCount = ['matches', 'activeRatings'];
+    protected $withCount = ['matches', 'activeRatings', 'multiplayerGames'];
     protected $fillable = [
         'name',
         'picture',
@@ -59,6 +60,11 @@ class League extends Model
     public function matches(): HasMany
     {
         return $this->hasMany(MatchGame::class);
+    }
+
+    public function multiplayerGames(): HasMany
+    {
+        return $this->hasMany(MultiplayerGame::class);
     }
 
     public function ratings(): HasMany
