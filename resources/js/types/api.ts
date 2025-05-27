@@ -238,6 +238,7 @@ export interface MultiplayerGame {
         id: number;
         lives: number;
         turn_order: number | null;
+        user: User;
         cards: {
             skip_turn?: boolean;
             pass_turn?: boolean;

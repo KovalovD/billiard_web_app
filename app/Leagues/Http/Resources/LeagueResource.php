@@ -24,7 +24,7 @@ class LeagueResource extends JsonResource
             'rating_change_for_losers_rule'  => $this->rating_change_for_losers_rule,
             'created_at'                     => $this->created_at,
             'updated_at'                     => $this->updated_at,
-            'matches_count'                  => $this->matches_count,
+            'matches_count' => $this->matches_count + $this->multiplayer_games_count,
             'invite_days_expire' => $this->invite_days_expire,
             'max_players'        => $this->max_players,
             'max_score'          => $this->max_score,

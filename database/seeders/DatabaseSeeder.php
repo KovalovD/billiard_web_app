@@ -109,12 +109,14 @@ class DatabaseSeeder extends Seeder
 
         League::insert([
             [
+                'started_at' => now(),
                 'name'        => 'B2B Pool League',
                 'has_rating'  => true,
                 'game_id'     => 3,
                 'rating_type' => RatingType::Elo,
             ],
             [
+                'started_at' => now(),
                 'name'        => 'B2B Killer Pool League',
                 'has_rating'  => true,
                 'game_id'     => 5,
