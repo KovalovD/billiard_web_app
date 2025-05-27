@@ -565,7 +565,7 @@ watch(
                 </Card>
 
                 <!-- Matches Card -->
-                <Card v-if="isAuthenticated">
+                <Card v-if="isAuthenticated && !league.game_multiplayer">
                     <CardHeader>
                         <CardTitle>Matches</CardTitle>
                         <CardDescription>Recent challenges and games.</CardDescription>
