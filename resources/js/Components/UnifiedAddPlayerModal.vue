@@ -41,8 +41,8 @@ const newPlayerForm = ref({
     lastname: '',
     email: '',
     phone: '',
-    password: 'defaultPassword123',
-    initial_rating: 1000
+    password: '123456789',
+    initial_rating: 0
 });
 
 // Computed

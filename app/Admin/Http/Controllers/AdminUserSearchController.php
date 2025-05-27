@@ -1,6 +1,6 @@
 <?php
 
-namespace App\User\Http\Controllers;
+namespace App\Admin\Http\Controllers;
 
 use App\Core\Http\Resources\UserResource;
 use App\Core\Models\User;
@@ -8,9 +8,9 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 /**
- * @group User Search
+ * @group Admin User Search
  */
-class UserSearchController
+class AdminUserSearchController
 {
     /**
      * Search users by name or email
