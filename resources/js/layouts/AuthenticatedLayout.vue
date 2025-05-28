@@ -183,9 +183,18 @@ onMounted(() => {
                 <div :class="{ block: showingNavigationDropdown, hidden: !showingNavigationDropdown }"
                      class="sm:hidden">
                     <div class="space-y-1 pt-2 pb-3">
-                        <ResponsiveNavLink :active="$page.url === '/dashboard'" :href="'/dashboard'"> Dashboard
+                        <ResponsiveNavLink :active="$page.url === '/dashboard'" :href="'/dashboard'">
+                            Dashboard
                         </ResponsiveNavLink>
-                        <ResponsiveNavLink :active="$page.url.startsWith('/leagues')" :href="'/leagues'"> Leagues
+                        <ResponsiveNavLink :active="$page.url.startsWith('/leagues')" :href="'/leagues'">
+                            Leagues
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink :active="$page.url.startsWith('/tournaments')" :href="'/tournaments'">
+                            Tournaments
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink :active="$page.url.startsWith('/official-ratings')"
+                                           :href="'/official-ratings'">
+                            Official Ratings
                         </ResponsiveNavLink>
                     </div>
                     <div v-if="user" class="border-t border-gray-200 pt-4 pb-1 dark:border-gray-700">
