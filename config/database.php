@@ -59,7 +59,16 @@ return [
             'engine'         => null,
             'options'        => extension_loaded('pdo_mysql') ? array_filter([
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                // Add this line to handle authentication
+                PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false,
+                // Force using mysql_native_password authentication
+                PDO::MYSQL_ATTR_INIT_COMMAND           => "SET NAMES 'utf8mb4' COLLATE 'utf8mb4_unicode_ci', SESSION sql_mode='STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION'",
             ]) : [],
+            // Add these options for Railway MySQL 8.0+
+            'modes'          => [
+                'STRICT_TRANS_TABLES',
+                'NO_ENGINE_SUBSTITUTION',
+            ],
         ],
 
         'mariadb' => [
