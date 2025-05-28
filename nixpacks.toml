@@ -1,23 +1,28 @@
-# Пакети середовища (лівий бік Dockerfile)
-packages = [
-    "php84", # >=8.4 snapshot
-    "composer",
-    "nodejs_22", # Node 22 + npm 11
-    "nginx"         # простий статичний проксі для Vite-білду
+# nixpacks.toml  (новий)
+
+[variables]
+# Явно фіксуємо Node 22—так безпечніше, ніж покладатися на `engines`
+NIXPACKS_NODE_VERSION = "22"
+
+# Laravel корінь для Nginx/PHP-FPM (провайдер PHP підхопить автоматично)
+NIXPACKS_PHP_ROOT_DIR = "/app/public"
+
+# ---------- install ----------
+[phases.install]
+cmds = [
+    "composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev",
+    "npm ci --include=dev"
 ]
 
-providers = ["php", "node"]      # активує відповідні build-фази
-
-# ---------- Build ----------
+# ---------- build ----------
 [phases.build]
+dependsOn = ["install"]
 cmds = [
-    "composer install --no-dev --optimize-autoloader",
-    "npm ci",
     "npm run build",
-    # кешуємо все, що можна
+    # факультативно лінкуємо storage і кэшимо конфіг
+    "php artisan storage:link || true",
     "php artisan config:cache route:cache view:cache"
 ]
 
-# ---------- Start ----------
-[start]
-cmd = "./entrypoint.sh"
+# ---------- start ----------
+# Нічого не прописуємо: старт-команду створить PHP-провайдер
