@@ -1,20 +1,26 @@
 [phases.setup]
-nixPkgs = ["nodejs_18", "npm-9_x", "php84", "php84Packages.composer"]
+nixPkgs = ["php82", "php82Packages.composer", "nodejs_18", "npm-9_x"]
+aptPkgs = ["libpng-dev", "libjpeg-dev", "libfreetype6-dev", "libzip-dev", "libicu-dev", "libonig-dev"]
 
 [phases.install]
+dependsOn = ["setup"]
 cmds = [
-    "composer install --no-dev --optimize-autoloader",
-    "npm ci --omit=dev"
+    "php -m",
+    "composer install --no-interaction --prefer-dist --optimize-autoloader",
+    "npm ci"
 ]
 
 [phases.build]
+dependsOn = ["install"]
 cmds = [
     "npm run build",
-    "php artisan optimize",
+    "php artisan storage:link",
+    "php artisan optimize:clear",
     "php artisan config:cache",
     "php artisan route:cache",
-    "php artisan view:cache"
+    "php artisan view:cache",
+    "php artisan ziggy:generate"
 ]
 
 [start]
-cmd = "php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"
+cmd = "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"
