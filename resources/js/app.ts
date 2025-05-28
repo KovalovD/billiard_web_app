@@ -15,7 +15,7 @@ declare global {
 }
 
 createInertiaApp({
-    title: (title) => `${title} - B2B League`,
+    title: (title) => `${title} - WinnerBreak`,
 
     resolve: (name) => resolvePageComponent(`./pages/${name}.vue`, import.meta.glob<DefineComponent>('./pages/**/*.vue')),
 

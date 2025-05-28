@@ -1,5 +1,5 @@
 const Ziggy = {
-    "url": "http:\/\/localhost:8001", "port": 8001, "defaults": {}, "routes": {
+    "url": "https:\/\/winnerbreak.com", "port": 8001, "defaults": {}, "routes": {
         "auth.user": {"uri": "api\/auth\/user", "methods": ["GET", "HEAD"]},
         "auth.logout": {"uri": "api\/auth\/logout", "methods": ["POST"]},
         "auth.login": {"uri": "api\/auth\/login", "methods": ["POST"]},
