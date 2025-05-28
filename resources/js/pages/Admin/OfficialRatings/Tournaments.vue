@@ -77,8 +77,7 @@ const activeTournaments = computed(() => {
 const filteredAvailableTournaments = computed(() => {
     const existingIds = tournaments.value.map(t => t.id);
     return availableTournaments.value.filter(t =>
-        !existingIds.includes(t.id) &&
-        t.game?.id === rating.value?.game?.id
+        !existingIds.includes(t.id)
     );
 });
 
