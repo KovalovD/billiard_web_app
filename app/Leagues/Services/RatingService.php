@@ -185,24 +185,31 @@ class RatingService
      */
     private function batchUpdatePositions(array $orderedIds): void
     {
-        if (empty($orderedIds)) {
+        if ($orderedIds === []) {
             return;
         }
 
         DB::transaction(static function () use ($orderedIds) {
-            // Build a bulk update query
+            // WHEN id = ? THEN CAST(? AS INTEGER)
             $cases = [];
             $params = [];
 
             foreach ($orderedIds as $index => $ratingId) {
-                $cases[] = "WHEN id = ? THEN ?";
-                $params[] = $ratingId;
-                $params[] = $index + 1;
+                // порівняння завжди з int, результат явно кастимо до INTEGER
+                $cases[] = 'WHEN id = ? THEN CAST(? AS INTEGER)';
+                $params[] = $ratingId;      // ? для id
+                $params[] = $index + 1;     // ? для position
             }
 
-            $sql = "UPDATE ratings SET position = CASE ".implode(' ', $cases)." END WHERE id IN (".
-                str_repeat('?,', count($orderedIds) - 1)."?)";
+            // IN (?,?,?)
+            $inPlaceholders = rtrim(str_repeat('?,', count($orderedIds)), ',');
+            $sql = sprintf(
+                'UPDATE ratings SET position = CASE %s END WHERE id IN (%s)',
+                implode(' ', $cases),
+                $inPlaceholders,
+            );
 
+            // додаємо ті ж id вдруге для IN (...)
             $params = array_merge($params, $orderedIds);
 
             DB::update($sql, $params);
