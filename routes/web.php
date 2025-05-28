@@ -198,3 +198,31 @@ Route::get('/error/{status}', [ErrorController::class, 'show'])
 
 // Fallback route for handling 404s
 Route::fallback([ErrorController::class, 'notFound']);
+
+if (app()->environment('production')) {
+    Route::get('/run-seeder-once/{key}/{only_import}', function ($key, $only_import) {
+        // Use a secure key to prevent unauthorized access
+        $expectedKey = env('SEEDER_KEY', 'some-very-secure-random-key');
+
+        if ($key !== $expectedKey) {
+            abort(403, 'Unauthorized');
+        }
+
+        try {
+            if ($only_import == 1) {
+                Artisan::call('db:seed', ['--force' => true]);
+            }
+            Artisan::call('import:tournaments import.xlsx');
+            return response()->json([
+                'status'  => 'success',
+                'message' => 'Database seeded successfully',
+                'output'  => Artisan::output(),
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    });
+}
