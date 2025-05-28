@@ -1,8 +1,8 @@
-# Конфіг-as-code для Railway
 [build]
-builder = "nixpacks"          # Просимо Railway одразу юзати nixpacks.toml
+builder = "nixpacks"
 
+# Pre-deploy міграції окремо, щоб фейл не валив контейнер
 [deploy]
-preDeployCommand = ["php artisan migrate --force"]  # міграції окремо
-startCommand = "./entrypoint.sh"                # єдиний старт-скрипт
-healthcheckPath = "/"                              # 200 = ок
+preDeployCommand = ["php artisan migrate --force"]
+healthcheckPath  = "/"
+startCommand     = ""              # пусто → візьме дефолт провайдера PHP
