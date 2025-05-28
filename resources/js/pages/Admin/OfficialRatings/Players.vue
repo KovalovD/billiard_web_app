@@ -79,7 +79,6 @@ const fetchRatingApi = officialRatingsApi.fetchOfficialRating(props.ratingId);
 const fetchPlayersApi = officialRatingsApi.fetchRatingPlayers(props.ratingId);
 const searchUsersApi = tournamentsApi.searchUsers;
 const addPlayerApi = officialRatingsApi.addPlayerToRating(props.ratingId);
-const removePlayerApi = officialRatingsApi.removePlayerFromRating(props.ratingId);
 const recalculateApi = officialRatingsApi.recalculateRatingPositions(props.ratingId);
 
 // Computed
@@ -217,7 +216,8 @@ const addNewPlayer = async () => {
 const removePlayer = async (userId: number) => {
     if (!confirm('Are you sure you want to remove this player from the rating?')) return;
 
-    const success = await removePlayerApi.execute(userId);
+  const removePlayerApi = officialRatingsApi.removePlayerFromRating(props.ratingId, userId);
+  const success = await removePlayerApi.execute();
 
     if (success) {
         await fetchPlayersData();
@@ -235,7 +235,7 @@ const recalculatePositions = async () => {
     }
 };
 
-const formatDate = (dateString: string | null): string => {
+const formatDate = (dateString: string | null | undefined): string => {
     if (!dateString) return 'Never';
     return new Date(dateString).toLocaleDateString();
 };
@@ -471,7 +471,6 @@ onMounted(fetchData);
                                     </td>
                                     <td class="px-4 py-3 text-center">
                                         <Button
-                                            :disabled="removePlayerApi.isActing.value"
                                             size="sm"
                                             variant="destructive"
                                             @click="removePlayer(player.user_id)"
