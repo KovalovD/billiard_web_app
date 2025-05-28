@@ -1,12 +1,8 @@
+# Конфіг-as-code для Railway
 [build]
-builder = "nixpacks"
-buildCommand = "php artisan migrate --force && php artisan optimize:clear && php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan ziggy:generate || true && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"
+builder = "nixpacks"          # Просимо Railway одразу юзати nixpacks.toml
 
 [deploy]
-startCommand = "php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"
-healthcheckPath = "/up"
-healthcheckTimeout = 30
-restartPolicyType = "always"
-
-[[services]]
-name = "web"
+preDeployCommand = ["php artisan migrate --force"]  # міграції окремо
+startCommand = "./entrypoint.sh"                # єдиний старт-скрипт
+healthcheckPath = "/"                              # 200 = ок
