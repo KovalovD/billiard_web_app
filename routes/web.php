@@ -201,6 +201,7 @@ Route::fallback([ErrorController::class, 'notFound']);
 
 if (app()->environment('production')) {
     Route::get('/run-seeder-once/{key}/{only_import}', function ($key, $only_import) {
+        set_time_limit(0);
         // Use a secure key to prevent unauthorized access
         $expectedKey = env('SEEDER_KEY', 'some-very-secure-random-key');
 
