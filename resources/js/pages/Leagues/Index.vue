@@ -75,7 +75,7 @@ const formatDate = (dateString: string | null | undefined): string => {
     return new Date(dateString).toLocaleDateString();
 };
 
-const getLeagueUrl = (routeName: 'leagues.show' | 'leagues.edit', leagueId: number | undefined | null): string | null => {
+const getLeagueUrl = (routeName: 'leagues.show.page' | 'leagues.edit', leagueId: number | undefined | null): string | null => {
     if (typeof leagueId !== 'number') return null;
 
     try {
@@ -263,8 +263,8 @@ onMounted(() => {
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex justify-end space-x-2">
                                         <Link
-                                            v-if="getLeagueUrl('leagues.show', league.id)"
-                                            :href="getLeagueUrl('leagues.show', league.id)!"
+                                            v-if="getLeagueUrl('leagues.show.page', league.id)"
+                                            :href="getLeagueUrl('leagues.show.page', league.id)!"
                                             title="View Details"
                                         >
                                             <Button size="sm" variant="outline">

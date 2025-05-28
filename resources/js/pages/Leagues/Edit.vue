@@ -24,7 +24,7 @@ const {isAdmin} = useAuth();
 watchEffect(() => {
     if (isAdmin.value === false) {
         console.warn('Non-admin user tried to access Edit League page. Redirecting.');
-        router.visit(route('leagues.index'), {replace: true});
+        router.visit(route('leagues.index.page'), {replace: true});
     }
 });
 
@@ -42,7 +42,7 @@ onMounted(() => {
 
 const handleSuccess = (updatedLeague: League) => {
     // Navigate to the updated league view
-    router.visit(route('leagues.show', {league: updatedLeague.id}));
+    router.visit(route('leagues.show.page', {league: updatedLeague.id}));
 };
 
 const handleError = (error: ApiError) => {
@@ -59,13 +59,13 @@ const pageTitle = computed(() => (league.value ? `Edit ${league.value.name}` : '
     <div class="py-12">
         <div class="mx-auto max-w-4xl sm:px-6 lg:px-8">
             <div class="mb-6">
-                <Link :href="route('leagues.index')">
+                <Link :href="route('leagues.index.page')">
                     <Button variant="outline">
                         <ArrowLeftIcon class="mr-2 h-4 w-4"/>
                         Back to Leagues
                     </Button>
                 </Link>
-                <Link v-if="league" :href="route('leagues.show', { league: league.id })" class="ml-4">
+                <Link v-if="league" :href="route('leagues.show.page', { league: league.id })" class="ml-4">
                     <Button variant="outline">View League</Button>
                 </Link>
             </div>

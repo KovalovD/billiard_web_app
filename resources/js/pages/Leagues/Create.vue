@@ -4,9 +4,9 @@ import {Button} from '@/Components/ui';
 import {useAuth} from '@/composables/useAuth';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue'; // Import for defineOptions
 import type {ApiError, League} from '@/types/api';
-import { Head, Link, router } from '@inertiajs/vue3';
-import { ArrowLeftIcon } from 'lucide-vue-next';
-import { watchEffect } from 'vue'; // For checking admin status
+import {Head, Link, router} from '@inertiajs/vue3';
+import {ArrowLeftIcon} from 'lucide-vue-next';
+import {watchEffect} from 'vue'; // For checking admin status
 
 // --- Apply the layout ---
 defineOptions({layout: AuthenticatedLayout});
@@ -21,13 +21,13 @@ watchEffect(() => {
     if (isAdmin.value === false) {
         // Explicit check against false to account for null during initialization
         console.warn('Non-admin user tried to access Create League page. Redirecting.');
-        router.visit(route('leagues.index'), {replace: true});
+        router.visit(route('leagues.index.page'), {replace: true});
     }
 });
 
 const handleSuccess = (createdLeague: League) => {
     // Navigate to the newly created league
-    router.visit(route('leagues.show', {league: createdLeague.id}));
+    router.visit(route('leagues.show.page', {league: createdLeague.id}));
 };
 
 const handleError = (error: ApiError) => {
@@ -41,7 +41,7 @@ const handleError = (error: ApiError) => {
     <div class="py-12">
         <div class="mx-auto max-w-4xl sm:px-6 lg:px-8">
             <div class="mb-6">
-                <Link :href="route('leagues.index')">
+                <Link :href="route('leagues.index.page')">
                     <Button variant="outline">
                         <ArrowLeftIcon class="mr-2 h-4 w-4"/>
                         Back to Leagues

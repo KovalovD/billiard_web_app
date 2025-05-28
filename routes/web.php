@@ -46,24 +46,18 @@ Route::middleware('auth')->group(function () {
         ]);
     })->name('dashboard');
 
-    Route::get('/profile', static function () {
-        return Inertia::render('Profile/Edit', [
-            'header' => 'Profile Settings',
-        ]);
-    })->name('profile.edit');
-
     // --- Leagues ---
     Route::get('/leagues', static function () {
         return Inertia::render('Leagues/Index', [
             'header' => 'Leagues',
         ]);
-    })->name('leagues.index');
+    })->name('leagues.index.page');
 
     Route::get('/leagues/{league}', static function ($leagueId) {
         return Inertia::render('Leagues/Show', [
             'leagueId' => $leagueId,
         ]);
-    })->name('leagues.show')->where('league', '[0-9]+');
+    })->name('leagues.show.page')->where('league', '[0-9]+');
 
     Route::prefix('leagues/{leagueId}/multiplayer-games')->group(function () {
         Route::get('/', static function ($leagueId) {
@@ -115,13 +109,13 @@ Route::middleware('auth')->group(function () {
     // Public tournament pages
     Route::get('/tournaments', static function () {
         return Inertia::render('Tournaments/Index');
-    })->name('tournaments.index');
+    })->name('tournaments.index.page');
 
     Route::get('/tournaments/{tournamentId}', static function ($tournamentId) {
         return Inertia::render('Tournaments/Show', [
             'tournamentId' => $tournamentId,
         ]);
-    })->name('tournaments.show')->where('tournamentId', '[0-9]+');
+    })->name('tournaments.show.page')->where('tournamentId', '[0-9]+');
 
     // Official Ratings routes
     Route::get('/official-ratings', static function () {
