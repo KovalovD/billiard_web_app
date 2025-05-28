@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ce97c13837849a213f352b922884ede4",
+    "content-hash": "e1165eff9e50a34d8b697834b0cff416",
     "packages": [
         {
             "name": "brick/math",
@@ -1481,16 +1481,16 @@
         },
         {
             "name": "laravel/framework",
-            "version": "v12.15.0",
+            "version": "v12.16.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/framework.git",
-                "reference": "2ef7fb183f18e547af4eb9f5a55b2ac1011f0b77"
+                "reference": "293bb1c70224faebfd3d4328e201c37115da055f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/framework/zipball/2ef7fb183f18e547af4eb9f5a55b2ac1011f0b77",
-                "reference": "2ef7fb183f18e547af4eb9f5a55b2ac1011f0b77",
+                "url": "https://api.github.com/repos/laravel/framework/zipball/293bb1c70224faebfd3d4328e201c37115da055f",
+                "reference": "293bb1c70224faebfd3d4328e201c37115da055f",
                 "shasum": ""
             },
             "require": {
@@ -1692,7 +1692,7 @@
                 "issues": "https://github.com/laravel/framework/issues",
                 "source": "https://github.com/laravel/framework"
             },
-            "time": "2025-05-20T15:10:44+00:00"
+            "time": "2025-05-27T15:49:44+00:00"
         },
         {
             "name": "laravel/prompts",
@@ -7696,16 +7696,16 @@
         },
         {
             "name": "laravel/sail",
-            "version": "v1.43.0",
+            "version": "v1.43.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/sail.git",
-                "reference": "71a509b14b2621ce58574274a74290f933c687f7"
+                "reference": "3e7d899232a8c5e3ea4fc6dee7525ad583887e72"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/sail/zipball/71a509b14b2621ce58574274a74290f933c687f7",
-                "reference": "71a509b14b2621ce58574274a74290f933c687f7",
+                "url": "https://api.github.com/repos/laravel/sail/zipball/3e7d899232a8c5e3ea4fc6dee7525ad583887e72",
+                "reference": "3e7d899232a8c5e3ea4fc6dee7525ad583887e72",
                 "shasum": ""
             },
             "require": {
@@ -7755,7 +7755,7 @@
                 "issues": "https://github.com/laravel/sail/issues",
                 "source": "https://github.com/laravel/sail"
             },
-            "time": "2025-05-13T13:34:34+00:00"
+            "time": "2025-05-19T13:19:21+00:00"
         },
         {
             "name": "mockery/mockery",
@@ -9068,12 +9068,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/Roave/SecurityAdvisories.git",
-                "reference": "2145fcfdd72e389dce5082df4fb02d58fe32c5ca"
+                "reference": "af51c1a7b91dee6d4b920498946bf1de6a4efe86"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Roave/SecurityAdvisories/zipball/2145fcfdd72e389dce5082df4fb02d58fe32c5ca",
-                "reference": "2145fcfdd72e389dce5082df4fb02d58fe32c5ca",
+                "url": "https://api.github.com/repos/Roave/SecurityAdvisories/zipball/af51c1a7b91dee6d4b920498946bf1de6a4efe86",
+                "reference": "af51c1a7b91dee6d4b920498946bf1de6a4efe86",
                 "shasum": ""
             },
             "conflict": {
@@ -9466,6 +9466,7 @@
                 "livewire/volt": "<1.7",
                 "lms/routes": "<2.1.1",
                 "localizationteam/l10nmgr": "<7.4|>=8,<8.7|>=9,<9.2",
+                "lomkit/laravel-rest-api": "<2.13",
                 "luracast/restler": "<3.1",
                 "luyadev/yii-helpers": "<1.2.1",
                 "macropay-solutions/laravel-crud-wizard-free": "<3.4.17",
@@ -10001,7 +10002,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-05-20T20:06:01+00:00"
+            "time": "2025-05-27T20:05:51+00:00"
         },
         {
             "name": "sebastian/cli-parser",

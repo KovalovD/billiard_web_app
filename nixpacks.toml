@@ -1,30 +1,23 @@
-[phases.setup]
-nixPkgs = ["nodejs_22", "php84", "php84Packages.composer"]
-
-[phases.install]
-dependsOn = ["setup"]
-cmds = [
-    "composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev",
-    "npm ci --include=dev"
+# Пакети середовища (лівий бік Dockerfile)
+packages = [
+    "php84", # >=8.4 snapshot
+    "composer",
+    "nodejs_22", # Node 22 + npm 11
+    "nginx"         # простий статичний проксі для Vite-білду
 ]
 
+providers = ["php", "node"]      # активує відповідні build-фази
+
+# ---------- Build ----------
 [phases.build]
-dependsOn = ["install"]
 cmds = [
+    "composer install --no-dev --optimize-autoloader",
+    "npm ci",
     "npm run build",
-    "php artisan storage:link || true"
+    # кешуємо все, що можна
+    "php artisan config:cache route:cache view:cache"
 ]
 
+# ---------- Start ----------
 [start]
-cmds = [
-    "php artisan migrate --force",
-    "php artisan optimize:clear",
-    "php artisan config:cache",
-    "php artisan route:cache",
-    "php artisan view:cache",
-    "php artisan ziggy:generate || true",
-    "php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"
-]
-
-[variables]
-NODE_ENV = "production"
+cmd = "./entrypoint.sh"
