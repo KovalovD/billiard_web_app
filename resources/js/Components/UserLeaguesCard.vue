@@ -86,7 +86,7 @@ onMounted(fetchUserLeagues);
             <div v-else-if="Object.keys(leagues).length === 0"
                  class="py-4 text-center text-gray-500 dark:text-gray-400">
                 <p>You haven't joined any leagues yet.</p>
-                <Link :href="route('leagues.index')"
+                <Link :href="route('leagues.index.page')"
                       class="mt-2 block text-blue-600 hover:underline dark:text-blue-400">
                     Browse leagues to join
                 </Link>

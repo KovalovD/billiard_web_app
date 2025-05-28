@@ -30,7 +30,7 @@ class TournamentPlayerResource extends JsonResource
             // Relations
             'user'            => $this->whenLoaded('user', fn() => new UserResource($this->user)),
             'tournament'      => $this->when(
-                $this->relationLoaded('tournament') && !$request->routeIs('tournaments.show'),
+                $this->relationLoaded('tournament') && !$request->routeIs('tournaments.show.page'),
                 function () {
                     return [
                         'id'         => $this->tournament->id,

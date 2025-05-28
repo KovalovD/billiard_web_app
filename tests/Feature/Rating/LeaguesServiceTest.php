@@ -17,7 +17,7 @@ beforeEach(function () {
     $this->leaguesService = new LeaguesService();
 });
 
-it('fetches leagues index correctly', function () {
+it('fetches leagues.index.page correctly', function () {
     // Create test leagues
     $leagues = League::factory()->count(3)->create();
 

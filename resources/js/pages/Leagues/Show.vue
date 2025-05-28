@@ -362,7 +362,7 @@ watch(
         <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
             <!-- Header with actions -->
             <div class="mb-6 flex items-center justify-between">
-                <Link :href="route('leagues.index')">
+                <Link :href="route('leagues.index.page')">
                     <Button variant="outline">
                         <ArrowLeftIcon class="mr-2 h-4 w-4"/>
                         Back to Leagues

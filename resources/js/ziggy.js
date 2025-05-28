@@ -8,8 +8,8 @@ const Ziggy = {
         "scribe.postman": {"uri": "docs.postman", "methods": ["GET", "HEAD"]},
         "scribe.openapi": {"uri": "docs.openapi", "methods": ["GET", "HEAD"]},
         "sanctum.csrf-cookie": {"uri": "sanctum\/csrf-cookie", "methods": ["GET", "HEAD"]},
-        "leagues.index": {"uri": "leagues", "methods": ["GET", "HEAD"]},
-        "leagues.show": {
+        "leagues.index.page": {"uri": "leagues", "methods": ["GET", "HEAD"]},
+        "leagues.show.page": {
             "uri": "leagues\/{league}",
             "methods": ["GET", "HEAD"],
             "wheres": {"league": "[0-9]+"},
@@ -61,8 +61,8 @@ const Ziggy = {
             "methods": ["GET", "HEAD"],
             "parameters": ["league"]
         },
-        "tournaments.index": {"uri": "tournaments", "methods": ["GET", "HEAD"]},
-        "tournaments.show": {
+        "tournaments.index.page": {"uri": "tournaments", "methods": ["GET", "HEAD"]},
+        "tournaments.show.page": {
             "uri": "tournaments\/{tournamentId}",
             "methods": ["GET", "HEAD"],
             "wheres": {"tournamentId": "[0-9]+"},
