@@ -4,6 +4,7 @@ use App\Auth\Http\Middleware\EnsureFrontendRequestsAreAuthenticated;
 use App\Core\Http\Middleware\AdminMiddleware;
 use App\Core\Http\Middleware\HandleAppearance;
 use App\Core\Http\Middleware\HandleInertiaRequests;
+use App\Core\Http\Middleware\TrustProxies;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -18,6 +19,11 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->statefulApi();
+
+        // Add TrustProxies as the first middleware
+        $middleware->web(prepend: [
+            TrustProxies::class,
+        ]);
 
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
         $middleware->alias([
