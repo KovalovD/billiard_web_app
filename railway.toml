@@ -1,0 +1,12 @@
+[build]
+builder = "nixpacks"
+buildCommand = "composer install && npm ci && npm run build && php artisan optimize:clear"
+
+[deploy]
+startCommand = "php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"
+healthcheckPath = "/up"
+healthcheckTimeout = 30
+restartPolicyType = "always"
+
+[[services]]
+name = "web"
