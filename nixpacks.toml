@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["nodejs", "php", "phpPackages.composer"]
+nixPkgs = ["nodejs_22", "php84", "php84Packages.composer"]
 
 [phases.install]
 dependsOn = ["setup"]
