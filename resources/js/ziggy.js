@@ -1,5 +1,5 @@
 const Ziggy = {
-    "url": "http:\/\/localhost:8001", "port": 8001, "defaults": {}, "routes": {
+    "url": "https:\/\/winnerbreak.com", "port": 8001, "defaults": {}, "routes": {
         "multiplayer-games.index": {
             "uri": "api\/leagues\/{league}\/multiplayer-games",
             "methods": ["GET", "HEAD"],
