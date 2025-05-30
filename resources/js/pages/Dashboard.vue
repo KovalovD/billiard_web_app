@@ -64,6 +64,7 @@ onMounted(async () => {
         if (data.value) {
             recentLeagues.value = data.value.slice(0, 5); // Get 5 most recent leagues
         }
+// eslint-disable-next-line
     } catch (error) {
         // Silent error handling for better UX
     } finally {
