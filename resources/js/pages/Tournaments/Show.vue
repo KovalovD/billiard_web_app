@@ -1,7 +1,6 @@
-// resources/js/pages/Tournaments/Show.vue - Updated with application functionality
 <script lang="ts" setup>
 import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Spinner} from '@/Components/ui';
-import TournamentApplicationCard from '@/components/Tournament/TournamentApplicationCard.vue';
+import TournamentApplicationCard from '@/Components/Tournament/TournamentApplicationCard.vue';
 import {useAuth} from '@/composables/useAuth';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
