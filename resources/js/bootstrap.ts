@@ -7,7 +7,7 @@ import axios from 'axios';
 
 // Set base URL for API requests, if they go to a separate port/domain
 // If API is on the same domain as frontend, this may not be needed
-// axios.defaults.baseURL = 'http://localhost:8001'; // Specify if API is on different URL
+//axios.defaults.baseURL = ; // Specify if API is on different URL
 
 // IMPORTANT: Enable cookie and CSRF token transmission
 axios.defaults.withCredentials = true; // Required for CSRF to work - sends cookies with requests
