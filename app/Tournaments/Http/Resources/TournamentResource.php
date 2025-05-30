@@ -20,8 +20,6 @@ class TournamentResource extends JsonResource
             'details'              => $this->details,
             'status'               => $this->status,
             'status_display'       => $this->status_display,
-            'start_date'           => $this->start_date?->format('Y-m-d'),
-            'end_date'             => $this->end_date?->format('Y-m-d'),
             'max_participants'     => $this->max_participants,
             'entry_fee'            => $this->entry_fee,
             'prize_pool'           => $this->prize_pool,
@@ -29,11 +27,19 @@ class TournamentResource extends JsonResource
             'organizer'            => $this->organizer,
             'format'               => $this->format,
             'players_count'        => $this->players_count,
+            'confirmed_players_count'    => $this->confirmed_players_count,
+            'pending_applications_count' => $this->pending_applications_count,
+            'requires_application'       => $this->requires_application,
+            'auto_approve_applications'  => $this->auto_approve_applications,
             'is_registration_open' => $this->isRegistrationOpen(),
+            'can_accept_applications'    => $this->canAcceptApplications(),
             'is_active'            => $this->isActive(),
             'is_completed'         => $this->isCompleted(),
             'created_at'           => $this->created_at,
             'updated_at'           => $this->updated_at,
+            'start_date'                 => $this->start_date?->format('Y-m-d H:i:s'),
+            'end_date'                   => $this->end_date?->format('Y-m-d H:i:s'),
+            'application_deadline'       => $this->application_deadline?->format('Y-m-d H:i:s'),
 
             // Relations
             'game'                 => $this->whenLoaded('game', function () {

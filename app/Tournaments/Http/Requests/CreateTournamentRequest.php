@@ -1,5 +1,4 @@
 <?php
-// app/Tournaments/Http/Requests/CreateTournamentRequest.php
 
 namespace App\Tournaments\Http\Requests;
 
@@ -10,20 +9,21 @@ class CreateTournamentRequest extends BaseFormRequest
     public function rules(): array
     {
         return [
-            'name'               => ['required', 'string', 'max:255'],
-            'regulation'         => ['nullable', 'string'],
-            'details'            => ['nullable', 'string'],
-            'game_id'            => ['required', 'integer', 'exists:games,id'],
-            'city_id'            => ['nullable', 'integer', 'exists:cities,id'],
-            'club_id'            => ['nullable', 'integer', 'exists:clubs,id'],
-            'start_date'         => ['required', 'date', 'after_or_equal:today'],
-            'end_date'           => ['required', 'date', 'after_or_equal:start_date'],
-            'max_participants'   => ['nullable', 'integer', 'min:2'],
-            'entry_fee'          => ['numeric', 'min:0'],
-            'prize_pool'         => ['numeric', 'min:0'],
-            'prize_distribution' => ['nullable', 'array'],
-            'organizer'          => ['nullable', 'string', 'max:255'],
-            'format'             => ['nullable', 'string', 'max:255'],
+            'name'                 => ['required', 'string', 'max:255'],
+            'regulation'           => ['nullable', 'string'],
+            'details'              => ['nullable', 'string'],
+            'game_id'              => ['required', 'integer', 'exists:games,id'],
+            'city_id'              => ['nullable', 'integer', 'exists:cities,id'],
+            'club_id'              => ['nullable', 'integer', 'exists:clubs,id'],
+            'start_date'           => ['required', 'date', 'after_or_equal:today'],
+            'end_date'             => ['required', 'date', 'after_or_equal:start_date'],
+            'application_deadline' => ['nullable', 'date', 'before_or_equal:start_date', 'after_or_equal:today'],
+            'max_participants'     => ['nullable', 'integer', 'min:2'],
+            'entry_fee'            => ['numeric', 'min:0'],
+            'prize_pool'           => ['numeric', 'min:0'],
+            'prize_distribution'   => ['nullable', 'array'],
+            'organizer'            => ['nullable', 'string', 'max:255'],
+            'format'               => ['nullable', 'string', 'max:255'],
         ];
     }
 

@@ -26,6 +26,12 @@ class TournamentPlayerResource extends JsonResource
             'registered_at'   => $this->registered_at,
             'created_at'      => $this->created_at,
             'updated_at'      => $this->updated_at,
+            'is_confirmed' => $this->isConfirmed(),
+            'is_pending'   => $this->isPending(),
+            'is_rejected'  => $this->isRejected(),
+            'applied_at'   => $this->applied_at,
+            'confirmed_at' => $this->confirmed_at,
+            'rejected_at'  => $this->rejected_at,
 
             // Relations
             'user'            => $this->whenLoaded('user', fn() => new UserResource($this->user)),

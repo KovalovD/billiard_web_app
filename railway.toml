@@ -3,6 +3,6 @@ builder = "nixpacks"
 
 # Pre-deploy міграції окремо, щоб фейл не валив контейнер
 [deploy]
-preDeployCommand = ["php artisan migrate --force"]
+preDeployCommand = ["php artisan migrate --force && php artisan ziggy:generate"]
 startCommand = "php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"
 healthcheckPath = "/up"

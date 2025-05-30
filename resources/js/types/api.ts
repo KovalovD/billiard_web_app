@@ -285,53 +285,6 @@ export interface UserStats {
     average_rating: number;
 }
 
-export interface Tournament {
-    id: number;
-    name: string;
-    regulation?: string | null;
-    details?: string | null;
-    status: 'upcoming' | 'active' | 'completed' | 'cancelled';
-    status_display: string;
-    start_date: string;
-    end_date: string;
-    max_participants?: number | null;
-    entry_fee: number;
-    prize_pool: number;
-    prize_distribution?: any[] | null;
-    organizer?: string | null;
-    format?: string | null;
-    players_count: number;
-    is_registration_open: boolean;
-    is_active: boolean;
-    is_completed: boolean;
-    created_at: string;
-    updated_at: string;
-    game?: Game;
-    city?: City;
-    club?: Club;
-    players?: TournamentPlayer[];
-    winner?: TournamentPlayer;
-    top_players?: TournamentPlayer[];
-}
-
-export interface TournamentPlayer {
-    id: number;
-    tournament_id: number;
-    user_id: number;
-    position?: number | null;
-    rating_points: number;
-    prize_amount: number;
-    status: 'registered' | 'confirmed' | 'eliminated' | 'dnf';
-    status_display: string;
-    is_winner: boolean;
-    is_in_top_three: boolean;
-    registered_at: string;
-    created_at: string;
-    updated_at: string;
-    user?: User;
-    tournament?: Tournament;
-}
-
 export interface OfficialRating {
     id: number;
     name: string;
@@ -382,23 +335,6 @@ export interface OfficialRatingTournament {
     is_counting: boolean;
 }
 
-export interface CreateTournamentPayload {
-    name: string;
-    regulation?: string;
-    details?: string;
-    game_id: number;
-    city_id?: number;
-    club_id?: number;
-    start_date: string;
-    end_date: string;
-    max_participants?: number;
-    entry_fee?: number;
-    prize_pool?: number;
-    prize_distribution?: any[];
-    organizer?: string;
-    format?: string;
-}
-
 export interface CreateOfficialRatingPayload {
     name: string;
     description: string | number;
@@ -407,4 +343,90 @@ export interface CreateOfficialRatingPayload {
     initial_rating: number | null;
     calculation_method?: 'tournament_points' | 'elo' | 'custom';
     rating_rules: any[] | null | undefined;
+}
+
+
+export interface Tournament {
+    id: number;
+    name: string;
+    regulation?: string;
+    details?: string;
+    status: 'upcoming' | 'active' | 'completed' | 'cancelled';
+    status_display: string;
+    game_id: number;
+    city_id?: number;
+    club_id?: number;
+    start_date: string; // Now datetime string
+    end_date: string;   // Now datetime strin
+    application_deadline?: string; // datetime string
+    max_participants?: number;
+    entry_fee: number;
+    prize_pool: number;
+    prize_distribution?: number[];
+    organizer?: string;
+    format?: string;
+    players_count: number;
+    confirmed_players_count: number;
+    pending_applications_count: number;
+    requires_application: boolean;
+    auto_approve_applications: boolean;
+    is_registration_open: boolean;
+    can_accept_applications: boolean;
+    is_active: boolean;
+    is_completed: boolean;
+    created_at: string;
+    updated_at: string;
+
+    // Relations
+    game?: Game;
+    city?: City;
+    club?: Club;
+    winner?: TournamentPlayer;
+    top_players?: TournamentPlayer[];
+}
+
+export interface TournamentPlayer {
+    id: number;
+    tournament_id: number;
+    user_id: number;
+    position?: number;
+    rating_points: number;
+    prize_amount: number;
+    status: 'applied' | 'confirmed' | 'rejected' | 'eliminated' | 'dnf';
+    status_display: string;
+    is_confirmed: boolean;
+    is_pending: boolean;
+    is_rejected: boolean;
+    is_winner: boolean;
+    is_in_top_three: boolean;
+    registered_at: string;
+    applied_at?: string;
+    confirmed_at?: string;
+    rejected_at?: string;
+    created_at: string;
+    updated_at: string;
+
+    // Relations
+    user?: User;
+    tournament?: Tournament;
+}
+
+export interface CreateTournamentPayload {
+    name: string;
+    regulation?: string;
+    details?: string;
+    game_id: number;
+    city_id?: number;
+    club_id?: number;
+    start_date: string; // datetime string
+    end_date: string;   // datetime string
+    application_deadline?: string; // datetime string
+    max_participants?: number;
+    entry_fee: number;
+    prize_pool: number;
+    prize_distribution?: number[];
+    organizer?: string;
+    format?: string;
+    requires_application?: boolean;
+    auto_approve_applications?: boolean;
 }

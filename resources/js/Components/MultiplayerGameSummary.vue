@@ -13,7 +13,7 @@ const props = defineProps<Props>();
 // Format date for display
 const formatDate = (dateString: string | null): string => {
     if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleString();
+    return new Date(dateString).toLocaleString('uk-UK');
 };
 
 // Format currency amount
