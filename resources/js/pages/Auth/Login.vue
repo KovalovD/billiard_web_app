@@ -10,8 +10,8 @@ import {
     CardTitle,
     Input,
     Label
-} from '@/Components/ui/index.ts';
-import {useAuth} from '@/composables/useAuth.ts';
+} from '@/Components/ui/index';
+import {useAuth} from '@/composables/useAuth';
 import {Head, useForm} from '@inertiajs/vue3';
 import {ref} from 'vue';
 
@@ -26,6 +26,9 @@ const processing = ref(false);
 const formError = ref('');
 
 async function submit() {
+    // Prevent multiple submissions
+    if (processing.value) return;
+
     processing.value = true;
     formError.value = '';
 
@@ -37,11 +40,19 @@ async function submit() {
 
         // Redirect to dashboard
         window.location.href = route('dashboard');
-    } catch (err) {
+    } catch (err: any) {
         formError.value = err.message || 'Failed to login. Please check your credentials.';
         form.reset('password');
     } finally {
         processing.value = false;
+    }
+}
+
+// Handle Enter key press
+function handleKeydown(event: KeyboardEvent) {
+    if (event.key === 'Enter' && !processing.value) {
+        event.preventDefault();
+        submit();
     }
 }
 </script>
@@ -57,7 +68,7 @@ async function submit() {
                     <CardDescription>Enter your credentials to access your account</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <form @submit.prevent="submit" class="space-y-4">
+                    <form class="space-y-4" @keydown="handleKeydown" @submit.prevent="submit">
                         <div v-if="formError"
                              class="rounded-md bg-red-50 p-3 text-sm text-red-500 dark:bg-red-900/30 dark:text-red-400">
                             {{ formError }}
@@ -65,8 +76,14 @@ async function submit() {
 
                         <div class="space-y-2">
                             <Label for="email">Email</Label>
-                            <Input id="email" v-model="form.email" :disabled="processing" autocomplete="username" required
-                                   type="email"/>
+                            <Input
+                                id="email"
+                                v-model="form.email"
+                                :disabled="processing"
+                                autocomplete="username"
+                                required
+                                type="email"
+                            />
                             <InputError :message="form.errors.email" />
                         </div>
 
@@ -97,10 +114,13 @@ async function submit() {
                             />
                             <Label for="remember_me">Remember me</Label>
                         </div>
+
+                        <!-- Hidden submit button to handle Enter key -->
+                        <button class="sr-only" tabindex="-1" type="submit">Submit</button>
                     </form>
                 </CardContent>
                 <CardFooter class="flex flex-col space-y-4">
-                    <Button type="submit" class="w-full" :disabled="processing" @click="submit">
+                    <Button :disabled="processing" class="w-full" type="button" @click="submit">
                         <span v-if="processing">Logging in...</span>
                         <span v-else>Sign in</span>
                     </Button>

@@ -58,7 +58,7 @@ const handleRegisterError = (error: any) => {
                 <div
                     class="flex-1 rounded-br-lg rounded-bl-lg bg-white p-6 pb-12 text-[13px] leading-[20px] shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] lg:rounded-tl-lg lg:rounded-br-none lg:p-20 dark:bg-[#161615] dark:text-[#EDEDEC] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d]"
                 >
-                    <h1 class="mb-1 font-medium">Welcome to B2B League</h1>
+                    <h1 class="mb-1 font-medium">Welcome to WinnerBreak</h1>
                     <p class="mb-2 text-[#706f6c] dark:text-[#A1A09A]">
                         The premier league management system. <br/>Join a league, challenge players, and track your
                         progress.
@@ -94,7 +94,7 @@ const handleRegisterError = (error: any) => {
                     class="relative -mb-px aspect-335/376 w-full shrink-0 overflow-hidden rounded-t-lg bg-[#fff2f2] lg:mb-0 lg:-ml-px lg:aspect-auto lg:w-[438px] lg:rounded-t-none lg:rounded-r-lg dark:bg-[#1D0002]"
                 >
                     <div class="flex h-full items-center justify-center">
-                        <div class="text-4xl font-bold">B2B League</div>
+                        <div class="text-4xl font-bold">WinnerBreak</div>
                     </div>
                 </div>
             </main>

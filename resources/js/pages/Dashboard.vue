@@ -1,13 +1,20 @@
 <script lang="ts" setup>
 import ActiveMatchesModal from '@/Components/ActiveMatchesModal.vue';
-import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/Components/ui';
+import RecentTournamentsCard from '@/Components/RecentTournamentsCard.vue';
 import UserLeaguesCard from '@/Components/UserLeaguesCard.vue';
+import UserTournamentsCard from '@/Components/UserTournamentsCard.vue';
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/Components/ui';
 import {useAuth} from '@/composables/useAuth';
 import {useLeagues} from '@/composables/useLeagues';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
-import type {MatchGame} from '@/types/api';
+import type {League, MatchGame, TournamentPlayer} from '@/types/api';
 import {Head, Link} from '@inertiajs/vue3';
 import {onMounted, ref} from 'vue';
+
+interface TournamentWithParticipation {
+    tournament: any;
+    participation: TournamentPlayer;
+}
 
 defineOptions({
     layout: AuthenticatedLayout,
@@ -15,13 +22,17 @@ defineOptions({
 
 const { user } = useAuth();
 const leagues = useLeagues();
-const recentLeagues = ref([]);
+const recentLeagues = ref<League[]>([]);
 const isLoadingLeagues = ref(false);
 
 // Active matches modal state
 const showActiveMatchesModal = ref(false);
 const activeMatches = ref<MatchGame[]>([]);
 const userLeaguesRef = ref<InstanceType<typeof UserLeaguesCard> | null>(null);
+const userTournamentsRef = ref<InstanceType<typeof UserTournamentsCard> | null>(null);
+
+// Pending applications modal state (for tournaments)
+const pendingApplications = ref<TournamentWithParticipation[]>([]);
 
 // Handle active matches found in user leagues
 const handleActiveMatchesFound = (matches: MatchGame[]) => {
@@ -29,6 +40,12 @@ const handleActiveMatchesFound = (matches: MatchGame[]) => {
     if (matches.length > 0) {
         showActiveMatchesModal.value = true;
     }
+};
+
+// Handle pending tournament applications found
+const handlePendingApplicationsFound = (applications: TournamentWithParticipation[]) => {
+    pendingApplications.value = applications;
+    // You could show a modal or notification here if needed
 };
 
 // Handle match declined - simply refresh the leagues card
@@ -48,7 +65,7 @@ onMounted(async () => {
             recentLeagues.value = data.value.slice(0, 5); // Get 5 most recent leagues
         }
     } catch (error) {
-        console.error('Failed to load leagues:', error);
+        // Silent error handling for better UX
     } finally {
         isLoadingLeagues.value = false;
     }
@@ -77,14 +94,14 @@ onMounted(async () => {
                             </Link>
                         </div>
                         <div class="rounded-lg bg-emerald-50 p-6 dark:bg-emerald-900/30">
-                            <h3 class="mb-2 text-lg font-medium text-emerald-800 dark:text-emerald-300">Challenge
-                                Players</h3>
+                            <h3 class="mb-2 text-lg font-medium text-emerald-800 dark:text-emerald-300">Join
+                                Tournaments</h3>
                             <p class="mb-4 text-emerald-600 dark:text-emerald-400">
-                                Challenge other players to matches and improve your rating and ranking.
+                                Participate in tournaments to compete against other players and win prizes.
                             </p>
                             <Link class="font-medium text-emerald-700 hover:underline dark:text-emerald-300"
-                                  href="/leagues">Find
-                                Opponents →
+                                  href="/tournaments">Browse
+                                Tournaments →
                             </Link>
                         </div>
                         <div class="rounded-lg bg-amber-50 p-6 dark:bg-amber-900/30">
@@ -100,8 +117,23 @@ onMounted(async () => {
                 </div>
             </div>
 
-            <!-- Recent Leagues and Your Leagues -->
+            <!-- User Activity Cards -->
             <div class="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+                <!-- Your Leagues - Now emits event when active matches are found -->
+                <UserLeaguesCard ref="userLeaguesRef" @active-matches-found="handleActiveMatchesFound"/>
+
+                <!-- Your Tournaments - Now emits event when pending applications are found -->
+                <UserTournamentsCard ref="userTournamentsRef"
+                                     @pending-applications-found="handlePendingApplicationsFound"/>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="mb-6">
+                <RecentTournamentsCard/>
+            </div>
+
+            <!-- Recent Leagues (keeping original functionality) -->
+            <div class="mb-6">
                 <Card>
                     <CardHeader>
                         <CardTitle>Recent Leagues</CardTitle>
@@ -129,30 +161,33 @@ onMounted(async () => {
                         </ul>
                     </CardContent>
                 </Card>
-
-                <!-- Your Leagues - Now emits event when active matches are found -->
-                <UserLeaguesCard ref="userLeaguesRef" @active-matches-found="handleActiveMatchesFound"/>
             </div>
 
             <!-- Admin Actions (if admin) -->
             <Card v-if="user?.is_admin">
                 <CardHeader>
                     <CardTitle>Admin Actions</CardTitle>
-                    <CardDescription>Manage leagues and system settings</CardDescription>
+                    <CardDescription>Manage leagues, tournaments and system settings</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div class="flex flex-wrap gap-4">
                         <Link
                             class="inline-flex items-center rounded-md border border-transparent bg-purple-600 px-4 py-2 text-xs font-semibold tracking-widest text-white uppercase ring-purple-300 transition hover:bg-purple-700 focus:border-purple-800 focus:ring focus:outline-none active:bg-purple-800 disabled:opacity-25"
-                            href="/leagues/create"
+                            href="admin/leagues/create"
                         >
                             Create New League
                         </Link>
                         <Link
-                            class="inline-flex items-center rounded-md border border-transparent bg-gray-800 px-4 py-2 text-xs font-semibold tracking-widest text-white uppercase ring-gray-300 transition hover:bg-gray-700 focus:border-gray-900 focus:ring focus:outline-none active:bg-gray-900 disabled:opacity-25"
-                            href="/admin/users"
+                            class="inline-flex items-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-xs font-semibold tracking-widest text-white uppercase ring-green-300 transition hover:bg-green-700 focus:border-green-800 focus:ring focus:outline-none active:bg-green-800 disabled:opacity-25"
+                            href="/admin/tournaments/create"
                         >
-                            Manage Users
+                            Create New Tournament
+                        </Link>
+                        <Link
+                            class="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-xs font-semibold tracking-widest text-white uppercase ring-blue-300 transition hover:bg-blue-700 focus:border-blue-800 focus:ring focus:outline-none active:bg-blue-800 disabled:opacity-25"
+                            href="/admin/official-ratings/create"
+                        >
+                            Create Official Rating
                         </Link>
                     </div>
                 </CardContent>

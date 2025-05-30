@@ -10,6 +10,7 @@ use App\User\Http\Controllers\CitiesController;
 use App\User\Http\Controllers\ClubsController;
 use App\User\Http\Controllers\ProfileController;
 use App\User\Http\Controllers\UserStatsController;
+use App\User\Http\Controllers\UserTournamentsController;
 use Illuminate\Support\Facades\Route;
 
 // Public endpoints
@@ -42,6 +43,14 @@ Route::middleware(['auth:sanctum', AdminMiddleware::class])->group(function () {
 });
 
 Route::middleware('auth:sanctum')->group(function () {
+    Route::group(['prefix' => 'user/tournaments'], static function () {
+        Route::get('recent', [UserTournamentsController::class, 'recent'])->name('user.tournaments.recent');
+        Route::get('upcoming', [UserTournamentsController::class, 'upcoming'])->name('user.tournaments.upcoming');
+        Route::get('my-tournaments-and-applications', [
+            UserTournamentsController::class, 'myTournamentsAndApplications',
+        ])->name('user.tournaments.my-tournaments-and-applications');
+    });
+
     Route::post('my-leagues-and-challenges',
         [LeaguesController::class, 'myLeaguesAndChallenges'])->name('my-leagues-and-challenges');
     Route::get('available-games', [GameController::class, 'availableGames'])->name('available-games');
