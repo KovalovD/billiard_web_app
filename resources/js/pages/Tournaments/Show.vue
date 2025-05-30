@@ -175,7 +175,7 @@ const fetchPlayers = async () => {
     }
 };
 
-const handleApplicationUpdated = (application: TournamentPlayer | null) => {
+const handleApplicationUpdated = () => {
     // Refresh tournament data to get updated counts
     fetchTournament();
     fetchPlayers();
