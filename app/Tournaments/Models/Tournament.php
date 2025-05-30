@@ -1,4 +1,5 @@
 <?php
+// app/Tournaments/Models/Tournament.php
 
 namespace App\Tournaments\Models;
 
@@ -24,6 +25,7 @@ class Tournament extends Model
         'club_id',
         'start_date',
         'end_date',
+        'application_deadline',
         'max_participants',
         'entry_fee',
         'prize_pool',
@@ -31,17 +33,22 @@ class Tournament extends Model
         'organizer',
         'format',
         'is_old',
+        'requires_application',
+        'auto_approve_applications',
     ];
 
     protected $casts = [
-        'start_date'         => 'date',
-        'end_date'           => 'date',
-        'entry_fee'          => 'decimal:2',
-        'prize_pool'         => 'decimal:2',
-        'prize_distribution' => 'array',
+        'start_date'                => 'datetime',
+        'end_date'                  => 'datetime',
+        'application_deadline'      => 'datetime',
+        'entry_fee'                 => 'decimal:2',
+        'prize_pool'                => 'decimal:2',
+        'prize_distribution'        => 'array',
+        'requires_application'      => 'boolean',
+        'auto_approve_applications' => 'boolean',
     ];
 
-    protected $withCount = ['players'];
+    protected $withCount = ['players', 'confirmedPlayers', 'pendingApplications'];
 
     public function game(): BelongsTo
     {
@@ -68,6 +75,16 @@ class Tournament extends Model
         return $this->players()->where('status', 'confirmed');
     }
 
+    public function pendingApplications(): HasMany
+    {
+        return $this->players()->where('status', 'applied');
+    }
+
+    public function rejectedApplications(): HasMany
+    {
+        return $this->players()->where('status', 'rejected');
+    }
+
     public function officialRatings(): BelongsToMany
     {
         return $this
@@ -79,8 +96,26 @@ class Tournament extends Model
 
     public function isRegistrationOpen(): bool
     {
-        return $this->status === 'upcoming' &&
-            (!$this->max_participants || $this->players_count < $this->max_participants);
+        return $this->canAcceptApplications();
+    }
+
+    public function canAcceptApplications(): bool
+    {
+        // Tournament must be upcoming
+        if ($this->status !== 'upcoming') {
+            return false;
+        }
+
+        // If requires application, check application deadline
+        if ($this->requires_application) {
+            $deadline = $this->application_deadline ?? $this->start_date;
+            if ($deadline && $deadline < now()) {
+                return false;
+            }
+        }
+
+        // Check max participants limit (only confirmed players count towards limit)
+        return !($this->max_participants && $this->confirmed_players_count >= $this->max_participants);
     }
 
     public function isActive(): bool

@@ -1,7 +1,9 @@
 <?php
 
 use App\Core\Http\Middleware\AdminMiddleware;
+use App\Tournaments\Http\Controllers\AdminTournamentApplicationsController;
 use App\Tournaments\Http\Controllers\AdminTournamentsController;
+use App\Tournaments\Http\Controllers\TournamentApplicationController;
 use App\Tournaments\Http\Controllers\TournamentsController;
 use Illuminate\Support\Facades\Route;
 
@@ -14,6 +16,16 @@ Route::group(['prefix' => 'tournaments'], static function () {
     Route::get('/{tournament}', [TournamentsController::class, 'show'])->name('tournaments.show');
     Route::get('/{tournament}/players', [TournamentsController::class, 'players'])->name('tournaments.players');
     Route::get('/{tournament}/results', [TournamentsController::class, 'results'])->name('tournaments.results');
+
+    // Tournament application routes (authenticated users)
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/{tournament}/apply',
+            [TournamentApplicationController::class, 'apply'])->name('tournaments.apply');
+        Route::delete('/{tournament}/cancel-application',
+            [TournamentApplicationController::class, 'cancel'])->name('tournaments.cancel-application');
+        Route::get('/{tournament}/application-status',
+            [TournamentApplicationController::class, 'status'])->name('tournaments.application-status');
+    });
 });
 
 // Admin tournament routes
@@ -34,6 +46,32 @@ Route::middleware(['auth:sanctum', AdminMiddleware::class])
             [AdminTournamentsController::class, 'removePlayer'])->name('admin.tournaments.remove-player');
         Route::put('/{tournament}/players/{player}',
             [AdminTournamentsController::class, 'updatePlayer'])->name('admin.tournaments.update-player');
+
+        // Application management
+        Route::get('/{tournament}/applications/pending',
+            [
+                AdminTournamentApplicationsController::class, 'pendingApplications',
+            ])->name('admin.tournaments.pending-applications');
+        Route::get('/{tournament}/applications/all',
+            [
+                AdminTournamentApplicationsController::class, 'allApplications',
+            ])->name('admin.tournaments.all-applications');
+        Route::post('/{tournament}/applications/{application}/confirm',
+            [
+                AdminTournamentApplicationsController::class, 'confirmApplication',
+            ])->name('admin.tournaments.confirm-application');
+        Route::post('/{tournament}/applications/{application}/reject',
+            [
+                AdminTournamentApplicationsController::class, 'rejectApplication',
+            ])->name('admin.tournaments.reject-application');
+        Route::post('/{tournament}/applications/bulk-confirm',
+            [
+                AdminTournamentApplicationsController::class, 'bulkConfirmApplications',
+            ])->name('admin.tournaments.bulk-confirm-applications');
+        Route::post('/{tournament}/applications/bulk-reject',
+            [
+                AdminTournamentApplicationsController::class, 'bulkRejectApplications',
+            ])->name('admin.tournaments.bulk-reject-applications');
 
         // Tournament management
         Route::post('/{tournament}/results',

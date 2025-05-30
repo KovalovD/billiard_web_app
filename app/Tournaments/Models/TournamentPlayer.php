@@ -16,11 +16,17 @@ class TournamentPlayer extends Model
         'prize_amount',
         'status',
         'registered_at',
+        'applied_at',
+        'confirmed_at',
+        'rejected_at',
     ];
 
     protected $casts = [
         'prize_amount'  => 'decimal:2',
         'registered_at' => 'datetime',
+        'applied_at'   => 'datetime',
+        'confirmed_at' => 'datetime',
+        'rejected_at'  => 'datetime',
     ];
 
     public function tournament(): BelongsTo
@@ -46,11 +52,27 @@ class TournamentPlayer extends Model
     public function getStatusDisplayAttribute(): string
     {
         return match ($this->status) {
-            'registered' => 'Registered',
+            'applied' => 'Applied',
             'confirmed' => 'Confirmed',
+            'rejected' => 'Rejected',
             'eliminated' => 'Eliminated',
             'dnf' => 'Did Not Finish',
             default => ucfirst($this->status),
         };
+    }
+
+    public function isConfirmed(): bool
+    {
+        return $this->status === 'confirmed';
+    }
+
+    public function isPending(): bool
+    {
+        return $this->status === 'applied';
+    }
+
+    public function isRejected(): bool
+    {
+        return $this->status === 'rejected';
     }
 }

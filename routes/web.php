@@ -154,6 +154,12 @@ Route::middleware(['auth', AdminMiddleware::class])->prefix('admin')->group(func
         ]);
     })->name('admin.tournaments.results')->where('tournamentId', '[0-9]+');
 
+    Route::get('/tournaments/{tournamentId}/applications', static function ($tournamentId) {
+        return Inertia::render('Admin/Tournaments/Applications', [
+            'tournamentId' => $tournamentId,
+        ]);
+    })->name('admin.tournaments.applications');
+
     // Admin Official Ratings routes
     Route::get('/official-ratings/create', static function () {
         return Inertia::render('Admin/OfficialRatings/Create');
