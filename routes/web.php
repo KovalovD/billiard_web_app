@@ -205,7 +205,7 @@ Route::get('/error/{status}', [ErrorController::class, 'show'])
 // Fallback route for handling 404s
 Route::fallback([ErrorController::class, 'notFound']);
 
-if (app()->environment('production')) {
+/*if (app()->environment('production')) {
     Route::get('/run-seeder-once/{key}/{only_import}', function ($key, $only_import) {
         set_time_limit(0);
         // Use a secure key to prevent unauthorized access
@@ -232,4 +232,4 @@ if (app()->environment('production')) {
             ], 500);
         }
     });
-}
+}*/

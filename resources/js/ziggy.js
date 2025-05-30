@@ -1,5 +1,5 @@
 const Ziggy = {
-    "url": "https:\/\/winnerbreak.com", "port": 8001, "defaults": {}, "routes": {
+    "url": "https:\/\/winnerbreak.com", "defaults": {}, "routes": {
         "multiplayer-games.index": {
             "uri": "api\/leagues\/{league}\/multiplayer-games",
             "methods": ["GET", "HEAD"],
@@ -375,6 +375,12 @@ const Ziggy = {
             "methods": ["POST"],
             "parameters": ["league"],
             "bindings": {"league": "id"}
+        },
+        "user.tournaments.recent": {"uri": "api\/user\/tournaments\/recent", "methods": ["GET", "HEAD"]},
+        "user.tournaments.upcoming": {"uri": "api\/user\/tournaments\/upcoming", "methods": ["GET", "HEAD"]},
+        "user.tournaments.my-tournaments-and-applications": {
+            "uri": "api\/user\/tournaments\/my-tournaments-and-applications",
+            "methods": ["GET", "HEAD"]
         },
         "my-leagues-and-challenges": {"uri": "api\/my-leagues-and-challenges", "methods": ["POST"]},
         "available-games": {"uri": "api\/available-games", "methods": ["GET", "HEAD"]},
