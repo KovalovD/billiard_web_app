@@ -15,7 +15,7 @@ return new class extends Migration {
 
         // Update existing ratings to set game_type based on their game_id
         $rating = OfficialRating::first();
-        $rating->update(['game_type' => Game::find($rating->game_id)->type]);
+        $rating?->update(['game_type' => Game::find($rating->game_id)?->type]);
 
         // Make game_type required and remove game_id
         Schema::table('official_ratings', static function (Blueprint $table) {
