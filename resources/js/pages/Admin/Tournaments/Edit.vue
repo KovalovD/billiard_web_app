@@ -1,4 +1,3 @@
-// resources/js/pages/Admin/Tournaments/Edit.vue
 <script lang="ts" setup>
 import {
     Button,
@@ -20,9 +19,9 @@ import {useProfileApi} from '@/composables/useProfileApi';
 import {useTournaments} from '@/composables/useTournaments';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
-import type {City, Club, Game, Tournament} from '@/types/api';
+import type {City, Club, Game, OfficialRating, Tournament} from '@/types/api';
 import {Head, router} from '@inertiajs/vue3';
-import {ArrowLeftIcon, MapPinIcon, TrophyIcon} from 'lucide-vue-next';
+import {ArrowLeftIcon, MapPinIcon, StarIcon, TrophyIcon} from 'lucide-vue-next';
 import {computed, onMounted, ref, watch} from 'vue';
 
 defineOptions({layout: AuthenticatedLayout});
@@ -50,6 +49,8 @@ const form = ref({
     organizer: '',
     format: '',
     status: 'upcoming' as 'upcoming' | 'active' | 'completed' | 'cancelled',
+    official_rating_id: undefined as number | undefined,
+    rating_coefficient: 1.0,
 });
 
 // Data
@@ -58,10 +59,13 @@ const games = ref<Game[]>([]);
 const cities = ref<City[]>([]);
 const clubs = ref<Club[]>([]);
 const filteredClubs = ref<Club[]>([]);
+const officialRatings = ref<OfficialRating[]>([]);
+const filteredOfficialRatings = ref<OfficialRating[]>([]);
 
 // Loading states
 const isLoadingTournament = ref(true);
 const isLoadingGames = ref(true);
+const isLoadingRatings = ref(true);
 const isSubmitting = ref(false);
 
 // API calls
@@ -100,6 +104,21 @@ watch(() => form.value.city_id, (newCityId) => {
     }
 });
 
+// Watch for game changes to filter official ratings
+watch(() => form.value.game_id, (newGameId) => {
+    if (newGameId !== tournament.value?.game?.id) {
+        form.value.official_rating_id = undefined;
+    }
+
+    if (newGameId) {
+        filteredOfficialRatings.value = officialRatings.value.filter(rating =>
+            rating.game?.id === newGameId && rating.is_active
+        );
+    } else {
+        filteredOfficialRatings.value = [];
+    }
+});
+
 const fetchGames = async () => {
     isLoadingGames.value = true;
     try {
@@ -108,6 +127,17 @@ const fetchGames = async () => {
         console.error('Failed to load games:', error);
     } finally {
         isLoadingGames.value = false;
+    }
+};
+
+const fetchOfficialRatings = async () => {
+    isLoadingRatings.value = true;
+    try {
+        officialRatings.value = await apiClient<OfficialRating[]>('/api/official-ratings/active');
+    } catch (error) {
+        console.error('Failed to load official ratings:', error);
+    } finally {
+        isLoadingRatings.value = false;
     }
 };
 
@@ -135,6 +165,8 @@ const loadTournament = async () => {
             organizer: tournament.value.organizer || '',
             format: tournament.value.format || '',
             status: tournament.value.status as any,
+            official_rating_id: tournament.value.official_ratings?.[0]?.id,
+            rating_coefficient: tournament.value.official_ratings?.[0]?.rating_coefficient || 1.0,
         };
     }
 
@@ -179,6 +211,7 @@ const handleCancel = () => {
 onMounted(() => {
     loadTournament();
     fetchGames();
+    fetchOfficialRatings();
     loadCitiesAndClubs();
 });
 </script>
@@ -297,6 +330,57 @@ onMounted(() => {
                                     required
                                     type="date"
                                 />
+                            </div>
+                        </div>
+
+                        <!-- Official Rating Association -->
+                        <div class="space-y-4">
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                                <StarIcon class="h-5 w-5"/>
+                                Official Rating Association
+                            </h3>
+
+                            <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                                <div class="space-y-2">
+                                    <Label for="official_rating_id">Official Rating</Label>
+                                    <Select v-model="form.official_rating_id" :disabled="!form.game_id">
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select official rating (optional)"/>
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem v-if="isLoadingRatings" :value="0">
+                                                Loading ratings...
+                                            </SelectItem>
+                                            <SelectItem
+                                                v-for="rating in filteredOfficialRatings"
+                                                v-else
+                                                :key="rating.id"
+                                                :value="rating.id"
+                                            >
+                                                {{ rating.name }}
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                                        Associate this tournament with an official rating system
+                                    </p>
+                                </div>
+
+                                <div class="space-y-2">
+                                    <Label for="rating_coefficient">Rating Coefficient</Label>
+                                    <Input
+                                        id="rating_coefficient"
+                                        v-model.number="form.rating_coefficient"
+                                        :disabled="!form.official_rating_id"
+                                        max="5.0"
+                                        min="0.1"
+                                        step="0.1"
+                                        type="number"
+                                    />
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                                        Multiplier for rating points (0.1 - 5.0)
+                                    </p>
+                                </div>
                             </div>
                         </div>
 

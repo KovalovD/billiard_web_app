@@ -5,17 +5,19 @@ namespace App\Tournaments\Http\Controllers;
 use App\Admin\Http\Requests\AddPlayerRequest;
 use App\Auth\DataTransferObjects\RegisterDTO;
 use App\Core\Http\Resources\UserResource;
+use App\OfficialRatings\Services\OfficialRatingService;
+use App\Tournaments\Http\Requests\AddTournamentPlayerRequest;
 use App\Tournaments\Http\Requests\CreateTournamentRequest;
 use App\Tournaments\Http\Requests\UpdateTournamentRequest;
-use App\Tournaments\Http\Requests\AddTournamentPlayerRequest;
-use App\Tournaments\Http\Resources\TournamentResource;
 use App\Tournaments\Http\Resources\TournamentPlayerResource;
+use App\Tournaments\Http\Resources\TournamentResource;
 use App\Tournaments\Models\Tournament;
 use App\Tournaments\Models\TournamentPlayer;
 use App\Tournaments\Services\TournamentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Throwable;
 
 /**
@@ -25,12 +27,14 @@ readonly class AdminTournamentsController
 {
     public function __construct(
         private TournamentService $tournamentService,
+        private OfficialRatingService $officialRatingService,
     ) {
     }
 
     /**
      * Create tournament
      * @admin
+     * @throws Throwable
      */
     public function store(CreateTournamentRequest $request): TournamentResource
     {
@@ -42,10 +46,42 @@ readonly class AdminTournamentsController
     /**
      * Update tournament
      * @admin
+     * @throws Throwable
      */
     public function update(UpdateTournamentRequest $request, Tournament $tournament): TournamentResource
     {
-        $tournament = $this->tournamentService->updateTournament($tournament, $request->validated());
+        $data = $request->validated();
+
+        // Handle official rating association update
+        if (array_key_exists('official_rating_id', $data)) {
+            DB::transaction(function () use ($tournament, $data) {
+                // Remove existing associations
+                $tournament->officialRatings()->detach();
+
+                // Add new association if provided
+                if (!empty($data['official_rating_id'])) {
+                    $rating = $this->officialRatingService
+                        ->getAllRatings()
+                        ->where('id', $data['official_rating_id'])
+                        ->first()
+                    ;
+
+                    if ($rating) {
+                        $this->officialRatingService->addTournamentToRating(
+                            $rating,
+                            $tournament->id,
+                            $data['rating_coefficient'] ?? 1.0,
+
+                        );
+                    }
+                }
+            });
+
+            // Remove these fields from the update data as they're handled separately
+            unset($data['official_rating_id'], $data['rating_coefficient']);
+        }
+
+        $tournament = $this->tournamentService->updateTournament($tournament, $data);
 
         return new TournamentResource($tournament);
     }

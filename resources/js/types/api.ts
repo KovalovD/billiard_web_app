@@ -325,7 +325,7 @@ export interface OfficialRatingTournament {
     id: number;
     name: string;
     start_date: string;
-    end_date: string;
+    end_date?: string;
     status: string;
     city?: string;
     country?: string;
@@ -383,6 +383,12 @@ export interface Tournament {
     club?: Club;
     winner?: TournamentPlayer;
     top_players?: TournamentPlayer[];
+    official_ratings?: Array<{
+        id: number;
+        name: string;
+        rating_coefficient: number;
+        is_counting: boolean;
+    }>;
 }
 
 export interface TournamentPlayer {
@@ -418,15 +424,15 @@ export interface CreateTournamentPayload {
     game_id: number;
     city_id?: number;
     club_id?: number;
-    start_date: string; // datetime string
-    end_date: string;   // datetime string
-    application_deadline?: string; // datetime string
+    start_date: string;
+    end_date: string;
+    application_deadline?: string;
     max_participants?: number;
-    entry_fee: number;
-    prize_pool: number;
+    entry_fee?: number;
+    prize_pool?: number;
     prize_distribution?: number[];
     organizer?: string;
     format?: string;
-    requires_application?: boolean;
-    auto_approve_applications?: boolean;
+    official_rating_id?: number;
+    rating_coefficient?: number;
 }
