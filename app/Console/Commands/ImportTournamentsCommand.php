@@ -1,7 +1,5 @@
 <?php
-
 namespace App\Console\Commands;
-
 use App\Core\Models\City;
 use App\Core\Models\Country;
 use App\Core\Models\Game;
@@ -22,10 +20,10 @@ class ImportTournamentsCommand extends Command
 {
     protected $signature = 'import:tournaments {file}';
     protected $description = 'Import tournaments data from Excel file';
-
     private OfficialRatingService $ratingService;
     private array $gameMap = [];
     private array $cityMap = [];
+    private array $countryMap = [];
     private OfficialRating $rating;
 
     public function __construct(OfficialRatingService $ratingService)
@@ -79,8 +77,8 @@ class ImportTournamentsCommand extends Command
             // Step 6: Create tournament players and results
             $this->createTournamentResults($tournamentPlayersData);
 
-            // Step 7: Update official rating from tournaments
-            $this->updateOfficialRating();
+            // Step 7: Update official rating from tournaments using new system
+            $this->updateOfficialRatingWithNewSystem();
 
             DB::commit();
 
@@ -374,17 +372,18 @@ class ImportTournamentsCommand extends Command
                         'rating_points'      => $this->rating->initial_rating,
                         'position'           => 0,
                         'is_active'          => true,
+                        'tournament_records' => [],
                     ]);
                 }
             }
 
-            $this->info("Added {$tournamentId} results for tournament: {$tournament->name}");
+            $this->info("Added results for tournament: {$tournament->name}");
         }
     }
 
-    private function updateOfficialRating()
+    private function updateOfficialRatingWithNewSystem()
     {
-        $this->info('Updating official rating from tournaments...');
+        $this->info('Updating official rating from tournaments using new system...');
 
         $tournaments = $this->rating->tournaments()->orderBy('end_date')->get();
         $updatedCount = 0;
@@ -403,32 +402,13 @@ class ImportTournamentsCommand extends Command
         $this->ratingService->recalculatePositions($this->rating);
 
         $this->info("Rating update completed. Total players updated: {$updatedCount}");
+
+        // Show integrity report
+        $report = $this->ratingService->getRatingIntegrityReport($this->rating);
+        $this->info("Data integrity check: {$report['players_with_issues']} issues found out of {$report['total_players']} players");
+
+        if ($report['players_with_issues'] > 0) {
+            $this->warn("There are data integrity issues. Consider running 'recalculate-from-records' command.");
+        }
     }
 }
-
-/*
-SELECT
-    u.id                                  AS user_id,
-    u.firstname,
-    u.lastname,
-    orp.rating_points                     AS rating_pts,
-    orp.tournaments_played                AS t_played,
-    orp.tournaments_won                   AS t_won,
-    (orp.rating_points * (1 + 1 / SQRT(orp.tournaments_played))
-        + 500 * orp.tournaments_won)       AS effective_rating,
-    CASE
-        WHEN (orp.rating_points * (1 + 1 / SQRT(orp.tournaments_played))
-            + 500 * orp.tournaments_won) >= 15000 THEN 'S'
-        WHEN (orp.rating_points * (1 + 1 / SQRT(orp.tournaments_played))
-            + 500 * orp.tournaments_won) >=  8000 THEN 'A'
-        WHEN (orp.rating_points * (1 + 1 / SQRT(orp.tournaments_played))
-            + 500 * orp.tournaments_won) >=  4000 THEN 'B'
-        WHEN (orp.rating_points * (1 + 1 / SQRT(orp.tournaments_played))
-            + 500 * orp.tournaments_won) >=  1000 THEN 'C'
-        ELSE 'D'
-    END                                   AS grade
-FROM   official_rating_players  AS orp
-JOIN   users                    AS u   ON u.id = orp.user_id   -- подставляем ФИО
-WHERE  orp.is_active = 1;
-
- * */
