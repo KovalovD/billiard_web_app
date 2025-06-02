@@ -1,4 +1,5 @@
 <?php
+// app/Tournaments/Http/Controllers/AdminTournamentsController.php
 
 namespace App\Tournaments\Http\Controllers;
 
@@ -242,5 +243,26 @@ readonly class AdminTournamentsController
         $users = $this->tournamentService->searchUsers($validated['query']);
 
         return UserResource::collection($users);
+    }
+
+    /**
+     * Get available official ratings for tournament game type
+     * @admin
+     */
+    public function getAvailableOfficialRatings(Tournament $tournament): JsonResponse
+    {
+        $gameType = $tournament->game->type;
+        $ratings = $this->officialRatingService->getRatingsByGameType($gameType);
+
+        return response()->json([
+            'ratings' => $ratings->map(function ($rating) {
+                return [
+                    'id'          => $rating->id,
+                    'name'        => $rating->name,
+                    'description' => $rating->description,
+                    'game_type'   => $rating->game_type->value,
+                ];
+            }),
+        ]);
     }
 }

@@ -1,3 +1,4 @@
+<!-- resources/js/pages/Admin/Tournaments/Create.vue -->
 <script lang="ts" setup>
 import {
     Button,
@@ -58,6 +59,7 @@ const cities = ref<City[]>([]);
 const clubs = ref<Club[]>([]);
 const filteredClubs = ref<Club[]>([]);
 const officialRatings = ref<OfficialRating[]>([]);
+const filteredGames = ref<Game[]>([]);
 const filteredOfficialRatings = ref<OfficialRating[]>([]);
 
 // Loading states
@@ -78,6 +80,22 @@ const isFormValid = computed(() => {
         form.value.end_date !== '';
 });
 
+// Watch for official rating changes to filter games
+watch(() => form.value.official_rating_id, (newRatingId) => {
+    form.value.game_id = 0;
+    if (newRatingId) {
+        const selectedRating = officialRatings.value.find(r => r.id === newRatingId);
+        if (selectedRating) {
+            // Filter games by the rating's game type
+            filteredGames.value = games.value.filter(game =>
+                game.type === selectedRating.game_type
+            );
+        }
+    } else {
+        filteredGames.value = games.value;
+    }
+});
+
 // Watch for city changes to filter clubs
 watch(() => form.value.city_id, (newCityId) => {
     form.value.club_id = undefined;
@@ -90,22 +108,11 @@ watch(() => form.value.city_id, (newCityId) => {
     }
 });
 
-// Watch for game changes to filter official ratings
-watch(() => form.value.game_id, (newGameId) => {
-    form.value.official_rating_id = undefined;
-    if (newGameId) {
-        filteredOfficialRatings.value = officialRatings.value.filter(rating =>
-            rating.game?.id === newGameId && rating.is_active
-        );
-    } else {
-        filteredOfficialRatings.value = [];
-    }
-});
-
 const fetchGames = async () => {
     isLoadingGames.value = true;
     try {
         games.value = await apiClient<Game[]>('/api/available-games');
+        filteredGames.value = games.value;
     } catch (error) {
         console.error('Failed to load games:', error);
     } finally {
@@ -117,6 +124,7 @@ const fetchOfficialRatings = async () => {
     isLoadingRatings.value = true;
     try {
         officialRatings.value = await apiClient<OfficialRating[]>('/api/official-ratings/active');
+        filteredOfficialRatings.value = officialRatings.value;
     } catch (error) {
         console.error('Failed to load official ratings:', error);
     } finally {
@@ -199,17 +207,17 @@ onMounted(() => {
                             </div>
 
                             <div class="space-y-2">
-                                <Label for="game_id">Game Type *</Label>
+                                <Label for="game_id">Game *</Label>
                                 <Select v-model="form.game_id" required>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select game type"/>
+                                        <SelectValue placeholder="Select specific game"/>
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem v-if="isLoadingGames" :value="0">
                                             Loading games...
                                         </SelectItem>
                                         <SelectItem
-                                            v-for="game in games"
+                                            v-for="game in filteredGames"
                                             v-else
                                             :key="game.id"
                                             :value="game.id"
@@ -218,6 +226,9 @@ onMounted(() => {
                                         </SelectItem>
                                     </SelectContent>
                                 </Select>
+                                <p v-if="form.official_rating_id" class="text-sm text-gray-500 dark:text-gray-400">
+                                    Games filtered by selected rating type
+                                </p>
                             </div>
                         </div>
 
@@ -254,7 +265,7 @@ onMounted(() => {
                             <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
                                 <div class="space-y-2">
                                     <Label for="official_rating_id">Official Rating</Label>
-                                    <Select v-model="form.official_rating_id" :disabled="!form.game_id">
+                                    <Select v-model="form.official_rating_id">
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select official rating (optional)"/>
                                         </SelectTrigger>
@@ -268,7 +279,7 @@ onMounted(() => {
                                                 :key="rating.id"
                                                 :value="rating.id"
                                             >
-                                                {{ rating.name }}
+                                                {{ rating.name }} ({{ rating.game_type_name }})
                                             </SelectItem>
                                         </SelectContent>
                                     </Select>

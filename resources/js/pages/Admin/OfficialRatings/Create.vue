@@ -1,4 +1,3 @@
-// resources/js/pages/Admin/OfficialRatings/Create.vue
 <script lang="ts" setup>
 import {
     Button,
@@ -19,11 +18,10 @@ import {
 } from '@/Components/ui';
 import {useOfficialRatings} from '@/composables/useOfficialRatings';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
-import {apiClient} from '@/lib/apiClient';
-import type {CreateOfficialRatingPayload, Game} from '@/types/api';
+import type {CreateOfficialRatingPayload} from '@/types/api';
 import {Head, Link, router} from '@inertiajs/vue3';
 import {ArrowLeftIcon, PlusIcon, SaveIcon} from 'lucide-vue-next';
-import {computed, onMounted, ref} from 'vue';
+import {computed, ref} from 'vue';
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -32,41 +30,33 @@ const {createOfficialRating} = useOfficialRatings();
 const form = ref<CreateOfficialRatingPayload>({
     name: '',
     description: '',
-    game_id: 0,
+    game_type: '',
     initial_rating: 1000,
     calculation_method: 'tournament_points',
     rating_rules: []
 });
 
-const games = ref<Game[]>([]);
-const isLoadingGames = ref(true);
 const isSaving = ref(false);
 const error = ref<string | null>(null);
 const validationErrors = ref<Record<string, string[]>>({});
 
 const isFormValid = computed(() => {
     return form.value.name.trim() !== '' &&
-        form.value.game_id > 0 &&
+        form.value.game_type !== '' &&
         form.value.initial_rating > 0;
 });
+
+const gameTypes = [
+    {value: 'pool', label: 'Pool'},
+    {value: 'pyramid', label: 'Pyramid'},
+    {value: 'snooker', label: 'Snooker'}
+];
 
 const calculationMethods = [
     {value: 'tournament_points', label: 'Tournament Points'},
     {value: 'elo', label: 'ELO Rating'},
     {value: 'custom', label: 'Custom'}
 ];
-
-const fetchGames = async () => {
-    isLoadingGames.value = true;
-    try {
-        games.value = await apiClient<Game[]>('/api/available-games');
-        // eslint-disable-next-line
-    } catch (err: any) {
-        error.value = 'Failed to load games';
-    } finally {
-        isLoadingGames.value = false;
-    }
-};
 
 const handleSubmit = async () => {
     if (!isFormValid.value) return;
@@ -106,10 +96,6 @@ const clearValidationError = (field: string) => {
         delete validationErrors.value[field];
     }
 };
-
-onMounted(() => {
-    fetchGames();
-});
 </script>
 
 <template>
@@ -183,33 +169,28 @@ onMounted(() => {
                                 </p>
                             </div>
 
-                            <!-- Game -->
+                            <!-- Game Type -->
                             <div class="space-y-2">
-                                <Label for="game">Game Type *</Label>
-                                <div v-if="isLoadingGames" class="flex items-center gap-2">
-                                    <Spinner class="h-4 w-4"/>
-                                    <span class="text-sm text-gray-500">Loading games...</span>
-                                </div>
+                                <Label for="game_type">Game Type *</Label>
                                 <Select
-                                    v-else
-                                    v-model="form.game_id"
-                                    @update:modelValue="clearValidationError('game_id')"
+                                    v-model="form.game_type"
+                                    @update:modelValue="clearValidationError('game_type')"
                                 >
-                                    <SelectTrigger :class="{ 'border-red-300': getValidationError('game_id') }">
+                                    <SelectTrigger :class="{ 'border-red-300': getValidationError('game_type') }">
                                         <SelectValue placeholder="Select a game type"/>
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem
-                                            v-for="game in games"
-                                            :key="game.id"
-                                            :value="game.id"
+                                            v-for="gameType in gameTypes"
+                                            :key="gameType.value"
+                                            :value="gameType.value"
                                         >
-                                            {{ game.name }}
+                                            {{ gameType.label }}
                                         </SelectItem>
                                     </SelectContent>
                                 </Select>
-                                <p v-if="getValidationError('game_id')" class="text-sm text-red-600">
-                                    {{ getValidationError('game_id') }}
+                                <p v-if="getValidationError('game_type')" class="text-sm text-red-600">
+                                    {{ getValidationError('game_type') }}
                                 </p>
                             </div>
                         </div>

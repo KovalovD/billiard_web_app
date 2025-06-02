@@ -1,4 +1,3 @@
-// resources/js/pages/OfficialRatings/Show.vue
 <script lang="ts" setup>
 import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Spinner} from '@/Components/ui';
 import {useAuth} from '@/composables/useAuth';
@@ -65,7 +64,10 @@ const getCalculationMethodDisplay = (method: string): string => {
     }
 };
 
-const formatDate = (dateString: string): string => {
+const formatDate = (dateString: string | undefined): string => {
+    if (!dateString) {
+        return ''
+    }
     return new Date(dateString).toLocaleDateString();
 };
 
@@ -173,7 +175,7 @@ onMounted(() => {
                                     <div class="flex flex-wrap gap-4">
                                         <span class="flex items-center gap-1">
                                             <TrophyIcon class="h-4 w-4"/>
-                                            {{ rating.game?.name || 'N/A' }}
+                                            {{ rating.game_type_name || 'N/A' }}
                                         </span>
                                         <span class="flex items-center gap-1">
                                             <UsersIcon class="h-4 w-4"/>
