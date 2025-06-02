@@ -18,7 +18,6 @@ class OfficialRatingService
     public function getAllRatings(array $filters = []): Collection
     {
         $query = OfficialRating::with(['game']);
-
         if (isset($filters['game_id'])) {
             $query->where('game_id', $filters['game_id']);
         }
@@ -156,7 +155,19 @@ class OfficialRatingService
             throw new RuntimeException('Tournament is not associated with this rating');
         }
 
-        $rating->tournaments()->detach($tournament->id);
+        DB::transaction(function () use ($rating, $tournament) {
+            // Remove tournament records from all players
+            $players = $rating->players()->get();
+            foreach ($players as $player) {
+                $player->removeTournament($tournament->id);
+            }
+
+            // Detach tournament from rating
+            $rating->tournaments()->detach($tournament->id);
+
+            // Recalculate positions
+            $this->recalculatePositions($rating);
+        });
     }
 
     /**
@@ -170,7 +181,7 @@ class OfficialRatingService
     ): OfficialRatingPlayer {
         // Check if player already exists
         if ($rating->hasPlayer($userId)) {
-            throw new RuntimeException('Player is already in this rating');
+            return $rating->getPlayerRating($userId);
         }
 
         $player = OfficialRatingPlayer::create([
@@ -178,6 +189,7 @@ class OfficialRatingService
             'user_id'            => $userId,
             'rating_points'      => $initialRating ?? $rating->initial_rating,
             'position'           => $rating->players()->count() + 1,
+            'tournament_records' => [],
         ]);
 
         // Recalculate positions
@@ -216,7 +228,7 @@ class OfficialRatingService
                 ->where('is_active', true)
                 ->orderBy('rating_points', 'desc')
                 ->orderBy('tournaments_won', 'desc')
-                ->orderBy('tournaments_played', 'asc')
+                ->orderBy('tournaments_played')
                 ->get()
             ;
 
@@ -227,7 +239,7 @@ class OfficialRatingService
     }
 
     /**
-     * Update rating from tournament results
+     * Update rating from tournament results using tournament records tracking
      * @throws Throwable
      */
     public function updateRatingFromTournament(OfficialRating $rating, Tournament $tournament): int
@@ -269,12 +281,17 @@ class OfficialRatingService
                 }
 
                 // Calculate rating points based on position and coefficient
-                $basePoints = $tournamentPlayer->rating_points * $ratingTournament->pivot->rating_coefficient;
+                $basePoints = $tournamentPlayer->rating_points;
                 $adjustedPoints = (int) ($basePoints * $ratingTournament->pivot->rating_coefficient);
 
-                // Update player stats
+                // Update player using the new tournament record system
                 $won = $tournamentPlayer->position === 1;
-                $ratingPlayer->addTournament($adjustedPoints, $tournament->end_date, $won);
+                $ratingPlayer->addTournament(
+                    $tournament->id,
+                    $adjustedPoints,
+                    $tournament->end_date,
+                    $won,
+                );
 
                 $updatedCount++;
             }
@@ -284,5 +301,57 @@ class OfficialRatingService
 
             return $updatedCount;
         });
+    }
+
+    /**
+     * Recalculate all players from their tournament records (data integrity check)
+     * @throws Throwable
+     */
+    public function recalculateAllPlayersFromRecords(OfficialRating $rating): int
+    {
+        return DB::transaction(function () use ($rating) {
+            $players = $rating->players()->get();
+            $updatedCount = 0;
+
+            foreach ($players as $player) {
+                $player->recalculateFromRecords();
+                $updatedCount++;
+            }
+
+            // Recalculate positions
+            $this->recalculatePositions($rating);
+
+            return $updatedCount;
+        });
+    }
+
+    /**
+     * Get rating integrity report (useful for debugging)
+     */
+    public function getRatingIntegrityReport(OfficialRating $rating): array
+    {
+        $players = $rating->players()->get();
+        $issues = [];
+
+        foreach ($players as $player) {
+            $calculatedPoints = $rating->initial_rating + $player->getTotalPointsFromRecords();
+
+            if ($calculatedPoints !== $player->rating_points) {
+                $issues[] = [
+                    'player_id'                => $player->id,
+                    'player_name'              => $player->user->firstname.' '.$player->user->lastname,
+                    'current_points'           => $player->rating_points,
+                    'calculated_points'        => $calculatedPoints,
+                    'difference'               => $player->rating_points - $calculatedPoints,
+                    'tournament_records_count' => count($player->tournament_records ?? []),
+                ];
+            }
+        }
+
+        return [
+            'total_players'       => $players->count(),
+            'players_with_issues' => count($issues),
+            'issues'              => $issues,
+        ];
     }
 }
