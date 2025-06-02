@@ -59,6 +59,16 @@ class TournamentResource extends JsonResource
             'top_players'          => $this->when($this->isCompleted(), function () {
                 return TournamentPlayerResource::collection($this->getTopPlayers());
             }),
+            'official_ratings' => $this->whenLoaded('officialRatings', function () {
+                return $this->officialRatings->map(function ($rating) {
+                    return [
+                        'id'                 => $rating->id,
+                        'name'               => $rating->name,
+                        'rating_coefficient' => $rating->pivot->rating_coefficient,
+                        'is_counting'        => $rating->pivot->is_counting,
+                    ];
+                });
+            }),
         ];
     }
 }

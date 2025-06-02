@@ -24,13 +24,18 @@ class UpdateTournamentRequest extends BaseFormRequest
             'prize_distribution' => ['nullable', 'array'],
             'organizer'          => ['nullable', 'string', 'max:255'],
             'format'             => ['nullable', 'string', 'max:255'],
+            'official_rating_id' => ['nullable', 'integer', 'exists:official_ratings,id'],
+            'rating_coefficient' => ['nullable', 'numeric', 'min:0.1', 'max:5.0'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'end_date.after_or_equal' => 'End date must be after or equal to start date.',
+            'end_date.after_or_equal'   => 'End date must be after or equal to start date.',
+            'official_rating_id.exists' => 'The selected official rating does not exist.',
+            'rating_coefficient.min'    => 'Rating coefficient must be at least 0.1.',
+            'rating_coefficient.max'    => 'Rating coefficient cannot exceed 5.0.',
         ];
     }
 }

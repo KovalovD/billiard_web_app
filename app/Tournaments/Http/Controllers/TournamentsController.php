@@ -2,8 +2,8 @@
 
 namespace App\Tournaments\Http\Controllers;
 
-use App\Tournaments\Http\Resources\TournamentResource;
 use App\Tournaments\Http\Resources\TournamentPlayerResource;
+use App\Tournaments\Http\Resources\TournamentResource;
 use App\Tournaments\Models\Tournament;
 use App\Tournaments\Services\TournamentService;
 use Illuminate\Http\JsonResponse;
@@ -35,7 +35,7 @@ readonly class TournamentsController
      */
     public function show(Tournament $tournament): TournamentResource
     {
-        $tournament->load(['game', 'city.country', 'club', 'players.user']);
+        $tournament->load(['game', 'city.country', 'club', 'players.user', 'officialRatings']);
 
         return new TournamentResource($tournament);
     }

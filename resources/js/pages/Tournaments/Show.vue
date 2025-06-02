@@ -12,6 +12,7 @@ import {
     ClipboardListIcon,
     MapPinIcon,
     PencilIcon,
+    StarIcon,
     TrophyIcon,
     UserCheckIcon,
     UserPlusIcon,
@@ -387,6 +388,20 @@ onMounted(() => {
                                             Deadline</h4>
                                         <p class="mt-1 text-gray-600 dark:text-gray-400">
                                             {{ formatDateTime(tournament.application_deadline) }}</p>
+                                    </div>
+
+                                    <div v-if="tournament.official_ratings && tournament.official_ratings.length > 0"
+                                         class="flex justify-between">
+                                        <dt class="text-gray-600 dark:text-gray-400">
+                                            <StarIcon class="h-4 w-4 inline mr-1"/>
+                                            Official Rating:
+                                        </dt>
+                                        <dd class="font-medium">
+                                            {{ tournament.official_ratings[0].name }}
+                                            <span class="text-xs text-gray-500">(×{{
+                                                    tournament.official_ratings[0].rating_coefficient
+                                                }})</span>
+                                        </dd>
                                     </div>
                                 </div>
                             </CardContent>

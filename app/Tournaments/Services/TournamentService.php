@@ -5,6 +5,7 @@ namespace App\Tournaments\Services;
 use App\Auth\DataTransferObjects\RegisterDTO;
 use App\Auth\Services\AuthService;
 use App\Core\Models\User;
+use App\OfficialRatings\Services\OfficialRatingService;
 use App\Tournaments\Models\Tournament;
 use App\Tournaments\Models\TournamentPlayer;
 use Illuminate\Database\Eloquent\Collection;
@@ -16,6 +17,7 @@ class TournamentService
 {
     public function __construct(
         private readonly AuthService $authService,
+        private readonly OfficialRatingService $officialRatingService,
     ) {
     }
 
@@ -83,10 +85,45 @@ class TournamentService
 
     /**
      * Create new tournament
+     * @throws Throwable
      */
     public function createTournament(array $data): Tournament
     {
-        return Tournament::create($data);
+        return DB::transaction(function () use ($data) {
+            // Create tournament
+            $tournament = Tournament::create([
+                'name'                 => $data['name'],
+                'regulation'           => $data['regulation'] ?? null,
+                'details'              => $data['details'] ?? null,
+                'game_id'              => $data['game_id'],
+                'city_id'              => $data['city_id'] ?? null,
+                'club_id'              => $data['club_id'] ?? null,
+                'start_date'           => $data['start_date'],
+                'end_date'             => $data['end_date'],
+                'application_deadline' => $data['application_deadline'] ?? null,
+                'max_participants'     => $data['max_participants'] ?? null,
+                'entry_fee'            => $data['entry_fee'] ?? 0,
+                'prize_pool'           => $data['prize_pool'] ?? 0,
+                'prize_distribution'   => $data['prize_distribution'] ?? null,
+                'organizer'            => $data['organizer'] ?? null,
+                'format'               => $data['format'] ?? null,
+            ]);
+
+            // If official rating is selected, associate it with the tournament
+            if (!empty($data['official_rating_id'])) {
+                $ratingCoefficient = $data['rating_coefficient'] ?? 1.0;
+                $this->officialRatingService->addTournamentToRating(
+                    $this->officialRatingService
+                        ->getAllRatings()
+                        ->where('id', $data['official_rating_id'])
+                        ->first(),
+                    $tournament->id,
+                    $ratingCoefficient,
+                );
+            }
+
+            return $tournament;
+        });
     }
 
     /**
@@ -267,7 +304,7 @@ class TournamentService
      */
     public function setTournamentResults(Tournament $tournament, array $results): void
     {
-        DB::transaction(static function () use ($tournament, $results) {
+        DB::transaction(function () use ($tournament, $results) {
             foreach ($results as $result) {
                 $player = TournamentPlayer::findOrFail($result['player_id']);
 
@@ -287,7 +324,29 @@ class TournamentService
             if ($tournament->status !== 'completed') {
                 $tournament->update(['status' => 'completed']);
             }
+
+            // Update official ratings if tournament is associated with any
+            $this->updateOfficialRatingsFromTournament($tournament);
         });
+    }
+
+    /**
+     * Update official ratings from tournament results
+     */
+    private function updateOfficialRatingsFromTournament(Tournament $tournament): void
+    {
+        // Get all official ratings associated with this tournament
+        $officialRatings = $tournament->officialRatings()->where('is_counting', true)->get();
+
+        foreach ($officialRatings as $officialRating) {
+            try {
+                $this->officialRatingService->updateRatingFromTournament($officialRating, $tournament);
+            } catch (Throwable) {
+                // Log error but don't fail the entire transaction
+                // You might want to add proper logging here
+                continue;
+            }
+        }
     }
 
     /**
@@ -296,6 +355,12 @@ class TournamentService
     public function changeTournamentStatus(Tournament $tournament, string $status): Tournament
     {
         $tournament->update(['status' => $status]);
+
+        // If status is being changed to completed, update official ratings
+        if ($status === 'completed') {
+            $this->updateOfficialRatingsFromTournament($tournament);
+        }
+
         return $tournament->fresh();
     }
 
