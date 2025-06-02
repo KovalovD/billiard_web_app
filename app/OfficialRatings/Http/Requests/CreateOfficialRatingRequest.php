@@ -3,6 +3,8 @@
 namespace App\OfficialRatings\Http\Requests;
 
 use App\Core\Http\Requests\BaseFormRequest;
+use App\Matches\Enums\GameType;
+use Illuminate\Validation\Rules\Enum;
 
 class CreateOfficialRatingRequest extends BaseFormRequest
 {
@@ -11,7 +13,7 @@ class CreateOfficialRatingRequest extends BaseFormRequest
         return [
             'name'               => ['required', 'string', 'max:255'],
             'description'        => ['nullable', 'string'],
-            'game_id'            => ['required', 'integer', 'exists:games,id'],
+            'game_type' => ['required', new Enum(GameType::class)],
             'initial_rating'     => ['integer', 'min:0'],
             'calculation_method' => ['string', 'in:tournament_points,elo,custom'],
             'rating_rules'       => ['nullable', 'array'],

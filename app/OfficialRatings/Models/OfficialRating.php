@@ -3,10 +3,10 @@
 namespace App\OfficialRatings\Models;
 
 use App\Core\Models\Game;
+use App\Matches\Enums\GameType;
 use App\Tournaments\Models\Tournament;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -15,7 +15,7 @@ class OfficialRating extends Model
     protected $fillable = [
         'name',
         'description',
-        'game_id',
+        'game_type',
         'is_active',
         'initial_rating',
         'calculation_method',
@@ -25,13 +25,24 @@ class OfficialRating extends Model
     protected $casts = [
         'is_active'    => 'boolean',
         'rating_rules' => 'array',
+        'game_type' => GameType::class,
     ];
 
     protected $withCount = ['players', 'tournaments'];
 
-    public function game(): BelongsTo
+    public function getGameTypeNameAttribute(): string
     {
-        return $this->belongsTo(Game::class);
+        return match ($this->game_type) {
+            GameType::Pool => 'Pool',
+            GameType::Pyramid => 'Pyramid',
+            GameType::Snooker => 'Snooker',
+            default => 'Unknown',
+        };
+    }
+
+    public function getGamesOfType(): Collection
+    {
+        return Game::where('type', $this->game_type)->get();
     }
 
     public function players(): HasMany

@@ -175,7 +175,7 @@ onMounted(() => {
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center text-sm text-gray-900 dark:text-gray-100">
                                         <TrophyIcon class="h-4 w-4 mr-2 text-gray-400"/>
-                                        {{ rating.game?.name || 'N/A' }}
+                                        {{ rating.game_type_name || 'N/A' }}
                                     </div>
                                 </td>
 

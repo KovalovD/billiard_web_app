@@ -2,6 +2,7 @@
 
 namespace App\OfficialRatings\Services;
 
+use App\Matches\Enums\GameType;
 use App\OfficialRatings\Models\OfficialRating;
 use App\OfficialRatings\Models\OfficialRatingPlayer;
 use App\Tournaments\Models\Tournament;
@@ -17,9 +18,10 @@ class OfficialRatingService
      */
     public function getAllRatings(array $filters = []): Collection
     {
-        $query = OfficialRating::with(['game']);
-        if (isset($filters['game_id'])) {
-            $query->where('game_id', $filters['game_id']);
+        $query = OfficialRating::query();
+
+        if (isset($filters['game_type'])) {
+            $query->where('game_type', $filters['game_type']);
         }
 
         if (isset($filters['is_active'])) {
@@ -34,7 +36,18 @@ class OfficialRatingService
      */
     public function getActiveRatings(): Collection
     {
-        return OfficialRating::with(['game'])
+        return OfficialRating::where('is_active', true)
+            ->orderBy('name')
+            ->get()
+        ;
+    }
+
+    /**
+     * Get ratings by game type
+     */
+    public function getRatingsByGameType(GameType $gameType): Collection
+    {
+        return OfficialRating::where('game_type', $gameType)
             ->where('is_active', true)
             ->orderBy('name')
             ->get()
@@ -91,7 +104,7 @@ class OfficialRatingService
     {
         $tournaments = $rating
             ->tournaments()
-            ->with(['city.country', 'club'])
+            ->with(['city.country', 'club', 'game'])
             ->orderBy('start_date', 'desc')
             ->get()
         ;
@@ -106,6 +119,7 @@ class OfficialRatingService
                 'city'               => $tournament->city?->name,
                 'country'            => $tournament->city?->country?->name,
                 'club'               => $tournament->club?->name,
+                'game_name' => $tournament->game?->name,
                 'players_count'      => $tournament->players_count,
                 'rating_coefficient' => $tournament->pivot->rating_coefficient,
                 'is_counting'        => $tournament->pivot->is_counting,
@@ -123,10 +137,10 @@ class OfficialRatingService
         float $ratingCoefficient = 1.0,
         bool $isCounting = true,
     ): void {
-        $tournament = Tournament::with('players')->findOrFail($tournamentId);
+        $tournament = Tournament::with(['players', 'game'])->findOrFail($tournamentId);
 
-        // Check if tournament game matches rating game
-        if ($tournament->game_id !== $rating->game_id) {
+        // Check if tournament game type matches rating game type
+        if ($tournament->game->type !== $rating->game_type) {
             throw new RuntimeException('Tournament game type does not match rating game type');
         }
 

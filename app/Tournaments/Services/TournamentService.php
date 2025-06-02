@@ -1,4 +1,5 @@
 <?php
+// app/Tournaments/Services/TournamentService.php
 
 namespace App\Tournaments\Services;
 
@@ -112,14 +113,19 @@ class TournamentService
             // If official rating is selected, associate it with the tournament
             if (!empty($data['official_rating_id'])) {
                 $ratingCoefficient = $data['rating_coefficient'] ?? 1.0;
-                $this->officialRatingService->addTournamentToRating(
-                    $this->officialRatingService
-                        ->getAllRatings()
-                        ->where('id', $data['official_rating_id'])
-                        ->first(),
-                    $tournament->id,
-                    $ratingCoefficient,
-                );
+                $rating = $this->officialRatingService
+                    ->getAllRatings()
+                    ->where('id', $data['official_rating_id'])
+                    ->first()
+                ;
+
+                if ($rating) {
+                    $this->officialRatingService->addTournamentToRating(
+                        $rating,
+                        $tournament->id,
+                        $ratingCoefficient,
+                    );
+                }
             }
 
             return $tournament;
@@ -152,12 +158,12 @@ class TournamentService
             ->players()
             ->with('user')
             ->orderByRaw("CASE
-                WHEN status = 'confirmed' AND position IS NOT NULL THEN 1
-                WHEN status = 'confirmed' AND position IS NULL THEN 2
-                WHEN status = 'applied' THEN 3
-                WHEN status = 'rejected' THEN 4
-                ELSE 5
-            END")
+               WHEN status = 'confirmed' AND position IS NOT NULL THEN 1
+               WHEN status = 'confirmed' AND position IS NULL THEN 2
+               WHEN status = 'applied' THEN 3
+               WHEN status = 'rejected' THEN 4
+               ELSE 5
+           END")
             ->orderBy('position')
             ->orderBy('applied_at')
             ->get()

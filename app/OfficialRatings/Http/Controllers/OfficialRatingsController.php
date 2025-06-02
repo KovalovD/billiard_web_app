@@ -2,8 +2,8 @@
 
 namespace App\OfficialRatings\Http\Controllers;
 
-use App\OfficialRatings\Http\Resources\OfficialRatingResource;
 use App\OfficialRatings\Http\Resources\OfficialRatingPlayerResource;
+use App\OfficialRatings\Http\Resources\OfficialRatingResource;
 use App\OfficialRatings\Models\OfficialRating;
 use App\OfficialRatings\Services\OfficialRatingService;
 use Illuminate\Http\JsonResponse;
@@ -35,7 +35,7 @@ readonly class OfficialRatingsController
      */
     public function show(OfficialRating $officialRating): OfficialRatingResource
     {
-        $officialRating->load(['game', 'players.user', 'tournaments']);
+        $officialRating->load(['players.user', 'tournaments']);
 
         return new OfficialRatingResource($officialRating);
     }

@@ -297,7 +297,9 @@ export interface OfficialRating {
     tournaments_count: number;
     created_at: string;
     updated_at: string;
-    game?: Game;
+    game_type: 'pool' | 'pyramid' | 'snooker';
+    game_type_name: string;
+    available_games?: Game[];
     players?: OfficialRatingPlayer[];
     tournaments?: OfficialRatingTournament[];
     top_players?: OfficialRatingPlayer[];
@@ -338,8 +340,8 @@ export interface OfficialRatingTournament {
 export interface CreateOfficialRatingPayload {
     name: string;
     description: string | number;
-    game_id: number;
-    is_active: boolean;
+    game_type: string;
+    is_active?: boolean;
     initial_rating: number | null;
     calculation_method?: 'tournament_points' | 'elo' | 'custom';
     rating_rules: any[] | null | undefined;

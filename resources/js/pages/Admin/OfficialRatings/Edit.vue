@@ -1,4 +1,3 @@
-// resources/js/pages/Admin/OfficialRatings/Edit.vue
 <script lang="ts" setup>
 import {
     Button,
@@ -19,8 +18,7 @@ import {
 } from '@/Components/ui';
 import {useOfficialRatings} from '@/composables/useOfficialRatings';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
-import {apiClient} from '@/lib/apiClient';
-import type {CreateOfficialRatingPayload, Game, OfficialRating} from '@/types/api';
+import type {CreateOfficialRatingPayload, OfficialRating} from '@/types/api';
 import {Head, Link, router} from '@inertiajs/vue3';
 import {ArrowLeftIcon, PencilIcon, SaveIcon, TrashIcon} from 'lucide-vue-next';
 import {computed, onMounted, ref} from 'vue';
@@ -41,16 +39,14 @@ const rating = ref<OfficialRating | null>(null);
 const form = ref<Partial<CreateOfficialRatingPayload>>({
     name: '',
     description: '',
-    game_id: 0,
+    game_type: '',
     is_active: true,
     initial_rating: 1000,
     calculation_method: 'tournament_points',
     rating_rules: []
 });
 
-const games = ref<Game[]>([]);
 const isLoading = ref(true);
-const isLoadingGames = ref(true);
 const isSaving = ref(false);
 const isDeleting = ref(false);
 const showDeleteConfirm = ref(false);
@@ -60,9 +56,15 @@ const successMessage = ref<string | null>(null);
 
 const isFormValid = computed(() => {
     return form.value.name?.trim() !== '' &&
-        form.value.game_id && form.value.game_id > 0 &&
+        form.value.game_type !== '' &&
         form.value.initial_rating && form.value.initial_rating > 0;
 });
+
+const gameTypes = [
+    {value: 'pool', label: 'Pool'},
+    {value: 'pyramid', label: 'Pyramid'},
+    {value: 'snooker', label: 'Snooker'}
+];
 
 const calculationMethods = [
     {value: 'tournament_points', label: 'Tournament Points'},
@@ -76,10 +78,7 @@ const fetchData = async () => {
 
     try {
         const ratingApi = fetchOfficialRating(props.ratingId);
-        const [ /*ignore*/, gamesResponse] = await Promise.all([
-            ratingApi.execute(),
-            apiClient<Game[]>('/api/available-games')
-        ]);
+        await ratingApi.execute();
 
         const r = ratingApi.data.value;
 
@@ -89,20 +88,17 @@ const fetchData = async () => {
             form.value = {
                 name: r.name,
                 description: r.description,
-                game_id: r.game?.id ?? 0,
+                game_type: r.game_type,
                 is_active: r.is_active,
                 initial_rating: r.initial_rating,
                 calculation_method: r.calculation_method,
                 rating_rules: r.rating_rules,
             };
         }
-
-        games.value = gamesResponse;
     } catch (err: any) {
         error.value = err.message || 'Failed to load rating data';
     } finally {
         isLoading.value = false;
-        isLoadingGames.value = false;
     }
 };
 
@@ -262,33 +258,28 @@ onMounted(() => {
                                 </p>
                             </div>
 
-                            <!-- Game -->
+                            <!-- Game Type -->
                             <div class="space-y-2">
-                                <Label for="game">Game Type *</Label>
-                                <div v-if="isLoadingGames" class="flex items-center gap-2">
-                                    <Spinner class="h-4 w-4"/>
-                                    <span class="text-sm text-gray-500">Loading games...</span>
-                                </div>
+                                <Label for="game_type">Game Type *</Label>
                                 <Select
-                                    v-else
-                                    v-model="form.game_id"
-                                    @update:modelValue="clearValidationError('game_id')"
+                                    v-model="form.game_type"
+                                    @update:modelValue="clearValidationError('game_type')"
                                 >
-                                    <SelectTrigger :class="{ 'border-red-300': getValidationError('game_id') }">
+                                    <SelectTrigger :class="{ 'border-red-300': getValidationError('game_type') }">
                                         <SelectValue placeholder="Select a game type"/>
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem
-                                            v-for="game in games"
-                                            :key="game.id"
-                                            :value="game.id"
+                                            v-for="gameType in gameTypes"
+                                            :key="gameType.value"
+                                            :value="gameType.value"
                                         >
-                                            {{ game.name }}
+                                            {{ gameType.label }}
                                         </SelectItem>
                                     </SelectContent>
                                 </Select>
-                                <p v-if="getValidationError('game_id')" class="text-sm text-red-600">
-                                    {{ getValidationError('game_id') }}
+                                <p v-if="getValidationError('game_type')" class="text-sm text-red-600">
+                                    {{ getValidationError('game_type') }}
                                 </p>
                             </div>
 
