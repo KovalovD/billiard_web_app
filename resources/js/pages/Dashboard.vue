@@ -1,3 +1,4 @@
+// resources/js/pages/Dashboard.vue
 <script lang="ts" setup>
 import ActiveMatchesModal from '@/Components/ActiveMatchesModal.vue';
 import RecentTournamentsCard from '@/Components/RecentTournamentsCard.vue';
@@ -9,6 +10,7 @@ import {useLeagues} from '@/composables/useLeagues';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import type {League, MatchGame, TournamentPlayer} from '@/types/api';
 import {Head, Link} from '@inertiajs/vue3';
+import {LogInIcon} from 'lucide-vue-next';
 import {onMounted, ref} from 'vue';
 
 interface TournamentWithParticipation {
@@ -20,7 +22,7 @@ defineOptions({
     layout: AuthenticatedLayout,
 });
 
-const { user } = useAuth();
+const {user, isAuthenticated} = useAuth();
 const leagues = useLeagues();
 const recentLeagues = ref<League[]>([]);
 const isLoadingLeagues = ref(false);
@@ -34,23 +36,25 @@ const userTournamentsRef = ref<InstanceType<typeof UserTournamentsCard> | null>(
 // Pending applications modal state (for tournaments)
 const pendingApplications = ref<TournamentWithParticipation[]>([]);
 
-// Handle active matches found in user leagues
+// Handle active matches found in user leagues (authenticated users only)
 const handleActiveMatchesFound = (matches: MatchGame[]) => {
+    if (!isAuthenticated.value) return;
     activeMatches.value = matches;
     if (matches.length > 0) {
         showActiveMatchesModal.value = true;
     }
 };
 
-// Handle pending tournament applications found
+// Handle pending tournament applications found (authenticated users only)
 const handlePendingApplicationsFound = (applications: TournamentWithParticipation[]) => {
+    if (!isAuthenticated.value) return;
     pendingApplications.value = applications;
     // You could show a modal or notification here if needed
 };
 
-// Handle match declined - simply refresh the leagues card
+// Handle match declined - simply refresh the leagues card (authenticated users only)
 const handleMatchDeclined = () => {
-    if (userLeaguesRef.value) {
+    if (userLeaguesRef.value && isAuthenticated.value) {
         userLeaguesRef.value.refreshData();
     }
 };
@@ -81,7 +85,11 @@ onMounted(async () => {
             <!-- Welcome Section -->
             <div class="mb-6 overflow-hidden rounded-lg bg-white shadow-sm dark:bg-gray-800">
                 <div class="p-6 text-gray-900 dark:text-gray-100">
-                    <h1 class="mb-4 text-2xl font-semibold">Welcome back, {{ user?.firstname || 'User' }}!</h1>
+                    <h1 class="mb-4 text-2xl font-semibold">
+                        {{
+                            isAuthenticated ? `Welcome back, ${user?.firstname || 'User'}!` : 'Welcome to WinnerBreak!'
+                        }}
+                    </h1>
 
                     <div class="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
                         <div class="rounded-lg bg-indigo-50 p-6 dark:bg-indigo-900/30">
@@ -106,20 +114,53 @@ onMounted(async () => {
                             </Link>
                         </div>
                         <div class="rounded-lg bg-amber-50 p-6 dark:bg-amber-900/30">
-                            <h3 class="mb-2 text-lg font-medium text-amber-800 dark:text-amber-300">Track Progress</h3>
+                            <h3 class="mb-2 text-lg font-medium text-amber-800 dark:text-amber-300">
+                                {{ isAuthenticated ? 'Track Progress' : 'View Ratings' }}
+                            </h3>
                             <p class="mb-4 text-amber-600 dark:text-amber-400">
-                                Monitor your performance, rating changes, and match history over time.
+                                {{
+                                    isAuthenticated
+                                        ? 'Monitor your performance, rating changes, and match history over time.'
+                                        : 'Explore official player rankings and tournament results.'
+                                }}
                             </p>
                             <Link class="font-medium text-amber-700 hover:underline dark:text-amber-300"
-                                  href="/profile/stats">View Stats →
+                                  :href="isAuthenticated ? '/profile/stats' : '/official-ratings'">
+                                {{ isAuthenticated ? 'View Stats' : 'View Ratings' }} →
                             </Link>
+                        </div>
+                    </div>
+
+                    <!-- Guest login prompt -->
+                    <div v-if="!isAuthenticated" class="mt-6 rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg font-medium text-blue-800 dark:text-blue-300">Ready to compete?</h3>
+                                <p class="text-blue-600 dark:text-blue-400">Join WinnerBreak to participate in leagues,
+                                    tournaments, and track your progress.</p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <Link :href="route('login')">
+                                    <button
+                                        class="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                        <LogInIcon class="mr-2 h-4 w-4"/>
+                                        Login
+                                    </button>
+                                </Link>
+                                <Link :href="route('register')">
+                                    <button
+                                        class="inline-flex items-center rounded-md border border-blue-300 bg-white px-4 py-2 text-sm font-medium text-blue-700 shadow-sm hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-blue-600 dark:bg-gray-800 dark:text-blue-400 dark:hover:bg-gray-700">
+                                        Register
+                                    </button>
+                                </Link>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- User Activity Cards -->
-            <div class="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+            <!-- User Activity Cards - Only for authenticated users -->
+            <div v-if="isAuthenticated" class="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
                 <!-- Your Leagues - Now emits event when active matches are found -->
                 <UserLeaguesCard ref="userLeaguesRef" @active-matches-found="handleActiveMatchesFound"/>
 
@@ -133,12 +174,16 @@ onMounted(async () => {
                 <RecentTournamentsCard/>
             </div>
 
-            <!-- Recent Leagues (keeping original functionality) -->
+            <!-- Recent Leagues (available to everyone) -->
             <div class="mb-6">
                 <Card>
                     <CardHeader>
                         <CardTitle>Recent Leagues</CardTitle>
-                        <CardDescription>New and active leagues you might be interested in</CardDescription>
+                        <CardDescription>
+                            {{
+                                isAuthenticated ? 'New and active leagues you might be interested in' : 'Explore active billiard leagues'
+                            }}
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div v-if="isLoadingLeagues" class="py-4 text-center text-gray-500 dark:text-gray-400">Loading
@@ -164,8 +209,8 @@ onMounted(async () => {
                 </Card>
             </div>
 
-            <!-- Admin Actions (if admin) -->
-            <Card v-if="user?.is_admin">
+            <!-- Admin Actions (if admin and authenticated) -->
+            <Card v-if="isAuthenticated && user?.is_admin">
                 <CardHeader>
                     <CardTitle>Admin Actions</CardTitle>
                     <CardDescription>Manage leagues, tournaments and system settings</CardDescription>
@@ -193,11 +238,57 @@ onMounted(async () => {
                     </div>
                 </CardContent>
             </Card>
+
+            <!-- Guest Explore Section -->
+            <Card v-if="!isAuthenticated">
+                <CardHeader>
+                    <CardTitle>Explore WinnerBreak</CardTitle>
+                    <CardDescription>Discover what our platform has to offer</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        <Link :href="route('leagues.index.page')" class="group block">
+                            <div
+                                class="rounded-lg border p-4 transition hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800/50">
+                                <h3 class="font-medium text-gray-900 group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
+                                    Browse Leagues
+                                </h3>
+                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                    Explore active leagues and see player rankings
+                                </p>
+                            </div>
+                        </Link>
+                        <Link :href="route('tournaments.index.page')" class="group block">
+                            <div
+                                class="rounded-lg border p-4 transition hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800/50">
+                                <h3 class="font-medium text-gray-900 group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
+                                    View Tournaments
+                                </h3>
+                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                    Check out upcoming and completed tournaments
+                                </p>
+                            </div>
+                        </Link>
+                        <Link class="group block" href="/official-ratings">
+                            <div
+                                class="rounded-lg border p-4 transition hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800/50">
+                                <h3 class="font-medium text-gray-900 group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
+                                    Official Ratings
+                                </h3>
+                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                    View professional player rankings and standings
+                                </p>
+                            </div>
+                        </Link>
+                    </div>
+                </CardContent>
+            </Card>
         </div>
     </div>
 
-    <!-- Active Matches Modal -->
+    <!-- Active Matches Modal - Only for authenticated users -->
     <ActiveMatchesModal
+        v-if="isAuthenticated"
         :active-matches="activeMatches"
         :show="showActiveMatchesModal"
         @close="showActiveMatchesModal = false"

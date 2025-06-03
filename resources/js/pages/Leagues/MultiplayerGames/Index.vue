@@ -1,3 +1,4 @@
+// resources/js/pages/Leagues/MultiplayerGames/Index.vue
 <script lang="ts" setup>
 import CreateMultiplayerGameModal from '@/Components/CreateMultiplayerGameModal.vue';
 import {Button, Card, CardContent, CardHeader, CardTitle, Spinner} from '@/Components/ui';
@@ -12,6 +13,7 @@ import {
     CalendarIcon,
     EyeIcon,
     GamepadIcon,
+    LogInIcon,
     PlayIcon,
     PlusIcon,
     SettingsIcon,
@@ -26,7 +28,7 @@ const props = defineProps<{
     leagueId: string | number;
 }>();
 
-const {isAdmin} = useAuth();
+const {isAdmin, isAuthenticated} = useAuth();
 const {getMultiplayerGames, error} = useMultiplayerGames();
 
 const league = ref<League | null>(null);
@@ -166,10 +168,19 @@ onMounted(() => {
                     </div>
                 </div>
 
-                <Button v-if="isAdmin && league?.game_multiplayer" @click="openCreateModal">
+                <!-- Admin create button -->
+                <Button v-if="isAuthenticated && isAdmin && league?.game_multiplayer" @click="openCreateModal">
                     <PlusIcon class="mr-2 h-4 w-4"/>
                     Create Game
                 </Button>
+
+                <!-- Guest login prompt -->
+                <div v-else-if="!isAuthenticated && league?.game_multiplayer" class="text-center">
+                    <Link :href="route('login')" class="text-sm text-blue-600 hover:underline dark:text-blue-400">
+                        <LogInIcon class="mr-1 inline h-4 w-4"/>
+                        Login to create games
+                    </Link>
+                </div>
             </div>
 
             <!-- Error message -->
@@ -225,7 +236,12 @@ onMounted(() => {
                             {{
                                 selectedStatus === 'all' ? 'No multiplayer games for this league.' : `No ${selectedStatus} games.`
                             }}
-                            <span v-if="isAdmin"> Create one to get started!</span>
+                            <span v-if="isAuthenticated && isAdmin"> Create one to get started!</span>
+                            <span v-else-if="!isAuthenticated">
+                                <Link :href="route('login')" class="text-blue-600 hover:underline dark:text-blue-400">
+                                    Login to create games.
+                                </Link>
+                            </span>
                         </p>
                     </div>
 
@@ -315,7 +331,6 @@ onMounted(() => {
                                     </div>
                                 </td>
 
-
                                 <!-- Entry Fee -->
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center text-sm">
@@ -340,38 +355,52 @@ onMounted(() => {
                                 <!-- Actions -->
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex justify-end space-x-2">
+                                        <!-- Everyone can view -->
                                         <Link :href="`/leagues/${leagueId}/multiplayer-games/${game.id}`">
                                             <Button size="sm" title="View Game" variant="outline">
                                                 <EyeIcon class="h-4 w-4"/>
                                             </Button>
                                         </Link>
 
-                                        <Button
-                                            v-if="isAdmin && game.status === 'registration'"
-                                            size="sm"
-                                            title="Start Game"
-                                            variant="outline"
-                                        >
-                                            <PlayIcon class="h-4 w-4"/>
-                                        </Button>
+                                        <!-- Admin only actions -->
+                                        <template v-if="isAuthenticated && isAdmin">
+                                            <Button
+                                                v-if="game.status === 'registration'"
+                                                size="sm"
+                                                title="Start Game"
+                                                variant="outline"
+                                            >
+                                                <PlayIcon class="h-4 w-4"/>
+                                            </Button>
 
-                                        <Button
-                                            v-if="isAdmin && ['registration', 'in_progress'].includes(game.status)"
-                                            size="sm"
-                                            title="Manage Game"
-                                            variant="outline"
-                                        >
-                                            <SettingsIcon class="h-4 w-4"/>
-                                        </Button>
+                                            <Button
+                                                v-if="['registration', 'in_progress'].includes(game.status)"
+                                                size="sm"
+                                                title="Manage Game"
+                                                variant="outline"
+                                            >
+                                                <SettingsIcon class="h-4 w-4"/>
+                                            </Button>
 
-                                        <Button
-                                            v-if="isAdmin && game.status === 'registration'"
-                                            size="sm"
-                                            title="Cancel Game"
-                                            variant="destructive"
-                                        >
-                                            <XIcon class="h-4 w-4"/>
-                                        </Button>
+                                            <Button
+                                                v-if="game.status === 'registration'"
+                                                size="sm"
+                                                title="Cancel Game"
+                                                variant="destructive"
+                                            >
+                                                <XIcon class="h-4 w-4"/>
+                                            </Button>
+                                        </template>
+
+                                        <!-- Guest login prompt for admin actions -->
+                                        <div v-else-if="!isAuthenticated && game.status === 'registration'"
+                                             class="text-center">
+                                            <Link :href="route('login')" title="Login to manage">
+                                                <Button size="sm" variant="outline">
+                                                    <LogInIcon class="h-4 w-4"/>
+                                                </Button>
+                                            </Link>
+                                        </div>
                                     </div>
                                 </td>
                             </tr>
@@ -383,8 +412,9 @@ onMounted(() => {
         </div>
     </div>
 
-    <!-- Create Game Modal -->
+    <!-- Create Game Modal - Only for authenticated admins -->
     <CreateMultiplayerGameModal
+        v-if="isAuthenticated && isAdmin"
         :league-id="leagueId"
         :show="showCreateModal"
         @close="showCreateModal = false"
