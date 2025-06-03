@@ -3,6 +3,7 @@ import RegisterModal from '@/Components/Auth/RegisterModal.vue';
 import {Button} from '@/Components/ui';
 import {Link} from '@inertiajs/vue3';
 import {ref} from 'vue';
+import ApplicationLogo from "@/Components/ApplicationLogo.vue";
 
 // State for modal visibility - start as false
 const showRegisterModal = ref(false);
@@ -94,7 +95,7 @@ const handleRegisterError = (error: any) => {
                     class="relative -mb-px aspect-335/376 w-full shrink-0 overflow-hidden rounded-t-lg bg-[#fff2f2] lg:mb-0 lg:-ml-px lg:aspect-auto lg:w-[438px] lg:rounded-t-none lg:rounded-r-lg dark:bg-[#1D0002]"
                 >
                     <div class="flex h-full items-center justify-center">
-                        <div class="text-4xl font-bold">WinnerBreak</div>
+                        <ApplicationLogo style="height: 80px"/>
                     </div>
                 </div>
             </main>
