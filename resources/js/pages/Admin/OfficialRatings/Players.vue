@@ -402,6 +402,7 @@ onMounted(fetchData);
                                 <thead>
                                 <tr class="border-b dark:border-gray-700">
                                     <th class="px-4 py-3 text-left">Rank</th>
+                                    <th class="px-4 py-3 text-left">Division</th>
                                     <th class="px-4 py-3 text-left">Player</th>
                                     <th class="px-4 py-3 text-center">Rating</th>
                                     <th class="px-4 py-3 text-center">Tournaments</th>
@@ -429,6 +430,15 @@ onMounted(fetchData);
                                             ]"
                                         >
                                             {{ player.position }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span
+                                            :class="[
+                                                'inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium',
+                                         ]"
+                                        >
+                                            {{ player.division }}
                                         </span>
                                     </td>
                                     <td class="px-4 py-3">
