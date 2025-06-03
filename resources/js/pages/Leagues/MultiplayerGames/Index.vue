@@ -29,7 +29,7 @@ const props = defineProps<{
 }>();
 
 const {isAdmin, isAuthenticated} = useAuth();
-const {getMultiplayerGames, error} = useMultiplayerGames();
+const {getMultiplayerGames, error, startMultiplayerGame} = useMultiplayerGames();
 
 const league = ref<League | null>(null);
 const multiplayerGames = ref<MultiplayerGame[]>([]);
@@ -139,6 +139,19 @@ const getGameDateInfo = (game: MultiplayerGame): string => {
     }
 };
 
+const handleStart = async (game: MultiplayerGame) => {
+    if (!isAuthenticated.value || !isAdmin.value) return;
+
+    try {
+        await startMultiplayerGame(props.leagueId, game.id);
+
+        fetchGames();
+        // eslint-disable-next-line
+    } catch (err) {
+        // Error is handled by the composable
+    }
+};
+
 onMounted(() => {
     fetchLeague();
     fetchGames();
@@ -173,14 +186,6 @@ onMounted(() => {
                     <PlusIcon class="mr-2 h-4 w-4"/>
                     Create Game
                 </Button>
-
-                <!-- Guest login prompt -->
-                <div v-else-if="!isAuthenticated && league?.game_multiplayer" class="text-center">
-                    <Link :href="route('login')" class="text-sm text-blue-600 hover:underline dark:text-blue-400">
-                        <LogInIcon class="mr-1 inline h-4 w-4"/>
-                        Login to create games
-                    </Link>
-                </div>
             </div>
 
             <!-- Error message -->
@@ -366,9 +371,11 @@ onMounted(() => {
                                         <template v-if="isAuthenticated && isAdmin">
                                             <Button
                                                 v-if="game.status === 'registration'"
+                                                :disabled="game.total_players_count < 2"
                                                 size="sm"
                                                 title="Start Game"
                                                 variant="outline"
+                                                @click="handleStart(game)"
                                             >
                                                 <PlayIcon class="h-4 w-4"/>
                                             </Button>

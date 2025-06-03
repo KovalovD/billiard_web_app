@@ -238,51 +238,6 @@ onMounted(async () => {
                     </div>
                 </CardContent>
             </Card>
-
-            <!-- Guest Explore Section -->
-            <Card v-if="!isAuthenticated">
-                <CardHeader>
-                    <CardTitle>Explore WinnerBreak</CardTitle>
-                    <CardDescription>Discover what our platform has to offer</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        <Link :href="route('leagues.index.page')" class="group block">
-                            <div
-                                class="rounded-lg border p-4 transition hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800/50">
-                                <h3 class="font-medium text-gray-900 group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
-                                    Browse Leagues
-                                </h3>
-                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                    Explore active leagues and see player rankings
-                                </p>
-                            </div>
-                        </Link>
-                        <Link :href="route('tournaments.index.page')" class="group block">
-                            <div
-                                class="rounded-lg border p-4 transition hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800/50">
-                                <h3 class="font-medium text-gray-900 group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
-                                    View Tournaments
-                                </h3>
-                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                    Check out upcoming and completed tournaments
-                                </p>
-                            </div>
-                        </Link>
-                        <Link class="group block" href="/official-ratings">
-                            <div
-                                class="rounded-lg border p-4 transition hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800/50">
-                                <h3 class="font-medium text-gray-900 group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
-                                    Official Ratings
-                                </h3>
-                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                    View professional player rankings and standings
-                                </p>
-                            </div>
-                        </Link>
-                    </div>
-                </CardContent>
-            </Card>
         </div>
     </div>
 

@@ -433,14 +433,6 @@ onMounted(() => {
                             Add Player
                         </Button>
                     </template>
-
-                    <!-- Guest login prompt for admin actions -->
-                    <div v-else-if="!isAuthenticated && game?.status === 'registration'" class="text-center">
-                        <Link :href="route('login')" class="text-sm text-blue-600 hover:underline dark:text-blue-400">
-                            <LogInIcon class="mr-1 inline h-4 w-4"/>
-                            Login to manage
-                        </Link>
-                    </div>
                 </div>
             </div>
 

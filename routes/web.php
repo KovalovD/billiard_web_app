@@ -22,63 +22,63 @@ Route::middleware('guest')->group(function () {
     Route::get('/', static function () {
         return Inertia::render('Welcome');
     })->name('home');
+});
 
-    // Dashboard as home for authenticated users
-    Route::get('/dashboard', static function () {
-        return Inertia::render('Dashboard', [
-            'header' => 'Dashboard',
-        ]);
-    })->name('dashboard');
+// Dashboard as home for authenticated users
+Route::get('/dashboard', static function () {
+    return Inertia::render('Dashboard', [
+        'header' => 'Dashboard',
+    ]);
+})->name('dashboard');
 
-    // --- Leagues ---
-    Route::get('/leagues', static function () {
-        return Inertia::render('Leagues/Index', [
-            'header' => 'Leagues',
-        ]);
-    })->name('leagues.index.page');
+// --- Leagues ---
+Route::get('/leagues', static function () {
+    return Inertia::render('Leagues/Index', [
+        'header' => 'Leagues',
+    ]);
+})->name('leagues.index.page');
 
-    Route::get('/leagues/{league}', static function ($leagueId) {
-        return Inertia::render('Leagues/Show', [
+Route::get('/leagues/{league}', static function ($leagueId) {
+    return Inertia::render('Leagues/Show', [
+        'leagueId' => $leagueId,
+    ]);
+})->name('leagues.show.page')->where('league', '[0-9]+');
+
+Route::prefix('leagues/{leagueId}/multiplayer-games')->group(function () {
+    Route::get('/', static function ($leagueId) {
+        return Inertia::render('Leagues/MultiplayerGames/Index', [
             'leagueId' => $leagueId,
         ]);
-    })->name('leagues.show.page')->where('league', '[0-9]+');
+    })->name('leagues.multiplayer-games.index');
 
-    Route::prefix('leagues/{leagueId}/multiplayer-games')->group(function () {
-        Route::get('/', static function ($leagueId) {
-            return Inertia::render('Leagues/MultiplayerGames/Index', [
-                'leagueId' => $leagueId,
-            ]);
-        })->name('leagues.multiplayer-games.index');
-
-        Route::get('/{gameId}', static function ($leagueId, $gameId) {
-            return Inertia::render('Leagues/MultiplayerGames/Show', [
-                'leagueId' => $leagueId,
-                'gameId'   => $gameId,
-            ]);
-        })->name('leagues.multiplayer-games.show');
-    });
-
-    Route::get('/tournaments', static function () {
-        return Inertia::render('Tournaments/Index');
-    })->name('tournaments.index.page');
-
-    Route::get('/tournaments/{tournamentId}', static function ($tournamentId) {
-        return Inertia::render('Tournaments/Show', [
-            'tournamentId' => $tournamentId,
+    Route::get('/{gameId}', static function ($leagueId, $gameId) {
+        return Inertia::render('Leagues/MultiplayerGames/Show', [
+            'leagueId' => $leagueId,
+            'gameId'   => $gameId,
         ]);
-    })->name('tournaments.show.page')->where('tournamentId', '[0-9]+');
-
-    // Official Ratings routes
-    Route::get('/official-ratings', static function () {
-        return Inertia::render('OfficialRatings/Index');
-    })->name('official-ratings.index');
-
-    Route::get('/official-ratings/{ratingId}', static function ($ratingId) {
-        return Inertia::render('OfficialRatings/Show', [
-            'ratingId' => $ratingId,
-        ]);
-    })->name('official-ratings.show')->where('ratingId', '[0-9]+');
+    })->name('leagues.multiplayer-games.show');
 });
+
+Route::get('/tournaments', static function () {
+    return Inertia::render('Tournaments/Index');
+})->name('tournaments.index.page');
+
+Route::get('/tournaments/{tournamentId}', static function ($tournamentId) {
+    return Inertia::render('Tournaments/Show', [
+        'tournamentId' => $tournamentId,
+    ]);
+})->name('tournaments.show.page')->where('tournamentId', '[0-9]+');
+
+// Official Ratings routes
+Route::get('/official-ratings', static function () {
+    return Inertia::render('OfficialRatings/Index');
+})->name('official-ratings.index');
+
+Route::get('/official-ratings/{ratingId}', static function ($ratingId) {
+    return Inertia::render('OfficialRatings/Show', [
+        'ratingId' => $ratingId,
+    ]);
+})->name('official-ratings.show')->where('ratingId', '[0-9]+');
 
 // --- Authenticated routes ---
 Route::middleware('auth')->group(function () {

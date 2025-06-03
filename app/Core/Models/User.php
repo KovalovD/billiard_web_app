@@ -34,6 +34,7 @@ class User extends Authenticatable
         'home_club_id',
         'email_verified_at',
         'is_active',
+        'is_changed_once',
         'sex',
     ];
 
@@ -65,7 +66,8 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password'          => 'hashed',
             'is_admin'          => 'boolean',
-            'is_active' => 'boolean',
+            'is_active'       => 'boolean',
+            'is_changed_once' => 'boolean',
         ];
     }
 
@@ -96,6 +98,7 @@ class User extends Authenticatable
         return match ($this->sex) {
             'M' => 'Male',
             'F' => 'Female',
+            'N' => 'Non-binary',
             default => 'Unknown',
         };
     }

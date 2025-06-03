@@ -3,15 +3,16 @@ import {Button, Card, CardContent, CardHeader, CardTitle, Spinner} from '@/Compo
 import {useAuth} from '@/composables/useAuth';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
-import type {Tournament} from '@/types/api';
+import type {Tournament, TournamentPlayer} from '@/types/api';
 import {Head, Link} from '@inertiajs/vue3';
 import {
     CalendarIcon,
+    CrownIcon,
     EyeIcon,
-    LogInIcon,
     MapPinIcon,
     PencilIcon,
     PlusIcon,
+    StarIcon,
     TrophyIcon,
     UsersIcon,
 } from 'lucide-vue-next';
@@ -22,6 +23,7 @@ defineOptions({layout: AuthenticatedLayout});
 const {isAdmin, isAuthenticated} = useAuth();
 
 const tournaments = ref<Tournament[]>([]);
+const userParticipations = ref<TournamentPlayer[]>([]);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
 const selectedStatus = ref<string>('all');
@@ -40,16 +42,114 @@ const filteredTournaments = computed(() => {
     return tournaments.value.filter(t => t.status === selectedStatus.value);
 });
 
+// Create a map of tournament IDs where user participated
+const userTournamentMap = computed(() => {
+    const map = new Map<number, TournamentPlayer>();
+    userParticipations.value.forEach(participation => {
+        if (participation.tournament) {
+            map.set(participation.tournament.id, participation);
+        }
+    });
+    return map;
+});
+
 const fetchTournaments = async () => {
     isLoading.value = true;
     error.value = null;
 
     try {
-        tournaments.value = await apiClient<Tournament[]>('/api/tournaments');
+        const [tournamentsData, userTournamentsData] = await Promise.all([
+            apiClient<Tournament[]>('/api/tournaments'),
+            // Only fetch user tournaments if authenticated
+            isAuthenticated.value
+                ? apiClient<{
+                    tournaments: {
+                        upcoming: any[],
+                        active: any[],
+                        completed: any[],
+                        pending_applications: any[],
+                        rejected_applications: any[]
+                    }
+                }>('/api/user/tournaments/my-tournaments-and-applications')
+                : Promise.resolve(null)
+        ]);
+
+        tournaments.value = tournamentsData;
+
+        if (userTournamentsData && isAuthenticated.value) {
+            // Flatten all user participations into a single array
+            userParticipations.value = [
+                ...userTournamentsData.tournaments.upcoming.map(t => t.participation),
+                ...userTournamentsData.tournaments.active.map(t => t.participation),
+                ...userTournamentsData.tournaments.completed.map(t => t.participation),
+                ...userTournamentsData.tournaments.pending_applications.map(t => t.participation),
+                ...userTournamentsData.tournaments.rejected_applications.map(t => t.participation),
+            ].filter(p => p && p.tournament);
+        }
     } catch (err: any) {
         error.value = err.message || 'Failed to load tournaments';
     } finally {
         isLoading.value = false;
+    }
+};
+
+const getUserParticipation = (tournamentId: number): TournamentPlayer | undefined => {
+    return userTournamentMap.value.get(tournamentId);
+};
+
+const isUserParticipant = (tournamentId: number): boolean => {
+    return userTournamentMap.value.has(tournamentId);
+};
+
+const getParticipationBadgeClass = (participation: TournamentPlayer): string => {
+    switch (participation.status) {
+        case 'confirmed':
+            if (participation.position === 1) {
+                return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
+            } else if (participation.position && participation.position <= 3) {
+                return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300';
+            }
+            return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
+        case 'applied':
+            return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
+        case 'rejected':
+            return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
+        default:
+            return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+    }
+};
+
+const getParticipationBadgeText = (participation: TournamentPlayer): string => {
+    switch (participation.status) {
+        case 'confirmed':
+            if (participation.position === 1) {
+                return '🏆 Winner';
+            } else if (participation.position && participation.position <= 3) {
+                return `🥉 ${participation.position}${getOrdinalSuffix(participation.position)} Place`;
+            } else if (participation.position) {
+                return `${participation.position}${getOrdinalSuffix(participation.position)} Place`;
+            }
+            return 'Participated';
+        case 'applied':
+            return 'Applied';
+        case 'rejected':
+            return 'Rejected';
+        default:
+            return 'Registered';
+    }
+};
+
+const getOrdinalSuffix = (num: number): string => {
+    if (num > 3 && num < 21) return 'th';
+    switch (num % 10) {
+        case 1:
+            return 'st';
+        case 2:
+            return 'nd';
+        case 3:
+            return 'rd';
+        default:
+            return 'th';
     }
 };
 
@@ -100,7 +200,14 @@ onMounted(() => {
             <div class="mb-6 flex items-center justify-between">
                 <div>
                     <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">Tournaments</h1>
-                    <p class="text-gray-600 dark:text-gray-400">Discover and follow billiard tournaments</p>
+                    <p class="text-gray-600 dark:text-gray-400">
+                        Discover and follow billiard tournaments
+                        <span v-if="isAuthenticated && userParticipations.length > 0"
+                              class="inline-flex items-center ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full dark:bg-blue-900/30 dark:text-blue-300">
+                            <StarIcon class="w-3 h-3 mr-1"/>
+                            {{ userParticipations.length }} participations
+                        </span>
+                    </p>
                 </div>
 
                 <!-- Only show create button to authenticated admins -->
@@ -110,13 +217,6 @@ onMounted(() => {
                         Create Tournament
                     </Button>
                 </Link>
-                <!-- Show login prompt for guests -->
-                <div v-else-if="!isAuthenticated" class="text-center">
-                    <Link :href="route('login')" class="text-sm text-blue-600 hover:underline dark:text-blue-400">
-                        <LogInIcon class="mr-1 inline h-4 w-4"/>
-                        Login to create tournaments
-                    </Link>
-                </div>
             </div>
 
             <!-- Filters -->
@@ -203,20 +303,56 @@ onMounted(() => {
                             <tr
                                 v-for="tournament in filteredTournaments"
                                 :key="tournament.id"
-                                class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                                :class="[
+                                    'transition-colors',
+                                    isUserParticipant(tournament.id)
+                                        ? 'bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 border-l-4 border-blue-300'
+                                        : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                                ]"
                             >
                                 <!-- Tournament Name -->
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0 h-8 w-8">
                                             <div
-                                                class="h-8 w-8 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
-                                                <TrophyIcon class="h-4 w-4 text-yellow-600 dark:text-yellow-400"/>
+                                                :class="[
+                                                    'h-8 w-8 rounded-full flex items-center justify-center',
+                                                    isUserParticipant(tournament.id)
+                                                        ? 'bg-blue-100 dark:bg-blue-900/30'
+                                                        : 'bg-yellow-100 dark:bg-yellow-900/30'
+                                                ]"
+                                            >
+                                                <StarIcon
+                                                    v-if="isUserParticipant(tournament.id)"
+                                                    class="h-4 w-4 text-blue-600 dark:text-blue-400"
+                                                />
+                                                <TrophyIcon
+                                                    v-else
+                                                    class="h-4 w-4 text-yellow-600 dark:text-yellow-400"
+                                                />
                                             </div>
                                         </div>
                                         <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                                {{ tournament.name }}
+                                            <div class="flex items-center gap-2">
+                                                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                    {{ tournament.name }}
+                                                </div>
+                                                <!-- Participation Badge -->
+                                                <span
+                                                    v-if="isUserParticipant(tournament.id)"
+                                                    :class="[
+                                                        'inline-flex items-center px-2 py-1 text-xs font-medium rounded-full',
+                                                        getParticipationBadgeClass(getUserParticipation(tournament.id)!)
+                                                    ]"
+                                                >
+                                                    <CrownIcon
+                                                        v-if="getUserParticipation(tournament.id)?.position === 1"
+                                                        class="w-3 h-3 mr-1"
+                                                    />
+                                                    {{
+                                                        getParticipationBadgeText(getUserParticipation(tournament.id)!)
+                                                    }}
+                                                </span>
                                             </div>
                                             <div v-if="tournament.organizer"
                                                  class="text-sm text-gray-500 dark:text-gray-400">

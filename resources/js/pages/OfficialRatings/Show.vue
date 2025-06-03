@@ -8,14 +8,16 @@ import {Head, Link} from '@inertiajs/vue3';
 import {
     ArrowLeftIcon,
     CalendarIcon,
+    ChevronDownIcon,
     CrownIcon,
     PencilIcon,
     StarIcon,
     TrophyIcon,
+    UserIcon,
     UserPlusIcon,
-    UsersIcon
+    UsersIcon,
 } from 'lucide-vue-next';
-import {computed, onMounted, ref} from 'vue';
+import {computed, nextTick, onMounted, ref} from 'vue';
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -23,7 +25,7 @@ const props = defineProps<{
     ratingId: number | string;
 }>();
 
-const {isAdmin} = useAuth();
+const {isAdmin, isAuthenticated, user} = useAuth();
 
 const rating = ref<OfficialRating | null>(null);
 const players = ref<OfficialRatingPlayer[]>([]);
@@ -33,10 +35,41 @@ const isLoadingPlayers = ref(true);
 const isLoadingTournaments = ref(true);
 const error = ref<string | null>(null);
 const activeTab = ref<'players' | 'tournaments'>('players');
+const showScrollToUser = ref(false);
 
 const allActivePlayers = computed(() => {
     return players.value.filter(p => p.is_active);
 });
+
+const currentUserPlayer = computed(() => {
+    if (!isAuthenticated.value || !user.value) return null;
+    return allActivePlayers.value.find(p => p.user?.id === user.value?.id);
+});
+
+const isCurrentUser = (player: OfficialRatingPlayer): boolean | null => {
+    return isAuthenticated.value && user.value && player.user?.id === user.value.id;
+};
+
+const scrollToUser = async () => {
+    if (currentUserPlayer.value) {
+        await nextTick();
+        // Find the user's row element by data attribute
+        const userRowElement = document.querySelector(`[data-user-row="${currentUserPlayer.value.user?.id}"]`) as HTMLElement;
+
+        if (userRowElement) {
+            userRowElement.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+
+            // Flash highlight effect
+            userRowElement.classList.add('animate-pulse');
+            setTimeout(() => {
+                userRowElement.classList.remove('animate-pulse');
+            }, 2000);
+        }
+    }
+};
 
 const getPositionBadgeClass = (position: number): string => {
     switch (position) {
@@ -89,6 +122,11 @@ const fetchPlayers = async () => {
 
     try {
         players.value = await apiClient<OfficialRatingPlayer[]>(`/api/official-ratings/${props.ratingId}/players`);
+
+        // Check if we should show scroll to user button
+        if (currentUserPlayer.value && allActivePlayers.value.length > 10) {
+            showScrollToUser.value = true;
+        }
     } catch (err: any) {
         console.error('Failed to load players:', err);
     } finally {
@@ -185,6 +223,12 @@ onMounted(() => {
                                             <CalendarIcon class="h-4 w-4"/>
                                             {{ rating.tournaments_count }} tournaments
                                         </span>
+                                        <!-- User's position indicator -->
+                                        <span v-if="currentUserPlayer"
+                                              class="flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full dark:bg-blue-900/30 dark:text-blue-300">
+                                            <UserIcon class="h-3 w-3"/>
+                                            Your position: #{{ currentUserPlayer.position }}
+                                        </span>
                                     </div>
                                 </CardDescription>
                             </div>
@@ -249,13 +293,30 @@ onMounted(() => {
                 <div v-if="activeTab === 'players'">
                     <Card>
                         <CardHeader>
-                            <CardTitle class="flex items-center gap-2">
-                                <CrownIcon class="h-5 w-5"/>
-                                Player Rankings
-                            </CardTitle>
-                            <CardDescription>
-                                Current standings in the {{ rating.name }} rating
-                            </CardDescription>
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <CardTitle class="flex items-center gap-2">
+                                        <CrownIcon class="h-5 w-5"/>
+                                        Player Rankings
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Current standings in the {{ rating.name }} rating
+                                    </CardDescription>
+                                </div>
+
+                                <!-- Find Me Button -->
+                                <Button
+                                    v-if="showScrollToUser && currentUserPlayer"
+                                    class="flex items-center gap-2"
+                                    size="sm"
+                                    variant="outline"
+                                    @click="scrollToUser"
+                                >
+                                    <UserIcon class="h-4 w-4"/>
+                                    Find Me (#{{ currentUserPlayer.position }})
+                                    <ChevronDownIcon class="h-4 w-4"/>
+                                </Button>
+                            </div>
                         </CardHeader>
                         <CardContent>
                             <div v-if="isLoadingPlayers" class="flex justify-center py-8">
@@ -282,9 +343,16 @@ onMounted(() => {
                                     <tr
                                         v-for="player in allActivePlayers"
                                         :key="player.id"
-                                        class="border-b dark:border-gray-700"
+                                        :class="[
+                                            'border-b dark:border-gray-700 transition-all duration-200',
+                                            isCurrentUser(player)
+                                                ? 'bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 border-l-4 border-blue-500 shadow-sm'
+                                                : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                                        ]"
+                                        :data-user-row="player.user?.id"
                                     >
                                         <td class="px-4 py-3">
+                                            <div class="flex items-center gap-2">
                                                 <span
                                                     :class="[
                                                         'inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium',
@@ -293,11 +361,21 @@ onMounted(() => {
                                                 >
                                                     {{ player.position }}
                                                 </span>
+                                                <!-- Current user indicator -->
+                                                <UserIcon
+                                                    v-if="isCurrentUser(player)"
+                                                    class="h-4 w-4 text-blue-600 dark:text-blue-400"
+                                                    title="This is you!"
+                                                />
+                                            </div>
                                         </td>
                                         <td class="px-4 py-3">
                                                 <span
                                                     :class="[
                                                         'inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium',
+                                                        isCurrentUser(player)
+                                                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                                                            : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
                                                     ]"
                                                 >
                                                     {{ player.division }}
@@ -306,8 +384,16 @@ onMounted(() => {
                                         <td class="px-4 py-3">
                                             <div class="flex items-center gap-2">
                                                 <div>
-                                                    <p class="font-medium">{{ player.user?.firstname }}
-                                                        {{ player.user?.lastname }}</p>
+                                                    <p :class="[
+                                                        'font-medium',
+                                                        isCurrentUser(player)
+                                                            ? 'text-blue-900 dark:text-blue-100'
+                                                            : 'text-gray-900 dark:text-gray-100'
+                                                    ]">
+                                                        {{ player.user?.firstname }} {{ player.user?.lastname }}
+                                                        <span v-if="isCurrentUser(player)"
+                                                              class="text-xs text-blue-600 dark:text-blue-400 ml-1">(You)</span>
+                                                    </p>
                                                     <p v-if="player.position === 1"
                                                        class="text-sm text-yellow-600 dark:text-yellow-400">
                                                         👑 Champion
@@ -316,12 +402,34 @@ onMounted(() => {
                                             </div>
                                         </td>
                                         <td class="px-4 py-3 text-center">
-                                            <span class="font-bold text-lg">{{ player.rating_points }}</span>
+                                            <span :class="[
+                                                'font-bold text-lg',
+                                                isCurrentUser(player)
+                                                    ? 'text-blue-900 dark:text-blue-100'
+                                                    : 'text-gray-900 dark:text-gray-100'
+                                            ]">
+                                                {{ player.rating_points }}
+                                            </span>
                                         </td>
-                                        <td class="px-4 py-3 text-center">{{ player.tournaments_played }}</td>
-                                        <td class="px-4 py-3 text-center">{{ player.tournaments_won }}</td>
                                         <td class="px-4 py-3 text-center">
-                                            <span class="text-sm">{{ player.win_rate }}%</span>
+                                            <span
+                                                :class="isCurrentUser(player) ? 'font-semibold text-blue-900 dark:text-blue-100' : ''">
+                                                {{ player.tournaments_played }}
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-3 text-center">
+                                            <span
+                                                :class="isCurrentUser(player) ? 'font-semibold text-blue-900 dark:text-blue-100' : ''">
+                                                {{ player.tournaments_won }}
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-3 text-center">
+                                            <span :class="[
+                                                'text-sm',
+                                                isCurrentUser(player) ? 'font-semibold text-blue-900 dark:text-blue-100' : ''
+                                            ]">
+                                                {{ player.win_rate }}%
+                                            </span>
                                         </td>
                                         <td class="px-4 py-3 text-center text-sm text-gray-600 dark:text-gray-400">
                                             {{

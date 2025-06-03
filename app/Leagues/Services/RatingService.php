@@ -190,26 +190,35 @@ class RatingService
         }
 
         DB::transaction(static function () use ($orderedIds) {
-            // WHEN id = ? THEN CAST(? AS INTEGER)
+            // Detect database type for proper casting syntax
+            $driver = DB::getDriverName();
+            $castType = match ($driver) {
+                'pgsql' => 'INTEGER',
+                default => 'UNSIGNED', // Default to MySQL syntax for other databases
+            };
+
+            // Build CASE statements for position updates
             $cases = [];
             $params = [];
 
             foreach ($orderedIds as $index => $ratingId) {
-                // порівняння завжди з int, результат явно кастимо до INTEGER
-                $cases[] = 'WHEN id = ? THEN CAST(? AS INTEGER)';
-                $params[] = $ratingId;      // ? для id
-                $params[] = $index + 1;     // ? для position
+                // Use appropriate cast syntax based on database driver
+                $cases[] = "WHEN id = ? THEN CAST(? AS {$castType})";
+                $params[] = $ratingId;      // Parameter for id comparison
+                $params[] = $index + 1;     // Parameter for position value (1-indexed)
             }
 
-            // IN (?,?,?)
+            // Build IN clause placeholders: (?,?,?)
             $inPlaceholders = rtrim(str_repeat('?,', count($orderedIds)), ',');
+
+            // Construct the final SQL
             $sql = sprintf(
                 'UPDATE ratings SET position = CASE %s END WHERE id IN (%s)',
                 implode(' ', $cases),
                 $inPlaceholders,
             );
 
-            // додаємо ті ж id вдруге для IN (...)
+            // Append the same IDs again for the IN clause
             $params = array_merge($params, $orderedIds);
 
             DB::update($sql, $params);

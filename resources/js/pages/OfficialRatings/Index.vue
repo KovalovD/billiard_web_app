@@ -8,7 +8,6 @@ import {Head, Link} from '@inertiajs/vue3';
 import {
     CheckCircleIcon,
     EyeIcon,
-    LogInIcon,
     PencilIcon,
     PlusIcon,
     SettingsIcon,
@@ -72,13 +71,6 @@ onMounted(() => {
                         Create Rating
                     </Button>
                 </Link>
-                <!-- Show login prompt for guests -->
-                <div v-else-if="!isAuthenticated" class="text-center">
-                    <Link :href="route('login')" class="text-sm text-blue-600 hover:underline dark:text-blue-400">
-                        <LogInIcon class="mr-1 inline h-4 w-4"/>
-                        Login to create ratings
-                    </Link>
-                </div>
             </div>
 
             <!-- Filters -->

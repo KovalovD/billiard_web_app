@@ -78,6 +78,7 @@ const getLeagueUrl = (routeName: 'leagues.show.page' | 'leagues.edit', leagueId:
 
     try {
         return route(routeName, {league: leagueId});
+// eslint-disable-next-line
     } catch (e) {
         return null;
     }
@@ -105,12 +106,6 @@ onMounted(() => {
                         Create New League
                     </Button>
                 </Link>
-                <!-- Show login prompt for guests -->
-                <div v-else-if="!isAuthenticated" class="text-center">
-                    <Link :href="route('login')" class="text-sm text-blue-600 hover:underline dark:text-blue-400">
-                        Login to create leagues
-                    </Link>
-                </div>
             </div>
 
             <!-- Filters -->

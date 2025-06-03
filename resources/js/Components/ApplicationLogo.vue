@@ -7,5 +7,5 @@ defineOptions({
 </script>
 
 <template>
-    <img alt="Application Logo" src="/icon-hor.png" v-bind="$attrs"/>
+    <img alt="WinnerBreak" src="/icon-hor.png" v-bind="$attrs"/>
 </template>
