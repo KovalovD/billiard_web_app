@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import {Button} from '@/Components/ui';
 import type {Rating} from '@/types/api';
-import {SwordsIcon} from 'lucide-vue-next';
+import {LogInIcon, SwordsIcon} from 'lucide-vue-next';
 
 interface Props {
     playerRating: Rating;
@@ -35,12 +35,13 @@ const isWithinChallengeRange = (): boolean => {
 // Check if both players are confirmed
 const canChallenge = (playerRating: Rating): boolean => {
     return (
-        props.authUserIsConfirmed
-        && props.playerRating.is_confirmed
-        && !props.playerRating.hasOngoingMatches
-        && isWithinChallengeRange()
-        && !props.authUserHaveOngoingMatch
-        && playerRating.id !== props.authUserRating?.last_player_rating_id
+        props.isAuthenticated &&
+        props.authUserIsConfirmed &&
+        props.playerRating.is_confirmed &&
+        !props.playerRating.hasOngoingMatches &&
+        isWithinChallengeRange() &&
+        !props.authUserHaveOngoingMatch &&
+        playerRating.id !== props.authUserRating?.last_player_rating_id
     );
 };
 </script>
@@ -64,8 +65,10 @@ const canChallenge = (playerRating: Rating): boolean => {
         </div>
         <div class="flex items-center space-x-3">
             <span class="text-sm font-bold text-indigo-600 dark:text-indigo-400">{{ playerRating.rating }}</span>
+
+            <!-- Challenge button for authenticated users -->
             <Button
-                v-if="isAuthenticated && !isCurrentUser && canChallenge(playerRating) && !multiplayerGame"
+                v-if="canChallenge(playerRating) && !multiplayerGame"
                 size="sm"
                 title="Challenge this player"
                 variant="outline"
@@ -74,6 +77,20 @@ const canChallenge = (playerRating: Rating): boolean => {
                 <SwordsIcon class="mr-1 h-4 w-4"/>
                 Challenge
             </Button>
+
+            <!-- Login prompt for guests -->
+            <Button
+                v-else-if="!isAuthenticated && !isCurrentUser && !multiplayerGame"
+                size="sm"
+                title="Login to challenge players"
+                variant="outline"
+                @click="$router.push(route('login'))"
+            >
+                <LogInIcon class="mr-1 h-4 w-4"/>
+                Login
+            </Button>
+
+            <!-- Status messages for authenticated users -->
             <span v-else-if="isAuthenticated && !isCurrentUser && !playerRating.is_confirmed"
                   class="text-xs text-amber-600 dark:text-amber-400">
                 Waiting for admin confirmation

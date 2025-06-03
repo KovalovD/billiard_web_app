@@ -22,22 +22,6 @@ Route::middleware('guest')->group(function () {
     Route::get('/', static function () {
         return Inertia::render('Welcome');
     })->name('home');
-});
-
-// --- Authenticated routes ---
-Route::middleware('auth')->group(function () {
-    Route::get('/profile/edit', static function () {
-        return Inertia::render('Profile/Edit', [
-            'header' => 'Edit',
-        ]);
-    })->name('profile.edit');
-
-    Route::get('/profile/stats', static function () {
-        return Inertia::render('Profile/Stats', [
-            'header' => 'Statistics',
-        ]);
-    })->name('profile.stats');
-
 
     // Dashboard as home for authenticated users
     Route::get('/dashboard', static function () {
@@ -74,6 +58,41 @@ Route::middleware('auth')->group(function () {
         })->name('leagues.multiplayer-games.show');
     });
 
+    Route::get('/tournaments', static function () {
+        return Inertia::render('Tournaments/Index');
+    })->name('tournaments.index.page');
+
+    Route::get('/tournaments/{tournamentId}', static function ($tournamentId) {
+        return Inertia::render('Tournaments/Show', [
+            'tournamentId' => $tournamentId,
+        ]);
+    })->name('tournaments.show.page')->where('tournamentId', '[0-9]+');
+
+    // Official Ratings routes
+    Route::get('/official-ratings', static function () {
+        return Inertia::render('OfficialRatings/Index');
+    })->name('official-ratings.index');
+
+    Route::get('/official-ratings/{ratingId}', static function ($ratingId) {
+        return Inertia::render('OfficialRatings/Show', [
+            'ratingId' => $ratingId,
+        ]);
+    })->name('official-ratings.show')->where('ratingId', '[0-9]+');
+});
+
+// --- Authenticated routes ---
+Route::middleware('auth')->group(function () {
+    Route::get('/profile/edit', static function () {
+        return Inertia::render('Profile/Edit', [
+            'header' => 'Edit',
+        ]);
+    })->name('profile.edit');
+
+    Route::get('/profile/stats', static function () {
+        return Inertia::render('Profile/Stats', [
+            'header' => 'Statistics',
+        ]);
+    })->name('profile.stats');
     // --- Admin routes ---
     Route::middleware(AdminMiddleware::class)->prefix('admin')->group(function () {
         Route::group(['prefix' => 'leagues'], static function () {
@@ -102,93 +121,66 @@ Route::middleware('auth')->group(function () {
                 ]);
             })->name('admin.leagues.pending-players');
         });
+        // Admin Tournament routes
+        Route::get('/tournaments/create', static function () {
+            return Inertia::render('Admin/Tournaments/Create');
+        })->name('admin.tournaments.create');
+
+        Route::get('/tournaments/{tournamentId}/edit', static function ($tournamentId) {
+            return Inertia::render('Admin/Tournaments/Edit', [
+                'tournamentId' => $tournamentId,
+            ]);
+        })->name('admin.tournaments.edit')->where('tournamentId', '[0-9]+');
+
+        Route::get('/tournaments/{tournamentId}/players', static function ($tournamentId) {
+            return Inertia::render('Admin/Tournaments/Players', [
+                'tournamentId' => $tournamentId,
+            ]);
+        })->name('admin.tournaments.players')->where('tournamentId', '[0-9]+');
+
+        Route::get('/tournaments/{tournamentId}/results', static function ($tournamentId) {
+            return Inertia::render('Admin/Tournaments/Results', [
+                'tournamentId' => $tournamentId,
+            ]);
+        })->name('admin.tournaments.results')->where('tournamentId', '[0-9]+');
+
+        Route::get('/tournaments/{tournamentId}/applications', static function ($tournamentId) {
+            return Inertia::render('Admin/Tournaments/Applications', [
+                'tournamentId' => $tournamentId,
+            ]);
+        })->name('admin.tournaments.applications');
+
+        // Admin Official Ratings routes
+        Route::get('/official-ratings/create', static function () {
+            return Inertia::render('Admin/OfficialRatings/Create');
+        })->name('admin.official-ratings.create');
+
+        Route::get('/official-ratings/{ratingId}/edit', static function ($ratingId) {
+            return Inertia::render('Admin/OfficialRatings/Edit', [
+                'ratingId' => $ratingId,
+            ]);
+        })->name('admin.official-ratings.edit')->where('ratingId', '[0-9]+');
+
+        Route::get('/official-ratings/{ratingId}/manage', static function ($ratingId) {
+            return Inertia::render('Admin/OfficialRatings/Manage', [
+                'ratingId' => $ratingId,
+            ]);
+        })->name('admin.official-ratings.manage')->where('ratingId', '[0-9]+');
+
+        Route::get('/official-ratings/{ratingId}/tournaments', static function ($ratingId) {
+            return Inertia::render('Admin/OfficialRatings/Tournaments', [
+                'ratingId' => $ratingId,
+            ]);
+        })->name('admin.official-ratings.tournaments')->where('ratingId', '[0-9]+');
+
+        Route::get('/official-ratings/{ratingId}/players', static function ($ratingId) {
+            return Inertia::render('Admin/OfficialRatings/Players', [
+                'ratingId' => $ratingId,
+            ]);
+        })->name('admin.official-ratings.players')->where('ratingId', '[0-9]+');
     });
 });
 
-Route::middleware('auth')->group(function () {
-    // Public tournament pages
-    Route::get('/tournaments', static function () {
-        return Inertia::render('Tournaments/Index');
-    })->name('tournaments.index.page');
-
-    Route::get('/tournaments/{tournamentId}', static function ($tournamentId) {
-        return Inertia::render('Tournaments/Show', [
-            'tournamentId' => $tournamentId,
-        ]);
-    })->name('tournaments.show.page')->where('tournamentId', '[0-9]+');
-
-    // Official Ratings routes
-    Route::get('/official-ratings', static function () {
-        return Inertia::render('OfficialRatings/Index');
-    })->name('official-ratings.index');
-
-    Route::get('/official-ratings/{ratingId}', static function ($ratingId) {
-        return Inertia::render('OfficialRatings/Show', [
-            'ratingId' => $ratingId,
-        ]);
-    })->name('official-ratings.show')->where('ratingId', '[0-9]+');
-});
-
-// Admin routes
-Route::middleware(['auth', AdminMiddleware::class])->prefix('admin')->group(function () {
-    // Admin Tournament routes
-    Route::get('/tournaments/create', static function () {
-        return Inertia::render('Admin/Tournaments/Create');
-    })->name('admin.tournaments.create');
-
-    Route::get('/tournaments/{tournamentId}/edit', static function ($tournamentId) {
-        return Inertia::render('Admin/Tournaments/Edit', [
-            'tournamentId' => $tournamentId,
-        ]);
-    })->name('admin.tournaments.edit')->where('tournamentId', '[0-9]+');
-
-    Route::get('/tournaments/{tournamentId}/players', static function ($tournamentId) {
-        return Inertia::render('Admin/Tournaments/Players', [
-            'tournamentId' => $tournamentId,
-        ]);
-    })->name('admin.tournaments.players')->where('tournamentId', '[0-9]+');
-
-    Route::get('/tournaments/{tournamentId}/results', static function ($tournamentId) {
-        return Inertia::render('Admin/Tournaments/Results', [
-            'tournamentId' => $tournamentId,
-        ]);
-    })->name('admin.tournaments.results')->where('tournamentId', '[0-9]+');
-
-    Route::get('/tournaments/{tournamentId}/applications', static function ($tournamentId) {
-        return Inertia::render('Admin/Tournaments/Applications', [
-            'tournamentId' => $tournamentId,
-        ]);
-    })->name('admin.tournaments.applications');
-
-    // Admin Official Ratings routes
-    Route::get('/official-ratings/create', static function () {
-        return Inertia::render('Admin/OfficialRatings/Create');
-    })->name('admin.official-ratings.create');
-
-    Route::get('/official-ratings/{ratingId}/edit', static function ($ratingId) {
-        return Inertia::render('Admin/OfficialRatings/Edit', [
-            'ratingId' => $ratingId,
-        ]);
-    })->name('admin.official-ratings.edit')->where('ratingId', '[0-9]+');
-
-    Route::get('/official-ratings/{ratingId}/manage', static function ($ratingId) {
-        return Inertia::render('Admin/OfficialRatings/Manage', [
-            'ratingId' => $ratingId,
-        ]);
-    })->name('admin.official-ratings.manage')->where('ratingId', '[0-9]+');
-
-    Route::get('/official-ratings/{ratingId}/tournaments', static function ($ratingId) {
-        return Inertia::render('Admin/OfficialRatings/Tournaments', [
-            'ratingId' => $ratingId,
-        ]);
-    })->name('admin.official-ratings.tournaments')->where('ratingId', '[0-9]+');
-
-    Route::get('/official-ratings/{ratingId}/players', static function ($ratingId) {
-        return Inertia::render('Admin/OfficialRatings/Players', [
-            'ratingId' => $ratingId,
-        ]);
-    })->name('admin.official-ratings.players')->where('ratingId', '[0-9]+');
-});
 
 // --- Error routes ---
 // These can be used programmatically by redirecting to them by name

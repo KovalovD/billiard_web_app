@@ -8,6 +8,7 @@ import {Head, Link} from '@inertiajs/vue3';
 import {
     CheckCircleIcon,
     EyeIcon,
+    LogInIcon,
     PencilIcon,
     PlusIcon,
     SettingsIcon,
@@ -20,7 +21,7 @@ import {computed, onMounted, ref} from 'vue';
 
 defineOptions({layout: AuthenticatedLayout});
 
-const {isAdmin} = useAuth();
+const {isAdmin, isAuthenticated} = useAuth();
 
 const ratings = ref<OfficialRating[]>([]);
 const isLoading = ref(true);
@@ -64,12 +65,20 @@ onMounted(() => {
                     <p class="text-gray-600 dark:text-gray-400">Professional billiard player rankings</p>
                 </div>
 
-                <Link v-if="isAdmin" href="/admin/official-ratings/create">
+                <!-- Only show create button to authenticated admins -->
+                <Link v-if="isAuthenticated && isAdmin" href="/admin/official-ratings/create">
                     <Button>
                         <PlusIcon class="mr-2 h-4 w-4"/>
                         Create Rating
                     </Button>
                 </Link>
+                <!-- Show login prompt for guests -->
+                <div v-else-if="!isAuthenticated" class="text-center">
+                    <Link :href="route('login')" class="text-sm text-blue-600 hover:underline dark:text-blue-400">
+                        <LogInIcon class="mr-1 inline h-4 w-4"/>
+                        Login to create ratings
+                    </Link>
+                </div>
             </div>
 
             <!-- Filters -->
@@ -210,19 +219,23 @@ onMounted(() => {
                                 <!-- Actions -->
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex justify-end space-x-2">
+                                        <!-- Everyone can view -->
                                         <Link :href="`/official-ratings/${rating.id}`">
                                             <Button size="sm" variant="outline">
                                                 <EyeIcon class="h-4 w-4"/>
                                             </Button>
                                         </Link>
 
-                                        <Link v-if="isAdmin" :href="`/admin/official-ratings/${rating.id}/manage`">
+                                        <!-- Only authenticated admins can manage/edit -->
+                                        <Link v-if="isAuthenticated && isAdmin"
+                                              :href="`/admin/official-ratings/${rating.id}/manage`">
                                             <Button size="sm" variant="outline">
                                                 <SettingsIcon class="h-4 w-4"/>
                                             </Button>
                                         </Link>
 
-                                        <Link v-if="isAdmin" :href="`/admin/official-ratings/${rating.id}/edit`">
+                                        <Link v-if="isAuthenticated && isAdmin"
+                                              :href="`/admin/official-ratings/${rating.id}/edit`">
                                             <Button size="sm" variant="outline">
                                                 <PencilIcon class="h-4 w-4"/>
                                             </Button>

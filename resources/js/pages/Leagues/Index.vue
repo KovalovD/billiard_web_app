@@ -11,7 +11,7 @@ import {computed, onMounted, ref} from 'vue';
 
 defineOptions({layout: AuthenticatedLayout});
 
-const {isAdmin} = useAuth();
+const {isAdmin, isAuthenticated} = useAuth();
 const leagues = useLeagues();
 const {getLeagueStatus, getPlayersText} = useLeagueStatus();
 
@@ -33,7 +33,6 @@ const filteredAndSortedLeagues = computed(() => {
 
     let filtered = [...leaguesData.value];
 
-    // Filter by status
     if (selectedStatus.value !== 'all') {
         filtered = filtered.filter(league => {
             const status = getLeagueStatus(league);
@@ -41,7 +40,6 @@ const filteredAndSortedLeagues = computed(() => {
         });
     }
 
-    // Sort by status priority: Active > Upcoming > Ended
     return filtered.sort((a, b) => {
         const statusA = getLeagueStatus(a);
         const statusB = getLeagueStatus(b);
@@ -81,7 +79,6 @@ const getLeagueUrl = (routeName: 'leagues.show.page' | 'leagues.edit', leagueId:
     try {
         return route(routeName, {league: leagueId});
     } catch (e) {
-        console.error(`Error generating ${routeName} route with ID ${leagueId}:`, e);
         return null;
     }
 };
@@ -101,12 +98,19 @@ onMounted(() => {
                     <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">Available Leagues</h1>
                     <p class="text-gray-600 dark:text-gray-400">Manage and participate in competitive leagues</p>
                 </div>
-                <Link v-if="isAdmin" :href="route('leagues.create')">
+                <!-- Only show create button to authenticated admins -->
+                <Link v-if="isAuthenticated && isAdmin" :href="route('leagues.create')">
                     <Button>
                         <PlusIcon class="mr-2 h-4 w-4"/>
                         Create New League
                     </Button>
                 </Link>
+                <!-- Show login prompt for guests -->
+                <div v-else-if="!isAuthenticated" class="text-center">
+                    <Link :href="route('login')" class="text-sm text-blue-600 hover:underline dark:text-blue-400">
+                        Login to create leagues
+                    </Link>
+                </div>
             </div>
 
             <!-- Filters -->
@@ -155,7 +159,6 @@ onMounted(() => {
                             {{
                                 selectedStatus === 'all' ? 'No leagues have been created yet.' : `No ${selectedStatus} leagues available.`
                             }}
-                            <span v-if="isAdmin"> Start by creating one!</span>
                         </p>
                     </div>
 
@@ -262,6 +265,7 @@ onMounted(() => {
                                 <!-- Actions -->
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex justify-end space-x-2">
+                                        <!-- Everyone can view -->
                                         <Link
                                             v-if="getLeagueUrl('leagues.show.page', league.id)"
                                             :href="getLeagueUrl('leagues.show.page', league.id)!"
@@ -272,8 +276,9 @@ onMounted(() => {
                                             </Button>
                                         </Link>
 
+                                        <!-- Only authenticated admins can edit -->
                                         <Link
-                                            v-if="isAdmin && getLeagueUrl('leagues.edit', league.id)"
+                                            v-if="isAuthenticated && isAdmin && getLeagueUrl('leagues.edit', league.id)"
                                             :href="getLeagueUrl('leagues.edit', league.id)!"
                                             title="Edit League"
                                         >
