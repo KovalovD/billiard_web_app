@@ -5,6 +5,7 @@ import {useAuth} from '@/composables/useAuth';
 import {useMultiplayerGames} from '@/composables/useMultiplayerGames';
 import type {MultiplayerGame} from '@/types/api';
 import {Link} from '@inertiajs/vue3';
+import {LogInIcon} from 'lucide-vue-next';
 import {computed} from 'vue';
 
 interface Props {
@@ -15,7 +16,7 @@ interface Props {
 const props = defineProps<Props>();
 const emit = defineEmits(['updated']);
 
-const {isAdmin, user} = useAuth();
+const {isAdmin, user, isAuthenticated} = useAuth();
 const {
     joinMultiplayerGame,
     leaveMultiplayerGame,
@@ -24,15 +25,13 @@ const {
     isLoading
 } = useMultiplayerGames();
 
-// Check if current user is in the game
+// Check if current user is in the game (only for authenticated users)
 const isUserInGame = computed(() => {
-    const userId = user.value?.id;
-    if (!userId) return false;
+    if (!isAuthenticated.value || !user.value) return false;
 
-    const playerExists = props.game.active_players.some(player => player.user.id === userId) ||
+    const userId = user.value.id;
+    return props.game.active_players.some(player => player.user.id === userId) ||
         props.game.eliminated_players.some(player => player.user.id === userId);
-
-    return playerExists;
 });
 
 // Format date for display
@@ -57,8 +56,10 @@ const statusText = computed(() => {
     }
 });
 
-// Join a game
+// Join a game (authenticated users only)
 const handleJoin = async () => {
+    if (!isAuthenticated.value) return;
+
     try {
         await joinMultiplayerGame(props.leagueId, props.game.id);
         emit('updated');
@@ -68,8 +69,10 @@ const handleJoin = async () => {
     }
 };
 
-// Leave a game
+// Leave a game (authenticated users only)
 const handleLeave = async () => {
+    if (!isAuthenticated.value) return;
+
     try {
         await leaveMultiplayerGame(props.leagueId, props.game.id);
         emit('updated');
@@ -81,6 +84,8 @@ const handleLeave = async () => {
 
 // Start a game (admin only)
 const handleStart = async () => {
+    if (!isAuthenticated.value || !isAdmin.value) return;
+
     try {
         await startMultiplayerGame(props.leagueId, props.game.id);
         emit('updated');
@@ -92,6 +97,8 @@ const handleStart = async () => {
 
 // Cancel a game (admin only)
 const handleCancel = async () => {
+    if (!isAuthenticated.value || !isAdmin.value) return;
+
     if (!confirm('Are you sure you want to cancel this game?')) {
         return;
     }
@@ -169,42 +176,56 @@ const statusBadgeClass = computed(() => {
                 </Button>
             </Link>
 
-            <template v-if="game.status === 'registration'">
-                <Button
-                    v-if="!isUserInGame && game.is_registration_open"
-                    :disabled="isLoading"
-                    class="flex-1"
-                    @click="handleJoin"
-                >
-                    Join
-                </Button>
-                <Button
-                    v-else-if="isUserInGame"
-                    :disabled="isLoading"
-                    class="flex-1"
-                    variant="destructive"
-                    @click="handleLeave"
-                >
-                    Leave
-                </Button>
+            <!-- Authenticated user actions -->
+            <template v-if="isAuthenticated">
+                <template v-if="game.status === 'registration'">
+                    <Button
+                        v-if="!isUserInGame && game.is_registration_open"
+                        :disabled="isLoading"
+                        class="flex-1"
+                        @click="handleJoin"
+                    >
+                        Join
+                    </Button>
+                    <Button
+                        v-else-if="isUserInGame"
+                        :disabled="isLoading"
+                        class="flex-1"
+                        variant="destructive"
+                        @click="handleLeave"
+                    >
+                        Leave
+                    </Button>
+                </template>
+
+                <template v-if="isAdmin && game.status === 'registration'">
+                    <Button
+                        :disabled="isLoading || game.total_players_count < 2"
+                        class="flex-1"
+                        @click="handleStart"
+                    >
+                        Start Game
+                    </Button>
+                    <Button
+                        :disabled="isLoading"
+                        class="flex-1"
+                        variant="destructive"
+                        @click="handleCancel"
+                    >
+                        Cancel
+                    </Button>
+                </template>
             </template>
 
-            <template v-if="isAdmin && game.status === 'registration'">
-                <Button
-                    :disabled="isLoading || game.total_players_count < 2"
-                    class="flex-1"
-                    @click="handleStart"
-                >
-                    Start Game
-                </Button>
-                <Button
-                    :disabled="isLoading"
-                    class="flex-1"
-                    variant="destructive"
-                    @click="handleCancel"
-                >
-                    Cancel
-                </Button>
+            <!-- Guest actions -->
+            <template v-else>
+                <Link v-if="game.status === 'registration' && game.is_registration_open" :href="route('login')"
+                      class="flex-1">
+                    <Button class="w-full" variant="outline">
+                        <LogInIcon class="mr-2 h-4 w-4"/>
+                        Login to Join
+                    </Button>
+                </Link>
             </template>
         </div>
     </div>

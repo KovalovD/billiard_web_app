@@ -1,3 +1,4 @@
+// resources/js/pages/Leagues/MultiplayerGames/Show.vue
 <script lang="ts" setup>
 import SetModeratorModal from '@/Components/SetModeratorModal.vue';
 import GameRegistry from '@/Components/GameRegistry.vue';
@@ -8,7 +9,7 @@ import RatingSummaryCard from '@/Components/RatingSummaryCard.vue';
 import GameActionPanel from '@/Components/GameActionPanel.vue';
 import TimeFundCard from '@/Components/TimeFundCard.vue';
 import MultiplayerGameSummary from '@/Components/MultiplayerGameSummary.vue';
-import {ArrowLeftIcon, TrophyIcon, UserIcon, UserPlusIcon} from 'lucide-vue-next';
+import {ArrowLeftIcon, LogInIcon, TrophyIcon, UserIcon, UserPlusIcon} from 'lucide-vue-next';
 import {Button, Card, CardContent, CardHeader, CardTitle} from '@/Components/ui';
 import {useAuth} from '@/composables/useAuth';
 import {useMultiplayerGames} from '@/composables/useMultiplayerGames';
@@ -27,7 +28,8 @@ const props = defineProps<{
     gameId: string | number;
 }>();
 
-const {isAdmin, user} = useAuth();
+const {isAdmin, user, isAuthenticated} = useAuth();
+
 const {
     getMultiplayerGame,
     performGameAction,
@@ -51,8 +53,9 @@ const activeTab = ref<'game' | 'prizes' | 'ratings' | 'timefund'>('game');
 // Add to existing refs
 const showAddPlayerModal = ref(false);
 
-// Add method to handle player addition
+// Add method to handle player addition (admin only)
 const handlePlayerAdded = async () => {
+    if (!isAuthenticated.value || !isAdmin.value) return;
     await fetchGame();
     actionFeedback.value = {
         type: 'success',
@@ -65,8 +68,14 @@ const formattedStatusMessage = computed(() => {
     if (!game.value) return '';
 
     if (game.value.status === 'registration') {
+        if (!isAuthenticated.value) {
+            return 'The game is currently in the registration phase. Login to join and participate.';
+        }
         return 'The game is currently in the registration phase. Players can join until the game starts.';
     } else if (game.value.status === 'in_progress') {
+        if (!isAuthenticated.value) {
+            return 'This game is currently in progress. You can watch the live action below.';
+        }
         if (isModerator.value) {
             return 'You are the moderator. You can perform actions for any player.';
         } else if (game.value.current_turn_player_id === user.value?.id) {
@@ -82,7 +91,7 @@ const formattedStatusMessage = computed(() => {
 });
 
 const isModerator = computed(() => {
-    if (!game.value || !user.value) return false;
+    if (!game.value || !user.value || !isAuthenticated.value) return false;
     return game.value.is_current_user_moderator;
 });
 
@@ -93,7 +102,7 @@ const currentTurnPlayer = computed(() => {
 });
 
 // Format date for display
-const formatDate = (dateString: string | null): string => {
+const formatDate = (dateString: string | null | undefined): string => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleString('uk-UK');
 };
@@ -152,9 +161,9 @@ const fetchGame = async () => {
         game.value = await getMultiplayerGame(props.leagueId, props.gameId);
 
         // After fetching the game, check if we need to update the selected acting player
-        if (selectedActingPlayer.value) {
+        if (isAuthenticated.value && selectedActingPlayer.value) {
             updateSelectedActingPlayer();
-        } else if (game.value.status === 'in_progress') {
+        } else if (isAuthenticated.value && game.value.status === 'in_progress') {
             // Auto-select the current user's player or current turn player when first loading
             selectDefaultActingPlayer();
         }
@@ -166,14 +175,15 @@ const fetchGame = async () => {
     }
 };
 
-// Update the selected acting player with fresh data from the game
+// Update the selected acting player with fresh data from the game (authenticated users only)
 const updateSelectedActingPlayer = () => {
+    if (!isAuthenticated.value) return;
     selectDefaultActingPlayer();
 };
 
-// Select a default acting player (current user or current turn)
+// Select a default acting player (current user or current turn) - authenticated users only
 const selectDefaultActingPlayer = () => {
-    if (!game.value || !user.value) return;
+    if (!game.value || !user.value || !isAuthenticated.value) return;
 
     // First try to select the current user's player
     const currentTurnUser = game.value.active_players.find(p => p.user.id === game.value?.current_turn_player_id);
@@ -186,13 +196,13 @@ const selectDefaultActingPlayer = () => {
     }
 };
 
-// Handle game actions
+// Handle game actions (authenticated users only)
 const handleAction = async (
     action: 'increment_lives' | 'decrement_lives' | 'record_turn' | 'set_turn',
     targetUserId?: number,
     actingUserId?: number
 ) => {
-    if (!game.value) return;
+    if (!game.value || !isAuthenticated.value) return;
 
     actionFeedback.value = null;
 
@@ -221,7 +231,6 @@ const handleAction = async (
             };
         }
 
-
         // If the action was 'record_turn', select the new current turn player
         if (action === 'record_turn' && game.value) {
             const newCurrentTurnPlayer = game.value.active_players.find(p => p.is_current_turn);
@@ -247,7 +256,7 @@ const handleAction = async (
 };
 
 const handleUseCard = async (cardType: 'skip_turn' | 'pass_turn' | 'hand_shot', targetPlayerId?: number, actingUserId?: number) => {
-    if (!game.value) return;
+    if (!game.value || !isAuthenticated.value) return;
 
     actionFeedback.value = null;
 
@@ -285,7 +294,7 @@ const handleUseCard = async (cardType: 'skip_turn' | 'pass_turn' | 'hand_shot', 
 
         // Don't clear acting player, just update it with fresh data
         await fetchGame();
-    } catch (err) {
+    } catch (err: any) {
         // Show error feedback
         actionFeedback.value = {
             type: 'error',
@@ -293,8 +302,9 @@ const handleUseCard = async (cardType: 'skip_turn' | 'pass_turn' | 'hand_shot', 
         };
     }
 };
+
 const handleSetModerator = async (userId: number) => {
-    if (!game.value) return;
+    if (!game.value || !isAuthenticated.value || !isAdmin.value) return;
 
     actionFeedback.value = null;
 
@@ -316,8 +326,10 @@ const handleSetModerator = async (userId: number) => {
     }
 };
 
-// User interface selection handlers
+// User interface selection handlers (authenticated users only)
 const selectPlayer = (player: MultiplayerGamePlayer) => {
+    if (!isAuthenticated.value) return;
+
     // When selecting a different acting player, clear the card and target selections
     if (selectedActingPlayer.value?.id !== player.id) {
         selectedCardType.value = null;
@@ -327,6 +339,8 @@ const selectPlayer = (player: MultiplayerGamePlayer) => {
 };
 
 const handlePlayerAction = (actionData: any) => {
+    if (!isAuthenticated.value) return;
+
     if (actionData.cardType) {
         handleUseCard(
             actionData.cardType,
@@ -392,36 +406,53 @@ onMounted(() => {
                         {{ statusText }}
                     </span>
 
-                    <Button
-                        v-if="game?.status === 'completed' && (isAdmin || isModerator)"
-                        variant="outline"
-                        @click="showFinishModal = true"
-                    >
-                        <TrophyIcon class="mr-2 h-4 w-4"/>
-                        Finish Game
-                    </Button>
-                    <Button
-                        v-if="game?.status === 'in_progress' && (isAdmin || isModerator)"
-                        variant="outline"
-                        @click="showModeratorModal = true"
-                    >
-                        <UserIcon class="mr-2 h-4 w-4"/>
-                        Change Moderator
-                    </Button>
-                    <Button
-                        v-if="isAdmin && game?.status === 'registration'"
-                        variant="outline"
-                        @click="showAddPlayerModal = true"
-                    >
-                        <UserPlusIcon class="mr-2 h-4 w-4"/>
-                        Add Player
-                    </Button>
+                    <!-- Authenticated admin actions -->
+                    <template v-if="isAuthenticated && (isAdmin || isModerator)">
+                        <Button
+                            v-if="game?.status === 'completed'"
+                            variant="outline"
+                            @click="showFinishModal = true"
+                        >
+                            <TrophyIcon class="mr-2 h-4 w-4"/>
+                            Finish Game
+                        </Button>
+                        <Button
+                            v-if="game?.status === 'in_progress'"
+                            variant="outline"
+                            @click="showModeratorModal = true"
+                        >
+                            <UserIcon class="mr-2 h-4 w-4"/>
+                            Change Moderator
+                        </Button>
+                        <Button
+                            v-if="isAdmin && game?.status === 'registration'"
+                            variant="outline"
+                            @click="showAddPlayerModal = true"
+                        >
+                            <UserPlusIcon class="mr-2 h-4 w-4"/>
+                            Add Player
+                        </Button>
+                    </template>
+
+                    <!-- Guest login prompt for admin actions -->
+                    <div v-else-if="!isAuthenticated && game?.status === 'registration'" class="text-center">
+                        <Link :href="route('login')" class="text-sm text-blue-600 hover:underline dark:text-blue-400">
+                            <LogInIcon class="mr-1 inline h-4 w-4"/>
+                            Login to manage
+                        </Link>
+                    </div>
                 </div>
             </div>
+
             <!-- Status Message -->
             <div
                 v-if="formattedStatusMessage"
-                class="mb-6 rounded-md border border-blue-100 bg-blue-50 p-4 text-blue-800 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300"
+                :class="[
+                    'mb-6 rounded-md border p-4',
+                    !isAuthenticated
+                        ? 'border-yellow-100 bg-yellow-50 text-yellow-800 dark:border-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300'
+                        : 'border-blue-100 bg-blue-50 text-blue-800 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300'
+                ]"
             >
                 {{ formattedStatusMessage }}
             </div>
@@ -443,7 +474,6 @@ onMounted(() => {
             </div>
 
             <!-- Loading state -->
-
             <div v-if="game">
                 <!-- Registration phase -->
                 <div v-if="game.status === 'registration'">
@@ -519,7 +549,7 @@ onMounted(() => {
                                             :highlight-current-turn="true"
                                             :players="game.active_players"
                                             :selected-player-id="selectedActingPlayer?.id"
-                                            :show-controls="isModerator && game.status === 'in_progress'"
+                                            :show-controls="isAuthenticated && isModerator && game.status === 'in_progress'"
                                             title=""
                                             @select-player="selectPlayer"
                                         />
@@ -550,7 +580,7 @@ onMounted(() => {
                                                         <p class="font-medium">{{ player.user.firstname }} {{
                                                                 player.user.lastname
                                                             }}</p>
-                                                        <p v-if="player.user.id === user?.id"
+                                                        <p v-if="isAuthenticated && player.user.id === user?.id"
                                                            class="text-xs text-blue-600">(You)</p>
                                                     </div>
                                                 </div>
@@ -564,8 +594,9 @@ onMounted(() => {
                                 </Card>
                             </div>
 
-                            <!-- Game Action Panel -->
-                            <div v-if="game.status === 'in_progress'" class="order-1 lg:order-2 lg:col-span-2">
+                            <!-- Game Action Panel - Only for authenticated users in progress games -->
+                            <div v-if="isAuthenticated && game.status === 'in_progress'"
+                                 class="order-1 lg:order-2 lg:col-span-2">
                                 <div v-if="selectedActingPlayer" class="space-y-4">
                                     <GameActionPanel
                                         :is-current-turn="selectedActingPlayer.is_current_turn"
@@ -593,6 +624,30 @@ onMounted(() => {
                                 <div v-else class="rounded-lg border p-4 text-center text-gray-500 dark:text-gray-400">
                                     <p>Select a player to view their actions or wait for your turn.</p>
                                 </div>
+                            </div>
+
+                            <!-- Guest viewing message for in-progress games -->
+                            <div v-else-if="!isAuthenticated && game.status === 'in_progress'"
+                                 class="order-1 lg:order-2 lg:col-span-2">
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Game in Progress</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div class="text-center py-8">
+                                            <p class="text-gray-600 dark:text-gray-400 mb-4">
+                                                This multiplayer game is currently in progress. You can watch the live
+                                                action by viewing the player list on the left.
+                                            </p>
+                                            <Link :href="route('login')">
+                                                <Button>
+                                                    <LogInIcon class="mr-2 h-4 w-4"/>
+                                                    Login to Participate
+                                                </Button>
+                                            </Link>
+                                        </div>
+                                    </CardContent>
+                                </Card>
                             </div>
 
                             <!-- Game Completed Summary -->
@@ -634,7 +689,7 @@ onMounted(() => {
                                                         </td>
                                                         <td class="px-4 py-2">
                                                             {{ player.user.firstname }} {{ player.user.lastname }}
-                                                            <span v-if="player.user.id === user?.id"
+                                                            <span v-if="isAuthenticated && player.user.id === user?.id"
                                                                   class="ml-1 text-xs text-blue-600">(You)</span>
                                                         </td>
                                                         <td class="px-4 py-2 text-center">
@@ -688,30 +743,34 @@ onMounted(() => {
         </div>
     </div>
 
-    <!-- Set Moderator Modal -->
-    <SetModeratorModal
-        v-if="game"
-        :game="game"
-        :show="showModeratorModal"
-        @close="showModeratorModal = false"
-        @set-moderator="handleSetModerator"
-    />
+    <!-- Authenticated user modals -->
+    <template v-if="isAuthenticated">
+        <!-- Set Moderator Modal -->
+        <SetModeratorModal
+            v-if="game && (isAdmin || isModerator)"
+            :game="game"
+            :show="showModeratorModal"
+            @close="showModeratorModal = false"
+            @set-moderator="handleSetModerator"
+        />
 
-    <GameFinishModal
-        :game="game"
-        :leagueId="leagueId"
-        :show="showFinishModal"
-        @close="showFinishModal = false"
-        @finished="handleGameFinished"
-    />
+        <GameFinishModal
+            v-if="game && (isAdmin || isModerator)"
+            :game="game"
+            :leagueId="leagueId"
+            :show="showFinishModal"
+            @close="showFinishModal = false"
+            @finished="handleGameFinished"
+        />
 
-    <AddPlayerModal
-        v-if="isAdmin && game"
-        :entity-id="gameId"
-        :entity-type="'match'"
-        :league-id="leagueId"
-        :show="showAddPlayerModal"
-        @added="handlePlayerAdded"
-        @close="showAddPlayerModal = false"
-    />
+        <AddPlayerModal
+            v-if="isAdmin && game"
+            :entity-id="gameId"
+            :entity-type="'match'"
+            :league-id="leagueId"
+            :show="showAddPlayerModal"
+            @added="handlePlayerAdded"
+            @close="showAddPlayerModal = false"
+        />
+    </template>
 </template>

@@ -1,3 +1,4 @@
+// resources/js/pages/Leagues/Show.vue
 <script lang="ts" setup>
 import ChallengeModal from '@/Components/ChallengeModal.vue';
 import PendingConfirmationBanner from '@/Components/PendingConfirmationBanner.vue';
@@ -14,6 +15,7 @@ import {Head, Link} from '@inertiajs/vue3';
 import {
     ArrowLeftIcon,
     ChevronDownIcon,
+    GamepadIcon,
     LogInIcon,
     LogOutIcon,
     PencilIcon,
@@ -34,7 +36,7 @@ const props = defineProps<{
     leagueId: number | string;
 }>();
 
-const {user, isAuthenticated, isAdmin, isGuest} = useAuth();
+const {user, isAuthenticated, isAdmin} = useAuth();
 const leagues = useLeagues();
 const {getLeagueStatus, canJoinLeague, getJoinErrorMessage} = useLeagueStatus();
 
@@ -79,9 +81,9 @@ const {
     execute: fetchMatches
 } = leagues.fetchLeagueMatches(props.leagueId);
 
-// Check if current user is in the league
+// Check if current user is in the league (only for authenticated users)
 const isCurrentUserInLeague = computed(() => {
-    if (!user.value || !players.value) return false;
+    if (!user.value || !players.value || !isAuthenticated.value) return false;
     return leagues.isPlayerInLeague(players.value, user.value.id);
 });
 
@@ -133,9 +135,9 @@ const getMatchStatusClass = (status: string): string => {
     }
 };
 
-// Check if current user needs to confirm a result
+// Check if current user needs to confirm a result (authenticated users only)
 const needsConfirmation = (match: MatchGame): boolean => {
-    if (!user.value || match.status !== 'must_be_confirmed' || !match.result_confirmed || !Array.isArray(match.result_confirmed)) return false;
+    if (!user.value || !isAuthenticated.value || match.status !== 'must_be_confirmed' || !match.result_confirmed || !Array.isArray(match.result_confirmed)) return false;
 
     let userRatingId: number | null = null;
     if (match.firstPlayer?.user?.id === user.value.id) {
@@ -159,9 +161,10 @@ const displayMessage = (message: string) => {
     showGenericModal.value = true;
 };
 
-// Check if user is the sender of the match
+// Check if user is the sender of the match (authenticated users only)
 const isMatchSender = (match: MatchGame): boolean => {
-    return match.firstPlayer?.user?.id === user.value?.id;
+    if (!isAuthenticated.value || !user.value) return false;
+    return match.firstPlayer?.user?.id === user.value.id;
 };
 
 // Actions (only for authenticated users)
@@ -182,8 +185,9 @@ const handleJoinLeague = async () => {
 // State for Add Player modal
 const showAddPlayerModal = ref(false);
 
-// Handle player added
+// Handle player added (admin only)
 const handlePlayerAdded = async () => {
+    if (!isAuthenticated.value || !isAdmin.value) return;
     await fetchPlayers();
     displayMessage('Player added successfully');
 };
@@ -223,7 +227,7 @@ const openResultModal = (match: MatchGame) => {
     showResultModal.value = true;
 };
 
-// Decline match function
+// Decline match function (authenticated users only)
 const declineMatch = async (match: MatchGame) => {
     if (!isAuthenticated.value) {
         displayMessage('You must be logged in to decline matches.');
@@ -250,11 +254,11 @@ const declineMatch = async (match: MatchGame) => {
 const handleResultSuccess = (message: string) => {
     displayMessage(message);
 
-    if (matchForResults.value) {
+    if (matchForResults.value && isAuthenticated.value && user.value) {
         let userRatingId: number | null = null;
-        if (matchForResults.value.firstPlayer?.user?.id === user.value?.id) {
+        if (matchForResults.value.firstPlayer?.user?.id === user.value.id) {
             userRatingId = matchForResults.value.first_rating_id;
-        } else if (matchForResults.value.secondPlayer?.user?.id === user.value?.id) {
+        } else if (matchForResults.value.secondPlayer?.user?.id === user.value.id) {
             userRatingId = matchForResults.value.second_rating_id;
         }
 
@@ -330,7 +334,7 @@ onMounted(() => {
     });
 });
 
-// Watch for matches to be loaded, then check for routeMatchId
+// Watch for matches to be loaded, then check for routeMatchId (authenticated users only)
 watch(
     [matches, routeMatchId],
     ([currentMatches, currentMatchId]) => {
@@ -501,17 +505,18 @@ watch(
                             </div>
                         </div>
 
+                        <!-- Multiplayer Games Section - Available to everyone -->
+                        <div v-if="league?.game_multiplayer" class="mb-6 mt-4">
+                            <Link :href="`/leagues/${leagueId}/multiplayer-games`">
+                                <Button variant="secondary">
+                                    <GamepadIcon class="mr-2 h-4 w-4"/>
+                                    View Multiplayer Games
+                                </Button>
+                            </Link>
+                        </div>
+
                         <!-- Join/Leave Actions - Only for authenticated users -->
                         <div v-if="isAuthenticated" class="mt-6">
-                            <div v-if="league?.game_multiplayer" class="mb-6 mt-4">
-                                <Link :href="`/leagues/${leagueId}/multiplayer-games`">
-                                    <Button variant="secondary">
-                                        <UsersIcon class="mr-2 h-4 w-4"/>
-                                        Multiplayer Games
-                                    </Button>
-                                </Link>
-                            </div>
-
                             <template v-if="!isCurrentUserInLeague">
                                 <Button v-if="canUserJoinLeague" :disabled="isJoining" @click="handleJoinLeague">
                                     <Spinner v-if="isJoining" class="mr-2 h-4 w-4"/>
@@ -530,14 +535,17 @@ watch(
                             </Button>
                         </div>
 
-                        <!-- Login prompt for multiplayer games access for guests -->
-                        <div v-else-if="league?.game_multiplayer" class="mt-6">
-                            <Link :href="route('login')" class="text-blue-600 hover:underline dark:text-blue-400">
-                                <Button variant="secondary">
-                                    <LogInIcon class="mr-2 h-4 w-4"/>
-                                    Login to view multiplayer games
-                                </Button>
-                            </Link>
+                        <!-- Guest prompts -->
+                        <div v-else class="mt-6 space-y-2">
+                            <div class="rounded-md bg-blue-50 p-4 dark:bg-blue-900/20">
+                                <p class="text-blue-800 dark:text-blue-300">
+                                    <LogInIcon class="mr-2 inline h-4 w-4"/>
+                                    <Link :href="route('login')" class="font-medium hover:underline">
+                                        Login to join this league
+                                    </Link>
+                                    and participate in matches.
+                                </p>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
@@ -604,7 +612,7 @@ watch(
                             <li
                                 v-for="match in matches"
                                 :key="match.id"
-                                :class="needsConfirmation(match) ? 'border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-900/20' : ''"
+                                :class="isAuthenticated && needsConfirmation(match) ? 'border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-900/20' : ''"
                                 class="rounded-lg border p-4 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800/50"
                             >
                                 <div class="flex items-start justify-between">
