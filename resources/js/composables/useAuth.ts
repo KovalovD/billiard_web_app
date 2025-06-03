@@ -26,6 +26,7 @@ const initUserFromPageProps = (): boolean => {
             isGuest.value = false;
             return true;
         }
+// eslint-disable-next-line
     } catch (e) {
         // Silent fail for guest users
     }
@@ -52,6 +53,7 @@ const fetchUserFromApi = async (): Promise<boolean> => {
         user.value = await apiClient<User>('/api/auth/user');
         isGuest.value = false;
         return true;
+// eslint-disable-next-line
     } catch (err: any) {
         setToken(null, null);
         user.value = null;
@@ -175,6 +177,7 @@ const logout = async () => {
                 data: {deviceName: currentDeviceName},
             });
         }
+// eslint-disable-next-line
     } catch (err: any) {
         // Even if API call fails, clear client-side state
     } finally {

@@ -19,6 +19,11 @@ Route::apiResource('leagues', LeaguesController::class, ['only' => ['index', 'sh
 // Cities and clubs are publicly accessible
 Route::get('cities', [CitiesController::class, 'index'])->name('cities.index');
 Route::get('clubs', [ClubsController::class, 'index'])->name('clubs.index');
+Route::get('user/tournaments/recent', [UserTournamentsController::class, 'recent'])->name('user.tournaments.recent');
+Route::get('user/tournaments/upcoming',
+    [UserTournamentsController::class, 'upcoming'])->name('user.tournaments.upcoming');
+Route::get('leagues/{league}/players', [LeaguesController::class, 'players'])->name('leagues.players');
+Route::get('leagues/{league}/games', [LeaguesController::class, 'games'])->name('leagues.games');
 
 // Admin-only endpoints
 Route::middleware(['auth:sanctum', AdminMiddleware::class])->group(function () {
@@ -44,8 +49,7 @@ Route::middleware(['auth:sanctum', AdminMiddleware::class])->group(function () {
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::group(['prefix' => 'user/tournaments'], static function () {
-        Route::get('recent', [UserTournamentsController::class, 'recent'])->name('user.tournaments.recent');
-        Route::get('upcoming', [UserTournamentsController::class, 'upcoming'])->name('user.tournaments.upcoming');
+
         Route::get('my-tournaments-and-applications', [
             UserTournamentsController::class, 'myTournamentsAndApplications',
         ])->name('user.tournaments.my-tournaments-and-applications');
@@ -71,8 +75,6 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::group(['prefix' => 'leagues/{league}'], static function () {
-        Route::get('players', [LeaguesController::class, 'players'])->name('leagues.players');
-        Route::get('games', [LeaguesController::class, 'games'])->name('leagues.games');
         Route::get('load-user-rating', [LeaguesController::class, 'loadUserRating'])->name('leagues.load-user-rating');
 
         Route::group(['prefix' => 'players'], static function () {

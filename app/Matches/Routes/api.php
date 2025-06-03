@@ -4,12 +4,16 @@ use App\Core\Http\Middleware\AdminMiddleware;
 use App\Matches\Http\Controllers\MultiplayerGamesController;
 use Illuminate\Support\Facades\Route;
 
+
+Route::get('leagues/{league}/multiplayer-games',
+    [MultiplayerGamesController::class, 'index'])->name('multiplayer-games.index');
+Route::get('leagues/{league}/multiplayer-games/{multiplayerGame}',
+    [MultiplayerGamesController::class, 'show'])->name('multiplayer-games.show');
+
 Route::middleware(['auth:sanctum'])->group(function () {
     // Multiplayer Games routes
     Route::group(['prefix' => 'leagues/{league}/multiplayer-games'], static function () {
-        Route::get('/', [MultiplayerGamesController::class, 'index'])->name('multiplayer-games.index');
         Route::group(['prefix' => '{multiplayerGame}'], static function () {
-            Route::get('/', [MultiplayerGamesController::class, 'show'])->name('multiplayer-games.show');
             Route::post('/join', [MultiplayerGamesController::class, 'join'])->name('multiplayer-games.join');
             Route::post('/leave', [MultiplayerGamesController::class, 'leave'])->name('multiplayer-games.leave');
             Route::post('/action',

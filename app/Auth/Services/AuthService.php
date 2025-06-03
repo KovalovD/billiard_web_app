@@ -27,7 +27,7 @@ class AuthService
     }
 
     /**
-     * Register a new user
+     * Register a new user with lastname matching logic
      *
      * @param  RegisterDTO  $registerDTO
      * @param  bool  $selfRegistration
@@ -36,16 +36,25 @@ class AuthService
     public function register(RegisterDTO $registerDTO, bool $selfRegistration = true): array
     {
         try {
-            // Create the user
-            $user = User::create([
-                'firstname' => $registerDTO->firstname,
-                'lastname'  => $registerDTO->lastname,
-                'email'     => $registerDTO->email,
-                'phone'     => $registerDTO->phone,
-                'password'  => Hash::make($registerDTO->password),
-            ]);
+            $user = null;
 
-            // Log in the user
+            // Only apply lastname matching logic for self-registration
+            if ($selfRegistration) {
+                $user = $this->findAndUpdateExistingUserByName($registerDTO);
+            }
+
+            // If no existing user found or not self-registration, create new user
+            if (!$user) {
+                $user = User::create([
+                    'firstname' => $registerDTO->firstname,
+                    'lastname'  => $registerDTO->lastname,
+                    'email'     => $registerDTO->email,
+                    'phone'     => $registerDTO->phone,
+                    'password'  => Hash::make($registerDTO->password),
+                ]);
+            }
+
+            // Log in the user if self-registration
             if ($selfRegistration) {
                 Auth::login($user, true);
                 $token = $this->repository->createToken($user, 'web')->plainTextToken;
@@ -60,6 +69,58 @@ class AuthService
         } catch (Exception $e) {
             throw new RuntimeException('Failed to register user: '.$e->getMessage(), 0, $e);
         }
+    }
+
+    /**
+     * Find existing user by lastname (and firstname if multiple matches) and update it
+     *
+     * @param  RegisterDTO  $registerDTO
+     * @return User|null
+     */
+    private function findAndUpdateExistingUserByName(RegisterDTO $registerDTO): ?User
+    {
+        // Find users with matching lastname that haven't been changed once
+        $candidateUsers = User::where('lastname', $registerDTO->lastname)
+            ->where('is_changed_once', false)
+            ->where('is_active', true)
+            ->get()
+        ;
+
+        if ($candidateUsers->isEmpty()) {
+            return null;
+        }
+
+
+        if ($candidateUsers->count() === 1) {
+            // Only one user with this lastname - use it
+            $userToUpdate = $candidateUsers->first();
+        } else {
+            // Multiple users with same lastname - check firstname too
+            $exactMatch = $candidateUsers->where('firstname', $registerDTO->firstname)->first();
+
+            if ($exactMatch) {
+                $userToUpdate = $exactMatch;
+            } else {
+                // No exact match by firstname - don't update any user
+                return null;
+            }
+        }
+
+        if ($userToUpdate) {
+            // Update the existing user with new data
+            $userToUpdate->update([
+                'firstname'         => $registerDTO->firstname,
+                'email'             => $registerDTO->email,
+                'phone'             => $registerDTO->phone,
+                'password'          => Hash::make($registerDTO->password),
+                'is_changed_once'   => true,
+                'email_verified_at' => now(), // Auto-verify email for updated accounts
+            ]);
+
+            return $userToUpdate->fresh();
+        }
+
+        return null;
     }
 
     /**

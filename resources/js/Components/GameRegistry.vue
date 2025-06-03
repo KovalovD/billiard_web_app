@@ -63,6 +63,7 @@ const handleJoin = async () => {
     try {
         await joinMultiplayerGame(props.leagueId, props.game.id);
         emit('updated');
+// eslint-disable-next-line
     } catch (err) {
         // Error is handled by the composable
     }
@@ -75,6 +76,7 @@ const handleLeave = async () => {
     try {
         await leaveMultiplayerGame(props.leagueId, props.game.id);
         emit('updated');
+// eslint-disable-next-line
     } catch (err) {
         // Error is handled by the composable
     }
