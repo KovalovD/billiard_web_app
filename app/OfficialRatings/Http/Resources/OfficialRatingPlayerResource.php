@@ -14,6 +14,13 @@ class OfficialRatingPlayerResource extends JsonResource
     {
         return [
             'id'                 => $this->id,
+            'division' => match (true) {
+                $this->position <= 8 => 'Elite',
+                $this->position > 8 && $this->position <= 16 => 'S',
+                $this->position > 16 && $this->position <= 24 => 'A',
+                $this->position > 24 && $this->position <= 64 => 'B',
+                $this->position > 64 => 'C',
+            },
             'official_rating_id' => $this->official_rating_id,
             'user_id'            => $this->user_id,
             'rating_points'      => $this->rating_points,

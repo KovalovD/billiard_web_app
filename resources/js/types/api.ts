@@ -307,6 +307,7 @@ export interface OfficialRating {
 
 export interface OfficialRatingPlayer {
     id: number;
+    division: 'Elite' | 'S' | 'A' | 'B' | 'C';
     official_rating_id: number;
     user_id: number;
     rating_points: number;
