@@ -14,6 +14,7 @@ import {Head, Link} from '@inertiajs/vue3';
 import {
     ArrowLeftIcon,
     ChevronDownIcon,
+    LogInIcon,
     LogOutIcon,
     PencilIcon,
     SmileIcon,
@@ -33,7 +34,7 @@ const props = defineProps<{
     leagueId: number | string;
 }>();
 
-const {user, isAuthenticated, isAdmin} = useAuth();
+const {user, isAuthenticated, isAdmin, isGuest} = useAuth();
 const leagues = useLeagues();
 const {getLeagueStatus, canJoinLeague, getJoinErrorMessage} = useLeagueStatus();
 
@@ -94,13 +95,8 @@ const pageTitle = computed(() => {
     return `League: ${league.value.name}${suffix}`;
 });
 
-// Update the status computed property:
 const leagueStatus = computed(() => getLeagueStatus(league.value));
-
-// Update the can join check:
 const canUserJoinLeague = computed(() => canJoinLeague(league.value));
-
-// Update the error message:
 const joinErrorMessage = computed(() => getJoinErrorMessage(league.value));
 
 // Find an active match by ID from query params
@@ -141,7 +137,6 @@ const getMatchStatusClass = (status: string): string => {
 const needsConfirmation = (match: MatchGame): boolean => {
     if (!user.value || match.status !== 'must_be_confirmed' || !match.result_confirmed || !Array.isArray(match.result_confirmed)) return false;
 
-    // Get current user's rating ID
     let userRatingId: number | null = null;
     if (match.firstPlayer?.user?.id === user.value.id) {
         userRatingId = match.first_rating_id;
@@ -151,7 +146,6 @@ const needsConfirmation = (match: MatchGame): boolean => {
 
     if (!userRatingId) return false;
 
-    // Check if user has NOT confirmed yet (not found in result_confirmed array)
     const userConfirmation = match.result_confirmed.find(
         (confirmation) => confirmation && typeof confirmation === 'object' && confirmation.key === userRatingId,
     );
@@ -170,7 +164,7 @@ const isMatchSender = (match: MatchGame): boolean => {
     return match.firstPlayer?.user?.id === user.value?.id;
 };
 
-// Actions
+// Actions (only for authenticated users)
 const handleJoinLeague = async () => {
     if (!isAuthenticated.value) {
         displayMessage('You must be logged in to join this league.');
@@ -190,9 +184,7 @@ const showAddPlayerModal = ref(false);
 
 // Handle player added
 const handlePlayerAdded = async () => {
-    // Refresh the players list
     await fetchPlayers();
-    // Show a success message
     displayMessage('Player added successfully');
 };
 
@@ -208,6 +200,10 @@ const handleLeaveLeague = async () => {
 };
 
 const openChallengeModal = (player: Player) => {
+    if (!isAuthenticated.value) {
+        displayMessage('You must be logged in to challenge players.');
+        return;
+    }
     targetPlayerForChallenge.value = player;
     showChallengeModal.value = true;
 };
@@ -219,12 +215,21 @@ const handleChallengeSuccess = (message: string) => {
 };
 
 const openResultModal = (match: MatchGame) => {
+    if (!isAuthenticated.value) {
+        displayMessage('You must be logged in to submit results.');
+        return;
+    }
     matchForResults.value = match;
     showResultModal.value = true;
 };
 
 // Decline match function
 const declineMatch = async (match: MatchGame) => {
+    if (!isAuthenticated.value) {
+        displayMessage('You must be logged in to decline matches.');
+        return;
+    }
+
     if (isProcessingAction.value || !match.id) return;
 
     isProcessingAction.value = true;
@@ -233,7 +238,6 @@ const declineMatch = async (match: MatchGame) => {
             method: 'post',
         });
         displayMessage('Match declined successfully.');
-        // Refresh data
         await fetchMatches();
         await fetchPlayers();
     } catch (error: any) {
@@ -246,9 +250,7 @@ const declineMatch = async (match: MatchGame) => {
 const handleResultSuccess = (message: string) => {
     displayMessage(message);
 
-    // If the match was in the matchForResults value, update its state locally
     if (matchForResults.value) {
-        // Get user's rating ID
         let userRatingId: number | null = null;
         if (matchForResults.value.firstPlayer?.user?.id === user.value?.id) {
             userRatingId = matchForResults.value.first_rating_id;
@@ -256,22 +258,17 @@ const handleResultSuccess = (message: string) => {
             userRatingId = matchForResults.value.second_rating_id;
         }
 
-        // If we have a valid user rating ID, mark it as confirmed in the local state
         if (userRatingId) {
-            // Create a confirmation signature based on the current scores
             const confirmSignature = `${matchForResults.value.first_user_score}-${matchForResults.value.second_user_score}`;
 
-            // Ensure the result_confirmed array exists
             if (!matchForResults.value.result_confirmed) {
                 matchForResults.value.result_confirmed = [];
             }
 
-            // Check if this user already has a confirmation
             const existingConfirmIndex = matchForResults.value.result_confirmed.findIndex(
                 (conf) => conf && typeof conf === 'object' && conf.key === userRatingId,
             );
 
-            // Either update existing or add new confirmation
             const userConfirmation = {
                 key: userRatingId,
                 score: confirmSignature,
@@ -283,7 +280,6 @@ const handleResultSuccess = (message: string) => {
                 matchForResults.value.result_confirmed.push(userConfirmation);
             }
 
-            // Also update this match in the matches list if it exists there
             if (matches.value) {
                 const matchInList = matches.value.find((m) => m.id === matchForResults.value?.id);
                 if (matchInList) {
@@ -291,12 +287,10 @@ const handleResultSuccess = (message: string) => {
                         matchInList.result_confirmed = [];
                     }
 
-                    // Check if this user already has a confirmation in the list match
                     const listConfirmIndex = matchInList.result_confirmed.findIndex(
                         (conf) => conf && typeof conf === 'object' && conf.key === userRatingId,
                     );
 
-                    // Either update existing or add new confirmation to the list match
                     if (listConfirmIndex >= 0) {
                         matchInList.result_confirmed[listConfirmIndex] = userConfirmation;
                     } else {
@@ -307,7 +301,6 @@ const handleResultSuccess = (message: string) => {
         }
     }
 
-    // Then fetch updated data from server
     fetchMatches();
     fetchPlayers();
 };
@@ -321,9 +314,12 @@ onMounted(() => {
     fetchLeague();
     fetchPlayers();
     fetchMatches();
-    loadUserRating();
 
-    // Check URL query params for matchId
+    // Only load user rating if authenticated
+    if (isAuthenticated.value) {
+        loadUserRating();
+    }
+
     const url = new URL(window.location.href);
     routeMatchId.value = url.searchParams.get('matchId');
 
@@ -338,12 +334,11 @@ onMounted(() => {
 watch(
     [matches, routeMatchId],
     ([currentMatches, currentMatchId]) => {
-        if (currentMatches && currentMatchId) {
+        if (currentMatches && currentMatchId && isAuthenticated.value) {
             const matchToOpen = findMatchById(currentMatchId);
             if (matchToOpen) {
                 matchForResults.value = matchToOpen;
                 showResultModal.value = true;
-                // Clear the query params without refreshing page
                 const url = new URL(window.location.href);
                 url.searchParams.delete('matchId');
                 window.history.replaceState({}, document.title, url);
@@ -369,7 +364,7 @@ watch(
                     </Button>
                 </Link>
 
-                <div v-if="isAdmin && league" class="flex space-x-2">
+                <div v-if="isAuthenticated && isAdmin && league" class="flex space-x-2">
                     <Link :href="route('leagues.edit', { league: league.id })">
                         <Button variant="secondary">
                             <PencilIcon class="mr-2 h-4 w-4"/>
@@ -408,10 +403,19 @@ watch(
                         </div>
                     </div>
                 </div>
+
+                <!-- Login prompt for guests -->
+                <div v-else-if="!isAuthenticated" class="text-center">
+                    <Link :href="route('login')" class="text-sm text-blue-600 hover:underline dark:text-blue-400">
+                        <LogInIcon class="mr-1 inline h-4 w-4"/>
+                        Login to participate
+                    </Link>
+                </div>
             </div>
 
+            <!-- Only show confirmation banner for authenticated users -->
             <PendingConfirmationBanner
-                v-if="isCurrentUserInLeague && authUserRating"
+                v-if="isAuthenticated && isCurrentUserInLeague && authUserRating"
                 :is-confirmed="authUserRating.is_confirmed"
                 :league-name="league?.name"
             />
@@ -438,28 +442,28 @@ watch(
                                     {{ league.name }}
                                     <span v-if="leagueStatus"
                                           :class="['rounded-full px-2 py-1 text-xs font-semibold', leagueStatus.class]">
-                                        <component :is="leagueStatus.icon" class="mr-1 inline h-3 w-3"/>
-                                        {{ leagueStatus.text }}
-                                    </span>
+                                       <component :is="leagueStatus.icon" class="mr-1 inline h-3 w-3"/>
+                                       {{ leagueStatus.text }}
+                                   </span>
                                 </CardTitle>
                                 <CardDescription class="mt-2">
                                     <div class="mt-2 flex flex-wrap gap-4">
+                                       <span class="flex items-center gap-1">
+                                           <TrophyIcon class="h-4 w-4"/>
+                                           Game: {{ league.game ?? 'N/A' }}
+                                       </span>
                                         <span class="flex items-center gap-1">
-                                            <TrophyIcon class="h-4 w-4"/>
-                                            Game: {{ league.game ?? 'N/A' }}
-                                        </span>
-                                        <span class="flex items-center gap-1">
-                                            <UsersIcon class="h-4 w-4"/>
-                                            Players: {{
+                                           <UsersIcon class="h-4 w-4"/>
+                                           Players: {{
                                                 league.active_players ?? 0
                                             }}{{ league.max_players ? `/${league.max_players}` : '' }}
-                                        </span>
+                                       </span>
                                         <span class="flex items-center gap-1">
-                                            <SmileIcon class="h-4 w-4"/>
-                                            Rating: {{
+                                           <SmileIcon class="h-4 w-4"/>
+                                           Rating: {{
                                                 league.has_rating ? `Enabled (${league.start_rating})` : 'Disabled'
                                             }}
-                                        </span>
+                                       </span>
                                     </div>
                                 </CardDescription>
                             </div>
@@ -497,7 +501,7 @@ watch(
                             </div>
                         </div>
 
-                        <!-- Join/Leave Actions -->
+                        <!-- Join/Leave Actions - Only for authenticated users -->
                         <div v-if="isAuthenticated" class="mt-6">
                             <div v-if="league?.game_multiplayer" class="mb-6 mt-4">
                                 <Link :href="`/leagues/${leagueId}/multiplayer-games`">
@@ -525,6 +529,16 @@ watch(
                                 Leave League
                             </Button>
                         </div>
+
+                        <!-- Login prompt for multiplayer games access for guests -->
+                        <div v-else-if="league?.game_multiplayer" class="mt-6">
+                            <Link :href="route('login')" class="text-blue-600 hover:underline dark:text-blue-400">
+                                <Button variant="secondary">
+                                    <LogInIcon class="mr-2 h-4 w-4"/>
+                                    Login to view multiplayer games
+                                </Button>
+                            </Link>
+                        </div>
                     </CardContent>
                 </Card>
 
@@ -533,7 +547,9 @@ watch(
                     <CardHeader>
                         <div class="flex items-center justify-between w-full">
                             <CardTitle>Players & Ratings</CardTitle>
-                            <Button v-if="isAdmin" variant="outline" @click="showAddPlayerModal = true">
+                            <!-- Only show add player button to authenticated admins -->
+                            <Button v-if="isAuthenticated && isAdmin" variant="outline"
+                                    @click="showAddPlayerModal = true">
                                 <UserPlusIcon class="mr-2 h-4 w-4"/>
                                 Add Player
                             </Button>
@@ -564,8 +580,8 @@ watch(
                     </CardContent>
                 </Card>
 
-                <!-- Matches Card -->
-                <Card v-if="isAuthenticated && !league.game_multiplayer">
+                <!-- Matches Card - Show to everyone but limit actions for guests -->
+                <Card v-if="!league.game_multiplayer">
                     <CardHeader>
                         <CardTitle>Matches</CardTitle>
                         <CardDescription>Recent challenges and games.</CardDescription>
@@ -584,7 +600,6 @@ watch(
                             No matches found for this league.
                         </div>
 
-
                         <ul v-else class="space-y-3">
                             <li
                                 v-for="match in matches"
@@ -598,46 +613,47 @@ watch(
                                             <span class="text-sm text-gray-500">{{ new Date(match.created_at).toLocaleDateString() }}</span>
                                             <span class="rounded-full px-2 py-0.5 text-xs"
                                                   :class="getMatchStatusClass(match.status)">
-                                                {{ getMatchStatusDisplay(match.status) }}
-                                            </span>
+                                               {{ getMatchStatusDisplay(match.status) }}
+                                           </span>
                                             <span
-                                                v-if="match.status === 'must_be_confirmed' && needsConfirmation(match)"
+                                                v-if="isAuthenticated && match.status === 'must_be_confirmed' && needsConfirmation(match)"
                                                 class="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
                                             >
-                                                Needs your confirmation
-                                            </span>
+                                               Needs your confirmation
+                                           </span>
                                             <span
                                                 v-else-if="
-                                                    match.status === 'must_be_confirmed' &&
-                                                    !needsConfirmation(match) &&
-                                                    (match.firstPlayer?.user?.id === user?.id || match.secondPlayer?.user?.id === user?.id)
-                                                "
+                                                   isAuthenticated &&
+                                                   match.status === 'must_be_confirmed' &&
+                                                   !needsConfirmation(match) &&
+                                                   (match.firstPlayer?.user?.id === user?.id || match.secondPlayer?.user?.id === user?.id)
+                                               "
                                                 class="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-800 dark:bg-green-900/30 dark:text-green-300"
                                             >
-                                                Waiting for opponent to confirm
-                                            </span>
+                                               Waiting for opponent to confirm
+                                           </span>
                                         </div>
                                         <h3 class="mt-1 font-medium">
-                                            <span
-                                                :class="{
-                                                    'text-red-600 dark:text-red-400':
-                                                        match.status === 'completed' && match.winner_rating_id !== match.first_rating_id,
-                                                    'text-green-600 dark:text-green-400':
-                                                        match.status === 'completed' && match.winner_rating_id === match.first_rating_id,
-                                                }"
-                                            >
-                                                <span v-if="match.status === 'completed'" class="font-semibold">
-                                                    ({{
-                                                        match.winner_rating_id === match.first_rating_id
-                                                            ? '+' + match.rating_change_for_winner
-                                                            : match.rating_change_for_loser
-                                                    }})
-                                                </span>
-                                                {{
-                                                    match.firstPlayer?.user?.lastname + ' ' + match.firstPlayer?.user?.firstname.charAt(0) + '.' ||
-                                                    'Player 1'
-                                                }}
-                                            </span>
+                                           <span
+                                               :class="{
+                                                   'text-red-600 dark:text-red-400':
+                                                       match.status === 'completed' && match.winner_rating_id !== match.first_rating_id,
+                                                   'text-green-600 dark:text-green-400':
+                                                       match.status === 'completed' && match.winner_rating_id === match.first_rating_id,
+                                               }"
+                                           >
+                                               <span v-if="match.status === 'completed'" class="font-semibold">
+                                                   ({{
+                                                       match.winner_rating_id === match.first_rating_id
+                                                           ? '+' + match.rating_change_for_winner
+                                                           : match.rating_change_for_loser
+                                                   }})
+                                               </span>
+                                               {{
+                                                   match.firstPlayer?.user?.lastname + ' ' + match.firstPlayer?.user?.firstname.charAt(0) + '.' ||
+                                                   'Player 1'
+                                               }}
+                                           </span>
                                             <span class="mx-2 font-semibold"
                                             >{{ match.first_user_score || 0 }} VS {{
                                                     match.second_user_score || 0
@@ -645,24 +661,24 @@ watch(
                                             >
                                             <span
                                                 :class="{
-                                                    'text-red-600 dark:text-red-400':
-                                                        match.status === 'completed' && match.winner_rating_id !== match.second_rating_id,
-                                                    'text-green-600 dark:text-green-400':
-                                                        match.status === 'completed' && match.winner_rating_id === match.second_rating_id,
-                                                }"
+                                                   'text-red-600 dark:text-red-400':
+                                                       match.status === 'completed' && match.winner_rating_id !== match.second_rating_id,
+                                                   'text-green-600 dark:text-green-400':
+                                                       match.status === 'completed' && match.winner_rating_id === match.second_rating_id,
+                                               }"
                                             >
-                                                {{
+                                               {{
                                                     match.secondPlayer?.user?.lastname + ' ' + match.secondPlayer?.user?.firstname.charAt(0) + '.' ||
                                                     'Player 2'
                                                 }}
-                                                <span v-if="match.status === 'completed'" class="font-semibold">
-                                                    ({{
-                                                        match.winner_rating_id === match.second_rating_id
-                                                            ? '+' + match.rating_change_for_winner
-                                                            : match.rating_change_for_loser
-                                                    }})
-                                                </span>
-                                            </span>
+                                               <span v-if="match.status === 'completed'" class="font-semibold">
+                                                   ({{
+                                                       match.winner_rating_id === match.second_rating_id
+                                                           ? '+' + match.rating_change_for_winner
+                                                           : match.rating_change_for_loser
+                                                   }})
+                                               </span>
+                                           </span>
                                         </h3>
 
                                         <p v-if="match.details" class="mt-1 text-sm text-gray-600 dark:text-gray-400">
@@ -670,20 +686,21 @@ watch(
                                         </p>
                                     </div>
                                     <div>
-                                        <!-- Match actions based on state -->
+                                        <!-- Match actions based on state - Only for authenticated users -->
                                         <div
                                             v-if="
-                                                (match.status === 'in_progress' || match.status === 'must_be_confirmed') &&
-                                                (match.firstPlayer?.user?.id === user?.id || match.secondPlayer?.user?.id === user?.id)
-                                            "
+                                               isAuthenticated &&
+                                               (match.status === 'in_progress' || match.status === 'must_be_confirmed') &&
+                                               (match.firstPlayer?.user?.id === user?.id || match.secondPlayer?.user?.id === user?.id)
+                                           "
                                             class="space-y-2"
                                         >
                                             <Button
                                                 size="sm"
                                                 variant="outline"
                                                 :class="
-                                                    needsConfirmation(match) ? 'animate-pulse border-amber-300 bg-amber-100 hover:bg-amber-200' : ''
-                                                "
+                                                   needsConfirmation(match) ? 'animate-pulse border-amber-300 bg-amber-100 hover:bg-amber-200' : ''
+                                               "
                                                 @click="openResultModal(match)"
                                             >
                                                 {{ needsConfirmation(match) ? 'Confirm Result' : 'Submit Result' }}
@@ -701,6 +718,19 @@ watch(
                                                 {{ isProcessingAction ? 'Processing...' : 'Decline' }}
                                             </Button>
                                         </div>
+                                        <!-- Login prompt for guests to participate -->
+                                        <div
+                                            v-else-if="
+                                               !isAuthenticated &&
+                                               (match.status === 'in_progress' || match.status === 'must_be_confirmed')
+                                           "
+                                            class="text-center"
+                                        >
+                                            <Link :href="route('login')"
+                                                  class="text-xs text-blue-600 hover:underline dark:text-blue-400">
+                                                Login to participate
+                                            </Link>
+                                        </div>
                                     </div>
                                 </div>
                             </li>
@@ -711,8 +741,9 @@ watch(
         </div>
     </div>
 
-    <!-- Challenge Modal -->
+    <!-- Challenge Modal - Only for authenticated users -->
     <ChallengeModal
+        v-if="isAuthenticated"
         :league="league"
         :show="showChallengeModal"
         :targetPlayer="targetPlayerForChallenge"
@@ -721,8 +752,9 @@ watch(
         @success="handleChallengeSuccess"
     />
 
-    <!-- Result Modal -->
+    <!-- Result Modal - Only for authenticated users -->
     <ResultModal
+        v-if="isAuthenticated"
         :currentUser="user"
         :matchGame="matchForResults"
         :show="showResultModal"
@@ -732,8 +764,9 @@ watch(
         @success="handleResultSuccess"
     />
 
+    <!-- Add Player Modal - Only for authenticated admins -->
     <AddPlayerModal
-        v-if="isAdmin"
+        v-if="isAuthenticated && isAdmin"
         :entity-id="leagueId"
         :entity-type="'league'"
         :show="showAddPlayerModal"

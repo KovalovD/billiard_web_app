@@ -10,6 +10,7 @@ import {
     ArrowLeftIcon,
     CalendarIcon,
     ClipboardListIcon,
+    LogInIcon,
     MapPinIcon,
     PencilIcon,
     StarIcon,
@@ -26,7 +27,7 @@ const props = defineProps<{
     tournamentId: number | string;
 }>();
 
-const {isAdmin} = useAuth();
+const {isAdmin, isAuthenticated} = useAuth();
 
 const tournament = ref<Tournament | null>(null);
 const players = ref<TournamentPlayer[]>([]);
@@ -37,7 +38,6 @@ const activeTab = ref<'info' | 'players' | 'results' | 'applications'>('info');
 
 const sortedPlayers = computed(() => {
     return [...players.value].sort((a, b) => {
-        // Sort by status first: confirmed > applied > rejected
         const statusOrder = {confirmed: 1, applied: 2, rejected: 3};
         const aStatus = statusOrder[a.status as keyof typeof statusOrder] || 4;
         const bStatus = statusOrder[b.status as keyof typeof statusOrder] || 4;
@@ -46,14 +46,12 @@ const sortedPlayers = computed(() => {
             return aStatus - bStatus;
         }
 
-        // Then by position (for confirmed players)
         if (a.position !== null && b.position !== null) {
             return a.position - b.position;
         }
         if (a.position !== null) return -1;
         if (b.position !== null) return 1;
 
-        // Finally by application date
         return new Date(a.applied_at || a.registered_at).getTime() -
             new Date(b.applied_at || b.registered_at).getTime();
     });
@@ -176,7 +174,6 @@ const fetchPlayers = async () => {
 };
 
 const handleApplicationUpdated = () => {
-    // Refresh tournament data to get updated counts
     fetchTournament();
     fetchPlayers();
 };
@@ -201,7 +198,8 @@ onMounted(() => {
                     </Button>
                 </Link>
 
-                <div v-if="isAdmin && tournament" class="flex space-x-2">
+                <!-- Admin controls - only for authenticated admins -->
+                <div v-if="isAuthenticated && isAdmin && tournament" class="flex space-x-2">
                     <Link :href="`/admin/tournaments/${tournament.id}/edit`">
                         <Button variant="secondary">
                             <PencilIcon class="mr-2 h-4 w-4"/>
@@ -237,6 +235,14 @@ onMounted(() => {
                             <TrophyIcon class="mr-2 h-4 w-4"/>
                             Manage Results
                         </Button>
+                    </Link>
+                </div>
+
+                <!-- Login prompt for guests -->
+                <div v-else-if="!isAuthenticated && tournament" class="text-center">
+                    <Link :href="route('login')" class="text-sm text-blue-600 hover:underline dark:text-blue-400">
+                        <LogInIcon class="mr-1 inline h-4 w-4"/>
+                        Login to participate
                     </Link>
                 </div>
             </div>
@@ -291,12 +297,36 @@ onMounted(() => {
                     </CardHeader>
                 </Card>
 
-                <!-- Tournament Application Card -->
-                <div v-if="tournament.requires_application && tournament.status === 'upcoming'" class="mb-8">
+                <!-- Tournament Application Card - Only show to authenticated users -->
+                <div v-if="isAuthenticated && tournament.requires_application && tournament.status === 'upcoming'"
+                     class="mb-8">
                     <TournamentApplicationCard
                         :tournament="tournament"
                         @application-updated="handleApplicationUpdated"
                     />
+                </div>
+
+                <!-- Guest application prompt -->
+                <div v-else-if="!isAuthenticated && tournament.requires_application && tournament.status === 'upcoming'"
+                     class="mb-8">
+                    <Card class="border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-900/20">
+                        <CardContent class="p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-lg font-medium text-blue-800 dark:text-blue-300">Tournament
+                                        Registration</h3>
+                                    <p class="text-blue-600 dark:text-blue-400">This tournament requires application to
+                                        participate.</p>
+                                </div>
+                                <Link :href="route('login')">
+                                    <Button>
+                                        <LogInIcon class="mr-2 h-4 w-4"/>
+                                        Login to Apply
+                                    </Button>
+                                </Link>
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
 
                 <!-- Tab Navigation -->
@@ -325,7 +355,7 @@ onMounted(() => {
                             Players ({{ tournament.confirmed_players_count }})
                         </button>
                         <button
-                            v-if="tournament.requires_application && (isAdmin || tournament.pending_applications_count > 0)"
+                            v-if="tournament.requires_application && (isAuthenticated && isAdmin || tournament.pending_applications_count > 0)"
                             :class="[
                                 'py-4 px-1 text-sm font-medium border-b-2',
                                 activeTab === 'applications'
@@ -341,9 +371,9 @@ onMounted(() => {
                             :class="[
                                 'py-4 px-1 text-sm font-medium border-b-2',
                                 activeTab === 'results'
-                                    ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                            ]"
+? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+                                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                           ]"
                             @click="activeTab = 'results'"
                         >
                             Results
@@ -474,8 +504,8 @@ onMounted(() => {
                             <CardDescription>
                                 {{ tournament.confirmed_players_count }} confirmed players
                                 <span v-if="tournament.max_participants">
-                                    out of {{ tournament.max_participants }} maximum
-                                </span>
+                                   out of {{ tournament.max_participants }} maximum
+                               </span>
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -535,8 +565,8 @@ onMounted(() => {
                                         </div>
                                         <span
                                             :class="['px-2 py-1 text-xs font-semibold rounded-full', getPlayerStatusBadgeClass(application.status)]">
-                                            {{ application.status_display }}
-                                        </span>
+                                           {{ application.status_display }}
+                                       </span>
                                     </div>
                                 </div>
                             </CardContent>
@@ -567,8 +597,8 @@ onMounted(() => {
                                         </div>
                                         <span
                                             :class="['px-2 py-1 text-xs font-semibold rounded-full', getPlayerStatusBadgeClass(application.status)]">
-                                            {{ application.status_display }}
-                                        </span>
+                                           {{ application.status_display }}
+                                       </span>
                                     </div>
                                 </div>
                             </CardContent>
@@ -618,14 +648,14 @@ onMounted(() => {
                                         class="border-b dark:border-gray-700"
                                     >
                                         <td class="px-4 py-3">
-                                            <span
-                                                :class="[
-                                                    'inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium',
-                                                    getPositionBadgeClass(player.position || 0)
-                                                ]"
-                                            >
-                                                {{ player.position }}
-                                            </span>
+                                           <span
+                                               :class="[
+                                                   'inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium',
+                                                   getPositionBadgeClass(player.position || 0)
+                                               ]"
+                                           >
+                                               {{ player.position }}
+                                           </span>
                                         </td>
                                         <td class="px-4 py-3">
                                             <div>
@@ -636,19 +666,19 @@ onMounted(() => {
                                             </div>
                                         </td>
                                         <td class="px-4 py-3 text-center">
-                                            <span
-                                                v-if="player.rating_points > 0"
-                                                class="rounded-full bg-blue-100 px-2 py-1 text-sm text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
-                                            >
-                                                +{{ player.rating_points }}
-                                            </span>
+                                           <span
+                                               v-if="player.rating_points > 0"
+                                               class="rounded-full bg-blue-100 px-2 py-1 text-sm text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+                                           >
+                                               +{{ player.rating_points }}
+                                           </span>
                                             <span v-else class="text-gray-400">—</span>
                                         </td>
                                         <td class="px-4 py-3 text-right">
-                                            <span v-if="player.prize_amount > 0"
-                                                  class="font-medium text-green-600 dark:text-green-400">
-                                                {{ formatCurrency(player.prize_amount) }}
-                                            </span>
+                                           <span v-if="player.prize_amount > 0"
+                                                 class="font-medium text-green-600 dark:text-green-400">
+                                               {{ formatCurrency(player.prize_amount) }}
+                                           </span>
                                             <span v-else class="text-gray-400">—</span>
                                         </td>
                                     </tr>
