@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import type {Rating} from '@/types/api';
 import {computed} from 'vue';
-import {useLocale} from '@/composables/useLocale';
 import PlayerListItem from './PlayerListItem.vue';
 import {useLocale} from '@/composables/useLocale';
 
