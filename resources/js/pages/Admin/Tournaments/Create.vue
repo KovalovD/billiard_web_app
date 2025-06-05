@@ -20,12 +20,15 @@ import {useProfileApi} from '@/composables/useProfileApi';
 import {useTournaments} from '@/composables/useTournaments';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
+import {useLocale} from '@/composables/useLocale';
 import type {City, Club, CreateTournamentPayload, Game, OfficialRating} from '@/types/api';
 import {Head, router} from '@inertiajs/vue3';
 import {ArrowLeftIcon, MapPinIcon, StarIcon, TrophyIcon} from 'lucide-vue-next';
 import {computed, onMounted, ref, watch} from 'vue';
 
 defineOptions({layout: AuthenticatedLayout});
+
+const {t} = useLocale();
 
 const {createTournament} = useTournaments();
 const {fetchCities, fetchClubs} = useProfileApi();
@@ -168,19 +171,19 @@ onMounted(() => {
 </script>
 
 <template>
-    <Head title="Create Tournament"/>
+    <Head :title="t('Create Tournament')"/>
 
     <div class="py-12">
         <div class="mx-auto max-w-4xl sm:px-6 lg:px-8">
             <!-- Header -->
             <div class="mb-6 flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">Create Tournament</h1>
-                    <p class="text-gray-600 dark:text-gray-400">Set up a new billiard tournament</p>
+                    <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">{{ t('Create Tournament') }}</h1>
+                    <p class="text-gray-600 dark:text-gray-400">{{ t('Set up a new billiard tournament') }}</p>
                 </div>
                 <Button variant="outline" @click="handleCancel">
                     <ArrowLeftIcon class="mr-2 h-4 w-4"/>
-                    Back to Tournaments
+                    {{ t('Back to Tournaments') }}
                 </Button>
             </div>
 
@@ -189,7 +192,7 @@ onMounted(() => {
                 <CardHeader>
                     <CardTitle class="flex items-center gap-2">
                         <TrophyIcon class="h-5 w-5"/>
-                        Tournament Details
+                        {{ t('Tournament Details') }}
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
