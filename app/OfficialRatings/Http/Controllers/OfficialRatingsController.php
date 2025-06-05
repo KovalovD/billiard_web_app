@@ -6,6 +6,7 @@ use App\OfficialRatings\Http\Resources\OfficialRatingPlayerResource;
 use App\OfficialRatings\Http\Resources\OfficialRatingResource;
 use App\OfficialRatings\Models\OfficialRating;
 use App\OfficialRatings\Services\OfficialRatingService;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -95,5 +96,31 @@ readonly class OfficialRatingsController
         $ratings = $this->officialRatingService->getActiveRatings();
 
         return OfficialRatingResource::collection($ratings);
+    }
+
+    /**
+     * Get rating delta for current user since date
+     */
+    public function playerDelta(OfficialRating $officialRating, Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'date' => 'required|date',
+        ]);
+
+        $user = $request->user();
+
+        $delta = $this->officialRatingService->getPlayerDeltaSinceDate(
+            $officialRating,
+            $user->id,
+            Carbon::parse($validated['date']),
+        );
+
+        if (!$delta) {
+            return response()->json([
+                'message' => 'Player not found in this rating',
+            ], 404);
+        }
+
+        return response()->json($delta);
     }
 }
