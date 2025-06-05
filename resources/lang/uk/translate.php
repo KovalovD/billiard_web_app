@@ -355,4 +355,10 @@ return [
     'Phone *' => 'Телефон *',
     'Add Player' => 'Додати гравця',
     'Adding...' => 'Додавання...',
+    'Welcome to' => 'Ласкаво просимо до',
+    'Welcome to WinnerBreak' => 'Ласкаво просимо до WinnerBreak',
+    'Active Players' => 'Активні гравці',
+    'Leagues Running' => 'Ліг у процесі',
+    'Matches Played' => 'Зіграно матчів',
+    'Tournaments Held' => 'Проведено турнірів',
 ];

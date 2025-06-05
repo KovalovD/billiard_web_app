@@ -93,7 +93,7 @@ const stats = [
 </script>
 
 <template>
-    <Head title="Welcome to WinnerBreak"/>
+<Head :title="t('Welcome to WinnerBreak')"/>
 
     <div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
         <!-- Navigation Header -->
@@ -152,7 +152,7 @@ const stats = [
             <div class="mx-auto max-w-7xl">
                 <div class="text-center">
                     <h1 class="text-4xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-6xl">
-                        Welcome to
+                        {{ t('Welcome to') }}
                         <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                             WinnerBreak
                         </span>
@@ -182,7 +182,7 @@ const stats = [
                 <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
                     <div v-for="stat in stats" :key="stat.label" class="text-center">
                         <div class="text-3xl font-bold text-gray-900 dark:text-white">{{ stat.value }}</div>
-                        <div class="text-sm text-gray-600 dark:text-gray-400">{{ stat.label }}</div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">{{ t(stat.label) }}</div>
                     </div>
                 </div>
             </div>
