@@ -100,6 +100,20 @@ class RatingService
     }
 
     /**
+     * Get position by rating order with optimized query
+     *
+     * @param  League  $league
+     * @return int
+     */
+    private function getPositionByRatingOrder(League $league): int
+    {
+        return Rating::query()
+            ->where('league_id', $league->id)
+            ->where('rating', '>', $league->start_rating)
+            ->min('position') ?? 1;
+    }
+
+    /**
      * Rearrange positions with optimized query
      *
      * @param  int  $leagueId
@@ -223,20 +237,6 @@ class RatingService
 
             DB::update($sql, $params);
         });
-    }
-
-    /**
-     * Get position by rating order with optimized query
-     *
-     * @param  League  $league
-     * @return int
-     */
-    private function getPositionByRatingOrder(League $league): int
-    {
-        return Rating::query()
-            ->where('league_id', $league->id)
-            ->where('rating', '>', $league->start_rating)
-            ->min('position') ?? 1;
     }
 
     /**

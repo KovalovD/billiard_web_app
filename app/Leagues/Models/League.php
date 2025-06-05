@@ -67,13 +67,13 @@ class League extends Model
         return $this->hasMany(MultiplayerGame::class);
     }
 
-    public function ratings(): HasMany
-    {
-        return $this->hasMany(Rating::class);
-    }
-
     public function activeRatings(): HasMany
     {
         return $this->ratings()->where('is_active', true);
+    }
+
+    public function ratings(): HasMany
+    {
+        return $this->hasMany(Rating::class);
     }
 }

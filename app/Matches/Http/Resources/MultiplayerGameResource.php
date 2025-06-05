@@ -84,7 +84,7 @@ class MultiplayerGameResource extends JsonResource
             'completed_at'              => $this->resource->completed_at ?? null,
             'created_at'                => $this->resource->created_at ?? null,
             'active_players_count'      => $activePlayersCount,
-            'total_players_count' => $players->count(),
+            'total_players_count'       => $players->count(),
             'current_turn_player_id'    => $currentTurnPlayerId,
             'is_registration_open'      => method_exists($this->resource,
                 'isRegistrationOpen') ? $this->resource->isRegistrationOpen() : false,
@@ -99,7 +99,7 @@ class MultiplayerGameResource extends JsonResource
             'financial_data'            => $financialData,
             'current_user_player'       => $currentUserPlayer ? [
                 'id'              => $currentUserPlayer->id,
-                'user' => new UserResource($currentUserPlayer->user),
+                'user'          => new UserResource($currentUserPlayer->user),
                 'lives'           => $currentUserPlayer->lives,
                 'turn_order'      => $currentUserPlayer->turn_order,
                 'cards'           => $currentUserPlayer->cards,
@@ -111,7 +111,7 @@ class MultiplayerGameResource extends JsonResource
                 'prize_amount'  => $currentUserPlayer->prize_amount,
                 'penalty_paid'  => $currentUserPlayer->penalty_paid,
             ] : null,
-            'active_players'      => $activePlayers->map(function (
+            'active_players'            => $activePlayers->map(function (
                 MultiplayerGamePlayer $player,
             ) use ($currentTurnPlayerId) {
                 return [
@@ -124,7 +124,7 @@ class MultiplayerGameResource extends JsonResource
                     'is_current_turn' => $player->user_id === $currentTurnPlayerId,
                 ];
             }),
-            'eliminated_players'  => $eliminatedPlayers->map(function (
+            'eliminated_players'        => $eliminatedPlayers->map(function (
                 MultiplayerGamePlayer $player,
             ) {
                 return [

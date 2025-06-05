@@ -10,6 +10,18 @@ use Illuminate\Support\Facades\Session;
 
 class LocaleController
 {
+    public function getLocale(): JsonResponse
+    {
+        $locale = Session::get('locale');
+        App::setLocale($locale);
+
+        return response()->json([
+            'current_locale'    => $locale,
+            'available_locales' => config('app.available_locales'),
+            'translations'      => $this->getTranslations($locale),
+        ]);
+    }
+
     public function setLocale(Request $request): JsonResponse
     {
         $request->validate([
@@ -25,18 +37,6 @@ class LocaleController
             'success' => true,
             'locale'  => $locale,
             'message' => __('Locale changed successfully'),
-        ]);
-    }
-
-    public function getLocale(): JsonResponse
-    {
-        $locale = Session::get('locale');
-        App::setLocale($locale);
-
-        return response()->json([
-            'current_locale'    => $locale,
-            'available_locales' => config('app.available_locales'),
-            'translations'      => $this->getTranslations($locale),
         ]);
     }
 

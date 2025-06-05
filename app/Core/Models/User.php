@@ -47,35 +47,11 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
+    protected $with = ['homeCity', 'homeClub'];
 
     protected static function newFactory(): UserFactory
     {
         return UserFactory::new();
-    }
-
-    protected $with = ['homeCity', 'homeClub'];
-
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password'          => 'hashed',
-            'is_admin'          => 'boolean',
-            'is_active'       => 'boolean',
-            'is_changed_once' => 'boolean',
-        ];
-    }
-
-    protected function fullName(): Attribute
-    {
-        return Attribute::make(
-            get: fn($value) => $this->lastname.' '.$this->firstname,
-        );
     }
 
     public function activeRatings(): HasMany
@@ -101,5 +77,28 @@ class User extends Authenticatable
             'N' => 'Non-binary',
             default => 'Unknown',
         };
+    }
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password'          => 'hashed',
+            'is_admin'          => 'boolean',
+            'is_active'         => 'boolean',
+            'is_changed_once'   => 'boolean',
+        ];
+    }
+
+    protected function fullName(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => $this->lastname.' '.$this->firstname,
+        );
     }
 }

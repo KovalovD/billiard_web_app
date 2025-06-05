@@ -170,16 +170,6 @@ class OfficialRatingPlayer extends Model
     }
 
     /**
-     * Get tournament record by tournament ID
-     */
-    public function getTournamentRecord(int $tournamentId): ?array
-    {
-        $records = $this->tournament_records ?? [];
-
-        return array_find($records, static fn($record) => $record['tournament_id'] === $tournamentId);
-    }
-
-    /**
      * Check if tournament is already recorded
      */
     public function hasTournamentRecord(int $tournamentId): bool
@@ -188,13 +178,13 @@ class OfficialRatingPlayer extends Model
     }
 
     /**
-     * Get total rating points from all tournament records (for verification)
+     * Get tournament record by tournament ID
      */
-    public function getTotalPointsFromRecords(): int
+    public function getTournamentRecord(int $tournamentId): ?array
     {
         $records = $this->tournament_records ?? [];
 
-        return collect($records)->sum('rating_points');
+        return array_find($records, static fn($record) => $record['tournament_id'] === $tournamentId);
     }
 
     /**
@@ -219,5 +209,15 @@ class OfficialRatingPlayer extends Model
         }
 
         $this->save();
+    }
+
+    /**
+     * Get total rating points from all tournament records (for verification)
+     */
+    public function getTotalPointsFromRecords(): int
+    {
+        $records = $this->tournament_records ?? [];
+
+        return collect($records)->sum('rating_points');
     }
 }

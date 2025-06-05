@@ -50,6 +50,11 @@ class MatchGame extends Model
         'result_confirmed' => 'array',
     ];
 
+    public static function newFactory(): MatchGameFactory|Factory
+    {
+        return MatchGameFactory::new();
+    }
+
     public function game(): BelongsTo
     {
         return $this->belongsTo(Game::class);
@@ -83,10 +88,5 @@ class MatchGame extends Model
         return $this->game->is_multiplayer
             ? []
             : [$this->firstRating, $this->secondRating];
-    }
-
-    public static function newFactory(): MatchGameFactory|Factory
-    {
-        return MatchGameFactory::new();
     }
 }

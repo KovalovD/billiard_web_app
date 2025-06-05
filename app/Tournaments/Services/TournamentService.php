@@ -206,42 +206,6 @@ class TournamentService
     }
 
     /**
-     * Add existing player to tournament
-     * @throws Throwable
-     */
-    public function addPlayerToTournament(Tournament $tournament, int $userId): TournamentPlayer
-    {
-        // Check if player already exists
-        $existingPlayer = $tournament->players()->where('user_id', $userId)->first();
-        if ($existingPlayer) {
-            throw new RuntimeException('Player is already registered for this tournament');
-        }
-
-        // Check max participants limit (confirmed players only)
-        if ($tournament->max_participants && $tournament->confirmed_players_count >= $tournament->max_participants) {
-            throw new RuntimeException('Tournament has reached maximum participants limit');
-        }
-
-        // Check if tournament accepts applications
-        if (!$tournament->canAcceptApplications()) {
-            throw new RuntimeException('Tournament is not accepting applications at this time');
-        }
-
-        // Determine initial status based on tournament settings
-        $status = $tournament->auto_approve_applications ? 'confirmed' : 'applied';
-        $confirmedAt = $tournament->auto_approve_applications ? now() : null;
-
-        return TournamentPlayer::create([
-            'tournament_id' => $tournament->id,
-            'user_id'       => $userId,
-            'status'       => $status,
-            'registered_at' => now(),
-            'applied_at'   => now(),
-            'confirmed_at' => $confirmedAt,
-        ]);
-    }
-
-    /**
      * Add new player to tournament with registration
      * @throws Throwable
      */
@@ -285,6 +249,42 @@ class TournamentService
         }
 
         return $existingUser;
+    }
+
+    /**
+     * Add existing player to tournament
+     * @throws Throwable
+     */
+    public function addPlayerToTournament(Tournament $tournament, int $userId): TournamentPlayer
+    {
+        // Check if player already exists
+        $existingPlayer = $tournament->players()->where('user_id', $userId)->first();
+        if ($existingPlayer) {
+            throw new RuntimeException('Player is already registered for this tournament');
+        }
+
+        // Check max participants limit (confirmed players only)
+        if ($tournament->max_participants && $tournament->confirmed_players_count >= $tournament->max_participants) {
+            throw new RuntimeException('Tournament has reached maximum participants limit');
+        }
+
+        // Check if tournament accepts applications
+        if (!$tournament->canAcceptApplications()) {
+            throw new RuntimeException('Tournament is not accepting applications at this time');
+        }
+
+        // Determine initial status based on tournament settings
+        $status = $tournament->auto_approve_applications ? 'confirmed' : 'applied';
+        $confirmedAt = $tournament->auto_approve_applications ? now() : null;
+
+        return TournamentPlayer::create([
+            'tournament_id' => $tournament->id,
+            'user_id'       => $userId,
+            'status'        => $status,
+            'registered_at' => now(),
+            'applied_at'    => now(),
+            'confirmed_at'  => $confirmedAt,
+        ]);
     }
 
     /**

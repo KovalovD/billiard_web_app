@@ -65,14 +65,14 @@ class Tournament extends Model
         return $this->belongsTo(Club::class);
     }
 
-    public function players(): HasMany
-    {
-        return $this->hasMany(TournamentPlayer::class);
-    }
-
     public function confirmedPlayers(): HasMany
     {
         return $this->players()->where('status', 'confirmed');
+    }
+
+    public function players(): HasMany
+    {
+        return $this->hasMany(TournamentPlayer::class);
     }
 
     public function pendingApplications(): HasMany

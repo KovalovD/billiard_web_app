@@ -21,13 +21,13 @@ class Club extends Model
 
     protected $with = ['city.country'];
 
-    public function city(): BelongsTo
-    {
-        return $this->belongsTo(City::class);
-    }
-
     public static function newFactory(): ClubFactory|Factory
     {
         return ClubFactory::new();
+    }
+
+    public function city(): BelongsTo
+    {
+        return $this->belongsTo(City::class);
     }
 }
