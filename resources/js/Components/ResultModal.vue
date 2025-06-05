@@ -5,6 +5,7 @@ import {Button, Input, Label, Modal, Spinner} from '@/Components/ui';
 import {apiClient} from '@/lib/apiClient';
 import type {ApiError, MatchGame, Rating, SendResultPayload, User} from '@/types/api';
 import {computed, reactive, ref, watch} from 'vue';
+import {useLocale} from '@/composables/useLocale';
 
 interface Props {
     show: boolean;
@@ -15,6 +16,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const emit = defineEmits(['close', 'success', 'error']);
+const { t } = useLocale();
 
 const form = reactive<SendResultPayload>({
     first_user_score: 0,
@@ -270,7 +272,7 @@ const rejectOtherPlayerResult = () => {
 </script>
 
 <template>
-    <Modal :show="show" title="Submit Match Result" @close="$emit('close')">
+    <Modal :show="show" :title="t('Submit Match Result')" @close="$emit('close')">
         <form class="space-y-4" @submit.prevent="submitResult">
             <div v-if="generalError"
                  class="rounded bg-red-100 p-3 text-sm text-red-600 dark:bg-red-900/30 dark:text-red-400">
@@ -279,18 +281,17 @@ const rejectOtherPlayerResult = () => {
 
             <!-- If user has already confirmed, show this message -->
             <div v-if="isUserConfirmed" class="mb-4 rounded-md bg-green-50 p-4 dark:bg-green-900/20">
-                <h3 class="mb-2 font-medium text-green-800 dark:text-green-300">Your Result Has Been Submitted</h3>
+                <h3 class="mb-2 font-medium text-green-800 dark:text-green-300">{{ t('Your Result Has Been Submitted') }}</h3>
                 <p class="mb-3 text-sm text-green-700 dark:text-green-400">
-                    You've already submitted your score for this match. Waiting for your opponent to confirm or the
-                    match to be completed.
+                    {{ t("You've already submitted your score for this match. Waiting for your opponent to confirm or the match to be completed.") }}
                 </p>
             </div>
 
             <!-- Show confirmation dialog if needed -->
             <div v-else-if="isConfirmationNeeded && otherPlayerSubmission"
                  class="mb-4 rounded-md bg-blue-50 p-4 dark:bg-blue-900/20">
-                <h3 class="mb-2 font-medium text-blue-800 dark:text-blue-300">Confirm Opponent's Result</h3>
-                <p class="mb-3 text-sm text-blue-700 dark:text-blue-400">Your opponent has submitted a result:</p>
+                <h3 class="mb-2 font-medium text-blue-800 dark:text-blue-300">{{ t("Confirm Opponent's Result") }}</h3>
+                <p class="mb-3 text-sm text-blue-700 dark:text-blue-400">{{ t('Your opponent has submitted a result:') }}</p>
                 <p class="mb-3 text-sm text-blue-700 dark:text-blue-400">
                     {{ firstPlayer?.name }}
                     <strong>{{ otherPlayerSubmission.first_user_score }} - {{
@@ -298,33 +299,32 @@ const rejectOtherPlayerResult = () => {
                         }}</strong>
                     {{ secondPlayer?.name }}
                 </p>
-                <p class="mb-3 text-sm text-blue-700 dark:text-blue-400">Do you confirm this result?</p>
+                <p class="mb-3 text-sm text-blue-700 dark:text-blue-400">{{ t('Do you confirm this result?') }}</p>
                 <div class="mt-4 flex gap-3">
                     <Button class="border-red-300 text-red-600 hover:bg-red-50" type="button" variant="outline"
                             @click="rejectOtherPlayerResult">
-                        Reject
+                        {{ t('Reject') }}
                     </Button>
-                    <Button type="button" @click="acceptOtherPlayerResult"> Confirm Result</Button>
+                    <Button type="button" @click="acceptOtherPlayerResult"> {{ t('Confirm Result') }}</Button>
                 </div>
             </div>
 
             <!-- Hide form input when waiting for confirmation or already submitted -->
             <div v-if="!isConfirmationNeeded && !isUserConfirmed">
                 <p class="text-sm text-gray-600 dark:text-gray-400">
-                    Enter the final score for the match between
+                    {{ t('Enter the final score for the match between') }}
                     <strong class="text-gray-800 dark:text-gray-200">{{ firstPlayer?.name || 'Player 1' }}</strong> and
                     <strong class="text-gray-800 dark:text-gray-200">{{ secondPlayer?.name || 'Player 2' }}</strong
                     >.
                 </p>
 
                 <div v-if="maxScore" class="mt-2 text-sm text-blue-600 dark:text-blue-400">
-                    This match is played to {{ maxScore }} wins. One player must reach exactly {{ maxScore }} points to
-                    win.
+                    {{ t('This match is played to :maxScore wins. One player must reach exactly :maxScore points to win.', {maxScore}) }}
                 </div>
 
                 <div class="mt-4 grid grid-cols-2 items-start gap-4">
                     <div>
-                        <Label :for="`first_score_${matchGame?.id}`">{{ firstPlayer?.name || 'Player 1' }} Score</Label>
+                        <Label :for="`first_score_${matchGame?.id}`">{{ firstPlayer?.name || 'Player 1' }} {{ t('Score') }}</Label>
                         <Input
                             :id="`first_score_${matchGame?.id}`"
                             v-model.number="form.first_user_score"
@@ -339,7 +339,7 @@ const rejectOtherPlayerResult = () => {
                     </div>
                     <div>
                         <Label :for="`second_score_${matchGame?.id}`">{{ secondPlayer?.name || 'Player 2' }}
-                            Score</Label>
+                            {{ t('Score') }}</Label>
                         <Input
                             :id="`second_score_${matchGame?.id}`"
                             v-model.number="form.second_user_score"
@@ -367,20 +367,20 @@ const rejectOtherPlayerResult = () => {
                     v-if="matchGame?.status === 'must_be_confirmed' && otherPlayerSubmission"
                     class="mt-3 rounded-md bg-amber-50 p-2 text-sm text-amber-700 dark:bg-amber-900/20 dark:text-amber-400"
                 >
-                    Your opponent submitted a different result. If you submit this, their result will be discarded.
+                    {{ t('Your opponent submitted a different result. If you submit this, their result will be discarded.') }}
                 </div>
             </div>
 
             <!-- Footer buttons -->
             <div class="flex justify-end space-x-3 pt-4">
-                <Button :disabled="isLoading" type="button" variant="outline" @click="$emit('close')"> Close</Button>
+                <Button :disabled="isLoading" type="button" variant="outline" @click="$emit('close')"> {{ t('Close') }}</Button>
                 <Button
                     v-if="!isConfirmationNeeded && !isUserConfirmed"
                     :disabled="isLoading || form.first_user_score === form.second_user_score || Object.keys(formErrors).length > 0"
                     type="submit"
                 >
                     <Spinner v-if="isLoading" class="mr-2 h-4 w-4"/>
-                    Submit Result
+                    {{ t('Submit Result') }}
                 </Button>
             </div>
         </form>

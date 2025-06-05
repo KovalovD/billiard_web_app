@@ -4,6 +4,7 @@ import {apiClient} from '@/lib/apiClient';
 import type {ApiError, User} from '@/types/api';
 import {SearchIcon, UserPlusIcon, UsersIcon} from 'lucide-vue-next';
 import {computed, ref, watch} from 'vue';
+import {useLocale} from '@/composables/useLocale';
 
 interface Props {
     show: boolean;
@@ -26,6 +27,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<Emits>();
+const { t } = useLocale();
 
 // State
 const activeTab = ref<'existing' | 'new'>('existing');
@@ -206,7 +208,7 @@ watch(() => props.show, (show) => {
                     @click="activeTab = 'existing'"
                 >
                     <UsersIcon class="mr-2 inline h-4 w-4"/>
-                    Add Existing Player
+                    {{ t('Add Existing Player') }}
                 </button>
                 <button
                     :class="[
@@ -218,7 +220,7 @@ watch(() => props.show, (show) => {
                     @click="activeTab = 'new'"
                 >
                     <UserPlusIcon class="mr-2 inline h-4 w-4"/>
-                    Add New Player
+                    {{ t('Add New Player') }}
                 </button>
             </nav>
         </div>
@@ -226,14 +228,14 @@ watch(() => props.show, (show) => {
         <!-- Add Existing Player Tab -->
         <div v-if="activeTab === 'existing'" class="space-y-4">
             <div>
-                <Label for="search">Search Players</Label>
+                <Label for="search">{{ t('Search Players') }}</Label>
                 <div class="relative">
                     <SearchIcon class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"/>
                     <Input
                         id="search"
                         v-model="searchQuery"
                         class="pl-10"
-                        placeholder="Search by name or email..."
+                        :placeholder="t('Search by name or email...')"
                         type="text"
                     />
                 </div>
@@ -249,7 +251,7 @@ watch(() => props.show, (show) => {
                             <p class="text-sm text-green-600 dark:text-green-300">{{ selectedUser.email }}</p>
                         </div>
                         <Button size="sm" variant="ghost" @click="selectedUser = null; searchQuery = ''">
-                            Clear
+                            {{ t('Clear') }}
                         </Button>
                     </div>
                 </div>
@@ -257,7 +259,7 @@ watch(() => props.show, (show) => {
                 <!-- Search Results -->
                 <div v-if="isSearching" class="mt-2 text-center text-sm text-gray-500">
                     <Spinner class="mx-auto h-4 w-4"/>
-                    <span class="ml-2">Searching...</span>
+                    <span class="ml-2">{{ t('Searching...') }}</span>
                 </div>
                 <div v-else-if="searchResults.length > 0 && !selectedUser"
                      class="mt-2 max-h-60 overflow-y-auto rounded-md border">
@@ -272,16 +274,16 @@ watch(() => props.show, (show) => {
                     </div>
                 </div>
                 <div v-else-if="searchQuery.length >= 2 && !selectedUser" class="mt-2 text-sm text-gray-500">
-                    No users found matching "{{ searchQuery }}"
+                    {{ t('No users found matching') }} "{{ searchQuery }}"
                 </div>
                 <div v-else-if="searchQuery.length < 2 && !selectedUser" class="mt-2 text-sm text-gray-500">
-                    Type at least 2 characters to search
+                    {{ t('Type at least 2 characters to search') }}
                 </div>
             </div>
 
             <!-- Initial Rating for Rating System -->
             <div v-if="entityType === 'rating'">
-                <Label for="existing_initial_rating">Initial Rating</Label>
+                <Label for="existing_initial_rating">{{ t('Initial Rating') }}</Label>
                 <Input
                     id="existing_initial_rating"
                     v-model.number="newPlayerForm.initial_rating"
@@ -290,7 +292,7 @@ watch(() => props.show, (show) => {
                     type="number"
                 />
                 <p class="mt-1 text-xs text-gray-500">
-                    Starting rating for this player
+                    {{ t('Starting rating for this player') }}
                 </p>
             </div>
         </div>
@@ -299,7 +301,7 @@ watch(() => props.show, (show) => {
         <div v-else class="space-y-4">
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <Label for="firstname">First Name *</Label>
+                    <Label for="firstname">{{ t('First Name *') }}</Label>
                     <Input
                         id="firstname"
                         v-model="newPlayerForm.firstname"
@@ -309,7 +311,7 @@ watch(() => props.show, (show) => {
                     />
                 </div>
                 <div>
-                    <Label for="lastname">Last Name *</Label>
+                    <Label for="lastname">{{ t('Last Name *') }}</Label>
                     <Input
                         id="lastname"
                         v-model="newPlayerForm.lastname"
@@ -321,7 +323,7 @@ watch(() => props.show, (show) => {
             </div>
 
             <div>
-                <Label for="email">Email *</Label>
+                <Label for="email">{{ t('Email *') }}</Label>
                 <Input
                     id="email"
                     v-model="newPlayerForm.email"
@@ -332,7 +334,7 @@ watch(() => props.show, (show) => {
             </div>
 
             <div>
-                <Label for="phone">Phone *</Label>
+                <Label for="phone">{{ t('Phone *') }}</Label>
                 <Input
                     id="phone"
                     v-model="newPlayerForm.phone"
@@ -343,7 +345,7 @@ watch(() => props.show, (show) => {
             </div>
 
             <div>
-                <Label for="password">Password</Label>
+                <Label for="password">{{ t('Password') }}</Label>
                 <Input
                     id="password"
                     v-model="newPlayerForm.password"
@@ -355,7 +357,7 @@ watch(() => props.show, (show) => {
 
             <!-- Initial Rating for Rating System -->
             <div v-if="entityType === 'rating'">
-                <Label for="new_initial_rating">Initial Rating</Label>
+                <Label for="new_initial_rating">{{ t('Initial Rating') }}</Label>
                 <Input
                     id="new_initial_rating"
                     v-model.number="newPlayerForm.initial_rating"
@@ -364,14 +366,14 @@ watch(() => props.show, (show) => {
                     type="number"
                 />
                 <p class="mt-1 text-xs text-gray-500">
-                    Starting rating for this player
+                    {{ t('Starting rating for this player') }}
                 </p>
             </div>
         </div>
 
         <template #footer>
             <Button variant="outline" @click="handleClose">
-                Cancel
+                {{ t('Cancel') }}
             </Button>
             <Button
                 v-if="activeTab === 'existing'"
@@ -379,7 +381,7 @@ watch(() => props.show, (show) => {
                 @click="addExistingPlayer"
             >
                 <Spinner v-if="isAdding" class="mr-2 h-4 w-4"/>
-                {{ isAdding ? 'Adding...' : 'Add Player' }}
+                {{ isAdding ? t('Adding...') : t('Add Player') }}
             </Button>
             <Button
                 v-else
@@ -387,7 +389,7 @@ watch(() => props.show, (show) => {
                 @click="addNewPlayer"
             >
                 <Spinner v-if="isAdding" class="mr-2 h-4 w-4"/>
-                {{ isAdding ? 'Adding...' : 'Add New Player' }}
+                {{ isAdding ? t('Adding...') : t('Add New Player') }}
             </Button>
         </template>
     </Modal>
