@@ -18,6 +18,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const emit = defineEmits(['challenge']);
+const { t } = useLocale();
 
 const { t } = useLocale();
 
@@ -58,7 +59,7 @@ const canChallenge = (playerRating: Rating): boolean => {
                     playerRating.position
                 }}.</span>
             <span class="font-medium text-gray-800 dark:text-gray-200">{{ playerRating.player.name }}</span>
-            <span v-if="isCurrentUser" class="text-xs font-semibold text-blue-600 dark:text-blue-400">(You)</span>
+            <span v-if="isCurrentUser" class="text-xs font-semibold text-blue-600 dark:text-blue-400">{{ t('(You)') }}</span>
             <span
                 v-if="!playerRating.is_confirmed"
                 class="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-700 dark:bg-amber-900/20 dark:text-amber-400"
