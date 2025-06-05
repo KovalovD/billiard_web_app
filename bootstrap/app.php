@@ -4,6 +4,7 @@ use App\Auth\Http\Middleware\EnsureFrontendRequestsAreAuthenticated;
 use App\Core\Http\Middleware\AdminMiddleware;
 use App\Core\Http\Middleware\HandleAppearance;
 use App\Core\Http\Middleware\HandleInertiaRequests;
+use App\Core\Http\Middleware\SetLocale;
 use App\Core\Http\Middleware\TrustProxies;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -34,6 +35,7 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
+            SetLocale::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

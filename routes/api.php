@@ -1,6 +1,7 @@
 <?php
 
 use App\Core\Http\Controllers\GameController;
+use App\Core\Http\Controllers\LocaleController;
 use App\Core\Http\Middleware\AdminMiddleware;
 use App\Leagues\Http\Controllers\AdminPlayersController;
 use App\Leagues\Http\Controllers\LeaguesController;
@@ -16,6 +17,10 @@ use Illuminate\Support\Facades\Route;
 // Public endpoints
 Route::apiResource('leagues', LeaguesController::class, ['only' => ['index', 'show']]);
 
+Route::prefix('locale')->group(function () {
+    Route::post('/set', [LocaleController::class, 'setLocale']);
+    Route::get('/current', [LocaleController::class, 'getLocale']);
+});
 // Cities and clubs are publicly accessible
 Route::get('cities', [CitiesController::class, 'index'])->name('cities.index');
 Route::get('clubs', [ClubsController::class, 'index'])->name('clubs.index');
