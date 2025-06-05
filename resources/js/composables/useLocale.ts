@@ -119,7 +119,7 @@ export function useLocale() {
             // Завантажуємо нові переклади
             await loadTranslations(locale);
         } catch (err: any) {
-            error.value = err.message || 'Failed to change locale';
+            error.value = err.message || 'Не вдалося змінити мову';
             throw err;
         } finally {
             isLoading.value = false;
