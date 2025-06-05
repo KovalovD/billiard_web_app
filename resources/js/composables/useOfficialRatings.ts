@@ -4,25 +4,25 @@ import {del, get, post, put} from '@/lib/apiClient';
 import type {OfficialRating, OfficialRatingPlayer, CreateOfficialRatingPayload} from '@/types/api';
 
 export function useOfficialRatings() {
-    // Fetch all official ratings
+    // Отримати всі офіційні рейтинги
     const fetchOfficialRatings = (filters?: Record<string, any>) => {
         const params = new URLSearchParams(filters || {}).toString();
         const url = params ? `/api/official-ratings?${params}` : '/api/official-ratings';
         return useApi<OfficialRating[]>(() => get(url));
     };
 
-    // Fetch active ratings
+    // Отримати активні рейтинги
     const fetchActiveRatings = () => {
         return useApi<OfficialRating[]>(() => get('/api/official-ratings/active'));
     };
 
-    // Fetch single rating
+    // Отримати конкретний рейтинг
     const fetchOfficialRating = (ratingId: number | string, includeTopPlayers = false) => {
         const params = includeTopPlayers ? '?include_top_players=true' : '';
         return useApi<OfficialRating>(() => get(`/api/official-ratings/${ratingId}${params}`));
     };
 
-    // Fetch rating players
+    // Отримати гравців рейтингу
     const fetchRatingPlayers = (ratingId: number | string, filters?: Record<string, any>) => {
         const params = new URLSearchParams(filters || {}).toString();
         const url = params ?
@@ -31,26 +31,26 @@ export function useOfficialRatings() {
         return useApi<OfficialRatingPlayer[]>(() => get(url));
     };
 
-    // Fetch rating tournaments
+    // Отримати турніри рейтингу
     const fetchRatingTournaments = (ratingId: number | string) => {
         return useApi<any[]>(() => get(`/api/official-ratings/${ratingId}/tournaments`));
     };
 
-    // Fetch top players
+    // Отримати топ гравців
     const fetchTopPlayers = (ratingId: number | string, limit = 10) => {
         return useApi<OfficialRatingPlayer[]>(() =>
             get(`/api/official-ratings/${ratingId}/top-players?limit=${limit}`)
         );
     };
 
-    // Fetch player rating info
+    // Отримати інформацію про рейтинг гравця
     const fetchPlayerRating = (ratingId: number | string, userId: number) => {
         return useApi<OfficialRatingPlayer>(() =>
             get(`/api/official-ratings/${ratingId}/players/${userId}`)
         );
     };
 
-    // Admin actions
+    // Дії адміністратора
     const createOfficialRating = () => {
         return useApiAction((payload: CreateOfficialRatingPayload | undefined) =>
             post<OfficialRating>('/api/admin/official-ratings', payload)
@@ -111,7 +111,7 @@ export function useOfficialRatings() {
     };
 
     return {
-        // Public API
+        // Публічний API
         fetchOfficialRatings,
         fetchActiveRatings,
         fetchOfficialRating,
@@ -120,7 +120,7 @@ export function useOfficialRatings() {
         fetchTopPlayers,
         fetchPlayerRating,
 
-        // Admin API
+        // API адміністратора
         createOfficialRating,
         updateOfficialRating,
         deleteOfficialRating,
