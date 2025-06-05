@@ -2,6 +2,7 @@
 
 namespace App\Core\Http\Controllers;
 
+use File;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -43,23 +44,12 @@ class LocaleController
     {
         $translations = [];
 
-        // Загружаем все файлы переводов для текущей локали
-        $translationFiles = [
-            'common',
-            'auth',
-            'navigation',
-            'leagues',
-            'tournaments',
-            'players',
-            'games',
-            'profile',
-            'validation',
-        ];
-
+        $translationFiles = File::allFiles(resource_path("lang/$locale"));   // Collection из SplFileInfo
         foreach ($translationFiles as $file) {
-            $filePath = resource_path("lang/$locale/$file.php");
+            $fileName = $file->getFilenameWithoutExtension();
+            $filePath = resource_path("lang/$locale/$fileName.php");
             if (file_exists($filePath)) {
-                $translations[$file] = include $filePath;
+                $translations[$fileName] = include $filePath;
             }
         }
 

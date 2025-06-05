@@ -97,14 +97,19 @@ onMounted(() => {
                                 </Link>
                             </div>
                             <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                                <NavLink :active="$page.url === '/dashboard'" :href="'/dashboard'"> Dashboard</NavLink>
-                                <NavLink :active="$page.url.startsWith('/leagues')" :href="'/leagues'"> Leagues
+                                <NavLink :active="$page.url === '/dashboard'" :href="'/dashboard'">{{
+                                        t('Dashboard')
+                                    }}
+                                </NavLink>
+                                <NavLink :active="$page.url.startsWith('/leagues')" :href="'/leagues'"> {{
+                                        t('Leagues')
+                                    }}
                                 </NavLink>
                                 <NavLink :active="$page.url.startsWith('/tournaments')" :href="'/tournaments'">
-                                    Tournaments
+                                    {{ t('Tournaments') }}
                                 </NavLink>
                                 <NavLink :active="$page.url.startsWith('/official-ratings')"
-                                         :href="'/official-ratings'"> Official Ratings
+                                         :href="'/official-ratings'"> {{ t('Official Ratings') }}
                                 </NavLink>
                             </div>
                         </div>
@@ -119,7 +124,7 @@ onMounted(() => {
                                                 class="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm leading-4 font-medium text-gray-500 transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none dark:bg-gray-800 dark:text-gray-400 dark:hover:text-gray-300"
                                                 type="button"
                                             >
-                                                {{ user.firstname || user.name || 'User' }}
+                                                {{ user.firstname || user.name || t('User') }}
                                                 <svg
                                                     class="-mr-0.5 ml-2 h-4 w-4"
                                                     fill="currentColor"
@@ -136,10 +141,13 @@ onMounted(() => {
                                         </span>
                                     </template>
                                     <template #content>
-                                        <DropdownLink :href="'/profile/edit'"> Profile</DropdownLink>
-                                        <DropdownLink :href="'/profile/stats'"> Statistic</DropdownLink>
+                                        <DropdownLink :href="'/profile/edit'"> {{ t('Profile') }}</DropdownLink>
+                                        <DropdownLink :href="'/profile/stats'"> {{ t('Statistic') }}</DropdownLink>
                                         <div class="border-t border-gray-200 dark:border-gray-600"/>
-                                        <DropdownLink as="button" @click.prevent="handleLogout"> Log Out</DropdownLink>
+                                        <DropdownLink as="button" @click.prevent="handleLogout"> {{
+                                                t('Log Out')
+                                            }}
+                                        </DropdownLink>
                                     </template>
                                 </Dropdown>
                             </div>
@@ -148,13 +156,13 @@ onMounted(() => {
                                     class="inline-flex items-center rounded-md border border-transparent bg-white px-4 py-2 text-sm leading-4 font-medium text-gray-500 transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none dark:bg-gray-800 dark:text-gray-400 dark:hover:text-gray-300"
                                     href="/login"
                                 >
-                                    Log In
+                                    {{ t('Log In') }}
                                 </Link>
                                 <button
                                     class="inline-flex items-center rounded-md border border-transparent bg-gray-800 px-4 py-2 text-xs font-semibold tracking-widest text-white uppercase transition duration-150 ease-in-out hover:bg-gray-700 focus:bg-gray-700 focus:outline-none active:bg-gray-900 dark:bg-gray-200 dark:text-gray-800 dark:hover:bg-white dark:focus:bg-white dark:active:bg-gray-300"
                                     @click="openRegisterModal"
                                 >
-                                    Register
+                                    {{ t('Register') }}
                                 </button>
                             </div>
                         </div>
@@ -189,34 +197,40 @@ onMounted(() => {
                      class="sm:hidden">
                     <div class="space-y-1 pt-2 pb-3">
                         <ResponsiveNavLink :active="$page.url === '/dashboard'" :href="'/dashboard'">
-                            Dashboard
+                            {{ t('Dashboard') }}
                         </ResponsiveNavLink>
                         <ResponsiveNavLink :active="$page.url.startsWith('/leagues')" :href="'/leagues'">
-                            Leagues
+                            {{ t('Leagues') }}
                         </ResponsiveNavLink>
                         <ResponsiveNavLink :active="$page.url.startsWith('/tournaments')" :href="'/tournaments'">
-                            Tournaments
+                            {{ t('Tournaments') }}
                         </ResponsiveNavLink>
                         <ResponsiveNavLink :active="$page.url.startsWith('/official-ratings')"
                                            :href="'/official-ratings'">
-                            Official Ratings
+                            {{ t('Official Ratings') }}
                         </ResponsiveNavLink>
                     </div>
                     <div v-if="user" class="border-t border-gray-200 pt-4 pb-1 dark:border-gray-700">
                         <div class="px-4">
                             <div class="text-base font-medium text-gray-800 dark:text-gray-200">
-                                {{ user.firstname || user.name || 'User' }}
+                                {{ user.firstname || user.name || t('User') }}
                             </div>
                             <div class="text-sm font-medium text-gray-500">{{ user.email }}</div>
                         </div>
                         <div class="mt-3 space-y-1">
-                            <ResponsiveNavLink :href="'/profile/edit'"> Profile</ResponsiveNavLink>
-                            <ResponsiveNavLink as="button" @click.prevent="handleLogout"> Log Out</ResponsiveNavLink>
+                            <ResponsiveNavLink :href="'/profile/edit'"> {{ t('Profile') }}</ResponsiveNavLink>
+                            <ResponsiveNavLink as="button" @click.prevent="handleLogout"> {{
+                                    t('Log Out')
+                                }}
+                            </ResponsiveNavLink>
                         </div>
                     </div>
                     <div v-else class="flex space-x-3 border-t border-gray-200 px-4 py-3 dark:border-gray-700">
-                        <ResponsiveNavLink :href="'/login'">Log In</ResponsiveNavLink>
-                        <ResponsiveNavLink as="button" @click="openRegisterModal">Register</ResponsiveNavLink>
+                        <ResponsiveNavLink :href="'/login'">{{ t('Log In') }}</ResponsiveNavLink>
+                        <ResponsiveNavLink as="button" @click="openRegisterModal">{{
+                                t('Register')
+                            }}
+                        </ResponsiveNavLink>
                     </div>
                 </div>
             </nav>
