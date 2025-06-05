@@ -207,11 +207,11 @@ const stats = [
                                 :class="['w-12 h-12 rounded-lg flex items-center justify-center mb-4', feature.bgColor]">
                                 <component :is="feature.icon" :class="['h-6 w-6', feature.color]"/>
                             </div>
-                            <CardTitle class="text-xl">{{ feature.title }}</CardTitle>
+                            <CardTitle class="text-xl">{{ t(feature.title) }}</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <CardDescription class="text-base">
-                                {{ feature.description }}
+                                {{ t(feature.description) }}
                             </CardDescription>
                         </CardContent>
                     </Card>
