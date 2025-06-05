@@ -308,6 +308,7 @@ return [
     'Score' => 'Рахунок',
     'Your opponent submitted a different result. If you submit this, their result will be discarded.' => 'Суперник подав інший результат. Якщо ви надішлете свій, його результат буде скасовано.',
     'Close' => 'Закрити',
+    'Close modal' => 'Закрити вікно',
     'Submit Result' => 'Надіслати результат',
     'Current Turn' => 'Поточний хід',
     'End Turn' => 'Завершити хід',
