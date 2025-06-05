@@ -8,6 +8,7 @@ import type {OfficialRating} from '@/types/api';
 import {Head, Link} from '@inertiajs/vue3';
 import {ArrowLeftIcon, RefreshCwIcon, SettingsIcon, TrophyIcon, UsersIcon} from 'lucide-vue-next';
 import {onMounted, ref} from 'vue';
+import {useLocale} from '@/composables/useLocale';
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -19,6 +20,8 @@ const {
     fetchOfficialRating,
     recalculateRatingPositions
 } = useOfficialRatings();
+const {t} = useLocale();
+
 const {t} = useLocale();
 
 const rating = ref<OfficialRating | null>(null);
@@ -179,9 +182,9 @@ onMounted(() => {
                             {{ rating.name }}
                         </CardTitle>
                         <CardDescription>
-                            {{ rating.game?.name }} • {{ rating.players_count }} players • {{
+                            {{ rating.game?.name }} • {{ rating.players_count }} {{ t('Players') }} • {{
                                 rating.tournaments_count
-                            }} tournaments
+                            }} {{ t('Tournaments') }}
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -249,9 +252,9 @@ onMounted(() => {
                 <Card>
                     <CardHeader>
                         <CardTitle>{{ t('Quick Actions') }}</CardTitle>
-                        <CardDescription>
+                    <CardDescription>
                             {{ t('Perform common management tasks quickly') }}
-                        </CardDescription>
+                    </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -319,14 +322,14 @@ onMounted(() => {
                                                 player.user?.lastname
                                             }}</p>
                                         <p class="text-sm text-gray-600 dark:text-gray-400">
-                                            {{ player.tournaments_played }} {{ t('tournaments played') }}
+                                            {{ t(':count tournaments played', {count: player.tournaments_played}) }}
                                         </p>
                                     </div>
                                 </div>
                                 <div class="text-right">
                                     <div class="font-bold text-lg">{{ player.rating_points }}</div>
                                     <div class="text-sm text-gray-600 dark:text-gray-400">
-                                        {{ player.win_rate }}% {{ t('win rate') }}
+                                        {{ t(':percent% win rate', {percent: player.win_rate}) }}
                                     </div>
                                 </div>
                             </div>

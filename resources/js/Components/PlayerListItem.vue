@@ -2,6 +2,7 @@
 import {Button} from '@/Components/ui';
 import type {Rating} from '@/types/api';
 import {LogInIcon, SwordsIcon} from 'lucide-vue-next';
+import {useLocale} from '@/composables/useLocale';
 
 interface Props {
     playerRating: Rating;
@@ -17,6 +18,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const emit = defineEmits(['challenge']);
+const { t } = useLocale();
 
 const handleChallenge = () => {
     if (props.isAuthenticated) {
@@ -55,12 +57,12 @@ const canChallenge = (playerRating: Rating): boolean => {
                     playerRating.position
                 }}.</span>
             <span class="font-medium text-gray-800 dark:text-gray-200">{{ playerRating.player.name }}</span>
-            <span v-if="isCurrentUser" class="text-xs font-semibold text-blue-600 dark:text-blue-400">(You)</span>
+            <span v-if="isCurrentUser" class="text-xs font-semibold text-blue-600 dark:text-blue-400">{{ t('(You)') }}</span>
             <span
                 v-if="!playerRating.is_confirmed"
                 class="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-700 dark:bg-amber-900/20 dark:text-amber-400"
             >
-                Pending
+                {{ t('Pending') }}
             </span>
         </div>
         <div class="flex items-center space-x-3">
@@ -70,36 +72,36 @@ const canChallenge = (playerRating: Rating): boolean => {
             <Button
                 v-if="canChallenge(playerRating) && !multiplayerGame"
                 size="sm"
-                title="Challenge this player"
+                :title="t('Challenge this player')"
                 variant="outline"
                 @click="handleChallenge"
             >
                 <SwordsIcon class="mr-1 h-4 w-4"/>
-                Challenge
+                {{ t('Challenge') }}
             </Button>
 
             <!-- Login prompt for guests -->
             <Button
                 v-else-if="!isAuthenticated && !isCurrentUser && !multiplayerGame"
                 size="sm"
-                title="Login to challenge players"
+                :title="t('Login to challenge players')"
                 variant="outline"
                 @click="$router.push(route('login'))"
             >
                 <LogInIcon class="mr-1 h-4 w-4"/>
-                Login
+                {{ t('Login') }}
             </Button>
 
             <!-- Status messages for authenticated users -->
             <span v-else-if="isAuthenticated && !isCurrentUser && !playerRating.is_confirmed"
                   class="text-xs text-amber-600 dark:text-amber-400">
-                Waiting for admin confirmation
+                {{ t('Waiting for admin confirmation') }}
             </span>
             <span
                 v-else-if="isAuthenticated && !isCurrentUser && !isWithinChallengeRange() && !authUserHaveOngoingMatch"
                 class="text-xs text-gray-500 dark:text-gray-400"
             >
-                Not in challenge range
+                {{ t('Not in challenge range') }}
             </span>
         </div>
     </li>
