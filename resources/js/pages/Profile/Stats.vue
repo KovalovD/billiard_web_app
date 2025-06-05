@@ -36,7 +36,7 @@ const errorMessage = ref('');
 
 // Format date for better display
 const formatDate = (dateString: string | undefined | null): string => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return t('N/A');
 
     return new Date(dateString).toLocaleDateString(undefined, {
         year: 'numeric',
@@ -49,7 +49,7 @@ const winLossRatio = computed(() => {
     // Проверяем, есть ли overallStats и нужные свойства
     if (!overallStats.value || typeof overallStats.value.wins === 'undefined' || typeof overallStats.value.losses === 'undefined') {
         // Если данных нет, возвращаем 'N/A'
-        return 'N/A';
+        return t('N/A');
     }
 
     // Безопасно получаем значения, используя 0 по умолчанию
@@ -63,10 +63,10 @@ const winLossRatio = computed(() => {
         // Если поражений нет
         if (wins > 0) {
             // А победы есть -> 'Perfect'
-            return 'Perfect';
+            return t('Perfect');
         } else {
             // Нет ни побед, ни поражений -> 'N/A'
-            return 'N/A';
+            return t('N/A');
         }
     }
 });
@@ -78,7 +78,7 @@ const isUserFirstPlayer = (match: MatchGame): boolean => {
 
 // Get opponent name - using the structure from MatchGameResource
 const getOpponentName = (match: MatchGame): string => {
-    if (!user.value) return 'Error: User not loaded'; // Защитная проверка
+    if (!user.value) return t('Error: User not loaded'); // Защитная проверка
 
     const userIsP1 = isUserFirstPlayer(match);
     let opponentUser: User | null | undefined;
@@ -105,7 +105,7 @@ const getOpponentName = (match: MatchGame): string => {
         return `${opponentUser.lastname} ${opponentUser.firstname.charAt(0)}.`;
     }
 
-    return 'Unknown Opponent'; // Запасной вариант
+    return t('Unknown Opponent'); // Запасной вариант
 };
 
 // Correctly determine if user won the match, using structure from MatchGameResource
@@ -163,7 +163,7 @@ const getUserRatingChange = (match: MatchGame): string | number => {
 
     // Сначала проверяем, участвовал ли юзер
     if (!didUserParticipate(match)) {
-        return 'N/A'; // Или '—', если пользователь не участвовал
+        return t('N/A'); // Или '—', если пользователь не участвовал
     }
 
     if (userWonMatch(match)) {
@@ -179,18 +179,18 @@ const getUserRatingChange = (match: MatchGame): string | number => {
 const getMatchResult = (match: MatchGame): string => {
     // Обработка незавершенных статусов
     if (match.status !== 'completed') {
-        if (match.status === 'pending' || match.status === 'must_be_confirmed') return 'Pending';
-        if (match.status === 'in_progress') return 'In Progress';
+        if (match.status === 'pending' || match.status === 'must_be_confirmed') return t('Pending');
+        if (match.status === 'in_progress') return t('In Progress');
         // Можно добавить обработку 'cancelled', 'draw' если такие статусы есть
         return match.status.charAt(0).toUpperCase() + match.status.slice(1); // Форматируем другие статусы
     }
 
     // Для завершенных матчей
     if (!didUserParticipate(match)) {
-        return 'N/A'; // Если пользователь не участвовал
+        return t('N/A'); // Если пользователь не участвовал
     }
 
-    return userWonMatch(match) ? 'Win' : 'Loss';
+    return userWonMatch(match) ? t('Win') : t('Loss');
 };
 
 // Get result class (учитываем участие)
@@ -495,13 +495,13 @@ onMounted(() => {
                             <tbody>
                             <tr v-for="rating in userRatings" :key="rating.id"
                                 class="border-b last:border-b-0 dark:border-gray-700">
-                                <td class="px-2 py-3">{{ rating.league?.name ?? 'Unknown League' }}</td>
+                                <td class="px-2 py-3">{{ rating.league?.name ?? t('Unknown League') }}</td>
                                 <td class="px-2 py-3">{{
                                         getGameTypeDisplayName(rating.league?.game_type ?? 'unknown')
                                     }}
                                 </td>
                                 <td class="px-2 py-3 text-right font-semibold">{{ rating.rating }}</td>
-                                <td class="px-2 py-3 text-right">#{{ rating.position ?? 'N/A' }}</td>
+                                <td class="px-2 py-3 text-right">#{{ rating.position ?? t('N/A') }}</td>
                                 <td class="px-2 py-3 text-right">{{ rating.matches_count ?? 0 }}</td>
                                 <td class="px-2 py-3 text-center">
                                         <span
@@ -512,7 +512,7 @@ onMounted(() => {
                                             "
                                             class="rounded-full px-2 py-1 text-xs font-medium"
                                         >
-                                            {{ rating.is_active ? 'Active' : 'Inactive' }}
+                                            {{ rating.is_active ? t('Active') : t('Inactive') }}
                                         </span>
                                 </td>
                             </tr>
@@ -552,7 +552,7 @@ onMounted(() => {
                                 <td class="px-2 py-3 whitespace-nowrap">
                                     {{ formatDate(match.finished_at ?? match.updated_at ?? match.created_at) }}
                                 </td>
-                                <td class="px-2 py-3">{{ match.league?.name ?? 'N/A' }}</td>
+                                <td class="px-2 py-3">{{ match.league?.name ?? t('N/A') }}</td>
                                 <td class="px-2 py-3">{{ getOpponentName(match) }}</td>
                                 <td class="px-2 py-3 text-center font-medium whitespace-nowrap">
                                     {{
