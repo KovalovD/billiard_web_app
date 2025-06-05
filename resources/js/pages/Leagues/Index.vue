@@ -8,6 +8,9 @@ import type {ApiError, League} from '@/types/api';
 import {Head, Link} from '@inertiajs/vue3';
 import {CalendarIcon, EyeIcon, GamepadIcon, PencilIcon, PlusIcon, TrophyIcon, UsersIcon} from 'lucide-vue-next';
 import {computed, onMounted, ref} from 'vue';
+import {useLocale} from '@/composables/useLocale';
+
+const {t} = useLocale();
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -21,10 +24,10 @@ const loadingError = ref<ApiError | null>(null);
 const selectedStatus = ref<string>('all');
 
 const statusOptions = [
-    {value: 'all', label: 'All Leagues'},
-    {value: 'active', label: 'Active'},
-    {value: 'upcoming', label: 'Upcoming'},
-    {value: 'ended', label: 'Ended'}
+    {value: 'all', label: t('All Leagues')},
+    {value: 'active', label: t('Active')},
+    {value: 'upcoming', label: t('Upcoming')},
+    {value: 'ended', label: t('Ended')}
 ];
 
 // Sort leagues by status and filter
@@ -69,7 +72,7 @@ const fetchLeagues = async () => {
 };
 
 const formatDate = (dateString: string | null | undefined): string => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return t('N/A');
     return new Date(dateString).toLocaleDateString();
 };
 
@@ -90,20 +93,20 @@ onMounted(() => {
 </script>
 
 <template>
-    <Head title="Leagues"/>
+    <Head :title="t('Leagues')"/>
     <div class="py-12">
         <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
             <!-- Header -->
             <div class="mb-6 flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">Available Leagues</h1>
-                    <p class="text-gray-600 dark:text-gray-400">Manage and participate in competitive leagues</p>
+                    <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">{{ t('Available Leagues') }}</h1>
+                    <p class="text-gray-600 dark:text-gray-400">{{ t('Manage and participate in competitive leagues') }}</p>
                 </div>
                 <!-- Only show create button to authenticated admins -->
                 <Link v-if="isAuthenticated && isAdmin" :href="route('leagues.create')">
                     <Button>
                         <PlusIcon class="mr-2 h-4 w-4"/>
-                        Create New League
+                        {{ t('Create New League') }}
                     </Button>
                 </Link>
             </div>
@@ -129,30 +132,32 @@ onMounted(() => {
                 <CardHeader>
                     <CardTitle class="flex items-center gap-2">
                         <TrophyIcon class="h-5 w-5"/>
-                        Leagues Directory
+                        {{ t('Leagues Directory') }}
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
                     <!-- Loading State -->
                     <div v-if="isLoading" class="flex items-center justify-center py-10">
                         <Spinner class="text-primary h-8 w-8"/>
-                        <span class="ml-2 text-gray-500 dark:text-gray-400">Loading leagues...</span>
+                        <span class="ml-2 text-gray-500 dark:text-gray-400">{{ t('Loading leagues...') }}</span>
                     </div>
 
                     <!-- Error State -->
                     <div v-else-if="loadingError"
                          class="rounded bg-red-100 p-4 text-center text-red-600 dark:bg-red-900/30 dark:text-red-400">
-                        Error loading leagues: {{ loadingError.message }}
+                        {{ t('Error loading leagues: :error', { error: loadingError.message }) }}
                     </div>
 
                     <!-- Empty State -->
                     <div v-else-if="!leaguesData || leaguesData.length === 0"
                          class="py-10 text-center text-gray-500 dark:text-gray-400">
                         <TrophyIcon class="mx-auto h-12 w-12 mb-4 opacity-50"/>
-                        <p class="text-lg">No leagues found</p>
+                        <p class="text-lg">{{ t('No leagues found') }}</p>
                         <p class="text-sm">
                             {{
-                                selectedStatus === 'all' ? 'No leagues have been created yet.' : `No ${selectedStatus} leagues available.`
+                                selectedStatus === 'all'
+                                    ? t('No leagues have been created yet.')
+                                    : t('No :status leagues available.', {status: selectedStatus})
                             }}
                         </p>
                     </div>
@@ -163,25 +168,25 @@ onMounted(() => {
                             <thead class="bg-gray-50 dark:bg-gray-800">
                             <tr>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                                    League
+                                    {{ t('League') }}
                                 </th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                                    Game
+                                    {{ t('Game') }}
                                 </th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                                    Status
+                                    {{ t('Status') }}
                                 </th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                                    Players
+                                    {{ t('Players') }}
                                 </th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                                    Matches
+                                    {{ t('Matches') }}
                                 </th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                                    Start Date
+                                    {{ t('Start Date') }}
                                 </th>
                                 <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                                    Actions
+                                    {{ t('Actions') }}
                                 </th>
                             </tr>
                             </thead>
@@ -202,7 +207,7 @@ onMounted(() => {
                                         </div>
                                         <div class="ml-4">
                                             <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                                {{ league.name ?? 'Unnamed League' }}
+                                                {{ league.name ?? t('Unnamed League') }}
                                             </div>
                                             <div v-if="league.details"
                                                  class="text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">
@@ -216,7 +221,7 @@ onMounted(() => {
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center text-sm text-gray-900 dark:text-gray-100">
                                         <GamepadIcon class="h-4 w-4 mr-2 text-gray-400"/>
-                                        {{ league.game ?? 'N/A' }}
+                                        {{ league.game ?? t('N/A') }}
                                     </div>
                                 </td>
 
@@ -231,7 +236,7 @@ onMounted(() => {
                                         >
                                             {{ getLeagueStatus(league)?.text }}
                                         </span>
-                                    <span v-else class="text-sm text-gray-500 dark:text-gray-400">Unknown</span>
+                                    <span v-else class="text-sm text-gray-500 dark:text-gray-400">{{ t('Unknown') }}</span>
                                 </td>
 
                                 <!-- Players -->
@@ -245,7 +250,7 @@ onMounted(() => {
                                 <!-- Matches -->
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-900 dark:text-gray-100">
-                                        {{ league.matches_count || 0 }} matches
+                                        {{ league.matches_count || 0 }} {{ t('Matches') }}
                                     </div>
                                 </td>
 
@@ -264,7 +269,7 @@ onMounted(() => {
                                         <Link
                                             v-if="getLeagueUrl('leagues.show.page', league.id)"
                                             :href="getLeagueUrl('leagues.show.page', league.id)!"
-                                            title="View Details"
+                                            :title="t('View Details')"
                                         >
                                             <Button size="sm" variant="outline">
                                                 <EyeIcon class="h-4 w-4"/>
@@ -275,7 +280,7 @@ onMounted(() => {
                                         <Link
                                             v-if="isAuthenticated && isAdmin && getLeagueUrl('leagues.edit', league.id)"
                                             :href="getLeagueUrl('leagues.edit', league.id)!"
-                                            title="Edit League"
+                                            :title="t('Edit League')"
                                         >
                                             <Button size="sm" variant="outline">
                                                 <PencilIcon class="h-4 w-4"/>
