@@ -5,6 +5,7 @@ import type {SharedData} from '@/types';
 import type {ApiError, LoginResponse, RegisterCredentials, User} from '@/types/api';
 import {usePage} from '@inertiajs/vue3';
 import {computed, ref} from 'vue';
+import {useLocale} from "@/composables/useLocale";
 
 // --- Reactive State ---
 const user = ref<User | null>(null);
@@ -120,6 +121,7 @@ const login = async (credentials: { email: string; password: string }): Promise<
         throw apiError;
     } finally {
         isLoading.value = false;
+        useLocale().removeLocaleFromStorage();
     }
 };
 
@@ -161,6 +163,7 @@ const register = async (credentials: RegisterCredentials): Promise<User> => {
         throw apiError;
     } finally {
         isLoading.value = false;
+        useLocale().removeLocaleFromStorage();
     }
 };
 
@@ -169,7 +172,6 @@ const logout = async () => {
     error.value = null;
     const currentToken = localStorage.getItem('authToken');
     const currentDeviceName = getDeviceName();
-
     try {
         if (currentToken && currentDeviceName) {
             await apiClient('/api/auth/logout', {
@@ -181,6 +183,7 @@ const logout = async () => {
     } catch (err: any) {
         // Even if API call fails, clear client-side state
     } finally {
+        useLocale().removeLocaleFromStorage();
         user.value = null;
         isGuest.value = true;
         setToken(null, null);
