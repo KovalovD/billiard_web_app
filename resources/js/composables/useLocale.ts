@@ -249,8 +249,8 @@ export function useLocale() {
     // Отримання назви мови
     const getLanguageName = (locale: string): string => {
         const languageNames: Record<string, string> = {
-            en: t('English'),
-            uk: t('Ukrainian')
+            en: 'EN',
+            uk: 'UA'
         };
         return languageNames[locale] || locale;
     };

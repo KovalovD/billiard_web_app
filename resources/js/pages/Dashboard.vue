@@ -99,7 +99,7 @@ onMounted(async () => {
                         <div class="rounded-lg bg-indigo-50 p-6 dark:bg-indigo-900/30">
                             <h3 class="mb-2 text-lg font-medium text-indigo-800 dark:text-indigo-300">{{ t('Join Leagues') }}</h3>
                             <p class="mb-4 text-indigo-600 dark:text-indigo-400">
-                                {{ t('Find and join billiard leagues that match your skill level and game preferences.') }}
+                                {{ t('find_leagues_text') }}
                             </p>
                             <Link class="font-medium text-indigo-700 hover:underline dark:text-indigo-300"
                                   href="/leagues">{{ t('Browse') }}
@@ -109,7 +109,7 @@ onMounted(async () => {
                         <div class="rounded-lg bg-emerald-50 p-6 dark:bg-emerald-900/30">
                             <h3 class="mb-2 text-lg font-medium text-emerald-800 dark:text-emerald-300">{{ t('Join Tournaments') }}</h3>
                             <p class="mb-4 text-emerald-600 dark:text-emerald-400">
-                                {{ t('Participate in tournaments to compete against other players and win prizes.') }}
+                                {{ t('find_tournaments_text') }}
                             </p>
                             <Link class="font-medium text-emerald-700 hover:underline dark:text-emerald-300"
                                   href="/tournaments">{{ t('Browse') }}
@@ -123,13 +123,13 @@ onMounted(async () => {
                             <p class="mb-4 text-amber-600 dark:text-amber-400">
                                 {{
                                     isAuthenticated
-                                        ? t('Monitor your performance, rating changes, and match history over time.')
-                                        : t('Explore official player rankings and tournament results.')
+                                        ? t('monitor_performance_text')
+                                        : t('explore_tournaments_text')
                                 }}
                             </p>
                             <Link class="font-medium text-amber-700 hover:underline dark:text-amber-300"
-                                  :href="isAuthenticated ? '/profile/stats' : '/official-ratings'">
-                                {{ isAuthenticated ? t('View Stats') : t('View Ratings') }} →
+                                  href="/official-ratings">
+                                {{ t('View Ratings') }} →
                             </Link>
                         </div>
                     </div>
