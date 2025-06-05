@@ -3,7 +3,7 @@ import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Spinn
 import {useAuth} from '@/composables/useAuth';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
-import type {OfficialRating, OfficialRatingPlayer, OfficialRatingTournament} from '@/types/api';
+import type {OfficialRating, OfficialRatingPlayer, OfficialRatingTournament, RatingDelta} from '@/types/api';
 import {Head, Link} from '@inertiajs/vue3';
 import {
     ArrowLeftIcon,
@@ -36,6 +36,9 @@ const isLoadingTournaments = ref(true);
 const error = ref<string | null>(null);
 const activeTab = ref<'players' | 'tournaments'>('players');
 const showScrollToUser = ref(false);
+const deltaDate = ref('');
+const ratingDelta = ref<RatingDelta | null>(null);
+const isLoadingDelta = ref(false);
 
 const allActivePlayers = computed(() => {
     return players.value.filter(p => p.is_active);
@@ -143,6 +146,20 @@ const fetchTournaments = async () => {
         console.error('Failed to load tournaments:', err);
     } finally {
         isLoadingTournaments.value = false;
+    }
+};
+
+const fetchDelta = async () => {
+    if (!deltaDate.value) return;
+    isLoadingDelta.value = true;
+    ratingDelta.value = null;
+
+    try {
+        ratingDelta.value = await apiClient<RatingDelta>(`/api/official-ratings/${props.ratingId}/player-delta?date=${deltaDate.value}`);
+    } catch (err: any) {
+        console.error('Failed to load delta:', err);
+    } finally {
+        isLoadingDelta.value = false;
     }
 };
 
@@ -319,6 +336,18 @@ onMounted(() => {
                             </div>
                         </CardHeader>
                         <CardContent>
+                            <div v-if="isAuthenticated" class="mb-4 flex flex-wrap items-center gap-2">
+                                <input type="date" v-model="deltaDate" class="rounded border px-2 py-1 text-sm dark:bg-gray-800" />
+                                <Button size="sm" @click="fetchDelta" :disabled="!deltaDate || isLoadingDelta">Load Delta</Button>
+                                <Spinner v-if="isLoadingDelta" class="text-primary h-4 w-4" />
+                                <div v-if="ratingDelta" class="text-sm ml-2">
+                                    Change since {{ deltaDate }}:
+                                    <span :class="ratingDelta.points_delta >= 0 ? 'text-green-600' : 'text-red-600'">
+                                        {{ ratingDelta.points_delta >= 0 ? `+${ratingDelta.points_delta}` : ratingDelta.points_delta }} pts
+                                    </span>,
+                                    position {{ ratingDelta.position_before }} → {{ ratingDelta.current_position }}
+                                </div>
+                            </div>
                             <div v-if="isLoadingPlayers" class="flex justify-center py-8">
                                 <Spinner class="text-primary h-6 w-6"/>
                             </div>

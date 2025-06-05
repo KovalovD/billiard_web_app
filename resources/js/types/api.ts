@@ -338,6 +338,15 @@ export interface OfficialRatingTournament {
     is_counting: boolean;
 }
 
+export interface RatingDelta {
+    current_position: number;
+    position_before: number;
+    position_delta: number;
+    current_points: number;
+    points_before: number;
+    points_delta: number;
+}
+
 export interface CreateOfficialRatingPayload {
     name: string;
     description: string | number;
