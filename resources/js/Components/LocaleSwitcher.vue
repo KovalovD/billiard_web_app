@@ -12,7 +12,6 @@
             <div class="flex items-center space-x-2">
                 <!-- Прапор/іконка поточної мови -->
                 <span class="text-lg">
-          {{ getCurrentFlag() }}
         </span>
 
                 <!-- Назва поточної мови -->
@@ -55,7 +54,7 @@
         >
             <div
                 v-if="isDropdownOpen"
-                class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
+                class="absolute right-0 mt-2 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
             >
                 <div class="py-1">
                     <button
@@ -70,7 +69,6 @@
                     >
                         <!-- Прапор/іконка мови -->
                         <span class="text-lg mr-3">
-              {{ getFlag(locale) }}
             </span>
 
                         <!-- Назва мови -->
@@ -138,19 +136,6 @@ const handleLocaleChange = async (locale: string) => {
         console.error('Failed to change locale:', error);
         // Тут можна додати показ повідомлення про помилку
     }
-};
-
-// Функції для отримання прапорців
-const getFlag = (locale: string): string => {
-    const flags: Record<string, string> = {
-        en: '🇺🇸', // або 🇬🇧 для Великобританії
-        uk: '🇺🇦'
-    };
-    return flags[locale] || '🌐';
-};
-
-const getCurrentFlag = (): string => {
-    return getFlag(currentLocale.value);
 };
 
 // Закриття меню при натисканні Escape
