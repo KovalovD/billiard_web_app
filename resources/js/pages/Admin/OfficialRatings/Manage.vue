@@ -2,6 +2,7 @@
 <script lang="ts" setup>
 import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Spinner} from '@/Components/ui';
 import {useOfficialRatings} from '@/composables/useOfficialRatings';
+import {useLocale} from '@/composables/useLocale';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import type {OfficialRating} from '@/types/api';
 import {Head, Link} from '@inertiajs/vue3';
@@ -19,6 +20,7 @@ const {
     fetchOfficialRating,
     recalculateRatingPositions
 } = useOfficialRatings();
+const {t} = useLocale();
 
 const {t} = useLocale();
 
