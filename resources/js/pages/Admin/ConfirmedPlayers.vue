@@ -2,6 +2,7 @@
 <script lang="ts" setup>
 import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Spinner} from '@/Components/ui';
 import {useAuth} from '@/composables/useAuth';
+import {useLocale} from '@/composables/useLocale';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
 import type {ApiError, League, Rating} from '@/types/api';
@@ -16,6 +17,7 @@ const props = defineProps<{
 }>();
 
 const {isAdmin} = useAuth();
+const {t} = useLocale();
 const confirmedPlayers = ref<Rating[]>([]);
 const selectedPlayers = ref<number[]>([]);
 const league = ref<League | null>(null);
@@ -54,7 +56,7 @@ const fetchConfirmedPlayers = async () => {
 
 // Deactivate individual player
 const deactivatePlayer = async (ratingId: number) => {
-    if (!confirm('Are you sure you want to deactivate this player? They will no longer be able to participate in this league.')) {
+    if (!confirm(t('Are you sure you want to deactivate this player? They will no longer be able to participate in this league.'))) {
         return;
     }
 
@@ -65,7 +67,7 @@ const deactivatePlayer = async (ratingId: number) => {
         });
         message.value = {
             type: 'success',
-            text: 'Player deactivated successfully',
+            text: t('Player deactivated successfully'),
         };
         // Refresh the list
         await fetchConfirmedPlayers();
@@ -73,7 +75,7 @@ const deactivatePlayer = async (ratingId: number) => {
         const apiError = error as ApiError;
         message.value = {
             type: 'error',
-            text: apiError.message || 'Failed to deactivate player',
+            text: apiError.message || t('Failed to deactivate player'),
         };
     } finally {
         isProcessing.value = false;
@@ -85,14 +87,14 @@ const bulkDeactivatePlayers = async () => {
     if (selectedPlayers.value.length === 0) {
         message.value = {
             type: 'error',
-            text: 'Please select at least one player to deactivate',
+            text: t('Please select at least one player to deactivate'),
         };
         return;
     }
 
     if (
         !confirm(
-            `Are you sure you want to deactivate ${selectedPlayers.value.length} players? They will no longer be able to participate in this league.`,
+            t('Are you sure you want to deactivate :count players? They will no longer be able to participate in this league.', {count: selectedPlayers.value.length}),
         )
     ) {
         return;
@@ -108,7 +110,7 @@ const bulkDeactivatePlayers = async () => {
         });
         message.value = {
             type: 'success',
-            text: `${selectedPlayers.value.length} players deactivated successfully`,
+            text: t(':count players deactivated successfully', {count: selectedPlayers.value.length}),
         };
         selectedPlayers.value = [];
         // Refresh the list
@@ -117,7 +119,7 @@ const bulkDeactivatePlayers = async () => {
         const apiError = error as ApiError;
         message.value = {
             type: 'error',
-            text: apiError.message || 'Failed to deactivate players',
+            text: apiError.message || t('Failed to deactivate players'),
         };
     } finally {
         isProcessing.value = false;
@@ -146,7 +148,7 @@ onMounted(async () => {
 </script>
 
 <template>
-    <Head :title="league ? `Manage Players - ${league.name}` : 'Manage Players'"/>
+    <Head :title="league ? t('Manage Players - :league', {league: league.name}) : t('Manage Players')"/>
 
     <div class="py-12">
         <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
@@ -155,17 +157,17 @@ onMounted(async () => {
                 <Link :href="`/leagues/${leagueId}`">
                     <Button variant="outline">
                         <ArrowLeftIcon class="mr-2 h-4 w-4"/>
-                        Back to League
+                        {{ t('Back to League') }}
                     </Button>
                 </Link>
 
                 <h1 class="text-2xl font-semibold">
-                    {{ league ? `Manage Players - ${league.name}` : 'Manage Players' }}
+                    {{ league ? t('Manage Players - :league', {league: league.name}) : t('Manage Players') }}
                 </h1>
 
                 <div class="flex space-x-2">
                     <Link :href="`/admin/leagues/${leagueId}/pending-players`">
-                        <Button variant="outline"> Pending Players</Button>
+                        <Button variant="outline"> {{ t('Pending Players') }}</Button>
                     </Link>
                 </div>
             </div>
@@ -180,8 +182,8 @@ onMounted(async () => {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Confirmed Players</CardTitle>
-                    <CardDescription> Manage players who are currently active in the league</CardDescription>
+                    <CardTitle>{{ t('Confirmed Players') }}</CardTitle>
+                    <CardDescription> {{ t('Manage players who are currently active in the league') }}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <!-- Loading state -->
@@ -192,7 +194,7 @@ onMounted(async () => {
                     <!-- Empty state -->
                     <div v-else-if="confirmedPlayers.length === 0"
                          class="py-8 text-center text-gray-500 dark:text-gray-400">
-                        No confirmed players in this league
+                        {{ t('No confirmed players in this league') }}
                     </div>
 
                     <!-- Players list -->
@@ -207,14 +209,14 @@ onMounted(async () => {
                                     type="checkbox"
                                     @change="(e) => toggleSelectAll(e.target.checked)"
                                 />
-                                <label class="text-sm font-medium" for="select-all">Select All</label>
+                                <label class="text-sm font-medium" for="select-all">{{ t('Select All') }}</label>
                             </div>
 
                             <Button :disabled="selectedPlayers.length === 0 || isProcessing" variant="destructive"
                                     @click="bulkDeactivatePlayers">
                                 <Spinner v-if="isProcessing" class="mr-2 h-4 w-4"/>
                                 <UserMinusIcon v-else class="mr-2 h-4 w-4"/>
-                                Deactivate Selected ({{ selectedPlayers.length }})
+                                {{ t('Deactivate Selected') }} ({{ selectedPlayers.length }})
                             </Button>
                         </div>
 
@@ -223,11 +225,11 @@ onMounted(async () => {
                                 <thead class="bg-gray-50 text-xs uppercase dark:bg-gray-800">
                                 <tr>
                                     <th class="px-4 py-3">&nbsp;</th>
-                                    <th class="px-4 py-3">Position</th>
-                                    <th class="px-4 py-3">Name</th>
-                                    <th class="px-4 py-3">Rating</th>
-                                    <th class="px-4 py-3">Stats (W/L)</th>
-                                    <th class="px-4 py-3 text-right">Actions</th>
+                                    <th class="px-4 py-3">{{ t('Position') }}</th>
+                                    <th class="px-4 py-3">{{ t('Name') }}</th>
+                                    <th class="px-4 py-3">{{ t('Rating') }}</th>
+                                    <th class="px-4 py-3">{{ t('Stats (W/L)') }}</th>
+                                    <th class="px-4 py-3 text-right">{{ t('Actions') }}</th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -256,7 +258,7 @@ onMounted(async () => {
                                         <Button :disabled="isProcessing" size="sm" variant="destructive"
                                                 @click="deactivatePlayer(player.id)">
                                             <UserMinusIcon class="mr-1 h-4 w-4"/>
-                                            Deactivate
+                                            {{ t('Deactivate') }}
                                         </Button>
                                     </td>
                                 </tr>
