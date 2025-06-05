@@ -51,7 +51,7 @@ const getStatusInfo = computed(() => {
     if (!application.value) {
         return {
             status: 'none',
-            message: 'Not applied',
+            message: t('Not applied'),
             color: 'text-gray-500',
             bgColor: 'bg-gray-100 dark:bg-gray-700',
             icon: ClockIcon
@@ -62,7 +62,7 @@ const getStatusInfo = computed(() => {
         case 'applied':
             return {
                 status: 'pending',
-                message: 'Application pending approval',
+                message: t('Application pending approval'),
                 color: 'text-yellow-600 dark:text-yellow-400',
                 bgColor: 'bg-yellow-100 dark:bg-yellow-900/30',
                 icon: ClockIcon
@@ -70,7 +70,7 @@ const getStatusInfo = computed(() => {
         case 'confirmed':
             return {
                 status: 'confirmed',
-                message: 'Application confirmed',
+                message: t('Application confirmed'),
                 color: 'text-green-600 dark:text-green-400',
                 bgColor: 'bg-green-100 dark:bg-green-900/30',
                 icon: CheckCircleIcon
@@ -78,7 +78,7 @@ const getStatusInfo = computed(() => {
         case 'rejected':
             return {
                 status: 'rejected',
-                message: 'Application rejected',
+                message: t('Application rejected'),
                 color: 'text-red-600 dark:text-red-400',
                 bgColor: 'bg-red-100 dark:bg-red-900/30',
                 icon: XCircleIcon
@@ -86,7 +86,7 @@ const getStatusInfo = computed(() => {
         default:
             return {
                 status: 'unknown',
-                message: 'Unknown status',
+                message: t('Unknown status'),
                 color: 'text-gray-500',
                 bgColor: 'bg-gray-100 dark:bg-gray-700',
                 icon: ClockIcon
@@ -110,7 +110,7 @@ const fetchApplicationStatus = async () => {
 
         application.value = response.application || null;
     } catch (err: any) {
-        error.value = err.message || 'Failed to load application status';
+        error.value = err.message || t('Failed to load application status');
     } finally {
         isLoading.value = false;
     }
@@ -140,7 +140,7 @@ const submitApplication = async () => {
             emit('applicationUpdated', application.value);
         }
     } catch (err: any) {
-        error.value = err.message || 'Failed to submit application';
+        error.value = err.message || t('Failed to submit application');
     } finally {
         isSubmitting.value = false;
     }
@@ -149,7 +149,7 @@ const submitApplication = async () => {
 const cancelApplication = async () => {
     if (!canCancelApplication.value) return;
 
-    if (!confirm('Are you sure you want to cancel your application?')) {
+    if (!confirm(t('Are you sure you want to cancel your application?'))) {
         return;
     }
 
@@ -164,7 +164,7 @@ const cancelApplication = async () => {
         application.value = null;
         emit('applicationUpdated', null);
     } catch (err: any) {
-        error.value = err.message || 'Failed to cancel application';
+        error.value = err.message || t('Failed to cancel application');
     } finally {
         isSubmitting.value = false;
     }
