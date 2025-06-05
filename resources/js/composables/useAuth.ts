@@ -7,17 +7,17 @@ import {usePage} from '@inertiajs/vue3';
 import {computed, ref} from 'vue';
 import {useLocale} from "@/composables/useLocale";
 
-// --- Reactive State ---
+// --- Реактивний стан ---
 const user = ref<User | null>(null);
 const isLoading = ref(false);
 const isInitializing = ref(true);
 const error = ref<string | null>(null);
 const isGuest = ref(true);
 
-// --- Internal state for Singleton pattern ---
+// --- Внутрішній стан для шаблону Singleton ---
 let isInitialized = false;
 
-// --- Initialization Logic ---
+// --- Логіка ініціалізації ---
 
 const initUserFromPageProps = (): boolean => {
     try {
@@ -29,7 +29,7 @@ const initUserFromPageProps = (): boolean => {
         }
 // eslint-disable-next-line
     } catch (e) {
-        // Silent fail for guest users
+        // Тихе ігнорування для гостьових користувачів
     }
     return false;
 };
@@ -38,7 +38,7 @@ const fetchUserFromApi = async (): Promise<boolean> => {
     const token = localStorage.getItem('authToken');
     if (!token) {
         isGuest.value = true;
-        return false; // Continue as guest
+        return false; // Продовжити як гість
     }
 
     if (user.value) {
@@ -58,7 +58,7 @@ const fetchUserFromApi = async (): Promise<boolean> => {
     } catch (err: any) {
         setToken(null, null);
         user.value = null;
-        isGuest.value = true; // Continue as guest
+        isGuest.value = true; // Продовжити як гість
         return false;
     } finally {
         isLoading.value = false;
@@ -83,7 +83,7 @@ const initializeAuth = async () => {
     isInitializing.value = false;
 };
 
-// --- Actions ---
+// --- Дії ---
 
 const login = async (credentials: { email: string; password: string }): Promise<LoginResponse> => {
     isLoading.value = true;
@@ -111,9 +111,9 @@ const login = async (credentials: { email: string; password: string }): Promise<
         const apiError = err as ApiError;
         if (apiError.response?.status === 422 && apiError.data?.errors) {
             const errorMessages = Object.values(apiError.data.errors).flat().join(' ');
-            error.value = `Login failed: ${errorMessages}`;
+            error.value = `Не вдалося увійти: ${errorMessages}`;
         } else {
-            error.value = apiError.message || 'Login failed due to an unknown error.';
+            error.value = apiError.message || 'Не вдалося увійти через невідому помилку.';
         }
         user.value = null;
         isGuest.value = true;
@@ -153,9 +153,9 @@ const register = async (credentials: RegisterCredentials): Promise<User> => {
         const apiError = err as ApiError;
         if (apiError.response?.status === 422 && apiError.data?.errors) {
             const errorMessages = Object.values(apiError.data.errors).flat().join(' ');
-            error.value = `Registration failed: ${errorMessages}`;
+            error.value = `Не вдалося зареєструватися: ${errorMessages}`;
         } else {
-            error.value = apiError.message || 'Registration failed due to an unknown error.';
+            error.value = apiError.message || 'Не вдалося зареєструватися через невідому помилку.';
         }
         user.value = null;
         isGuest.value = true;
