@@ -90,7 +90,7 @@ onMounted(async () => {
                     <h1 class="mb-4 text-2xl font-semibold">
                         {{
                             isAuthenticated
-                                ? t('Welcome back, :name!', {name: user?.firstname || t('User')})
+                                ? t('welcome_back', {name: user?.firstname || t('User')})
                                 : t('Welcome to WinnerBreak!')
                         }}
                     </h1>
