@@ -7,6 +7,7 @@ import type {MultiplayerGame} from '@/types/api';
 import {Link} from '@inertiajs/vue3';
 import {LogInIcon} from 'lucide-vue-next';
 import {computed} from 'vue';
+import {useLocale} from '@/composables/useLocale';
 
 interface Props {
     game: MultiplayerGame;
@@ -15,6 +16,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const emit = defineEmits(['updated']);
+const { t } = useLocale();
 
 const {isAdmin, user, isAuthenticated} = useAuth();
 const {
@@ -157,11 +159,11 @@ const statusBadgeClass = computed(() => {
                 <span>{{ formatDate(game.started_at) }}</span>
             </div>
             <div v-if="game.status === 'completed'" class="flex items-center justify-between">
-                <span class="text-gray-600 dark:text-gray-400">Completed:</span>
+                <span class="text-gray-600 dark:text-gray-400">{{ t('Completed:') }}</span>
                 <span>{{ formatDate(game.completed_at) }}</span>
             </div>
             <div v-if="game.status === 'in_progress'" class="flex items-center justify-between">
-                <span class="text-gray-600 dark:text-gray-400">Active players:</span>
+                <span class="text-gray-600 dark:text-gray-400">{{ t('Active players:') }}</span>
                 <span>{{ game.active_players_count }} / {{ game.total_players_count }}</span>
             </div>
         </div>
@@ -172,7 +174,7 @@ const statusBadgeClass = computed(() => {
                 class="flex-1"
             >
                 <Button class="w-full" variant="outline">
-                    {{ game.status === 'registration' ? 'View Registration' : 'View Game' }}
+                    {{ game.status === 'registration' ? t('View Registration') : t('View Game') }}
                 </Button>
             </Link>
 
@@ -185,7 +187,7 @@ const statusBadgeClass = computed(() => {
                         class="flex-1"
                         @click="handleJoin"
                     >
-                        Join
+                        {{ t('Join') }}
                     </Button>
                     <Button
                         v-else-if="isUserInGame"
@@ -194,7 +196,7 @@ const statusBadgeClass = computed(() => {
                         variant="destructive"
                         @click="handleLeave"
                     >
-                        Leave
+                        {{ t('Leave') }}
                     </Button>
                 </template>
 
@@ -204,7 +206,7 @@ const statusBadgeClass = computed(() => {
                         class="flex-1"
                         @click="handleStart"
                     >
-                        Start Game
+                        {{ t('Start Game') }}
                     </Button>
                     <Button
                         :disabled="isLoading"
@@ -212,7 +214,7 @@ const statusBadgeClass = computed(() => {
                         variant="destructive"
                         @click="handleCancel"
                     >
-                        Cancel
+                        {{ t('Cancel') }}
                     </Button>
                 </template>
             </template>
@@ -223,7 +225,7 @@ const statusBadgeClass = computed(() => {
                       class="flex-1">
                     <Button class="w-full" variant="outline">
                         <LogInIcon class="mr-2 h-4 w-4"/>
-                        Login to Join
+                        {{ t('Login to Join') }}
                     </Button>
                 </Link>
             </template>

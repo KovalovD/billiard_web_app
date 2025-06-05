@@ -3,6 +3,7 @@ import LivesTracker from '@/Components/LivesTracker.vue';
 import type {MultiplayerGamePlayer} from '@/types/api';
 import {ArrowDownIcon, ArrowRightIcon, CheckIcon, HandIcon} from 'lucide-vue-next';
 import {computed} from 'vue';
+import {useLocale} from '@/composables/useLocale';
 
 interface Props {
     players: MultiplayerGamePlayer[];
@@ -15,6 +16,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const emit = defineEmits(['select-player', 'increment-lives', 'decrement-lives']);
+const { t } = useLocale();
 
 const sortedPlayers = computed(() => {
     return [...props.players].sort((a, b) => {
@@ -48,7 +50,7 @@ const hasCard = (player: MultiplayerGamePlayer, cardType: 'skip_turn' | 'pass_tu
         <h3 class="mb-2 font-medium">{{ title }}</h3>
 
         <div v-if="players.length === 0" class="py-4 text-center text-gray-500 dark:text-gray-400">
-            {{ emptyMessage || 'No players' }}
+            {{ emptyMessage || t('No players') }}
         </div>
 
         <div v-else class="divide-y">
@@ -78,13 +80,13 @@ const hasCard = (player: MultiplayerGamePlayer, cardType: 'skip_turn' | 'pass_tu
 
                         <!-- Card indicators -->
                         <div v-if="getAvailableCardsCount(player) > 0" class="mt-1 flex items-center gap-1">
-                            <span class="text-xs text-gray-500 dark:text-gray-400 mr-1">Cards:</span>
+                            <span class="text-xs text-gray-500 dark:text-gray-400 mr-1">{{ t('Cards:') }}</span>
 
                             <!-- Pass Turn card -->
                             <div
                                 v-if="hasCard(player, 'pass_turn')"
                                 class="flex h-5 w-5 items-center justify-center rounded bg-blue-100 dark:bg-blue-900/30"
-                                title="Pass Turn"
+                                :title="t('Pass Turn')"
                             >
                                 <ArrowRightIcon class="h-3 w-3 text-blue-600 dark:text-blue-400"/>
                             </div>
@@ -93,7 +95,7 @@ const hasCard = (player: MultiplayerGamePlayer, cardType: 'skip_turn' | 'pass_tu
                             <div
                                 v-if="hasCard(player, 'skip_turn')"
                                 class="flex h-5 w-5 items-center justify-center rounded bg-orange-100 dark:bg-orange-900/30"
-                                title="Skip Turn"
+                                :title="t('Skip Turn')"
                             >
                                 <ArrowDownIcon class="h-3 w-3 text-orange-600 dark:text-orange-400"/>
                             </div>
@@ -102,7 +104,7 @@ const hasCard = (player: MultiplayerGamePlayer, cardType: 'skip_turn' | 'pass_tu
                             <div
                                 v-if="hasCard(player, 'hand_shot')"
                                 class="flex h-5 w-5 items-center justify-center rounded bg-purple-100 dark:bg-purple-900/30"
-                                title="Hand Shot"
+                                :title="t('Hand Shot')"
                             >
                                 <HandIcon class="h-3 w-3 text-purple-600 dark:text-purple-400"/>
                             </div>
