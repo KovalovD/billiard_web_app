@@ -5,6 +5,7 @@ import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
 import type {OfficialRating, OfficialRatingPlayer, OfficialRatingTournament, RatingDelta} from '@/types/api';
 import {Head, Link} from '@inertiajs/vue3';
+import {useLocale} from "@/composables/useLocale";
 import {
     ArrowLeftIcon,
     CalendarIcon,
@@ -24,6 +25,8 @@ defineOptions({layout: AuthenticatedLayout});
 const props = defineProps<{
     ratingId: number | string;
 }>();
+
+const {t} = useLocale();
 
 const {isAdmin, isAuthenticated, user} = useAuth();
 

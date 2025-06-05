@@ -1,9 +1,7 @@
-// resources/js/Components/PlayerCards.vue
 <script lang="ts" setup>
 import {Button} from '@/Components/ui';
 import type {MultiplayerGamePlayer} from '@/types/api';
 import {computed} from 'vue';
-import {useLocale} from '@/composables/useLocale';
 import {ArrowDownIcon, ArrowRightIcon, HandIcon} from "lucide-vue-next";
 import {useLocale} from '@/composables/useLocale';
 
