@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Spinner} from '@/Components/ui';
 import {useAuth} from '@/composables/useAuth';
+import {useLocale} from '@/composables/useLocale';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
 import type {ApiError, League, Rating} from '@/types/api';
@@ -15,6 +16,7 @@ const props = defineProps<{
 }>();
 
 const {isAdmin} = useAuth();
+const {t} = useLocale();
 const pendingPlayers = ref<Rating[]>([]);
 const selectedPlayers = ref<number[]>([]);
 const league = ref<League | null>(null);
@@ -30,7 +32,7 @@ const fetchLeague = async () => {
         const apiError = error as ApiError;
         message.value = {
             type: 'error',
-            text: apiError.message || 'Failed to load league',
+            text: apiError.message || t('Failed to load league'),
         };
     }
 };
@@ -44,7 +46,7 @@ const fetchPendingPlayers = async () => {
         const apiError = error as ApiError;
         message.value = {
             type: 'error',
-            text: apiError.message || 'Failed to load pending players',
+            text: apiError.message || t('Failed to load pending players'),
         };
     } finally {
         isLoading.value = false;
@@ -60,7 +62,7 @@ const confirmPlayer = async (ratingId: number) => {
         });
         message.value = {
             type: 'success',
-            text: 'Player confirmed successfully',
+            text: t('Player confirmed successfully'),
         };
         // Refresh the list
         await fetchPendingPlayers();
@@ -68,7 +70,7 @@ const confirmPlayer = async (ratingId: number) => {
         const apiError = error as ApiError;
         message.value = {
             type: 'error',
-            text: apiError.message || 'Failed to confirm player',
+            text: apiError.message || t('Failed to confirm player'),
         };
     } finally {
         isProcessing.value = false;
@@ -84,7 +86,7 @@ const rejectPlayer = async (ratingId: number) => {
         });
         message.value = {
             type: 'success',
-            text: 'Player rejected successfully',
+            text: t('Player rejected successfully'),
         };
         // Refresh the list
         await fetchPendingPlayers();
@@ -92,7 +94,7 @@ const rejectPlayer = async (ratingId: number) => {
         const apiError = error as ApiError;
         message.value = {
             type: 'error',
-            text: apiError.message || 'Failed to reject player',
+            text: apiError.message || t('Failed to reject player'),
         };
     } finally {
         isProcessing.value = false;
@@ -104,7 +106,7 @@ const bulkConfirmPlayers = async () => {
     if (selectedPlayers.value.length === 0) {
         message.value = {
             type: 'error',
-            text: 'Please select at least one player to confirm',
+            text: t('Please select at least one player to confirm'),
         };
         return;
     }
@@ -119,7 +121,7 @@ const bulkConfirmPlayers = async () => {
         });
         message.value = {
             type: 'success',
-            text: `${selectedPlayers.value.length} players confirmed successfully`,
+            text: t(':count players confirmed successfully', {count: selectedPlayers.value.length}),
         };
         selectedPlayers.value = [];
         // Refresh the list
@@ -128,7 +130,7 @@ const bulkConfirmPlayers = async () => {
         const apiError = error as ApiError;
         message.value = {
             type: 'error',
-            text: apiError.message || 'Failed to confirm players',
+            text: apiError.message || t('Failed to confirm players'),
         };
     } finally {
         isProcessing.value = false;
@@ -157,7 +159,7 @@ onMounted(async () => {
 </script>
 
 <template>
-    <Head :title="league ? `Confirm Players - ${league.name}` : 'Confirm Players'"/>
+    <Head :title="league ? t('Confirm Players - :league', {league: league.name}) : t('Confirm Players')"/>
 
     <div class="py-12">
         <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
@@ -166,17 +168,17 @@ onMounted(async () => {
                 <Link :href="`/leagues/${leagueId}`">
                     <Button variant="outline">
                         <ArrowLeftIcon class="mr-2 h-4 w-4"/>
-                        Back to League
+                        {{ t('Back to League') }}
                     </Button>
                 </Link>
 
                 <h1 class="text-2xl font-semibold">
-                    {{ league ? `Pending Players - ${league.name}` : 'Pending Players' }}
+                    {{ league ? t('Pending Players - :league', {league: league.name}) : t('Pending Players') }}
                 </h1>
 
                 <div class="flex space-x-2">
                     <Link :href="`/admin/leagues/${leagueId}/confirmed-players`">
-                        <Button variant="outline"> Confirmed Players</Button>
+                        <Button variant="outline"> {{ t('Confirmed Players') }}</Button>
                     </Link>
                 </div>
             </div>
@@ -191,8 +193,8 @@ onMounted(async () => {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Players Waiting for Confirmation</CardTitle>
-                    <CardDescription> Players will only be able to participate in matches after confirmation
+                    <CardTitle>{{ t('Players Waiting for Confirmation') }}</CardTitle>
+                    <CardDescription> {{ t('Players will only be able to participate in matches after confirmation') }}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -204,7 +206,7 @@ onMounted(async () => {
                     <!-- Empty state -->
                     <div v-else-if="pendingPlayers.length === 0"
                          class="py-8 text-center text-gray-500 dark:text-gray-400">
-                        No pending players to confirm
+                        {{ t('No pending players to confirm') }}
                     </div>
 
                     <!-- Players list -->
@@ -219,14 +221,14 @@ onMounted(async () => {
                                     type="checkbox"
                                     @change="(e) => toggleSelectAll(e.target.checked)"
                                 />
-                                <label class="text-sm font-medium" for="select-all">Select All</label>
+                                <label class="text-sm font-medium" for="select-all">{{ t('Select All') }}</label>
                             </div>
 
                             <Button :disabled="selectedPlayers.length === 0 || isProcessing"
                                     @click="bulkConfirmPlayers">
                                 <Spinner v-if="isProcessing" class="mr-2 h-4 w-4"/>
                                 <CheckIcon v-else class="mr-2 h-4 w-4"/>
-                                Confirm Selected ({{ selectedPlayers.length }})
+                                {{ t('Confirm Selected') }} ({{ selectedPlayers.length }})
                             </Button>
                         </div>
 
@@ -235,10 +237,10 @@ onMounted(async () => {
                                 <thead class="bg-gray-50 text-xs uppercase dark:bg-gray-800">
                                 <tr>
                                     <th class="px-4 py-3">&nbsp;</th>
-                                    <th class="px-4 py-3">Name</th>
-                                    <th class="px-4 py-3">Rating</th>
-                                    <th class="px-4 py-3">Joined On</th>
-                                    <th class="px-4 py-3 text-right">Actions</th>
+                                    <th class="px-4 py-3">{{ t('Name') }}</th>
+                                    <th class="px-4 py-3">{{ t('Rating') }}</th>
+                                    <th class="px-4 py-3">{{ t('Joined On') }}</th>
+                                    <th class="px-4 py-3 text-right">{{ t('Actions') }}</th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -268,7 +270,7 @@ onMounted(async () => {
                                             @click="confirmPlayer(player.id)"
                                         >
                                             <CheckIcon class="mr-1 h-4 w-4"/>
-                                            Confirm
+                                            {{ t('Confirm') }}
                                         </Button>
                                         <Button
                                             :disabled="isProcessing"
@@ -278,7 +280,7 @@ onMounted(async () => {
                                             @click="rejectPlayer(player.id)"
                                         >
                                             <XIcon class="mr-1 h-4 w-4"/>
-                                            Reject
+                                            {{ t('Reject') }}
                                         </Button>
                                     </td>
                                 </tr>
