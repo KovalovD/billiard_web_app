@@ -26,6 +26,7 @@ import {
 } from 'lucide-vue-next';
 import {computed, onMounted, ref, watch} from 'vue';
 import AddPlayerModal from "@/Components/AddPlayerModal.vue";
+import { useLocale } from '@/composables/useLocale';
 
 const adminDropdownOpen = ref(false);
 const adminDropdownRef = ref(null);
@@ -38,6 +39,7 @@ const props = defineProps<{
 
 const {user, isAuthenticated, isAdmin} = useAuth();
 const leagues = useLeagues();
+const { t } = useLocale();
 const {getLeagueStatus, canJoinLeague, getJoinErrorMessage} = useLeagueStatus();
 
 // State for modals
@@ -364,7 +366,7 @@ watch(
                 <Link :href="route('leagues.index.page')">
                     <Button variant="outline">
                         <ArrowLeftIcon class="mr-2 h-4 w-4"/>
-                        Back to Leagues
+                        {{ t('Back to Leagues') }}
                     </Button>
                 </Link>
 
@@ -372,14 +374,14 @@ watch(
                     <Link :href="route('leagues.edit', { league: league.id })">
                         <Button variant="secondary">
                             <PencilIcon class="mr-2 h-4 w-4"/>
-                            Edit League
+                            {{ t('Edit League') }}
                         </Button>
                     </Link>
 
                     <div ref="adminDropdownRef" class="relative">
                         <Button variant="secondary" @click="adminDropdownOpen = !adminDropdownOpen">
                             <UsersIcon class="mr-2 h-4 w-4"/>
-                            Manage Players
+                            {{ t('Manage Players') }}
                             <ChevronDownIcon class="ml-1 h-4 w-4"/>
                         </Button>
 
@@ -394,14 +396,14 @@ watch(
                                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
                                     role="menuitem"
                                 >
-                                    Pending Players
+                                    {{ t('Pending Players') }}
                                 </Link>
                                 <Link
                                     :href="`/admin/leagues/${league.id}/confirmed-players`"
                                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
                                     role="menuitem"
                                 >
-                                    Confirmed Players
+                                    {{ t('Confirmed Players') }}
                                 </Link>
                             </div>
                         </div>
@@ -412,7 +414,7 @@ watch(
                 <div v-else-if="!isAuthenticated" class="text-center">
                     <Link :href="route('login')" class="text-sm text-blue-600 hover:underline dark:text-blue-400">
                         <LogInIcon class="mr-1 inline h-4 w-4"/>
-                        Login to participate
+                        {{ t('Login to participate') }}
                     </Link>
                 </div>
             </div>
@@ -427,12 +429,12 @@ watch(
             <!-- League Loading State -->
             <div v-if="isLoadingLeague" class="p-10 text-center">
                 <Spinner class="text-primary mx-auto h-8 w-8"/>
-                <p class="mt-2 text-gray-500">Loading league information...</p>
+                <p class="mt-2 text-gray-500">{{ t('Loading league information...') }}</p>
             </div>
 
             <!-- League Error State -->
-            <div v-else-if="leagueError" class="mb-6 rounded bg-red-100 p-4 text-red-500">Error loading league:
-                {{ leagueError.message }}
+            <div v-else-if="leagueError" class="mb-6 rounded bg-red-100 p-4 text-red-500">
+                {{ t('Error loading league: :error', { error: leagueError.message }) }}
             </div>
 
             <!-- League Content -->
@@ -479,27 +481,27 @@ watch(
                     </CardHeader>
                     <CardContent>
                         <p v-if="league.details" class="mb-4 whitespace-pre-wrap">{{ league.details }}</p>
-                        <p v-else class="mb-4 text-gray-500 italic">No details provided for this league.</p>
+                        <p v-else class="mb-4 text-gray-500 italic">{{ t('No details provided for this league.') }}</p>
 
                         <div class="mt-4 grid grid-cols-1 gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
                             <div v-if="league.started_at" class="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
-                                <span class="font-medium text-gray-600 dark:text-gray-400">Start Date</span>
+                                <span class="font-medium text-gray-600 dark:text-gray-400">{{ t('Start Date') }}</span>
                                 <p class="text-gray-900 dark:text-gray-200">
                                     {{ new Date(league.started_at).toLocaleDateString() }}
                                 </p>
                             </div>
                             <div v-if="league.finished_at" class="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
-                                <span class="font-medium text-gray-600 dark:text-gray-400">End Date</span>
+                                <span class="font-medium text-gray-600 dark:text-gray-400">{{ t('End Date') }}</span>
                                 <p class="text-gray-900 dark:text-gray-200">
                                     {{ new Date(league.finished_at).toLocaleDateString() }}
                                 </p>
                             </div>
                             <div v-if="!league.game_multiplayer" class="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
-                                <span class="font-medium text-gray-600 dark:text-gray-400">Max Score</span>
+                                <span class="font-medium text-gray-600 dark:text-gray-400">{{ t('Max Score') }}</span>
                                 <p class="text-gray-900 dark:text-gray-200">{{ league.max_score || 'N/A' }}</p>
                             </div>
                             <div v-if="!league.game_multiplayer" class="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
-                                <span class="font-medium text-gray-600 dark:text-gray-400">Invite Expiry</span>
+                                <span class="font-medium text-gray-600 dark:text-gray-400">{{ t('Invite Expiry') }}</span>
                                 <p class="text-gray-900 dark:text-gray-200">{{ league.invite_days_expire || 'N/A' }}
                                     days</p>
                             </div>
@@ -510,7 +512,7 @@ watch(
                             <Link :href="`/leagues/${leagueId}/multiplayer-games`">
                                 <Button variant="secondary">
                                     <GamepadIcon class="mr-2 h-4 w-4"/>
-                                    View Multiplayer Games
+                                    {{ t('View Multiplayer Games') }}
                                 </Button>
                             </Link>
                         </div>
@@ -521,7 +523,7 @@ watch(
                                 <Button v-if="canUserJoinLeague" :disabled="isJoining" @click="handleJoinLeague">
                                     <Spinner v-if="isJoining" class="mr-2 h-4 w-4"/>
                                     <UserPlusIcon v-else class="mr-2 h-4 w-4"/>
-                                    Join League
+                                    {{ t('Join League') }}
                                 </Button>
                                 <div v-else class="text-sm text-gray-500 dark:text-gray-400">
                                     {{ joinErrorMessage }}
@@ -531,7 +533,7 @@ watch(
                             <Button v-else :disabled="isLeaving" variant="secondary" @click="handleLeaveLeague">
                                 <Spinner v-if="isLeaving" class="mr-2 h-4 w-4"/>
                                 <LogOutIcon v-else class="mr-2 h-4 w-4"/>
-                                Leave League
+                                {{ t('Leave League') }}
                             </Button>
                         </div>
 
@@ -541,9 +543,9 @@ watch(
                                 <p class="text-blue-800 dark:text-blue-300">
                                     <LogInIcon class="mr-2 inline h-4 w-4"/>
                                     <Link :href="route('login')" class="font-medium hover:underline">
-                                        Login to join this league
+                                        {{ t('Login to join this league') }}
                                     </Link>
-                                    and participate in matches.
+                                    {{ t('and participate in matches.') }}
                                 </p>
                             </div>
                         </div>
@@ -554,23 +556,23 @@ watch(
                 <Card class="mb-8">
                     <CardHeader>
                         <div class="flex items-center justify-between w-full">
-                            <CardTitle>Players & Ratings</CardTitle>
+                            <CardTitle>{{ t('Players & Ratings') }}</CardTitle>
                             <!-- Only show add player button to authenticated admins -->
                             <Button v-if="isAuthenticated && isAdmin" variant="outline"
                                     @click="showAddPlayerModal = true">
                                 <UserPlusIcon class="mr-2 h-4 w-4"/>
-                                Add Player
+                                {{ t('Add Player') }}
                             </Button>
                         </div>
                     </CardHeader>
                     <CardContent>
                         <div v-if="isLoadingPlayers" class="py-4 text-center">
                             <Spinner class="text-primary mx-auto h-6 w-6"/>
-                            <p class="mt-2 text-gray-500">Loading players...</p>
+                            <p class="mt-2 text-gray-500">{{ t('Loading players...') }}</p>
                         </div>
 
                         <div v-else-if="playersError" class="rounded bg-red-100 p-4 text-red-500">
-                            Error loading players: {{ playersError.message }}
+                            {{ t('Error loading players: :error', { error: playersError.message }) }}
                         </div>
 
                         <PlayerList
@@ -591,21 +593,21 @@ watch(
                 <!-- Matches Card - Show to everyone but limit actions for guests -->
                 <Card v-if="!league.game_multiplayer">
                     <CardHeader>
-                        <CardTitle>Matches</CardTitle>
-                        <CardDescription>Recent challenges and games.</CardDescription>
+                        <CardTitle>{{ t('Matches') }}</CardTitle>
+                        <CardDescription>{{ t('Recent challenges and games.') }}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div v-if="isLoadingMatches">
                             <Spinner class="text-primary mx-auto h-6 w-6"/>
-                            <p class="mt-2 text-center text-gray-500">Loading matches...</p>
+                            <p class="mt-2 text-center text-gray-500">{{ t('Loading matches...') }}</p>
                         </div>
 
                         <div v-else-if="matchesError" class="rounded bg-red-100 p-4 text-red-500">
-                            Error loading matches: {{ matchesError.message }}
+                            {{ t('Error loading matches: :error', { error: matchesError.message }) }}
                         </div>
 
                         <div v-else-if="!matches || matches.length === 0" class="py-4 text-center text-gray-500">
-                            No matches found for this league.
+                            {{ t('No matches found for this league.') }}
                         </div>
 
                         <ul v-else class="space-y-3">
@@ -736,7 +738,7 @@ watch(
                                         >
                                             <Link :href="route('login')"
                                                   class="text-xs text-blue-600 hover:underline dark:text-blue-400">
-                                                Login to participate
+                                                {{ t('Login to participate') }}
                                             </Link>
                                         </div>
                                     </div>
