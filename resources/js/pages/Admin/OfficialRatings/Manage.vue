@@ -2,6 +2,7 @@
 <script lang="ts" setup>
 import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Spinner} from '@/Components/ui';
 import {useOfficialRatings} from '@/composables/useOfficialRatings';
+import {useLocale} from '@/composables/useLocale';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import type {OfficialRating} from '@/types/api';
 import {Head, Link} from '@inertiajs/vue3';
@@ -18,6 +19,7 @@ const {
     fetchOfficialRating,
     recalculateRatingPositions
 } = useOfficialRatings();
+const {t} = useLocale();
 
 const rating = ref<OfficialRating | null>(null);
 const isLoading = ref(true);
@@ -27,22 +29,22 @@ const successMessage = ref<string | null>(null);
 
 const managementOptions = [
     {
-        title: 'Manage Players',
-        description: 'Add, remove, and manage players in this rating',
+        title: t('Manage Players'),
+        description: t('Add, remove, and manage players in this rating'),
         icon: UsersIcon,
         href: `/admin/official-ratings/${props.ratingId}/players`,
         color: 'blue'
     },
     {
-        title: 'Manage Tournaments',
-        description: 'Associate tournaments with this rating and manage coefficients',
+        title: t('Manage Tournaments'),
+        description: t('Associate tournaments with this rating and manage coefficients'),
         icon: TrophyIcon,
         href: `/admin/official-ratings/${props.ratingId}/tournaments`,
         color: 'green'
     },
     {
-        title: 'Edit Rating Settings',
-        description: 'Modify rating configuration and settings',
+        title: t('Edit Rating Settings'),
+        description: t('Modify rating configuration and settings'),
         icon: SettingsIcon,
         href: `/admin/official-ratings/${props.ratingId}/edit`,
         color: 'purple'
@@ -51,8 +53,8 @@ const managementOptions = [
 
 const quickActions = [
     {
-        title: 'Recalculate Positions',
-        description: 'Recalculate all player positions based on current ratings',
+        title: t('Recalculate Positions'),
+        description: t('Recalculate all player positions based on current ratings'),
         icon: RefreshCwIcon,
         action: 'recalculate',
         color: 'orange'
@@ -72,7 +74,7 @@ const fetchData = async () => {
             }
         }
     } catch (err: any) {
-        error.value = err.message || 'Failed to load rating data';
+        error.value = err.message || t('Failed to load rating data');
     } finally {
         isLoading.value = false;
     }
@@ -88,13 +90,13 @@ const handleRecalculate = async () => {
         const success = await recalculateAction.execute();
 
         if (success) {
-            successMessage.value = 'Player positions recalculated successfully!';
+            successMessage.value = t('Player positions recalculated successfully!');
             await fetchData(); // Refresh data
         } else if (recalculateAction.error.value) {
-            error.value = recalculateAction.error.value.message || 'Failed to recalculate positions';
+            error.value = recalculateAction.error.value.message || t('Failed to recalculate positions');
         }
     } catch (err: any) {
-        error.value = err.message || 'Failed to recalculate positions';
+        error.value = err.message || t('Failed to recalculate positions');
     } finally {
         isRecalculating.value = false;
     }
@@ -132,7 +134,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <Head :title="rating ? `Manage Rating: ${rating.name}` : 'Manage Official Rating'"/>
+    <Head :title="rating ? t('Manage Rating: :name', {name: rating.name}) : t('Manage Official Rating')"/>
 
     <div class="py-12">
         <div class="mx-auto max-w-4xl sm:px-6 lg:px-8">
@@ -141,19 +143,19 @@ onMounted(() => {
                 <Link :href="`/official-ratings/${props.ratingId}`">
                     <Button variant="outline">
                         <ArrowLeftIcon class="mr-2 h-4 w-4"/>
-                        Back to Rating
+                        {{ t('Back to Rating') }}
                     </Button>
                 </Link>
 
                 <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">
-                    Rating Management
+                    {{ t('Rating Management') }}
                 </h1>
             </div>
 
             <!-- Loading State -->
             <div v-if="isLoading" class="flex items-center justify-center py-10">
                 <Spinner class="text-primary h-8 w-8"/>
-                <span class="ml-2 text-gray-500 dark:text-gray-400">Loading rating...</span>
+                <span class="ml-2 text-gray-500 dark:text-gray-400">{{ t('Loading rating...') }}</span>
             </div>
 
             <!-- Error Message -->
@@ -188,26 +190,26 @@ onMounted(() => {
                                 <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
                                     {{ rating.players_count }}
                                 </div>
-                                <div class="text-sm text-gray-600 dark:text-gray-400">Active Players</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('Active Players') }}</div>
                             </div>
                             <div class="text-center p-4 bg-gray-50 rounded-lg dark:bg-gray-800">
                                 <div class="text-2xl font-bold text-green-600 dark:text-green-400">
                                     {{ rating.tournaments_count }}
                                 </div>
-                                <div class="text-sm text-gray-600 dark:text-gray-400">Tournaments</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('Tournaments') }}</div>
                             </div>
                             <div class="text-center p-4 bg-gray-50 rounded-lg dark:bg-gray-800">
                                 <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">
                                     {{ rating.initial_rating }}
                                 </div>
-                                <div class="text-sm text-gray-600 dark:text-gray-400">Initial Rating</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('Initial Rating') }}</div>
                             </div>
                             <div class="text-center p-4 bg-gray-50 rounded-lg dark:bg-gray-800">
                                 <div :class="rating.is_active ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'"
                                      class="text-2xl font-bold">
-                                    {{ rating.is_active ? 'Active' : 'Inactive' }}
+                                    {{ rating.is_active ? t('Active') : t('Inactive') }}
                                 </div>
-                                <div class="text-sm text-gray-600 dark:text-gray-400">Status</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('Status') }}</div>
                             </div>
                         </div>
                     </CardContent>
@@ -246,9 +248,9 @@ onMounted(() => {
                 <!-- Quick Actions -->
                 <Card>
                     <CardHeader>
-                        <CardTitle>Quick Actions</CardTitle>
+                        <CardTitle>{{ t('Quick Actions') }}</CardTitle>
                         <CardDescription>
-                            Perform common management tasks quickly
+                            {{ t('Perform common management tasks quickly') }}
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -288,9 +290,9 @@ onMounted(() => {
                 <!-- Recent Activity Summary -->
                 <Card v-if="rating.top_players && rating.top_players.length > 0" class="mt-8">
                     <CardHeader>
-                        <CardTitle>Top Players</CardTitle>
+                        <CardTitle>{{ t('Top Players') }}</CardTitle>
                         <CardDescription>
-                            Current top performers in this rating
+                            {{ t('Current top performers in this rating') }}
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -317,14 +319,14 @@ onMounted(() => {
                                                 player.user?.lastname
                                             }}</p>
                                         <p class="text-sm text-gray-600 dark:text-gray-400">
-                                            {{ player.tournaments_played }} tournaments played
+                                            {{ player.tournaments_played }} {{ t('tournaments played') }}
                                         </p>
                                     </div>
                                 </div>
                                 <div class="text-right">
                                     <div class="font-bold text-lg">{{ player.rating_points }}</div>
                                     <div class="text-sm text-gray-600 dark:text-gray-400">
-                                        {{ player.win_rate }}% win rate
+                                        {{ player.win_rate }}% {{ t('win rate') }}
                                     </div>
                                 </div>
                             </div>
