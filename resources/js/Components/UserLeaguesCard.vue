@@ -4,6 +4,7 @@ import {apiClient} from '@/lib/apiClient';
 import type {League, MatchGame, Rating} from '@/types/api';
 import {Link} from '@inertiajs/vue3';
 import {computed, onMounted, ref} from 'vue';
+import {useLocale} from '@/composables/useLocale';
 
 interface LeagueWithMatches {
     league: League;
@@ -14,6 +15,7 @@ interface LeagueWithMatches {
 const leagues = ref<Record<string, LeagueWithMatches>>({});
 const isLoading = ref(true);
 const error = ref<string | null>(null);
+const { t } = useLocale();
 
 const emit = defineEmits(['activeMatchesFound']);
 
@@ -70,13 +72,13 @@ onMounted(fetchUserLeagues);
 <template>
     <Card>
         <CardHeader>
-            <CardTitle>Your Leagues</CardTitle>
-            <CardDescription>Leagues you've joined and are active in</CardDescription>
+            <CardTitle>{{ t('Your Leagues') }}</CardTitle>
+            <CardDescription>{{ t("Leagues you've joined and are active in") }}</CardDescription>
         </CardHeader>
         <CardContent>
             <div v-if="isLoading" class="py-4 text-center text-gray-500 dark:text-gray-400">
                 <Spinner class="text-primary mx-auto mb-2 h-6 w-6"/>
-                <span>Loading your leagues...</span>
+                <span>{{ t('Loading your leagues...') }}</span>
             </div>
 
             <div v-else-if="error" class="py-4 text-center text-red-500 dark:text-red-400">
@@ -85,10 +87,10 @@ onMounted(fetchUserLeagues);
 
             <div v-else-if="Object.keys(leagues).length === 0"
                  class="py-4 text-center text-gray-500 dark:text-gray-400">
-                <p>You haven't joined any leagues yet.</p>
+                <p>{{ t("You haven't joined any leagues yet.") }}</p>
                 <Link :href="route('leagues.index.page')"
                       class="mt-2 block text-blue-600 hover:underline dark:text-blue-400">
-                    Browse leagues to join
+                    {{ t('Browse leagues to join') }}
                 </Link>
             </div>
 
@@ -102,18 +104,18 @@ onMounted(fetchUserLeagues);
                                     v-if="getActiveMatchesCount(item) > 0"
                                     class="ml-2 rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
                                 >
-                                    {{ getActiveMatchesCount(item) }} active
+                                    {{ getActiveMatchesCount(item) }} {{ t('active') }}
                                 </span>
                             </h4>
                             <p class="text-sm text-gray-500 dark:text-gray-400">
-                                Your Rating: <span class="font-semibold">{{ item.rating.rating }}</span>
+                                {{ t('Your Rating') }}: <span class="font-semibold">{{ item.rating.rating }}</span>
                                 <span v-if="item.activeMatches.length" class="ml-2 text-amber-600 dark:text-amber-400">
-                                    ({{ item.activeMatches.length }} matches total)
+                                    ({{ t(':count matches total', { count: item.activeMatches.length }) }})
                                 </span>
                             </p>
                         </div>
                         <Link :href="`/leagues/${item.league.id}`"
-                              class="text-sm text-blue-600 hover:underline dark:text-blue-400"> View
+                              class="text-sm text-blue-600 hover:underline dark:text-blue-400"> {{ t('View') }}
                         </Link>
                     </div>
                 </li>

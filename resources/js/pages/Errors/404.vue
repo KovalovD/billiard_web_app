@@ -2,9 +2,9 @@
 import {Button} from '@/Components/ui';
 import {Head, Link} from '@inertiajs/vue3';
 import {useLocale} from '@/composables/useLocale';
-</script>
 
-const {t} = useLocale();
+const { t } = useLocale();
+</script>
 
 <template>
     <Head :title="t('Page Not Found')"/>
