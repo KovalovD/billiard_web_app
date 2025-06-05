@@ -14,12 +14,15 @@ import {
 } from '@/Components/ui';
 import {useTournaments} from '@/composables/useTournaments';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
+import {useLocale} from '@/composables/useLocale';
 import type {Tournament, TournamentPlayer, User} from '@/types/api';
 import {Head, router} from '@inertiajs/vue3';
 import {ArrowLeftIcon, PlusIcon, SearchIcon, TrashIcon, UserPlusIcon, UsersIcon} from 'lucide-vue-next';
 import {computed, onMounted, ref, watch} from 'vue';
 
 defineOptions({layout: AuthenticatedLayout});
+
+const {t} = useLocale();
 
 const props = defineProps<{
     tournamentId: number | string;
@@ -201,30 +204,30 @@ onMounted(() => {
 </script>
 
 <template>
-    <Head :title="tournament ? `Manage Players: ${tournament.name}` : 'Manage Tournament Players'"/>
+    <Head :title="tournament ? t('Manage Players: :name', {name: tournament.name}) : t('Manage Tournament Players')"/>
 
     <div class="py-12">
         <div class="mx-auto max-w-6xl sm:px-6 lg:px-8">
             <!-- Header -->
             <div class="mb-6 flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">Manage Players</h1>
+                    <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">{{ t('Manage Players') }}</h1>
                     <p class="text-gray-600 dark:text-gray-400">
-                        {{ tournament ? tournament.name : 'Loading...' }}
+                        {{ tournament ? tournament.name : t('Loading...') }}
                     </p>
                 </div>
                 <div class="flex space-x-3">
                     <Button v-if="canAddPlayers" variant="outline" @click="showAddExistingModal = true">
                         <UserPlusIcon class="mr-2 h-4 w-4"/>
-                        Add Existing Player
+                        {{ t('Add Existing Player') }}
                     </Button>
                     <Button v-if="canAddPlayers" @click="showAddNewModal = true">
                         <PlusIcon class="mr-2 h-4 w-4"/>
-                        Add New Player
+                        {{ t('Add New Player') }}
                     </Button>
                     <Button variant="outline" @click="handleBackToTournament">
                         <ArrowLeftIcon class="mr-2 h-4 w-4"/>
-                        Back to Tournament
+                        {{ t('Back to Tournament') }}
                     </Button>
                 </div>
             </div>
@@ -237,25 +240,25 @@ onMounted(() => {
                             <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
                                 {{ tournament.players_count }}
                             </div>
-                            <div class="text-sm text-gray-600 dark:text-gray-400">Total Players</div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('Total Players') }}</div>
                         </div>
                         <div class="text-center">
                             <div class="text-2xl font-bold text-green-600 dark:text-green-400">
                                 {{ tournament.max_participants || '∞' }}
                             </div>
-                            <div class="text-sm text-gray-600 dark:text-gray-400">Max Players</div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('Max Players') }}</div>
                         </div>
                         <div class="text-center">
                             <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">
                                 {{ tournament.status_display }}
                             </div>
-                            <div class="text-sm text-gray-600 dark:text-gray-400">Status</div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('Status') }}</div>
                         </div>
                         <div class="text-center">
                             <div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
-                                {{ tournament.is_registration_open ? 'Open' : 'Closed' }}
+                                {{ tournament.is_registration_open ? t('Open') : t('Closed') }}
                             </div>
-                            <div class="text-sm text-gray-600 dark:text-gray-400">Registration</div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('Registration') }}</div>
                         </div>
                     </div>
                 </CardContent>
@@ -266,10 +269,10 @@ onMounted(() => {
                 <CardHeader>
                     <CardTitle class="flex items-center gap-2">
                         <UsersIcon class="h-5 w-5"/>
-                        Tournament Players
+                        {{ t('Tournament Players') }}
                     </CardTitle>
                     <CardDescription>
-                        Manage player registration and tournament participation
+                        {{ t('Manage player registration and tournament participation') }}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -277,18 +280,18 @@ onMounted(() => {
                         <Spinner class="text-primary h-6 w-6"/>
                     </div>
                     <div v-else-if="players.length === 0" class="py-8 text-center text-gray-500">
-                        No players registered yet.
+                        {{ t('No players registered yet.') }}
                     </div>
                     <div v-else class="overflow-auto">
                         <table class="w-full">
                             <thead>
                             <tr class="border-b dark:border-gray-700">
-                                <th class="px-4 py-3 text-left">Position</th>
-                                <th class="px-4 py-3 text-left">Player</th>
-                                <th class="px-4 py-3 text-center">Status</th>
-                                <th class="px-4 py-3 text-center">Rating Points</th>
-                                <th class="px-4 py-3 text-center">Prize</th>
-                                <th class="px-4 py-3 text-center">Actions</th>
+                                <th class="px-4 py-3 text-left">{{ t('Position') }}</th>
+                                <th class="px-4 py-3 text-left">{{ t('Player') }}</th>
+                                <th class="px-4 py-3 text-center">{{ t('Status') }}</th>
+                                <th class="px-4 py-3 text-center">{{ t('Rating Points') }}</th>
+                                <th class="px-4 py-3 text-center">{{ t('Prize') }}</th>
+                                <th class="px-4 py-3 text-center">{{ t('Actions') }}</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -347,17 +350,17 @@ onMounted(() => {
             </Card>
 
             <!-- Add Existing Player Modal -->
-            <Modal :show="showAddExistingModal" title="Add Existing Player" @close="showAddExistingModal = false">
+            <Modal :show="showAddExistingModal" :title="t('Add Existing Player')" @close="showAddExistingModal = false">
                 <div class="space-y-4">
                     <div class="space-y-2">
-                        <Label for="search">Search Players</Label>
+                        <Label for="search">{{ t('Search Players') }}</Label>
                         <div class="relative">
                             <SearchIcon class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"/>
                             <Input
                                 id="search"
                                 v-model="searchQuery"
                                 class="pl-10"
-                                placeholder="Search by name or email..."
+                                :placeholder="t('Search by name or email...')"
                             />
                         </div>
                     </div>
@@ -382,34 +385,34 @@ onMounted(() => {
                                 size="sm"
                                 @click="handleAddExistingPlayer(user.id)"
                             >
-                                Add
+                                {{ t('Add') }}
                             </Button>
-                            <span v-else class="text-sm text-gray-500">Already added</span>
+                            <span v-else class="text-sm text-gray-500">{{ t('Already added') }}</span>
                         </div>
                     </div>
 
                     <div v-else-if="searchQuery.length >= 2" class="py-4 text-center text-gray-500">
-                        No players found
+                        {{ t('No players found') }}
                     </div>
 
                     <div v-else class="py-4 text-center text-gray-500">
-                        Type at least 2 characters to search
+                        {{ t('Type at least 2 characters to search') }}
                     </div>
                 </div>
 
                 <template #footer>
                     <Button variant="outline" @click="showAddExistingModal = false">
-                        Cancel
+                        {{ t('Cancel') }}
                     </Button>
                 </template>
             </Modal>
 
             <!-- Add New Player Modal -->
-            <Modal :show="showAddNewModal" title="Add New Player" @close="showAddNewModal = false">
+            <Modal :show="showAddNewModal" :title="t('Add New Player')" @close="showAddNewModal = false">
                 <form class="space-y-4" @submit.prevent="handleAddNewPlayer">
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-2">
-                            <Label for="firstname">First Name *</Label>
+                            <Label for="firstname">{{ t('First Name *') }}</Label>
                             <Input
                                 id="firstname"
                                 v-model="newPlayerForm.firstname"
@@ -417,7 +420,7 @@ onMounted(() => {
                             />
                         </div>
                         <div class="space-y-2">
-                            <Label for="lastname">Last Name *</Label>
+                            <Label for="lastname">{{ t('Last Name *') }}</Label>
                             <Input
                                 id="lastname"
                                 v-model="newPlayerForm.lastname"
@@ -427,7 +430,7 @@ onMounted(() => {
                     </div>
 
                     <div class="space-y-2">
-                        <Label for="email">Email *</Label>
+                        <Label for="email">{{ t('Email *') }}</Label>
                         <Input
                             id="email"
                             v-model="newPlayerForm.email"
@@ -437,7 +440,7 @@ onMounted(() => {
                     </div>
 
                     <div class="space-y-2">
-                        <Label for="phone">Phone *</Label>
+                        <Label for="phone">{{ t('Phone *') }}</Label>
                         <Input
                             id="phone"
                             v-model="newPlayerForm.phone"
@@ -449,14 +452,14 @@ onMounted(() => {
 
                 <template #footer>
                     <Button variant="outline" @click="showAddNewModal = false">
-                        Cancel
+                        {{ t('Cancel') }}
                     </Button>
                     <Button
                         :disabled="!isNewPlayerFormValid || isAddingPlayer"
                         @click="handleAddNewPlayer"
                     >
                         <Spinner v-if="isAddingPlayer" class="mr-2 h-4 w-4"/>
-                        {{ isAddingPlayer ? 'Adding...' : 'Add Player' }}
+                        {{ isAddingPlayer ? t('Adding...') : t('Add Player') }}
                     </Button>
                 </template>
             </Modal>
@@ -464,7 +467,7 @@ onMounted(() => {
             <!-- Error Display -->
             <div v-if="addExistingApi.error.value || addNewApi.error.value"
                  class="mt-4 rounded bg-red-100 p-4 text-red-600 dark:bg-red-900/30 dark:text-red-400">
-                Error: {{ addExistingApi.error.value?.message || addNewApi.error.value?.message }}
+                {{ t('Error:') }} {{ addExistingApi.error.value?.message || addNewApi.error.value?.message }}
             </div>
         </div>
     </div>
