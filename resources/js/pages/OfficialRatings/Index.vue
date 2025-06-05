@@ -43,7 +43,7 @@ const fetchRatings = async () => {
     try {
         ratings.value = await apiClient<OfficialRating[]>('/api/official-ratings');
     } catch (err: any) {
-        error.value = err.message || 'Failed to load official ratings';
+        error.value = err.message || t('Failed to load official ratings');
     } finally {
         isLoading.value = false;
     }
