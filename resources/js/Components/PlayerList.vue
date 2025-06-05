@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type {Rating} from '@/types/api';
 import {computed} from 'vue';
+import {useLocale} from '@/composables/useLocale';
 import PlayerListItem from './PlayerListItem.vue';
 
 interface Props {
@@ -15,6 +16,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const { t } = useLocale();
 
 const authUserPosition = computed((): number | null => {
     if (!props.currentUserId) return null;
@@ -27,7 +29,7 @@ const authUserPosition = computed((): number | null => {
 
 <template>
     <div v-if="!players || players.length === 0" class="py-4 text-center text-gray-500 dark:text-gray-400">
-        No players have joined this league yet.
+        {{ t('No players have joined this league yet.') }}
     </div>
     <ul v-else class="space-y-3">
         <PlayerListItem
