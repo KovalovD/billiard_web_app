@@ -6,6 +6,7 @@ import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
 import type {Tournament, TournamentPlayer} from '@/types/api';
 import {Head, Link} from '@inertiajs/vue3';
+import {useLocale} from '@/composables/useLocale';
 import {
     ArrowLeftIcon,
     CalendarIcon,
@@ -28,6 +29,7 @@ const props = defineProps<{
 }>();
 
 const {isAdmin, isAuthenticated} = useAuth();
+const {t} = useLocale();
 
 const tournament = ref<Tournament | null>(null);
 const players = ref<TournamentPlayer[]>([]);
@@ -185,7 +187,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <Head :title="tournament ? `Tournament: ${tournament.name}` : 'Tournament'"/>
+    <Head :title="tournament ? t('Tournament: :name', {name: tournament.name}) : t('Tournament')"/>
 
     <div class="py-12">
         <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
@@ -194,7 +196,7 @@ onMounted(() => {
                 <Link href="/tournaments">
                     <Button variant="outline">
                         <ArrowLeftIcon class="mr-2 h-4 w-4"/>
-                        Back to Tournaments
+                        {{ t('Back to Tournaments') }}
                     </Button>
                 </Link>
 
@@ -203,20 +205,20 @@ onMounted(() => {
                     <Link :href="`/admin/tournaments/${tournament.id}/edit`">
                         <Button variant="secondary">
                             <PencilIcon class="mr-2 h-4 w-4"/>
-                            Edit Tournament
+                            {{ t('Edit Tournament') }}
                         </Button>
                     </Link>
                     <Link :href="`/admin/tournaments/${tournament.id}/players`">
                         <Button variant="secondary">
                             <UserPlusIcon class="mr-2 h-4 w-4"/>
-                            Manage Players
+                            {{ t('Manage Players') }}
                         </Button>
                     </Link>
                     <Link v-if="tournament.pending_applications_count > 0"
                           :href="`/admin/tournaments/${tournament.id}/applications`">
                         <Button class="relative" variant="secondary">
                             <ClipboardListIcon class="mr-2 h-4 w-4"/>
-                            Applications
+                            {{ t('Applications') }}
                             <span
                                 class="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
                                 {{ tournament.pending_applications_count }}
@@ -227,13 +229,13 @@ onMounted(() => {
                           :href="`/admin/tournaments/${tournament.id}/applications`">
                         <Button variant="secondary">
                             <ClipboardListIcon class="mr-2 h-4 w-4"/>
-                            Applications
+                            {{ t('Applications') }}
                         </Button>
                     </Link>
                     <Link :href="`/admin/tournaments/${tournament.id}/results`">
                         <Button variant="secondary">
                             <TrophyIcon class="mr-2 h-4 w-4"/>
-                            Manage Results
+                            {{ t('Manage Results') }}
                         </Button>
                     </Link>
                 </div>
@@ -242,7 +244,7 @@ onMounted(() => {
                 <div v-else-if="!isAuthenticated && tournament" class="text-center">
                     <Link :href="route('login')" class="text-sm text-blue-600 hover:underline dark:text-blue-400">
                         <LogInIcon class="mr-1 inline h-4 w-4"/>
-                        Login to participate
+                        {{ t('Login to participate') }}
                     </Link>
                 </div>
             </div>
@@ -250,12 +252,12 @@ onMounted(() => {
             <!-- Loading State -->
             <div v-if="isLoadingTournament" class="p-10 text-center">
                 <Spinner class="text-primary mx-auto h-8 w-8"/>
-                <p class="mt-2 text-gray-500">Loading tournament...</p>
+                <p class="mt-2 text-gray-500">{{ t('Loading tournament...') }}</p>
             </div>
 
             <!-- Error State -->
             <div v-else-if="error" class="mb-6 rounded bg-red-100 p-4 text-red-500">
-                Error loading tournament: {{ error }}
+                {{ t('Error loading tournament: :error', { error }) }}
             </div>
 
             <!-- Tournament Content -->
@@ -313,15 +315,13 @@ onMounted(() => {
                         <CardContent class="p-6">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <h3 class="text-lg font-medium text-blue-800 dark:text-blue-300">Tournament
-                                        Registration</h3>
-                                    <p class="text-blue-600 dark:text-blue-400">This tournament requires application to
-                                        participate.</p>
+                                    <h3 class="text-lg font-medium text-blue-800 dark:text-blue-300">{{ t('Tournament Registration') }}</h3>
+                                    <p class="text-blue-600 dark:text-blue-400">{{ t('This tournament requires application to participate.') }}</p>
                                 </div>
                                 <Link :href="route('login')">
                                     <Button>
                                         <LogInIcon class="mr-2 h-4 w-4"/>
-                                        Login to Apply
+                                        {{ t('Login to Apply') }}
                                     </Button>
                                 </Link>
                             </div>
@@ -341,7 +341,7 @@ onMounted(() => {
                             ]"
                             @click="activeTab = 'info'"
                         >
-                            Information
+                            {{ t('Information') }}
                         </button>
                         <button
                             :class="[
@@ -352,7 +352,7 @@ onMounted(() => {
                             ]"
                             @click="activeTab = 'players'"
                         >
-                            Players ({{ tournament.confirmed_players_count }})
+                            {{ t('Players') }} ({{ tournament.confirmed_players_count }})
                         </button>
                         <button
                             v-if="tournament.requires_application && (isAuthenticated && isAdmin || tournament.pending_applications_count > 0)"
@@ -364,7 +364,7 @@ onMounted(() => {
                             ]"
                             @click="activeTab = 'applications'"
                         >
-                            Applications ({{ tournament.pending_applications_count }})
+                            {{ t('Applications') }} ({{ tournament.pending_applications_count }})
                         </button>
                         <button
                             v-if="tournament.is_completed"
@@ -376,7 +376,7 @@ onMounted(() => {
                            ]"
                             @click="activeTab = 'results'"
                         >
-                            Results
+                            {{ t('Results') }}
                         </button>
                     </nav>
                 </div>
@@ -387,7 +387,7 @@ onMounted(() => {
                         <!-- Details Card -->
                         <Card>
                             <CardHeader>
-                                <CardTitle>Tournament Details</CardTitle>
+                                <CardTitle>{{ t('Tournament Details') }}</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div class="space-y-4">
@@ -440,7 +440,7 @@ onMounted(() => {
                         <!-- Stats Card -->
                         <Card>
                             <CardHeader>
-                                <CardTitle>Tournament Stats</CardTitle>
+                                <CardTitle>{{ t('Tournament Stats') }}</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div class="grid grid-cols-2 gap-4">
@@ -449,7 +449,7 @@ onMounted(() => {
                                             {{ tournament.confirmed_players_count }}
                                         </div>
                                         <div class="text-sm text-gray-600 dark:text-gray-400">
-                                            Confirmed Players
+                                            {{ t('Confirmed Players') }}
                                         </div>
                                     </div>
 
@@ -459,7 +459,7 @@ onMounted(() => {
                                             {{ tournament.pending_applications_count }}
                                         </div>
                                         <div class="text-sm text-gray-600 dark:text-gray-400">
-                                            Pending Applications
+                                            {{ t('Pending Applications') }}
                                         </div>
                                     </div>
 
@@ -468,7 +468,7 @@ onMounted(() => {
                                             {{ tournament.max_participants || '∞' }}
                                         </div>
                                         <div class="text-sm text-gray-600 dark:text-gray-400">
-                                            Max Participants
+                                            {{ t('Max Participants') }}
                                         </div>
                                     </div>
 
@@ -477,7 +477,7 @@ onMounted(() => {
                                         <div class="text-2xl font-bold text-green-600 dark:text-green-400">
                                             {{ formatCurrency(tournament.entry_fee) }}
                                         </div>
-                                        <div class="text-sm text-gray-600 dark:text-gray-400">Entry Fee</div>
+                                        <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('Entry Fee') }}</div>
                                     </div>
 
                                     <div v-if="tournament.prize_pool > 0"
@@ -485,7 +485,7 @@ onMounted(() => {
                                         <div class="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
                                             {{ formatCurrency(tournament.prize_pool) }}
                                         </div>
-                                        <div class="text-sm text-gray-600 dark:text-gray-400">Total Prize Pool</div>
+                                        <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('Total Prize Pool') }}</div>
                                     </div>
                                 </div>
                             </CardContent>
@@ -499,12 +499,12 @@ onMounted(() => {
                         <CardHeader>
                             <CardTitle class="flex items-center gap-2">
                                 <UsersIcon class="h-5 w-5"/>
-                                Confirmed Players
+                                {{ t('Confirmed Players') }}
                             </CardTitle>
                             <CardDescription>
-                                {{ tournament.confirmed_players_count }} confirmed players
+                                {{ tournament.confirmed_players_count }} {{ t('confirmed players') }}
                                 <span v-if="tournament.max_participants">
-                                   out of {{ tournament.max_participants }} maximum
+                                   {{ t('out of') }} {{ tournament.max_participants }} {{ t('maximum') }}
                                </span>
                             </CardDescription>
                         </CardHeader>
@@ -513,7 +513,7 @@ onMounted(() => {
                                 <Spinner class="text-primary h-6 w-6"/>
                             </div>
                             <div v-else-if="confirmedPlayers.length === 0" class="py-8 text-center text-gray-500">
-                                No confirmed players yet.
+                                {{ t('No confirmed players yet.') }}
                             </div>
                             <div v-else class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                                 <div
@@ -545,9 +545,9 @@ onMounted(() => {
                             <CardHeader>
                                 <CardTitle class="flex items-center gap-2">
                                     <ClipboardListIcon class="h-5 w-5 text-yellow-600"/>
-                                    Pending Applications ({{ pendingApplications.length }})
+                                    {{ t('Pending Applications') }} ({{ pendingApplications.length }})
                                 </CardTitle>
-                                <CardDescription>Applications waiting for approval</CardDescription>
+                                <CardDescription>{{ t('Applications waiting for approval') }}</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -577,9 +577,9 @@ onMounted(() => {
                             <CardHeader>
                                 <CardTitle class="flex items-center gap-2">
                                     <UserCheckIcon class="h-5 w-5 text-red-600"/>
-                                    Rejected Applications ({{ rejectedApplications.length }})
+                                    {{ t('Rejected Applications') }} ({{ rejectedApplications.length }})
                                 </CardTitle>
-                                <CardDescription>Applications that were not accepted</CardDescription>
+                                <CardDescription>{{ t('Applications that were not accepted') }}</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -608,9 +608,9 @@ onMounted(() => {
                         <Card v-if="pendingApplications.length === 0 && rejectedApplications.length === 0">
                             <CardContent class="py-10 text-center">
                                 <ClipboardListIcon class="mx-auto h-12 w-12 text-gray-400"/>
-                                <p class="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">No Applications</p>
+                                <p class="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">{{ t('No Applications') }}</p>
                                 <p class="mt-2 text-gray-600 dark:text-gray-400">
-                                    There are no applications to display.
+                                    {{ t('There are no applications to display.') }}
                                 </p>
                             </CardContent>
                         </Card>
@@ -623,22 +623,22 @@ onMounted(() => {
                         <CardHeader>
                             <CardTitle class="flex items-center gap-2">
                                 <TrophyIcon class="h-5 w-5"/>
-                                Tournament Results
+                                {{ t('Tournament Results') }}
                             </CardTitle>
-                            <CardDescription>Final standings and prizes</CardDescription>
+                            <CardDescription>{{ t('Final standings and prizes') }}</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div v-if="completedPlayers.length === 0" class="py-8 text-center text-gray-500">
-                                No results available yet.
+                                {{ t('No results available yet.') }}
                             </div>
                             <div v-else class="overflow-auto">
                                 <table class="w-full">
                                     <thead>
                                     <tr class="border-b dark:border-gray-700">
-                                        <th class="px-4 py-3 text-left">Position</th>
-                                        <th class="px-4 py-3 text-left">Player</th>
-                                        <th class="px-4 py-3 text-center">Rating Points</th>
-                                        <th class="px-4 py-3 text-right">Prize</th>
+                                        <th class="px-4 py-3 text-left">{{ t('Position') }}</th>
+                                        <th class="px-4 py-3 text-left">{{ t('Player') }}</th>
+                                        <th class="px-4 py-3 text-center">{{ t('Rating Points') }}</th>
+                                        <th class="px-4 py-3 text-right">{{ t('Prize') }}</th>
                                     </tr>
                                     </thead>
                                     <tbody>
