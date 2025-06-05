@@ -90,11 +90,11 @@ const getPositionBadgeClass = (position: number): string => {
 const getCalculationMethodDisplay = (method: string): string => {
     switch (method) {
         case 'tournament_points':
-            return 'Tournament Points';
+            return t('Tournament Points');
         case 'elo':
-            return 'ELO Rating';
+            return t('ELO Rating');
         case 'custom':
-            return 'Custom';
+            return t('Custom');
         default:
             return method;
     }
@@ -114,7 +114,7 @@ const fetchRating = async () => {
     try {
         rating.value = await apiClient<OfficialRating>(`/api/official-ratings/${props.ratingId}?include_top_players=true`);
     } catch (err: any) {
-        error.value = err.message || 'Failed to load official rating';
+        error.value = err.message || t('Failed to load official rating');
     } finally {
         isLoadingRating.value = false;
     }
@@ -171,7 +171,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <Head :title="rating ? `Rating: ${rating.name}` : 'Official Rating'"/>
+    <Head :title="rating ? t('Rating: :name', {name: rating.name}) : t('Official Rating')"/>
 
     <div class="py-12">
         <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
@@ -180,7 +180,7 @@ onMounted(() => {
                 <Link href="/official-ratings">
                     <Button variant="outline">
                         <ArrowLeftIcon class="mr-2 h-4 w-4"/>
-                        Back to Ratings
+                        {{ t('Back to Ratings') }}
                     </Button>
                 </Link>
 
@@ -188,13 +188,13 @@ onMounted(() => {
                     <Link :href="`/admin/official-ratings/${rating.id}/edit`">
                         <Button variant="secondary">
                             <PencilIcon class="mr-2 h-4 w-4"/>
-                            Edit Rating
+                            {{ t('Edit Rating') }}
                         </Button>
                     </Link>
                     <Link :href="`/admin/official-ratings/${rating.id}/manage`">
                         <Button variant="secondary">
                             <UserPlusIcon class="mr-2 h-4 w-4"/>
-                            Manage
+                            {{ t('Manage') }}
                         </Button>
                     </Link>
                 </div>
@@ -203,12 +203,12 @@ onMounted(() => {
             <!-- Loading State -->
             <div v-if="isLoadingRating" class="p-10 text-center">
                 <Spinner class="text-primary mx-auto h-8 w-8"/>
-                <p class="mt-2 text-gray-500">Loading rating...</p>
+                <p class="mt-2 text-gray-500">{{ t('Loading rating...') }}</p>
             </div>
 
             <!-- Error State -->
             <div v-else-if="error" class="mb-6 rounded bg-red-100 p-4 text-red-500">
-                Error loading rating: {{ error }}
+                {{ t('Error loading rating: :error', {error}) }}
             </div>
 
             <!-- Rating Content -->
@@ -223,7 +223,7 @@ onMounted(() => {
                                     {{ rating.name }}
                                     <span v-if="!rating.is_active"
                                           class="text-sm px-3 py-1 bg-gray-100 text-gray-600 rounded-full dark:bg-gray-800 dark:text-gray-400">
-                                        Inactive
+                                        {{ t('Inactive') }}
                                     </span>
                                 </CardTitle>
                                 <CardDescription class="mt-2 text-lg">
@@ -234,7 +234,7 @@ onMounted(() => {
                                         </span>
                                         <span class="flex items-center gap-1">
                                             <UsersIcon class="h-4 w-4"/>
-                                            {{ rating.players_count }} players
+                                            {{ rating.players_count }} {{ t('players') }}
                                         </span>
                                         <span class="flex items-center gap-1">
                                             <CalendarIcon class="h-4 w-4"/>
@@ -254,20 +254,20 @@ onMounted(() => {
                     <CardContent>
                         <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
                             <div>
-                                <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-2">Description</h4>
+                                <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-2">{{ t('Description') }}</h4>
                                 <p class="text-gray-600 dark:text-gray-400">
-                                    {{ rating.description || 'No description provided.' }}
+                                    {{ rating.description || t('No description provided.') }}
                                 </p>
                             </div>
                             <div>
-                                <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-2">Rating Details</h4>
+                                <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-2">{{ t('Rating Details') }}</h4>
                                 <div class="space-y-2 text-sm">
                                     <div class="flex justify-between">
-                                        <span class="text-gray-600 dark:text-gray-400">Initial Rating:</span>
+                                        <span class="text-gray-600 dark:text-gray-400">{{ t('Initial Rating') }}:</span>
                                         <span class="font-medium">{{ rating.initial_rating }}</span>
                                     </div>
                                     <div class="flex justify-between">
-                                        <span class="text-gray-600 dark:text-gray-400">Calculation Method:</span>
+                                        <span class="text-gray-600 dark:text-gray-400">{{ t('Calculation Method') }}:</span>
                                         <span class="font-medium">{{
                                                 getCalculationMethodDisplay(rating.calculation_method)
                                             }}</span>
@@ -290,7 +290,7 @@ onMounted(() => {
                             ]"
                             @click="activeTab = 'players'"
                         >
-                            Players ({{ rating.players_count }})
+                            {{ t('Players') }} ({{ rating.players_count }})
                         </button>
                         <button
                             :class="[
@@ -301,7 +301,7 @@ onMounted(() => {
                             ]"
                             @click="activeTab = 'tournaments'"
                         >
-                            Tournaments ({{ rating.tournaments_count }})
+                            {{ t('Tournaments') }} ({{ rating.tournaments_count }})
                         </button>
                     </nav>
                 </div>
@@ -314,10 +314,10 @@ onMounted(() => {
                                 <div>
                                     <CardTitle class="flex items-center gap-2">
                                         <CrownIcon class="h-5 w-5"/>
-                                        Player Rankings
+                                        {{ t('Player Rankings') }}
                                     </CardTitle>
                                     <CardDescription>
-                                        Current standings in the {{ rating.name }} rating
+                                        {{ t('Current standings in the :rating rating', {rating: rating.name}) }}
                                     </CardDescription>
                                 </div>
 
@@ -330,7 +330,7 @@ onMounted(() => {
                                     @click="scrollToUser"
                                 >
                                     <UserIcon class="h-4 w-4"/>
-                                    Find Me (#{{ currentUserPlayer.position }})
+                                    {{ t('Find Me (#:position)', {position: currentUserPlayer.position}) }}
                                     <ChevronDownIcon class="h-4 w-4"/>
                                 </Button>
                             </div>
@@ -338,34 +338,34 @@ onMounted(() => {
                         <CardContent>
                             <div v-if="isAuthenticated" class="mb-4 flex flex-wrap items-center gap-2">
                                 <input type="date" v-model="deltaDate" class="rounded border px-2 py-1 text-sm dark:bg-gray-800" />
-                                <Button size="sm" @click="fetchDelta" :disabled="!deltaDate || isLoadingDelta">Load Delta</Button>
+                                <Button size="sm" @click="fetchDelta" :disabled="!deltaDate || isLoadingDelta">{{ t('Load Delta') }}</Button>
                                 <Spinner v-if="isLoadingDelta" class="text-primary h-4 w-4" />
                                 <div v-if="ratingDelta" class="text-sm ml-2">
-                                    Change since {{ deltaDate }}:
+                                    {{ t('Change since :date:', {date: deltaDate}) }}
                                     <span :class="ratingDelta.points_delta >= 0 ? 'text-green-600' : 'text-red-600'">
                                         {{ ratingDelta.points_delta >= 0 ? `+${ratingDelta.points_delta}` : ratingDelta.points_delta }} pts
                                     </span>,
-                                    position {{ ratingDelta.position_before }} → {{ ratingDelta.current_position }}
+                                    {{ t('position :before → :after', {before: ratingDelta.position_before, after: ratingDelta.current_position}) }}
                                 </div>
                             </div>
                             <div v-if="isLoadingPlayers" class="flex justify-center py-8">
                                 <Spinner class="text-primary h-6 w-6"/>
                             </div>
                             <div v-else-if="allActivePlayers.length === 0" class="py-8 text-center text-gray-500">
-                                No active players in this rating.
+                                {{ t('No active players in this rating.') }}
                             </div>
                             <div v-else class="overflow-auto">
                                 <table class="w-full">
                                     <thead>
                                     <tr class="border-b dark:border-gray-700">
-                                        <th class="px-4 py-3 text-left">Rank</th>
-                                        <th class="px-4 py-3 text-left">Division</th>
-                                        <th class="px-4 py-3 text-left">Player</th>
-                                        <th class="px-4 py-3 text-center">Rating</th>
-                                        <th class="px-4 py-3 text-center">Tournaments</th>
-                                        <th class="px-4 py-3 text-center">Wins</th>
-                                        <th class="px-4 py-3 text-center">Win Rate</th>
-                                        <th class="px-4 py-3 text-center">Last Tournament</th>
+                                        <th class="px-4 py-3 text-left">{{ t('Rank') }}</th>
+                                        <th class="px-4 py-3 text-left">{{ t('Division') }}</th>
+                                        <th class="px-4 py-3 text-left">{{ t('Player') }}</th>
+                                        <th class="px-4 py-3 text-center">{{ t('Rating') }}</th>
+                                        <th class="px-4 py-3 text-center">{{ t('Tournaments') }}</th>
+                                        <th class="px-4 py-3 text-center">{{ t('Wins') }}</th>
+                                        <th class="px-4 py-3 text-center">{{ t('Win Rate') }}</th>
+                                        <th class="px-4 py-3 text-center">{{ t('Last Tournament') }}</th>
                                     </tr>
                                     </thead>
                                     <tbody>
@@ -462,7 +462,7 @@ onMounted(() => {
                                         </td>
                                         <td class="px-4 py-3 text-center text-sm text-gray-600 dark:text-gray-400">
                                             {{
-                                                player.last_tournament_at ? formatDate(player.last_tournament_at) : 'Never'
+                                                player.last_tournament_at ? formatDate(player.last_tournament_at) : t('Never')
                                             }}
                                         </td>
                                     </tr>
@@ -479,10 +479,10 @@ onMounted(() => {
                         <CardHeader>
                             <CardTitle class="flex items-center gap-2">
                                 <TrophyIcon class="h-5 w-5"/>
-                                Associated Tournaments
+                                {{ t('Associated Tournaments') }}
                             </CardTitle>
                             <CardDescription>
-                                Tournaments that count towards this rating
+                                {{ t('Tournaments that count towards this rating') }}
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -490,7 +490,7 @@ onMounted(() => {
                                 <Spinner class="text-primary h-6 w-6"/>
                             </div>
                             <div v-else-if="tournaments.length === 0" class="py-8 text-center text-gray-500">
-                                No tournaments associated with this rating.
+                                {{ t('No tournaments associated with this rating.') }}
                             </div>
                             <div v-else class="space-y-4">
                                 <div
@@ -522,13 +522,13 @@ onMounted(() => {
                                                 </span>
                                                 <span class="flex items-center gap-1">
                                                     <UsersIcon class="h-3 w-3"/>
-                                                    {{ tournament.players_count }} players
+                                                    {{ tournament.players_count }} {{ t('players') }}
                                                 </span>
                                             </div>
                                         </div>
                                         <div class="text-right">
                                             <div class="text-sm">
-                                                <span class="font-medium">Coefficient: {{
+                                                <span class="font-medium">{{ t('Coefficient') }}: {{
                                                         tournament.rating_coefficient
                                                     }}x</span>
                                             </div>
@@ -541,7 +541,7 @@ onMounted(() => {
                                                             : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
                                                     ]"
                                                 >
-                                                    {{ tournament.is_counting ? 'Counting' : 'Not Counting' }}
+                                                    {{ tournament.is_counting ? t('Counting') : t('Not Counting') }}
                                                 </span>
                                             </div>
                                         </div>

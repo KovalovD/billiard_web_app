@@ -2,6 +2,7 @@
 import {computed, onMounted, onUnmounted, watch} from 'vue';
 import {XIcon} from 'lucide-vue-next';
 import {Button} from '@/Components/ui';
+import {useLocale} from '@/composables/useLocale';
 
 interface Props {
     show: boolean;
@@ -17,6 +18,8 @@ const props = withDefaults(defineProps<Props>(), {
     closeable: true,
     modalWrapperClass: 'bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-xl transform transition-all sm:w-full sm:mx-auto'
 });
+
+const { t } = useLocale();
 
 const emit = defineEmits(['close']);
 
@@ -105,7 +108,7 @@ const maxWidthClass = computed(() => {
                                     size="icon" variant="ghost"
                                     @click="closeModal">
                                 <XIcon class="h-5 w-5"/>
-                                <span class="sr-only">Close modal</span>
+                                <span class="sr-only">{{ t('Close modal') }}</span>
                             </Button>
                         </div>
 
