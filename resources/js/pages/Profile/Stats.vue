@@ -4,6 +4,7 @@ import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
 import {Head, Link} from '@inertiajs/vue3';
 import {computed, onMounted, ref} from 'vue';
+import {useLocale} from '@/composables/useLocale';
 // Убедись, что User тип импортирован и соответствует структуре UserResource
 import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Spinner} from '@/Components/ui';
 import type {GameTypeStats, MatchGame, Rating, User, UserStats} from '@/types/api';
@@ -20,6 +21,7 @@ import {
 defineOptions({ layout: AuthenticatedLayout });
 
 const { user } = useAuth();
+const { t } = useLocale();
 
 // State for user stats
 const userRatings = ref<Rating[]>([]);
@@ -305,17 +307,17 @@ onMounted(() => {
 </script>
 
 <template>
-    <Head title="Profile Statistics" />
+    <Head :title="t('Profile Statistics')" />
 
     <div class="py-12">
         <div class="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
             <!-- Profile Navigation -->
             <div class="mb-6 flex space-x-4">
                 <Link :href="route('profile.edit')">
-                    <Button class="bg-gray-100 dark:bg-gray-800" variant="outline"> Edit Profile</Button>
+                    <Button class="bg-gray-100 dark:bg-gray-800" variant="outline">{{ t('Edit Profile') }}</Button>
                 </Link>
                 <Link :href="route('profile.stats')">
-                    <Button class="bg-primary text-primary-foreground" variant="outline"> Statistics</Button>
+                    <Button class="bg-primary text-primary-foreground" variant="outline">{{ t('Statistics') }}</Button>
                 </Link>
             </div>
 
@@ -331,8 +333,8 @@ onMounted(() => {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Statistics Overview</CardTitle>
-                    <CardDescription> Your performance across all leagues</CardDescription>
+                    <CardTitle>{{ t('Statistics Overview') }}</CardTitle>
+                    <CardDescription>{{ t('Your performance across all leagues') }}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div v-if="isLoadingStats" class="flex min-h-[100px] items-center justify-center py-8">
@@ -342,7 +344,7 @@ onMounted(() => {
                         <div class="rounded-md bg-blue-50 p-4 dark:bg-blue-900/20">
                             <div class="mb-2 flex items-center space-x-2 text-blue-600 dark:text-blue-400">
                                 <SwordIcon class="h-5 w-5"/>
-                                <h3 class="text-sm font-medium text-blue-800 dark:text-blue-300">Total Matches</h3>
+                                <h3 class="text-sm font-medium text-blue-800 dark:text-blue-300">{{ t('Total Matches') }}</h3>
                             </div>
                             <p class="text-3xl font-bold text-blue-600 dark:text-blue-400">
                                 {{ overallStats.total_matches ?? 0 }}
@@ -351,7 +353,7 @@ onMounted(() => {
                         <div class="rounded-md bg-green-50 p-4 dark:bg-green-900/20">
                             <div class="mb-2 flex items-center space-x-2 text-green-600 dark:text-green-400">
                                 <TrophyIcon class="h-5 w-5"/>
-                                <h3 class="text-sm font-medium text-green-800 dark:text-green-300">Wins</h3>
+                                <h3 class="text-sm font-medium text-green-800 dark:text-green-300">{{ t('Wins') }}</h3>
                             </div>
                             <p class="text-3xl font-bold text-green-600 dark:text-green-400">{{
                                     overallStats.wins ?? 0
@@ -360,7 +362,7 @@ onMounted(() => {
                         <div class="rounded-md bg-amber-50 p-4 dark:bg-amber-900/20">
                             <div class="mb-2 flex items-center space-x-2 text-amber-600 dark:text-amber-400">
                                 <PercentIcon class="h-5 w-5"/>
-                                <h3 class="text-sm font-medium text-amber-800 dark:text-amber-300">Win Rate</h3>
+                                <h3 class="text-sm font-medium text-amber-800 dark:text-amber-300">{{ t('Win Rate') }}</h3>
                             </div>
                             <p class="text-3xl font-bold text-amber-600 dark:text-amber-400">
                                 {{ overallStats.win_rate ?? 0 }}%</p>
@@ -368,24 +370,22 @@ onMounted(() => {
                         <div class="rounded-md bg-purple-50 p-4 dark:bg-purple-900/20">
                             <div class="mb-2 flex items-center space-x-2 text-purple-600 dark:text-purple-400">
                                 <BarChart4Icon class="h-5 w-5"/>
-                                <h3 class="text-sm font-medium text-purple-800 dark:text-purple-300">League
-                                    Memberships</h3>
+                                <h3 class="text-sm font-medium text-purple-800 dark:text-purple-300">{{ t('League Memberships') }}</h3>
                             </div>
                             <p class="text-3xl font-bold text-purple-600 dark:text-purple-400">
                                 {{ overallStats.leagues_count ?? 0 }}
                             </p>
                         </div>
                     </div>
-                    <div v-else class="py-6 text-center text-gray-500 dark:text-gray-400">No overall statistics
-                        available.
+                    <div v-else class="py-6 text-center text-gray-500 dark:text-gray-400">{{ t('No overall statistics available.') }}
                     </div>
                 </CardContent>
             </Card>
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Rating Analytics</CardTitle>
-                    <CardDescription> Your rating performance metrics</CardDescription>
+                    <CardTitle>{{ t('Rating Analytics') }}</CardTitle>
+                    <CardDescription>{{ t('Your rating performance metrics') }}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div v-if="isLoadingStats" class="flex min-h-[100px] items-center justify-center py-8">
@@ -395,7 +395,7 @@ onMounted(() => {
                         <div class="rounded-md bg-gray-50 p-4 dark:bg-gray-800/50">
                             <div class="mb-2 flex items-center space-x-2 text-indigo-600 dark:text-indigo-400">
                                 <AwardIcon class="h-5 w-5"/>
-                                <h3 class="text-sm font-medium text-indigo-800 dark:text-indigo-300">Highest Rating</h3>
+                                <h3 class="text-sm font-medium text-indigo-800 dark:text-indigo-300">{{ t('Highest Rating') }}</h3>
                             </div>
                             <p class="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
                                 {{ overallStats.highest_rating ?? 0 }}
@@ -404,7 +404,7 @@ onMounted(() => {
                         <div class="rounded-md bg-gray-50 p-4 dark:bg-gray-800/50">
                             <div class="mb-2 flex items-center space-x-2 text-teal-600 dark:text-teal-400">
                                 <TrendingUpIcon class="h-5 w-5"/>
-                                <h3 class="text-sm font-medium text-teal-800 dark:text-teal-300">Average Rating</h3>
+                                <h3 class="text-sm font-medium text-teal-800 dark:text-teal-300">{{ t('Average Rating') }}</h3>
                             </div>
                             <p class="text-3xl font-bold text-teal-600 dark:text-teal-400">
                                 {{ overallStats.average_rating ?? 0 }}
@@ -413,34 +413,33 @@ onMounted(() => {
                         <div class="rounded-md bg-gray-50 p-4 dark:bg-gray-800/50">
                             <div class="mb-2 flex items-center space-x-2 text-pink-600 dark:text-pink-400">
                                 <ActivityIcon class="h-5 w-5"/>
-                                <h3 class="text-sm font-medium text-pink-800 dark:text-pink-300">Win/Loss Ratio</h3>
+                                <h3 class="text-sm font-medium text-pink-800 dark:text-pink-300">{{ t('Win/Loss Ratio') }}</h3>
                             </div>
                             <p class="text-3xl font-bold text-pink-600 dark:text-pink-400">
                                 {{ winLossRatio }}
                             </p>
                         </div>
                     </div>
-                    <div v-else class="py-6 text-center text-gray-500 dark:text-gray-400">No rating analytics
-                        available.
+                    <div v-else class="py-6 text-center text-gray-500 dark:text-gray-400">{{ t('No rating analytics available.') }}
                     </div>
                 </CardContent>
             </Card>
 
             <Card v-if="!isLoadingGameTypeStats && gameTypeStats && Object.keys(gameTypeStats).length > 0">
                 <CardHeader>
-                    <CardTitle>Game Type Performance</CardTitle>
-                    <CardDescription> Your statistics by game type</CardDescription>
+                    <CardTitle>{{ t('Game Type Performance') }}</CardTitle>
+                    <CardDescription>{{ t('Your statistics by game type') }}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm">
                             <thead class="text-left">
                             <tr class="border-b dark:border-gray-700">
-                                <th class="px-2 py-3 font-medium">Game Type</th>
-                                <th class="px-2 py-3 text-center font-medium">Matches</th>
-                                <th class="px-2 py-3 text-center font-medium">Wins</th>
-                                <th class="px-2 py-3 text-center font-medium">Losses</th>
-                                <th class="px-2 py-3 text-center font-medium">Win Rate</th>
+                                <th class="px-2 py-3 font-medium">{{ t('Game Type') }}</th>
+                                <th class="px-2 py-3 text-center font-medium">{{ t('Matches') }}</th>
+                                <th class="px-2 py-3 text-center font-medium">{{ t('Wins') }}</th>
+                                <th class="px-2 py-3 text-center font-medium">{{ t('Losses') }}</th>
+                                <th class="px-2 py-3 text-center font-medium">{{ t('Win Rate') }}</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -462,8 +461,8 @@ onMounted(() => {
             </Card>
             <Card v-else-if="isLoadingGameTypeStats">
                 <CardHeader>
-                    <CardTitle>Game Type Performance</CardTitle>
-                    <CardDescription>Loading game type statistics...</CardDescription>
+                    <CardTitle>{{ t('Game Type Performance') }}</CardTitle>
+                    <CardDescription>{{ t('Loading game type statistics...') }}</CardDescription>
                 </CardHeader>
                 <CardContent class="flex min-h-[100px] items-center justify-center py-8">
                     <Spinner class="text-primary h-8 w-8"/>
@@ -471,15 +470,15 @@ onMounted(() => {
             </Card>
             <Card>
                 <CardHeader>
-                    <CardTitle>League Ratings</CardTitle>
-                    <CardDescription> Your current ratings across different leagues</CardDescription>
+                    <CardTitle>{{ t('League Ratings') }}</CardTitle>
+                    <CardDescription>{{ t('Your current ratings across different leagues') }}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div v-if="isLoadingRatings" class="flex min-h-[150px] items-center justify-center py-8">
                         <Spinner class="text-primary h-8 w-8"/>
                     </div>
                     <div v-else-if="userRatings.length === 0" class="py-6 text-center text-gray-500 dark:text-gray-400">
-                        You haven't joined any leagues yet or no ratings found.
+                        {{ t("You haven't joined any leagues yet or no ratings found.") }}
                     </div>
                     <div v-else class="overflow-x-auto">
                         <table class="w-full text-sm">
@@ -525,26 +524,26 @@ onMounted(() => {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Recent Matches</CardTitle>
-                    <CardDescription> Your most recent match results (up to 15)</CardDescription>
+                    <CardTitle>{{ t('Recent Matches') }}</CardTitle>
+                    <CardDescription>{{ t('Your most recent match results (up to 15)') }}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div v-if="isLoadingMatches" class="flex min-h-[200px] items-center justify-center py-8">
                         <Spinner class="text-primary h-8 w-8"/>
                     </div>
                     <div v-else-if="userMatches.length === 0" class="py-6 text-center text-gray-500 dark:text-gray-400">
-                        You haven't played any matches yet.
+                        {{ t("You haven't played any matches yet.") }}
                     </div>
                     <div v-else class="overflow-x-auto">
                         <table class="w-full text-sm">
                             <thead class="text-left">
                             <tr class="border-b dark:border-gray-700">
-                                <th class="px-2 py-3 font-medium">Date</th>
-                                <th class="px-2 py-3 font-medium">League</th>
-                                <th class="px-2 py-3 font-medium">Opponent</th>
-                                <th class="px-2 py-3 text-center font-medium">Score (You - Opp.)</th>
-                                <th class="px-2 py-3 text-center font-medium">Result</th>
-                                <th class="px-2 py-3 text-center font-medium">Rating Change</th>
+                                <th class="px-2 py-3 font-medium">{{ t('Date') }}</th>
+                                <th class="px-2 py-3 font-medium">{{ t('League') }}</th>
+                                <th class="px-2 py-3 font-medium">{{ t('Opponent') }}</th>
+                                <th class="px-2 py-3 text-center font-medium">{{ t('Score (You - Opp.)') }}</th>
+                                <th class="px-2 py-3 text-center font-medium">{{ t('Result') }}</th>
+                                <th class="px-2 py-3 text-center font-medium">{{ t('Rating Change') }}</th>
                             </tr>
                             </thead>
                             <tbody>
