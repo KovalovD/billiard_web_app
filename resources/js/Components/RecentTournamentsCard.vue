@@ -4,6 +4,7 @@ import {apiClient} from '@/lib/apiClient';
 import type {Tournament} from '@/types/api';
 import {Link} from '@inertiajs/vue3';
 import {onMounted, ref} from 'vue';
+import {useLocale} from '@/composables/useLocale';
 
 const recentTournaments = ref<Tournament[]>([]);
 const upcomingTournaments = ref<Tournament[]>([]);
@@ -11,6 +12,7 @@ const isLoadingRecent = ref(true);
 const isLoadingUpcoming = ref(true);
 const errorRecent = ref<string | null>(null);
 const errorUpcoming = ref<string | null>(null);
+const { t } = useLocale();
 
 // Get status badge for tournament
 const getStatusBadge = (tournament: Tournament) => {
@@ -85,13 +87,13 @@ onMounted(() => {
         <!-- Recent Tournaments -->
         <Card>
             <CardHeader>
-                <CardTitle>Recent Tournaments</CardTitle>
-                <CardDescription>Latest completed and active tournaments</CardDescription>
+                <CardTitle>{{ t('Recent Tournaments') }}</CardTitle>
+                <CardDescription>{{ t('Latest completed and active tournaments') }}</CardDescription>
             </CardHeader>
             <CardContent>
                 <div v-if="isLoadingRecent" class="py-4 text-center text-gray-500 dark:text-gray-400">
                     <Spinner class="text-primary mx-auto mb-2 h-6 w-6"/>
-                    <span>Loading tournaments...</span>
+                    <span>{{ t('Loading tournaments...') }}</span>
                 </div>
 
                 <div v-else-if="errorRecent" class="py-4 text-center text-red-500 dark:text-red-400">
@@ -100,7 +102,7 @@ onMounted(() => {
 
                 <div v-else-if="recentTournaments.length === 0"
                      class="py-4 text-center text-gray-500 dark:text-gray-400">
-                    No recent tournaments found.
+                    {{ t('No recent tournaments found.') }}
                 </div>
 
                 <ul v-else class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -125,7 +127,7 @@ onMounted(() => {
                             </div>
                             <Link :href="`/tournaments/${tournament.id}`"
                                   class="text-sm text-blue-600 hover:underline dark:text-blue-400">
-                                View
+                                {{ t('View') }}
                             </Link>
                         </div>
                     </li>
@@ -136,13 +138,13 @@ onMounted(() => {
         <!-- Upcoming Tournaments -->
         <Card>
             <CardHeader>
-                <CardTitle>Upcoming Tournaments</CardTitle>
-                <CardDescription>Tournaments open for registration</CardDescription>
+                <CardTitle>{{ t('Upcoming Tournaments') }}</CardTitle>
+                <CardDescription>{{ t('Tournaments open for registration') }}</CardDescription>
             </CardHeader>
             <CardContent>
                 <div v-if="isLoadingUpcoming" class="py-4 text-center text-gray-500 dark:text-gray-400">
                     <Spinner class="text-primary mx-auto mb-2 h-6 w-6"/>
-                    <span>Loading tournaments...</span>
+                    <span>{{ t('Loading tournaments...') }}</span>
                 </div>
 
                 <div v-else-if="errorUpcoming" class="py-4 text-center text-red-500 dark:text-red-400">
@@ -151,10 +153,10 @@ onMounted(() => {
 
                 <div v-else-if="upcomingTournaments.length === 0"
                      class="py-4 text-center text-gray-500 dark:text-gray-400">
-                    <p>No upcoming tournaments available.</p>
+                    <p>{{ t('No upcoming tournaments available.') }}</p>
                     <Link :href="route('tournaments.index.page')"
                           class="mt-2 block text-blue-600 hover:underline dark:text-blue-400">
-                        Check all tournaments →
+                        {{ t('Check all tournaments →') }}
                     </Link>
                 </div>
 
@@ -170,13 +172,13 @@ onMounted(() => {
                                         v-if="tournament.is_registration_open"
                                         class="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400"
                                     >
-                                        Open
+                                        {{ t('Open') }}
                                     </span>
                                     <span
                                         v-else
                                         class="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-300"
                                     >
-                                        Closed
+                                        {{ t('Closed') }}
                                     </span>
                                 </div>
                                 <p class="text-sm text-gray-500 dark:text-gray-400">
@@ -189,7 +191,7 @@ onMounted(() => {
                             </div>
                             <Link :href="`/tournaments/${tournament.id}`"
                                   class="text-sm text-blue-600 hover:underline dark:text-blue-400">
-                                View
+                                {{ t('View') }}
                             </Link>
                         </div>
                     </li>
@@ -199,7 +201,7 @@ onMounted(() => {
                 <div v-if="upcomingTournaments.length >= 5" class="mt-4 text-center">
                     <Link :href="route('tournaments.index.page')"
                           class="text-sm text-blue-600 hover:underline dark:text-blue-400">
-                        View all tournaments →
+                        {{ t('View all tournaments →') }}
                     </Link>
                 </div>
             </CardContent>
