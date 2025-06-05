@@ -10,6 +10,7 @@ import {useLeagues} from '@/composables/useLeagues';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import type {League, MatchGame, TournamentPlayer} from '@/types/api';
 import {Head, Link} from '@inertiajs/vue3';
+import {useLocale} from '@/composables/useLocale';
 import {LogInIcon} from 'lucide-vue-next';
 import {onMounted, ref} from 'vue';
 
@@ -23,6 +24,7 @@ defineOptions({
 });
 
 const {user, isAuthenticated} = useAuth();
+const {t} = useLocale();
 const leagues = useLeagues();
 const recentLeagues = ref<League[]>([]);
 const isLoadingLeagues = ref(false);
@@ -87,46 +89,47 @@ onMounted(async () => {
                 <div class="p-6 text-gray-900 dark:text-gray-100">
                     <h1 class="mb-4 text-2xl font-semibold">
                         {{
-                            isAuthenticated ? `Welcome back, ${user?.firstname || 'User'}!` : 'Welcome to WinnerBreak!'
+                            isAuthenticated
+                                ? t('Welcome back, :name!', {name: user?.firstname || t('User')})
+                                : t('Welcome to WinnerBreak!')
                         }}
                     </h1>
 
                     <div class="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
                         <div class="rounded-lg bg-indigo-50 p-6 dark:bg-indigo-900/30">
-                            <h3 class="mb-2 text-lg font-medium text-indigo-800 dark:text-indigo-300">Join Leagues</h3>
+                            <h3 class="mb-2 text-lg font-medium text-indigo-800 dark:text-indigo-300">{{ t('Join Leagues') }}</h3>
                             <p class="mb-4 text-indigo-600 dark:text-indigo-400">
-                                Find and join billiard leagues that match your skill level and game preferences.
+                                {{ t('Find and join billiard leagues that match your skill level and game preferences.') }}
                             </p>
                             <Link class="font-medium text-indigo-700 hover:underline dark:text-indigo-300"
-                                  href="/leagues">Browse
-                                Leagues →
+                                  href="/leagues">{{ t('Browse') }}
+                                {{ t('Leagues') }} →
                             </Link>
                         </div>
                         <div class="rounded-lg bg-emerald-50 p-6 dark:bg-emerald-900/30">
-                            <h3 class="mb-2 text-lg font-medium text-emerald-800 dark:text-emerald-300">Join
-                                Tournaments</h3>
+                            <h3 class="mb-2 text-lg font-medium text-emerald-800 dark:text-emerald-300">{{ t('Join Tournaments') }}</h3>
                             <p class="mb-4 text-emerald-600 dark:text-emerald-400">
-                                Participate in tournaments to compete against other players and win prizes.
+                                {{ t('Participate in tournaments to compete against other players and win prizes.') }}
                             </p>
                             <Link class="font-medium text-emerald-700 hover:underline dark:text-emerald-300"
-                                  href="/tournaments">Browse
-                                Tournaments →
+                                  href="/tournaments">{{ t('Browse') }}
+                                {{ t('Tournaments') }} →
                             </Link>
                         </div>
                         <div class="rounded-lg bg-amber-50 p-6 dark:bg-amber-900/30">
                             <h3 class="mb-2 text-lg font-medium text-amber-800 dark:text-amber-300">
-                                {{ isAuthenticated ? 'Track Progress' : 'View Ratings' }}
+                                {{ isAuthenticated ? t('Track Progress') : t('View Ratings') }}
                             </h3>
                             <p class="mb-4 text-amber-600 dark:text-amber-400">
                                 {{
                                     isAuthenticated
-                                        ? 'Monitor your performance, rating changes, and match history over time.'
-                                        : 'Explore official player rankings and tournament results.'
+                                        ? t('Monitor your performance, rating changes, and match history over time.')
+                                        : t('Explore official player rankings and tournament results.')
                                 }}
                             </p>
                             <Link class="font-medium text-amber-700 hover:underline dark:text-amber-300"
                                   :href="isAuthenticated ? '/profile/stats' : '/official-ratings'">
-                                {{ isAuthenticated ? 'View Stats' : 'View Ratings' }} →
+                                {{ isAuthenticated ? t('View Stats') : t('View Ratings') }} →
                             </Link>
                         </div>
                     </div>
@@ -135,22 +138,21 @@ onMounted(async () => {
                     <div v-if="!isAuthenticated" class="mt-6 rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
                         <div class="flex items-center justify-between">
                             <div>
-                                <h3 class="text-lg font-medium text-blue-800 dark:text-blue-300">Ready to compete?</h3>
-                                <p class="text-blue-600 dark:text-blue-400">Join WinnerBreak to participate in leagues,
-                                    tournaments, and track your progress.</p>
+                                <h3 class="text-lg font-medium text-blue-800 dark:text-blue-300">{{ t('Ready to compete?') }}</h3>
+                                <p class="text-blue-600 dark:text-blue-400">{{ t('Join WinnerBreak to participate in leagues, tournaments, and track your progress.') }}</p>
                             </div>
                             <div class="flex space-x-2">
                                 <Link :href="route('login')">
                                     <button
                                         class="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                                         <LogInIcon class="mr-2 h-4 w-4"/>
-                                        Login
+                                        {{ t('Login') }}
                                     </button>
                                 </Link>
                                 <Link :href="route('register')">
                                     <button
                                         class="inline-flex items-center rounded-md border border-blue-300 bg-white px-4 py-2 text-sm font-medium text-blue-700 shadow-sm hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-blue-600 dark:bg-gray-800 dark:text-blue-400 dark:hover:bg-gray-700">
-                                        Register
+                                        {{ t('Register') }}
                                     </button>
                                 </Link>
                             </div>
@@ -178,19 +180,20 @@ onMounted(async () => {
             <div class="mb-6">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Recent Leagues</CardTitle>
+                        <CardTitle>{{ t('Recent Leagues') }}</CardTitle>
                         <CardDescription>
                             {{
-                                isAuthenticated ? 'New and active leagues you might be interested in' : 'Explore active billiard leagues'
+                                isAuthenticated
+                                    ? t('New and active leagues you might be interested in')
+                                    : t('Explore active billiard leagues')
                             }}
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div v-if="isLoadingLeagues" class="py-4 text-center text-gray-500 dark:text-gray-400">Loading
-                            leagues...
+                        <div v-if="isLoadingLeagues" class="py-4 text-center text-gray-500 dark:text-gray-400">{{ t('Loading leagues...') }}
                         </div>
                         <div v-else-if="recentLeagues.length === 0" class="py-4 text-center text-gray-500 dark:text-gray-400">
-                            No leagues found. Check back later.
+                            {{ t('No leagues found. Check back later.') }}
                         </div>
                         <ul v-else class="divide-y divide-gray-200 dark:divide-gray-700">
                             <li v-for="league in recentLeagues" :key="league.id" class="py-3">
@@ -200,7 +203,7 @@ onMounted(async () => {
                                         <p class="text-sm text-gray-500 dark:text-gray-400">Game: {{ league.game }}</p>
                                     </div>
                                     <Link :href="`/leagues/${league.id}`" class="text-sm text-blue-600 hover:underline dark:text-blue-400">
-                                        View
+                                        {{ t('View') }}
                                     </Link>
                                 </div>
                             </li>
@@ -212,8 +215,8 @@ onMounted(async () => {
             <!-- Admin Actions (if admin and authenticated) -->
             <Card v-if="isAuthenticated && user?.is_admin">
                 <CardHeader>
-                    <CardTitle>Admin Actions</CardTitle>
-                    <CardDescription>Manage leagues, tournaments and system settings</CardDescription>
+                    <CardTitle>{{ t('Admin Actions') }}</CardTitle>
+                    <CardDescription>{{ t('Manage leagues, tournaments and system settings') }}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div class="flex flex-wrap gap-4">
@@ -221,19 +224,19 @@ onMounted(async () => {
                             class="inline-flex items-center rounded-md border border-transparent bg-purple-600 px-4 py-2 text-xs font-semibold tracking-widest text-white uppercase ring-purple-300 transition hover:bg-purple-700 focus:border-purple-800 focus:ring focus:outline-none active:bg-purple-800 disabled:opacity-25"
                             href="admin/leagues/create"
                         >
-                            Create New League
+                            {{ t('Create New League') }}
                         </Link>
                         <Link
                             class="inline-flex items-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-xs font-semibold tracking-widest text-white uppercase ring-green-300 transition hover:bg-green-700 focus:border-green-800 focus:ring focus:outline-none active:bg-green-800 disabled:opacity-25"
                             href="/admin/tournaments/create"
                         >
-                            Create New Tournament
+                            {{ t('Create New Tournament') }}
                         </Link>
                         <Link
                             class="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-xs font-semibold tracking-widest text-white uppercase ring-blue-300 transition hover:bg-blue-700 focus:border-blue-800 focus:ring focus:outline-none active:bg-blue-800 disabled:opacity-25"
                             href="/admin/official-ratings/create"
                         >
-                            Create Official Rating
+                            {{ t('Create Official Rating') }}
                         </Link>
                     </div>
                 </CardContent>
