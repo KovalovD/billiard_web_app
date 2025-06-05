@@ -9,6 +9,7 @@ import type {ApiError, League} from '@/types/api';
 import {Head, Link, router} from '@inertiajs/vue3';
 import {ArrowLeftIcon} from 'lucide-vue-next';
 import {computed, onMounted, watchEffect} from 'vue';
+import {useLocale} from '@/composables/useLocale';
 
 // Apply the layout
 defineOptions({layout: AuthenticatedLayout});
@@ -19,6 +20,7 @@ const props = defineProps<{
 }>();
 
 const {isAdmin} = useAuth();
+const { t } = useLocale();
 
 // Redirect if user is not admin
 watchEffect(() => {
@@ -51,7 +53,11 @@ const handleError = (error: ApiError) => {
 };
 
 // Dynamic page title
-const pageTitle = computed(() => (league.value ? `Edit ${league.value.name}` : 'Edit League'));
+const pageTitle = computed(() =>
+    league.value
+        ? t('Edit :name', {name: league.value.name})
+        : t('Edit League')
+);
 </script>
 
 <template>
@@ -62,28 +68,28 @@ const pageTitle = computed(() => (league.value ? `Edit ${league.value.name}` : '
                 <Link :href="route('leagues.index.page')">
                     <Button variant="outline">
                         <ArrowLeftIcon class="mr-2 h-4 w-4"/>
-                        Back to Leagues
+                        {{ t('Back to Leagues') }}
                     </Button>
                 </Link>
                 <Link v-if="league" :href="route('leagues.show.page', { league: league.id })" class="ml-4">
-                    <Button variant="outline">View League</Button>
+                    <Button variant="outline">{{ t('View League') }}</Button>
                 </Link>
             </div>
 
             <div v-if="isAdmin">
                 <div v-if="isLoading" class="p-10 text-center">
                     <Spinner class="text-primary mx-auto h-8 w-8"/>
-                    <p class="mt-4 text-gray-500">Loading league data...</p>
+                    <p class="mt-4 text-gray-500">{{ t('Loading league data...') }}</p>
                 </div>
                 <div v-else-if="loadingError" class="rounded bg-red-100 p-4 text-center text-red-600">
-                    Error loading league data: {{ loadingError.message }}
+                    {{ t('Error loading league data: :error', { error: loadingError.message }) }}
                 </div>
                 <LeagueForm v-else-if="league" :is-edit-mode="true" :league="league" @error="handleError"
                             @submitted="handleSuccess"/>
-                <div v-else class="p-10 text-center text-gray-500">League not found or failed to load.</div>
+                <div v-else class="p-10 text-center text-gray-500">{{ t('League not found or failed to load.') }}</div>
             </div>
-            <div v-else class="rounded bg-red-100 p-4 text-center text-red-500">You do not have permission to edit
-                leagues. Redirecting...
+            <div v-else class="rounded bg-red-100 p-4 text-center text-red-500">
+                {{ t('You do not have permission to edit leagues. Redirecting...') }}
             </div>
         </div>
     </div>

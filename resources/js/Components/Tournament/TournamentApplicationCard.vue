@@ -5,6 +5,7 @@ import {apiClient} from '@/lib/apiClient';
 import type {Tournament, TournamentPlayer} from '@/types/api';
 import {CalendarIcon, CheckCircleIcon, ClockIcon, XCircleIcon} from 'lucide-vue-next';
 import {computed, onMounted, ref} from 'vue';
+import {useLocale} from '@/composables/useLocale';
 
 const props = defineProps<{
     tournament: Tournament;
@@ -15,6 +16,7 @@ const emit = defineEmits<{
 }>();
 
 const {user, isAuthenticated} = useAuth();
+const { t } = useLocale();
 
 // State
 const application = ref<TournamentPlayer | null>(null);
@@ -192,17 +194,17 @@ onMounted(() => {
         <CardHeader>
             <CardTitle :class="getStatusInfo.color" class="flex items-center gap-2">
                 <component :is="getStatusInfo.icon" class="h-5 w-5"/>
-                Tournament Registration
+                {{ t('Tournament Registration') }}
             </CardTitle>
             <CardDescription>
                 <div class="space-y-1">
                     <div class="flex items-center gap-2 text-sm">
                         <CalendarIcon class="h-4 w-4"/>
-                        Application deadline: {{ formatDateTime(applicationDeadline.toISOString()) }}
+                        {{ t('Application deadline: :date', {date: formatDateTime(applicationDeadline.toISOString())}) }}
                     </div>
                     <div v-if="props.tournament.max_participants" class="text-sm">
                         {{ props.tournament.confirmed_players_count }} / {{ props.tournament.max_participants }}
-                        confirmed players
+                        {{ t('confirmed players') }}
                     </div>
                 </div>
             </CardDescription>
@@ -211,13 +213,13 @@ onMounted(() => {
             <!-- Loading State -->
             <div v-if="isLoading" class="flex items-center justify-center py-4">
                 <Spinner class="h-6 w-6"/>
-                <span class="ml-2 text-sm text-gray-500">Loading application status...</span>
+                <span class="ml-2 text-sm text-gray-500">{{ t('Loading application status...') }}</span>
             </div>
 
             <!-- Not Authenticated -->
             <div v-else-if="!isAuthenticated" class="text-center py-4">
                 <p class="text-gray-600 dark:text-gray-400">
-                    Please log in to apply for this tournament.
+                    {{ t('Please log in to apply for this tournament.') }}
                 </p>
             </div>
 
@@ -250,7 +252,7 @@ onMounted(() => {
                         @click="submitApplication"
                     >
                         <Spinner v-if="isSubmitting" class="mr-2 h-4 w-4"/>
-                        {{ isSubmitting ? 'Submitting...' : 'Submit Application' }}
+                        {{ isSubmitting ? t('Submitting...') : t('Submit Application') }}
                     </Button>
                 </div>
 
@@ -263,24 +265,24 @@ onMounted(() => {
                         @click="cancelApplication"
                     >
                         <Spinner v-if="isSubmitting" class="mr-2 h-4 w-4"/>
-                        {{ isSubmitting ? 'Cancelling...' : 'Cancel Application' }}
+                        {{ isSubmitting ? t('Cancelling...') : t('Cancel Application') }}
                     </Button>
                 </div>
 
                 <!-- Information Messages -->
                 <div v-if="isDeadlinePassed" class="text-sm text-red-600 dark:text-red-400">
-                    Application deadline has passed.
+                    {{ t('Application deadline has passed.') }}
                 </div>
 
                 <div v-if="!props.tournament.can_accept_applications && !isDeadlinePassed"
                      class="text-sm text-gray-600 dark:text-gray-400">
-                    This tournament is not accepting applications at this time.
+                    {{ t('This tournament is not accepting applications at this time.') }}
                 </div>
 
                 <div
                     v-if="props.tournament.max_participants && props.tournament.confirmed_players_count >= props.tournament.max_participants"
                     class="text-sm text-orange-600 dark:text-orange-400">
-                    This tournament has reached its maximum number of participants.
+                    {{ t('This tournament has reached its maximum number of participants.') }}
                 </div>
 
                 <!-- Error Display -->
@@ -292,12 +294,12 @@ onMounted(() => {
                 <!-- Success Messages -->
                 <div v-if="application?.is_pending"
                      class="text-sm text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 p-3 rounded">
-                    Your application has been submitted successfully. Please wait for admin approval.
+                    {{ t('Your application has been submitted successfully. Please wait for admin approval.') }}
                 </div>
 
                 <div v-if="application?.is_confirmed"
                      class="text-sm text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 p-3 rounded">
-                    Congratulations! Your application has been confirmed. You are registered for this tournament.
+                    {{ t('Congratulations! Your application has been confirmed. You are registered for this tournament.') }}
                 </div>
             </div>
         </CardContent>
