@@ -20,7 +20,7 @@ export function useUserStats() {
     const errorStats = ref<string | null>(null);
     const errorGameTypeStats = ref<string | null>(null);
 
-    // Fetch user ratings across all leagues
+    // Отримати рейтинги користувача в усіх лігах
     const fetchUserRatings = async () => {
         isLoadingRatings.value = true;
         errorRatings.value = null;
@@ -30,14 +30,14 @@ export function useUserStats() {
             userRatings.value = response;
             return response;
         } catch (error: any) {
-            errorRatings.value = error.message || 'Failed to load ratings';
+            errorRatings.value = error.message || 'Не вдалося завантажити рейтинги';
             throw error;
         } finally {
             isLoadingRatings.value = false;
         }
     };
 
-    // Fetch user match history
+    // Отримати історію матчів користувача
     const fetchUserMatches = async () => {
         isLoadingMatches.value = true;
         errorMatches.value = null;
@@ -47,14 +47,14 @@ export function useUserStats() {
             userMatches.value = response;
             return response;
         } catch (error: any) {
-            errorMatches.value = error.message || 'Failed to load matches';
+            errorMatches.value = error.message || 'Не вдалося завантажити матчі';
             throw error;
         } finally {
             isLoadingMatches.value = false;
         }
     };
 
-    // Fetch overall user stats
+    // Отримати загальну статистику користувача
     const fetchOverallStats = async () => {
         isLoadingStats.value = true;
         errorStats.value = null;
@@ -64,14 +64,14 @@ export function useUserStats() {
             overallStats.value = response;
             return response;
         } catch (error: any) {
-            errorStats.value = error.message || 'Failed to load statistics';
+            errorStats.value = error.message || 'Не вдалося завантажити статистику';
             throw error;
         } finally {
             isLoadingStats.value = false;
         }
     };
 
-    // Fetch game type statistics
+    // Отримати статистику за типами ігор
     const fetchGameTypeStats = async () => {
         isLoadingGameTypeStats.value = true;
         errorGameTypeStats.value = null;
@@ -81,14 +81,14 @@ export function useUserStats() {
             gameTypeStats.value = response;
             return response;
         } catch (error: any) {
-            errorGameTypeStats.value = error.message || 'Failed to load game type statistics';
+            errorGameTypeStats.value = error.message || 'Не вдалося завантажити статистику типів ігор';
             throw error;
         } finally {
             isLoadingGameTypeStats.value = false;
         }
     };
 
-    // Utility method to fetch all stats at once
+    // Допоміжний метод для отримання всіх статистик одночасно
     const fetchAllStats = async () => {
         try {
             await Promise.all([fetchUserRatings(), fetchUserMatches(), fetchOverallStats(), fetchGameTypeStats()]);
@@ -100,25 +100,25 @@ export function useUserStats() {
     };
 
     return {
-        // Data
+        // Дані
         userRatings,
         userMatches,
         overallStats,
         gameTypeStats,
 
-        // Loading states
+        // Стан завантаження
         isLoadingRatings,
         isLoadingMatches,
         isLoadingStats,
         isLoadingGameTypeStats,
 
-        // Error states
+        // Стан помилок
         errorRatings,
         errorMatches,
         errorStats,
         errorGameTypeStats,
 
-        // Methods
+        // Методи
         fetchUserRatings,
         fetchUserMatches,
         fetchOverallStats,

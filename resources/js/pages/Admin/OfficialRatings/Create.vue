@@ -14,18 +14,18 @@ import {
     SelectTrigger,
     SelectValue,
     Spinner,
-    Textarea
+    Textarea,
 } from '@/Components/ui';
-import {useOfficialRatings} from '@/composables/useOfficialRatings';
+import { useOfficialRatings } from '@/composables/useOfficialRatings';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
-import type {CreateOfficialRatingPayload} from '@/types/api';
-import {Head, Link, router} from '@inertiajs/vue3';
-import {ArrowLeftIcon, PlusIcon, SaveIcon} from 'lucide-vue-next';
-import {computed, ref} from 'vue';
+import type { CreateOfficialRatingPayload } from '@/types/api';
+import { Head, Link, router } from '@inertiajs/vue3';
+import { ArrowLeftIcon, PlusIcon, SaveIcon } from 'lucide-vue-next';
+import { computed, ref } from 'vue';
 
-defineOptions({layout: AuthenticatedLayout});
+defineOptions({ layout: AuthenticatedLayout });
 
-const {createOfficialRating} = useOfficialRatings();
+const { createOfficialRating } = useOfficialRatings();
 
 const form = ref<CreateOfficialRatingPayload>({
     name: '',
@@ -33,7 +33,7 @@ const form = ref<CreateOfficialRatingPayload>({
     game_type: '',
     initial_rating: 1000,
     calculation_method: 'tournament_points',
-    rating_rules: []
+    rating_rules: [],
 });
 
 const isSaving = ref(false);
@@ -41,21 +41,19 @@ const error = ref<string | null>(null);
 const validationErrors = ref<Record<string, string[]>>({});
 
 const isFormValid = computed(() => {
-    return form.value.name.trim() !== '' &&
-        form.value.game_type !== '' &&
-        form.value.initial_rating > 0;
+    return form.value.name.trim() !== '' && form.value.game_type !== '' && form.value.initial_rating > 0;
 });
 
 const gameTypes = [
-    {value: 'pool', label: 'Pool'},
-    {value: 'pyramid', label: 'Pyramid'},
-    {value: 'snooker', label: 'Snooker'}
+    { value: 'pool', label: 'Pool' },
+    { value: 'pyramid', label: 'Pyramid' },
+    { value: 'snooker', label: 'Snooker' },
 ];
 
 const calculationMethods = [
-    {value: 'tournament_points', label: 'Tournament Points'},
-    {value: 'elo', label: 'ELO Rating'},
-    {value: 'custom', label: 'Custom'}
+    { value: 'tournament_points', label: 'Tournament Points' },
+    { value: 'elo', label: 'ELO Rating' },
+    { value: 'custom', label: 'Custom' },
 ];
 
 const handleSubmit = async () => {
@@ -99,7 +97,7 @@ const clearValidationError = (field: string) => {
 </script>
 
 <template>
-    <Head title="Create Official Rating"/>
+    <Head :title="t('Create Official Rating')" />
 
     <div class="py-12">
         <div class="mx-auto max-w-2xl sm:px-6 lg:px-8">
@@ -107,13 +105,13 @@ const clearValidationError = (field: string) => {
             <div class="mb-6 flex items-center justify-between">
                 <Link href="/official-ratings">
                     <Button variant="outline">
-                        <ArrowLeftIcon class="mr-2 h-4 w-4"/>
-                        Back to Ratings
+                        <ArrowLeftIcon class="mr-2 h-4 w-4" />
+                        {{ t('Back to Ratings') }}
                     </Button>
                 </Link>
 
                 <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">
-                    Create Official Rating
+                    {{ t('Create Official Rating') }}
                 </h1>
             </div>
 
@@ -126,11 +124,11 @@ const clearValidationError = (field: string) => {
             <Card>
                 <CardHeader>
                     <CardTitle class="flex items-center gap-2">
-                        <PlusIcon class="h-5 w-5"/>
-                        New Official Rating
+                        <PlusIcon class="h-5 w-5" />
+                        {{ t('New Official Rating') }}
                     </CardTitle>
                     <CardDescription>
-                        Create a new official rating system for tracking player performance
+                        {{ t('Create a new official rating system for tracking player performance') }}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -139,12 +137,12 @@ const clearValidationError = (field: string) => {
                         <div class="grid grid-cols-1 gap-6">
                             <!-- Name -->
                             <div class="space-y-2">
-                                <Label for="name">Rating Name *</Label>
+                                <Label for="name">{{ t('Rating Name *') }}</Label>
                                 <Input
                                     id="name"
                                     v-model="form.name"
                                     :class="{ 'border-red-300': getValidationError('name') }"
-                                    placeholder="e.g., Ukrainian Pool Championship Rating"
+                                    placeholder="{{ t('e.g., Ukrainian Pool Championship Rating') }}"
                                     required
                                     @input="clearValidationError('name')"
                                 />
@@ -155,12 +153,12 @@ const clearValidationError = (field: string) => {
 
                             <!-- Description -->
                             <div class="space-y-2">
-                                <Label for="description">Description</Label>
+                                <Label for="description">{{ t('Description') }}</Label>
                                 <Textarea
                                     id="description"
                                     v-model="form.description"
                                     :class="{ 'border-red-300': getValidationError('description') }"
-                                    placeholder="Describe this rating system, its purpose, and rules..."
+                                    placeholder="{{ t('Describe this rating system, its purpose, and rules...') }}"
                                     rows="3"
                                     @input="clearValidationError('description')"
                                 />
@@ -171,20 +169,13 @@ const clearValidationError = (field: string) => {
 
                             <!-- Game Type -->
                             <div class="space-y-2">
-                                <Label for="game_type">Game Type *</Label>
-                                <Select
-                                    v-model="form.game_type"
-                                    @update:modelValue="clearValidationError('game_type')"
-                                >
+                                <Label for="game_type">{{ t('Game Type *') }}</Label>
+                                <Select v-model="form.game_type" @update:modelValue="clearValidationError('game_type')">
                                     <SelectTrigger :class="{ 'border-red-300': getValidationError('game_type') }">
-                                        <SelectValue placeholder="Select a game type"/>
+                                        <SelectValue placeholder="{{ t('Select a game type') }}" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem
-                                            v-for="gameType in gameTypes"
-                                            :key="gameType.value"
-                                            :value="gameType.value"
-                                        >
+                                        <SelectItem v-for="gameType in gameTypes" :key="gameType.value" :value="gameType.value">
                                             {{ gameType.label }}
                                         </SelectItem>
                                     </SelectContent>
@@ -197,14 +188,14 @@ const clearValidationError = (field: string) => {
 
                         <!-- Rating Configuration -->
                         <div class="border-t pt-6">
-                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
-                                Rating Configuration
+                            <h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-gray-100">
+                                {{ t('Rating Configuration') }}
                             </h3>
 
                             <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                 <!-- Initial Rating -->
                                 <div class="space-y-2">
-                                    <Label for="initial_rating">Initial Rating *</Label>
+                                    <Label for="initial_rating">{{ t('Initial Rating *') }}</Label>
                                     <Input
                                         id="initial_rating"
                                         v-model.number="form.initial_rating"
@@ -217,7 +208,7 @@ const clearValidationError = (field: string) => {
                                         @input="clearValidationError('initial_rating')"
                                     />
                                     <p class="text-sm text-gray-600 dark:text-gray-400">
-                                        Starting rating for new players
+                                        {{ t('Starting rating for new players') }}
                                     </p>
                                     <p v-if="getValidationError('initial_rating')" class="text-sm text-red-600">
                                         {{ getValidationError('initial_rating') }}
@@ -227,20 +218,12 @@ const clearValidationError = (field: string) => {
                                 <!-- Calculation Method -->
                                 <div class="space-y-2">
                                     <Label for="calculation_method">Calculation Method</Label>
-                                    <Select
-                                        v-model="form.calculation_method"
-                                        @update:modelValue="clearValidationError('calculation_method')"
-                                    >
-                                        <SelectTrigger
-                                            :class="{ 'border-red-300': getValidationError('calculation_method') }">
-                                            <SelectValue placeholder="Select calculation method"/>
+                                    <Select v-model="form.calculation_method" @update:modelValue="clearValidationError('calculation_method')">
+                                        <SelectTrigger :class="{ 'border-red-300': getValidationError('calculation_method') }">
+                                            <SelectValue placeholder="{{ t('Select calculation method') }}" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem
-                                                v-for="method in calculationMethods"
-                                                :key="method.value"
-                                                :value="method.value"
-                                            >
+                                            <SelectItem v-for="method in calculationMethods" :key="method.value" :value="method.value">
                                                 {{ method.label }}
                                             </SelectItem>
                                         </SelectContent>
@@ -253,37 +236,42 @@ const clearValidationError = (field: string) => {
                         </div>
 
                         <!-- Method Information -->
-                        <div v-if="form.calculation_method" class="bg-gray-50 p-4 rounded-lg dark:bg-gray-800">
-                            <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-2">
-                                {{ calculationMethods.find(m => m.value === form.calculation_method)?.label }} Method
+                        <div v-if="form.calculation_method" class="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
+                            <h4 class="mb-2 font-medium text-gray-900 dark:text-gray-100">
+                                {{ calculationMethods.find((m) => m.value === form.calculation_method)?.label }} Method
                             </h4>
                             <p class="text-sm text-gray-600 dark:text-gray-400">
                                 <span v-if="form.calculation_method === 'tournament_points'">
-                                    Players earn points based on their tournament placement. Higher placement in larger tournaments yields more points.
+                                    {{
+                                        t(
+                                            'Players earn points based on their tournament placement. Higher placement in larger tournaments yields more points.',
+                                        )
+                                    }}
                                 </span>
                                 <span v-else-if="form.calculation_method === 'elo'">
-                                    Traditional ELO rating system where players gain/lose rating based on match results and opponent strength.
+                                    {{
+                                        t(
+                                            'Traditional ELO rating system where players gain/lose rating based on match results and opponent strength.',
+                                        )
+                                    }}
                                 </span>
                                 <span v-else-if="form.calculation_method === 'custom'">
-                                    Custom rating calculation method. You can define specific rules for rating changes.
+                                    {{ t('Custom rating calculation method. You can define specific rules for rating changes.') }}
                                 </span>
                             </p>
                         </div>
 
                         <!-- Actions -->
-                        <div class="flex justify-end space-x-4 pt-6 border-t">
+                        <div class="flex justify-end space-x-4 border-t pt-6">
                             <Link href="/official-ratings">
                                 <Button variant="outline">
-                                    Cancel
+                                    {{ t('Cancel') }}
                                 </Button>
                             </Link>
-                            <Button
-                                :disabled="!isFormValid || isSaving"
-                                type="submit"
-                            >
-                                <SaveIcon v-if="!isSaving" class="mr-2 h-4 w-4"/>
-                                <Spinner v-else class="mr-2 h-4 w-4"/>
-                                {{ isSaving ? 'Creating...' : 'Create Rating' }}
+                            <Button :disabled="!isFormValid || isSaving" type="submit">
+                                <SaveIcon v-if="!isSaving" class="mr-2 h-4 w-4" />
+                                <Spinner v-else class="mr-2 h-4 w-4" />
+                                {{ isSaving ? t('Creating...') : t('Create Rating') }}
                             </Button>
                         </div>
                     </form>

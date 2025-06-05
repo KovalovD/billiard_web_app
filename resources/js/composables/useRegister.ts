@@ -13,18 +13,18 @@ export function useRegister() {
         validationErrors.value = {};
 
         try {
-            // Call the API to register the user
+            // Виклик API для реєстрації користувача
             const response = await apiClient<{ user: User; token: string }>('/api/auth/register', {
                 method: 'post',
                 data: credentials,
             });
 
-            // If successful, store the token and update the auth state
+            // У разі успіху зберігаємо токен і оновлюємо стан автентифікації
             if (response.token) {
                 localStorage.setItem('authToken', response.token);
                 localStorage.setItem('authDeviceName', 'web-' + Date.now());
 
-                // Set auth header for future requests
+                // Встановлюємо заголовок авторизації для майбутніх запитів
                 if (apiClient.defaults && apiClient.defaults.headers) {
                     apiClient.defaults.headers.common['Authorization'] = `Bearer ${response.token}`;
                 }
@@ -36,12 +36,12 @@ export function useRegister() {
         } catch (err: any) {
             const apiError = err as ApiError;
 
-            // Handle validation errors
+            // Обробка помилок валідації
             if (apiError.data?.errors) {
                 validationErrors.value = apiError.data.errors;
-                error.value = 'Please correct the errors in the form.';
+                error.value = 'Будь ласка, виправте помилки у формі.';
             } else {
-                error.value = apiError.message || 'Registration failed. Please try again.';
+                error.value = apiError.message || 'Не вдалося зареєструватися. Спробуйте ще раз.';
             }
 
             return null;

@@ -18,6 +18,7 @@ import {apiClient} from '@/lib/apiClient';
 import type {League, MultiplayerGame, MultiplayerGamePlayer} from '@/types/api';
 import {Head, Link} from '@inertiajs/vue3';
 import {computed, onMounted, ref, watch} from 'vue';
+import {useLocale} from '@/composables/useLocale';
 import GameFinishModal from "@/Components/GameFinishModal.vue";
 import AddPlayerModal from "@/Components/AddPlayerModal.vue";
 
@@ -29,6 +30,7 @@ const props = defineProps<{
 }>();
 
 const {isAdmin, user, isAuthenticated} = useAuth();
+const { t } = useLocale();
 
 const {
     getMultiplayerGame,
@@ -382,7 +384,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <Head :title="game ? `${game.name} - ${league?.name || 'Multiplayer Game'}` : 'Multiplayer Game'"/>
+    <Head :title="game ? `${game.name} - ${league?.name || t('Multiplayer Game')}` : t('Multiplayer Game')"/>
     <div class="py-12">
         <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
             <!-- Header with back button -->
@@ -390,12 +392,12 @@ onMounted(() => {
                 <Link :href="`/leagues/${leagueId}/multiplayer-games`">
                     <Button variant="outline">
                         <ArrowLeftIcon class="mr-2 h-4 w-4"/>
-                        Back to Games
+                        {{ t('Back to Games') }}
                     </Button>
                 </Link>
 
                 <h1 class="text-2xl font-semibold">
-                    {{ game ? game.name : 'Multiplayer Game' }}
+                    {{ game ? game.name : t('Multiplayer Game') }}
                 </h1>
 
                 <div class="flex space-x-2">
@@ -414,7 +416,7 @@ onMounted(() => {
                             @click="showFinishModal = true"
                         >
                             <TrophyIcon class="mr-2 h-4 w-4"/>
-                            Finish Game
+                            {{ t('Finish Game') }}
                         </Button>
                         <Button
                             v-if="game?.status === 'in_progress'"
@@ -422,7 +424,7 @@ onMounted(() => {
                             @click="showModeratorModal = true"
                         >
                             <UserIcon class="mr-2 h-4 w-4"/>
-                            Change Moderator
+                            {{ t('Change Moderator') }}
                         </Button>
                         <Button
                             v-if="isAdmin && game?.status === 'registration'"
@@ -430,7 +432,7 @@ onMounted(() => {
                             @click="showAddPlayerModal = true"
                         >
                             <UserPlusIcon class="mr-2 h-4 w-4"/>
-                            Add Player
+                            {{ t('Add Player') }}
                         </Button>
                     </template>
                 </div>
