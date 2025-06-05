@@ -291,33 +291,6 @@ class MultiplayerGameService
         }
     }
 
-    public function handleSetTurn(MultiplayerGame $game, MultiplayerGamePlayer $actingPlayer, int $targetUserId): void
-    {
-        $players = $game->activePlayers()->orderBy('turn_order')->get();
-        $nextTurnOrder = $players->where('id', $targetUserId)->first()?->turn_order + 1;
-
-        $nextPlayer = $players->where('turn_order', $nextTurnOrder)->first();
-
-        if (!$nextPlayer) {
-            $players->first();
-        }
-
-        // Update the game with new current and next player
-        $game->update([
-            'current_player_id' => $targetUserId,
-            'next_turn_order'   => $nextPlayer->turn_order,
-        ]);
-
-        // Log a turn for the target player
-        MultiplayerGameLog::create([
-            'multiplayer_game_id' => $game->id,
-            'user_id'             => $actingPlayer->user_id,
-            'action_type'         => 'set_turn',
-            'action_data'         => ['target_user_id' => $targetUserId],
-            'created_at'          => now(),
-        ]);
-    }
-
     /**
      * Handle incrementing lives
      * @throws Exception
@@ -373,6 +346,45 @@ class MultiplayerGameService
     public function incrementPlayerLives(MultiplayerGamePlayer $player): void
     {
         $player->increment('lives');
+    }
+
+    /**
+     * Move to the next player in turn order
+     */
+    private function moveToNextPlayer(MultiplayerGame $game): void
+    {
+        // Get active players sorted by turn order
+        $activePlayers = $game->activePlayers()->orderBy('turn_order')->get();
+        if ($activePlayers->isEmpty()) {
+            return;
+        }
+
+        // Find current next turn order
+        $nextTurnOrder = $game->next_turn_order;
+
+        // Find the player with this turn order
+        $nextPlayer = $activePlayers->first(function ($player) use ($nextTurnOrder) {
+            return $player->turn_order === $nextTurnOrder;
+        });
+
+        // If no player found with next turn order, use the first player
+        if (!$nextPlayer) {
+            $nextPlayer = $activePlayers->first();
+        }
+
+        // Find the player after the next player (becomes the new next player)
+        $nextPlayerIndex = $activePlayers->search(function ($player) use ($nextPlayer) {
+            return $player->id === $nextPlayer->id;
+        });
+
+        $newNextPlayerIndex = ($nextPlayerIndex + 1) % $activePlayers->count();
+        $newNextPlayer = $activePlayers[$newNextPlayerIndex];
+
+        // Update the game with new current and next player
+        $game->update([
+            'current_player_id' => $nextPlayer->user_id,
+            'next_turn_order'   => $newNextPlayer->turn_order,
+        ]);
     }
 
     /**
@@ -649,6 +661,20 @@ class MultiplayerGameService
     }
 
     /**
+     * Use a player's card
+     */
+    public function usePlayerCard(MultiplayerGamePlayer $player, string $cardType): void
+    {
+        if (!$player->hasCard($cardType)) {
+            throw new RuntimeException('Player does not have this card.');
+        }
+
+        $cards = $player->cards ?? [];
+        $cards[$cardType] = false;
+        $player->update(['cards' => $cards]);
+    }
+
+    /**
      * Pass turn to a specific player
      */
     private function passTurnToPlayer(
@@ -689,20 +715,6 @@ class MultiplayerGameService
         ]);
     }
 
-    /**
-     * Use a player's card
-     */
-    public function usePlayerCard(MultiplayerGamePlayer $player, string $cardType): void
-    {
-        if (!$player->hasCard($cardType)) {
-            throw new RuntimeException('Player does not have this card.');
-        }
-
-        $cards = $player->cards ?? [];
-        $cards[$cardType] = false;
-        $player->update(['cards' => $cards]);
-    }
-
     private function handleRecordTurn(MultiplayerGame $game, MultiplayerGamePlayer $actingPlayer): void
     {
         // Verify this is the current player's turn
@@ -724,42 +736,30 @@ class MultiplayerGameService
         $this->moveToNextPlayer($game);
     }
 
-    /**
-     * Move to the next player in turn order
-     */
-    private function moveToNextPlayer(MultiplayerGame $game): void
+    public function handleSetTurn(MultiplayerGame $game, MultiplayerGamePlayer $actingPlayer, int $targetUserId): void
     {
-        // Get active players sorted by turn order
-        $activePlayers = $game->activePlayers()->orderBy('turn_order')->get();
-        if ($activePlayers->isEmpty()) {
-            return;
-        }
+        $players = $game->activePlayers()->orderBy('turn_order')->get();
+        $nextTurnOrder = $players->where('id', $targetUserId)->first()?->turn_order + 1;
 
-        // Find current next turn order
-        $nextTurnOrder = $game->next_turn_order;
+        $nextPlayer = $players->where('turn_order', $nextTurnOrder)->first();
 
-        // Find the player with this turn order
-        $nextPlayer = $activePlayers->first(function ($player) use ($nextTurnOrder) {
-            return $player->turn_order === $nextTurnOrder;
-        });
-
-        // If no player found with next turn order, use the first player
         if (!$nextPlayer) {
-            $nextPlayer = $activePlayers->first();
+            $players->first();
         }
-
-        // Find the player after the next player (becomes the new next player)
-        $nextPlayerIndex = $activePlayers->search(function ($player) use ($nextPlayer) {
-            return $player->id === $nextPlayer->id;
-        });
-
-        $newNextPlayerIndex = ($nextPlayerIndex + 1) % $activePlayers->count();
-        $newNextPlayer = $activePlayers[$newNextPlayerIndex];
 
         // Update the game with new current and next player
         $game->update([
-            'current_player_id' => $nextPlayer->user_id,
-            'next_turn_order'   => $newNextPlayer->turn_order,
+            'current_player_id' => $targetUserId,
+            'next_turn_order'   => $nextPlayer->turn_order,
+        ]);
+
+        // Log a turn for the target player
+        MultiplayerGameLog::create([
+            'multiplayer_game_id' => $game->id,
+            'user_id'             => $actingPlayer->user_id,
+            'action_type'         => 'set_turn',
+            'action_data'         => ['target_user_id' => $targetUserId],
+            'created_at'          => now(),
         ]);
     }
 

@@ -45,16 +45,6 @@ class OfficialRating extends Model
         return Game::where('type', $this->game_type)->get();
     }
 
-    public function players(): HasMany
-    {
-        return $this->hasMany(OfficialRatingPlayer::class);
-    }
-
-    public function activePlayers(): HasMany
-    {
-        return $this->players()->where('is_active', true);
-    }
-
     public function tournaments(): BelongsToMany
     {
         return $this
@@ -73,6 +63,16 @@ class OfficialRating extends Model
             ->limit($limit)
             ->get()
         ;
+    }
+
+    public function activePlayers(): HasMany
+    {
+        return $this->players()->where('is_active', true);
+    }
+
+    public function players(): HasMany
+    {
+        return $this->hasMany(OfficialRatingPlayer::class);
     }
 
     public function getPlayerRating(int $userId): ?OfficialRatingPlayer

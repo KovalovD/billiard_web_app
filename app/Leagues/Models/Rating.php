@@ -17,8 +17,6 @@ class Rating extends Model
 {
     use HasFactory;
 
-    private ?int $last_player_rating_id = null;
-
     protected $fillable = [
         'user_id',
         'league_id',
@@ -27,18 +25,17 @@ class Rating extends Model
         'is_active',
         'is_confirmed',
     ];
-
     protected $casts = [
         'is_active' => 'boolean',
         'is_confirmed' => 'boolean',
     ];
-
     protected $with = [
         'ongoingMatchesAsFirstPlayer',
         'matchesAsFirstPlayer',
         'ongoingMatchesAsSecondPlayer',
         'matchesAsSecondPlayer',
     ];
+    private ?int $last_player_rating_id = null;
 
     public static function newFactory(): RatingFactory|Factory
     {
@@ -63,12 +60,22 @@ class Rating extends Model
         ;
     }
 
+    public function matchesAsFirstPlayer(): HasMany
+    {
+        return $this->hasMany(MatchGame::class, 'first_rating_id')->orderBy('finished_at', 'desc')->with('league');
+    }
+
     public function ongoingMatchesAsSecondPlayer(): HasMany
     {
         return $this
             ->matchesAsSecondPlayer()
             ->whereIn('status', GameStatus::notAllowedToInviteStatuses())
         ;
+    }
+
+    public function matchesAsSecondPlayer(): HasMany
+    {
+        return $this->hasMany(MatchGame::class, 'second_rating_id')->orderBy('finished_at', 'desc')->with('league');
     }
 
     /**
@@ -91,14 +98,12 @@ class Rating extends Model
         });
     }
 
-    public function matchesAsFirstPlayer(): HasMany
+    /**
+     * @return Collection<MatchGame>
+     */
+    public function wins(): Collection
     {
-        return $this->hasMany(MatchGame::class, 'first_rating_id')->orderBy('finished_at', 'desc')->with('league');
-    }
-
-    public function matchesAsSecondPlayer(): HasMany
-    {
-        return $this->hasMany(MatchGame::class, 'second_rating_id')->orderBy('finished_at', 'desc')->with('league');
+        return $this->matches()->where('winner_rating_id', $this->id);
     }
 
     /**
@@ -112,17 +117,14 @@ class Rating extends Model
     /**
      * @return Collection<MatchGame>
      */
-    public function wins(): Collection
-    {
-        return $this->matches()->where('winner_rating_id', $this->id);
-    }
-
-    /**
-     * @return Collection<MatchGame>
-     */
     public function loses(): Collection
     {
         return $this->matches()->where('loser_rating_id', $this->id);
+    }
+
+    public function getLastPlayerRatingId(): ?int
+    {
+        return $this->last_player_rating_id;
     }
 
     public function setLastPlayerRatingId(?int $id): self
@@ -130,10 +132,5 @@ class Rating extends Model
         $this->last_player_rating_id = $id;
 
         return $this;
-    }
-
-    public function getLastPlayerRatingId(): ?int
-    {
-        return $this->last_player_rating_id;
     }
 }

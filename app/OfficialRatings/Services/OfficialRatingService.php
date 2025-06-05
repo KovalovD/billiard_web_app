@@ -6,9 +6,9 @@ use App\Matches\Enums\GameType;
 use App\OfficialRatings\Models\OfficialRating;
 use App\OfficialRatings\Models\OfficialRatingPlayer;
 use App\Tournaments\Models\Tournament;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 use RuntimeException;
 use Throwable;
 
@@ -161,31 +161,6 @@ class OfficialRatingService
     }
 
     /**
-     * Remove tournament from rating
-     * @throws Throwable
-     */
-    public function removeTournamentFromRating(OfficialRating $rating, Tournament $tournament): void
-    {
-        if (!$rating->tournaments()->where('tournament_id', $tournament->id)->exists()) {
-            throw new RuntimeException('Tournament is not associated with this rating');
-        }
-
-        DB::transaction(function () use ($rating, $tournament) {
-            // Remove tournament records from all players
-            $players = $rating->players()->get();
-            foreach ($players as $player) {
-                $player->removeTournament($tournament->id);
-            }
-
-            // Detach tournament from rating
-            $rating->tournaments()->detach($tournament->id);
-
-            // Recalculate positions
-            $this->recalculatePositions($rating);
-        });
-    }
-
-    /**
      * Add player to rating
      * @throws Throwable
      */
@@ -214,24 +189,6 @@ class OfficialRatingService
     }
 
     /**
-     * Remove player from rating
-     * @throws Throwable
-     */
-    public function removePlayerFromRating(OfficialRating $rating, int $userId): void
-    {
-        $player = $rating->getPlayerRating($userId);
-
-        if (!$player) {
-            throw new RuntimeException('Player is not in this rating');
-        }
-
-        $player->delete();
-
-        // Recalculate positions
-        $this->recalculatePositions($rating);
-    }
-
-    /**
      * Recalculate rating positions
      * @throws Throwable
      */
@@ -251,6 +208,49 @@ class OfficialRatingService
                 $player->update(['position' => $index + 1]);
             }
         });
+    }
+
+    /**
+     * Remove tournament from rating
+     * @throws Throwable
+     */
+    public function removeTournamentFromRating(OfficialRating $rating, Tournament $tournament): void
+    {
+        if (!$rating->tournaments()->where('tournament_id', $tournament->id)->exists()) {
+            throw new RuntimeException('Tournament is not associated with this rating');
+        }
+
+        DB::transaction(function () use ($rating, $tournament) {
+            // Remove tournament records from all players
+            $players = $rating->players()->get();
+            foreach ($players as $player) {
+                $player->removeTournament($tournament->id);
+            }
+
+            // Detach tournament from rating
+            $rating->tournaments()->detach($tournament->id);
+
+            // Recalculate positions
+            $this->recalculatePositions($rating);
+        });
+    }
+
+    /**
+     * Remove player from rating
+     * @throws Throwable
+     */
+    public function removePlayerFromRating(OfficialRating $rating, int $userId): void
+    {
+        $player = $rating->getPlayerRating($userId);
+
+        if (!$player) {
+            throw new RuntimeException('Player is not in this rating');
+        }
+
+        $player->delete();
+
+        // Recalculate positions
+        $this->recalculatePositions($rating);
     }
 
     /**
@@ -398,11 +398,11 @@ class OfficialRatingService
             }
 
             $stats[] = [
-                'player_id'  => $player->id,
-                'user_id'    => $player->user_id,
-                'points'     => $beforePoints,
-                'wins'       => $wins,
-                'played'     => $played,
+                'player_id' => $player->id,
+                'user_id'   => $player->user_id,
+                'points'    => $beforePoints,
+                'wins'      => $wins,
+                'played'    => $played,
             ];
         }
 

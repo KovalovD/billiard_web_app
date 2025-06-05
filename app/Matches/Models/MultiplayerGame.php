@@ -42,8 +42,13 @@ class MultiplayerGame extends Model
         'started_at'           => 'datetime',
         'completed_at'         => 'datetime',
         'allow_player_targeting' => 'boolean',
-        'prize_pool' => 'array',
+        'prize_pool'           => 'array',
     ];
+
+    protected static function newFactory(): MultiplayerGameFactory|Factory
+    {
+        return MultiplayerGameFactory::new();
+    }
 
     public function league(): BelongsTo
     {
@@ -55,19 +60,9 @@ class MultiplayerGame extends Model
         return $this->belongsTo(Game::class);
     }
 
-    public function players(): HasMany
-    {
-        return $this->hasMany(MultiplayerGamePlayer::class);
-    }
-
     public function logs(): HasMany
     {
         return $this->hasMany(MultiplayerGameLog::class);
-    }
-
-    public function activePlayers(): HasMany
-    {
-        return $this->players()->whereNull('eliminated_at');
     }
 
     public function canJoin(User $user): bool
@@ -97,6 +92,11 @@ class MultiplayerGame extends Model
         return true;
     }
 
+    public function players(): HasMany
+    {
+        return $this->hasMany(MultiplayerGamePlayer::class);
+    }
+
     public function getCurrentTurnPlayerIndex(): ?int
     {
         if ($this->status !== 'in_progress' || !$this->current_player_id) {
@@ -121,13 +121,14 @@ class MultiplayerGame extends Model
 
         return $currentPlayerIndex;
     }
+
+    public function activePlayers(): HasMany
+    {
+        return $this->players()->whereNull('eliminated_at');
+    }
+
     public function isUserModerator(User $user): bool
     {
         return $user->id === $this->moderator_user_id || $user->is_admin;
-    }
-
-    protected static function newFactory(): MultiplayerGameFactory|Factory
-    {
-        return MultiplayerGameFactory::new();
     }
 }

@@ -78,6 +78,28 @@ class MatchGamesService
         return true;
     }
 
+    private function checkAvailability(Rating $rating, League $league): bool
+    {
+        return !MatchGame::query()
+            ->where(static function (Builder $query) use ($rating) {
+                $query->where('first_rating_id', $rating->id);
+                $query->orWhere('second_rating_id', $rating->id);
+            })
+            ->where('league_id', $league->id)
+            ->whereIn('status', GameStatus::notAllowedToInviteStatuses())
+            ->exists()
+        ;
+    }
+
+    /**
+     * Check if the two players are within challenge range (±10 positions)
+     */
+    private function isWithinChallengeRange(Rating $senderRating, Rating $receiverRating): bool
+    {
+        $positionDifference = abs($senderRating->position - $receiverRating->position);
+        return $positionDifference <= 10;
+    }
+
     /**
      * Check if the sender's last match was with the same opponent
      */
@@ -102,28 +124,6 @@ class MatchGamesService
         // Check if the last match was with the intended receiver
         return ($lastMatch->first_rating_id === $receiverRating->id && $lastMatch->second_rating_id === $senderRating->id)
             || ($lastMatch->first_rating_id === $senderRating->id && $lastMatch->second_rating_id === $receiverRating->id);
-    }
-
-    /**
-     * Check if the two players are within challenge range (±10 positions)
-     */
-    private function isWithinChallengeRange(Rating $senderRating, Rating $receiverRating): bool
-    {
-        $positionDifference = abs($senderRating->position - $receiverRating->position);
-        return $positionDifference <= 10;
-    }
-
-    private function checkAvailability(Rating $rating, League $league): bool
-    {
-        return !MatchGame::query()
-            ->where(static function (Builder $query) use ($rating) {
-                $query->where('first_rating_id', $rating->id);
-                $query->orWhere('second_rating_id', $rating->id);
-            })
-            ->where('league_id', $league->id)
-            ->whereIn('status', GameStatus::notAllowedToInviteStatuses())
-            ->exists()
-        ;
     }
 
     public function accept(User $user, MatchGame $matchGame): bool

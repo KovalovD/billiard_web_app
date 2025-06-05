@@ -35,17 +35,6 @@ readonly class AdminOfficialRatingsController
     }
 
     /**
-     * Update official rating
-     * @admin
-     */
-    public function update(UpdateOfficialRatingRequest $request, OfficialRating $officialRating): OfficialRatingResource
-    {
-        $rating = $this->officialRatingService->updateRating($officialRating, $request->validated());
-
-        return new OfficialRatingResource($rating);
-    }
-
-    /**
      * Delete official rating
      * @admin
      */
@@ -158,27 +147,6 @@ readonly class AdminOfficialRatingsController
                 'success' => false,
                 'message' => $e->getMessage(),
             ], 400);
-        }
-    }
-
-    /**
-     * Recalculate rating positions
-     * @admin
-     */
-    public function recalculatePositions(OfficialRating $officialRating): JsonResponse
-    {
-        try {
-            $this->officialRatingService->recalculatePositions($officialRating);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Rating positions recalculated successfully',
-            ]);
-        } catch (Throwable $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-            ], 500);
         }
     }
 
@@ -525,6 +493,38 @@ readonly class AdminOfficialRatingsController
                     'rating_points' => $player->rating_points,
                     'position'      => $player->fresh()->position,
                 ],
+            ]);
+        } catch (Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Update official rating
+     * @admin
+     */
+    public function update(UpdateOfficialRatingRequest $request, OfficialRating $officialRating): OfficialRatingResource
+    {
+        $rating = $this->officialRatingService->updateRating($officialRating, $request->validated());
+
+        return new OfficialRatingResource($rating);
+    }
+
+    /**
+     * Recalculate rating positions
+     * @admin
+     */
+    public function recalculatePositions(OfficialRating $officialRating): JsonResponse
+    {
+        try {
+            $this->officialRatingService->recalculatePositions($officialRating);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Rating positions recalculated successfully',
             ]);
         } catch (Throwable $e) {
             return response()->json([

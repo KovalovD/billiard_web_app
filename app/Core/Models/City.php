@@ -21,13 +21,13 @@ class City extends Model
 
     protected $with = ['country'];
 
-    public function country(): BelongsTo
-    {
-        return $this->belongsTo(Country::class);
-    }
-
     public static function newFactory(): CityFactory|Factory
     {
         return CityFactory::new();
+    }
+
+    public function country(): BelongsTo
+    {
+        return $this->belongsTo(Country::class);
     }
 }

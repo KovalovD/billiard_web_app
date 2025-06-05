@@ -16,7 +16,7 @@ class MatchGameResource extends JsonResource
             'id'     => $this->id,
             'status' => $this->status,
 
-            'league_id' => $this->league_id,
+            'league_id'        => $this->league_id,
             'stream_url' => $this->stream_url,
             'details'    => $this->details,
 

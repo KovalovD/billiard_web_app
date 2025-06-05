@@ -1,5 +1,7 @@
 <?php
+
 namespace App\Console\Commands;
+
 use App\Core\Models\City;
 use App\Core\Models\Country;
 use App\Core\Models\Game;
