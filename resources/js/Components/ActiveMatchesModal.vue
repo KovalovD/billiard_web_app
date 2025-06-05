@@ -6,6 +6,7 @@ import {apiClient} from '@/lib/apiClient';
 import type {MatchGame} from '@/types/api';
 import {Link} from '@inertiajs/vue3';
 import {computed, ref} from 'vue';
+import {useLocale} from '@/composables/useLocale';
 
 interface Props {
     show: boolean;
@@ -15,6 +16,8 @@ interface Props {
 const props = defineProps<Props>();
 const emit = defineEmits(['close', 'declined']);
 
+const { t } = useLocale();
+
 const {user} = useAuth();
 const isProcessing = ref(false);
 
@@ -22,7 +25,7 @@ const matchesCount = computed(() => props.activeMatches.length);
 
 // Format player name with first initial and last name
 const formatPlayerName = (player: any) => {
-    if (!player) return 'Unknown Player';
+    if (!player) return t('Unknown Player');
 
     const firstName = player.firstname || '';
     const lastName = player.lastname || '';
@@ -76,11 +79,11 @@ const needsConfirmation = (match: MatchGame): boolean => {
 const getMatchStatusDisplay = (status: string): string => {
     switch (status) {
         case 'in_progress':
-            return 'In Progress';
+            return t('In Progress');
         case 'completed':
-            return 'Completed';
+            return t('Completed');
         case 'must_be_confirmed':
-            return 'Needs Confirmation';
+            return t('Needs Confirmation');
         default:
             return status;
     }
@@ -107,9 +110,9 @@ const declineChallenge = async (match: MatchGame) => {
 </script>
 
 <template>
-    <Modal :show="show" :title="`Active Matches (${matchesCount})`" maxWidth="2xl" @close="emit('close')">
+    <Modal :show="show" :title="`${t('Active Matches')} (${matchesCount})`" maxWidth="2xl" @close="emit('close')">
         <div class="space-y-4 p-6">
-            <p v-if="matchesCount === 0" class="text-center text-gray-500">No active matches at the moment.</p>
+            <p v-if="matchesCount === 0" class="text-center text-gray-500">{{ t('No active matches at the moment.') }}</p>
 
             <div v-else class="space-y-6">
                 <div
@@ -124,7 +127,7 @@ const declineChallenge = async (match: MatchGame) => {
                 >
                     <div class="mb-5 flex items-start justify-between">
                         <h3 class="text-lg font-medium">
-                            {{ isChallengeSender(match) ? 'Your challenge to' : 'Challenge from' }}
+                            {{ isChallengeSender(match) ? t('Your challenge to') : t('Challenge from') }}
                             {{
                                 isChallengeSender(match) ? formatPlayerName(match.secondPlayer?.user) : formatPlayerName(match.firstPlayer?.user)
                             }}
@@ -133,7 +136,7 @@ const declineChallenge = async (match: MatchGame) => {
                                 class="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
                             >
                                 {{
-                                    needsConfirmation(match) ? 'Needs your confirmation' : getMatchStatusDisplay(match.status)
+                                    needsConfirmation(match) ? t('Needs your confirmation') : getMatchStatusDisplay(match.status)
                                 }}
                             </span>
                         </h3>
@@ -179,7 +182,7 @@ const declineChallenge = async (match: MatchGame) => {
 
                         <div class="rounded-md bg-white p-4 shadow-sm dark:bg-gray-700">
                             <h4 class="mb-2 font-medium text-green-600 dark:text-green-400">
-                                {{ isChallengeSender(match) ? 'Opponent' : 'You' }}
+                                {{ isChallengeSender(match) ? t('Opponent') : t('You') }}
                             </h4>
                             <div class="space-y-2">
                                 <p class="flex justify-between">
@@ -213,7 +216,7 @@ const declineChallenge = async (match: MatchGame) => {
                         v-if="match.first_user_score !== null && match.second_user_score !== null"
                         class="mb-5 rounded-md bg-blue-50 p-3 dark:bg-blue-900/20"
                     >
-                        <h4 class="mb-2 font-medium text-blue-800 dark:text-blue-300">Current Score</h4>
+                        <h4 class="mb-2 font-medium text-blue-800 dark:text-blue-300">{{ t('Current Score') }}</h4>
                         <div class="flex items-center justify-center text-xl font-bold">
                             <span
                                 :class="{ 'text-green-600 dark:text-green-400': match.first_user_score > match.second_user_score }">
@@ -229,7 +232,7 @@ const declineChallenge = async (match: MatchGame) => {
                             v-if="match.status === 'must_be_confirmed' && needsConfirmation(match)"
                             class="mt-2 text-center text-sm text-amber-700 dark:text-amber-400"
                         >
-                            This score needs your confirmation
+                            {{ t('This score needs your confirmation') }}
                         </p>
                     </div>
 
@@ -237,7 +240,7 @@ const declineChallenge = async (match: MatchGame) => {
                     <div class="mb-5 rounded-md bg-gray-100 p-3 dark:bg-gray-700/50">
                         <div class="flex flex-wrap justify-between">
                             <div class="mr-4">
-                                <span class="text-gray-600 dark:text-gray-300">Rating Difference:</span>
+                                <span class="text-gray-600 dark:text-gray-300">{{ t('Rating Difference:') }}</span>
                                 <span
                                     :class="{
                                         'text-green-600 dark:text-green-400':
@@ -262,7 +265,7 @@ const declineChallenge = async (match: MatchGame) => {
                                 </span>
                             </div>
                             <div class="mr-4">
-                                <span class="text-gray-600 dark:text-gray-300">Win Probability:</span>
+                                <span class="text-gray-600 dark:text-gray-300">{{ t('Win Probability:') }}</span>
                                 <span class="ml-1 font-medium">
                                     {{
                                         getWinProbability(
@@ -277,8 +280,8 @@ const declineChallenge = async (match: MatchGame) => {
                                 </span>
                             </div>
                             <div>
-                                <span class="text-gray-600 dark:text-gray-300">League:</span>
-                                <span class="ml-1 font-medium">{{ match.league?.name || 'Unknown' }}</span>
+                                <span class="text-gray-600 dark:text-gray-300">{{ t('League:') }}</span>
+                                <span class="ml-1 font-medium">{{ match.league?.name || t('Unknown') }}</span>
                             </div>
                         </div>
                     </div>
@@ -303,7 +306,7 @@ const declineChallenge = async (match: MatchGame) => {
                             variant="outline"
                             @click="declineChallenge(match)"
                         >
-                            {{ isProcessing ? 'Processing...' : 'Decline Match' }}
+                            {{ isProcessing ? t('Processing...') : t('Decline Match') }}
                         </Button>
 
                         <!-- Both sender and receiver: Submit Result -->
@@ -312,7 +315,7 @@ const declineChallenge = async (match: MatchGame) => {
                                 :class="{ 'animate-pulse bg-amber-500 hover:bg-amber-600': needsConfirmation(match) }"
                                 class="bg-black text-white dark:bg-white dark:text-black"
                             >
-                                {{ needsConfirmation(match) ? 'Confirm Result' : 'Submit Result' }}
+                                {{ needsConfirmation(match) ? t('Confirm Result') : t('Submit Result') }}
                             </Button>
                         </Link>
                     </div>
@@ -320,7 +323,7 @@ const declineChallenge = async (match: MatchGame) => {
             </div>
 
             <div class="flex justify-end border-t border-gray-200 pt-4 dark:border-gray-700">
-                <Button class="rounded-md border border-gray-300" variant="outline" @click="emit('close')"> Close
+                <Button class="rounded-md border border-gray-300" variant="outline" @click="emit('close')"> {{ t('Close') }}
                 </Button>
             </div>
         </div>

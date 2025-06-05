@@ -20,6 +20,8 @@ const props = defineProps<Props>();
 const emit = defineEmits(['challenge']);
 const { t } = useLocale();
 
+const { t } = useLocale();
+
 const handleChallenge = () => {
     if (props.isAuthenticated) {
         emit('challenge', props.playerRating.player);
