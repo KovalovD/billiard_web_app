@@ -54,11 +54,11 @@ export function initializeTheme() {
         return;
     }
 
-    // Initialize theme from saved preference or default to system...
+    // Ініціалізуємо тему із збережених налаштувань або використовуємо системну
     const savedAppearance = getStoredAppearance();
     updateTheme(savedAppearance || 'system');
 
-    // Set up system theme change listener...
+    // Налаштовуємо слухач зміни системної теми
     mediaQuery()?.addEventListener('change', handleSystemThemeChange);
 }
 
@@ -78,10 +78,10 @@ export function useAppearance() {
     function updateAppearance(value: Appearance) {
         appearance.value = value;
 
-        // Store in localStorage for client-side persistence...
+        // Зберігаємо в localStorage для клієнтської постійності
         localStorage.setItem('appearance', value);
 
-        // Store in cookie for SSR...
+        // Зберігаємо у cookie для SSR
         setCookie('appearance', value);
 
         updateTheme(value);
