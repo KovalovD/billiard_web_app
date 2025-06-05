@@ -8,6 +8,7 @@ use App\OfficialRatings\Models\OfficialRatingPlayer;
 use App\Tournaments\Models\Tournament;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 use RuntimeException;
 use Throwable;
 
@@ -366,6 +367,75 @@ class OfficialRatingService
             'total_players'       => $players->count(),
             'players_with_issues' => count($issues),
             'issues'              => $issues,
+        ];
+    }
+
+    /**
+     * Get rating delta for player since given date
+     */
+    public function getPlayerDeltaSinceDate(
+        OfficialRating $rating,
+        int $userId,
+        Carbon $date,
+    ): ?array {
+        $players = $rating->players()->get();
+
+        $stats = [];
+        foreach ($players as $player) {
+            $records = $player->tournament_records ?? [];
+            $beforePoints = $rating->initial_rating;
+            $wins = 0;
+            $played = 0;
+
+            foreach ($records as $record) {
+                if (Carbon::parse($record['tournament_date'])->lt($date)) {
+                    $beforePoints += $record['rating_points'];
+                    $played++;
+                    if (!empty($record['won'])) {
+                        $wins++;
+                    }
+                }
+            }
+
+            $stats[] = [
+                'player_id'  => $player->id,
+                'user_id'    => $player->user_id,
+                'points'     => $beforePoints,
+                'wins'       => $wins,
+                'played'     => $played,
+            ];
+        }
+
+        usort($stats, static function ($a, $b) {
+            if ($a['points'] !== $b['points']) {
+                return $b['points'] <=> $a['points'];
+            }
+
+            if ($a['wins'] !== $b['wins']) {
+                return $b['wins'] <=> $a['wins'];
+            }
+
+            return $a['played'] <=> $b['played'];
+        });
+
+        foreach ($stats as $index => &$stat) {
+            $stat['position'] = $index + 1;
+        }
+
+        $playerStat = collect($stats)->firstWhere('user_id', $userId);
+        $player = $players->firstWhere('user_id', $userId);
+
+        if (!$player || !$playerStat) {
+            return null;
+        }
+
+        return [
+            'current_points'   => $player->rating_points,
+            'points_before'    => $playerStat['points'],
+            'points_delta'     => $player->rating_points - $playerStat['points'],
+            'current_position' => $player->position,
+            'position_before'  => $playerStat['position'],
+            'position_delta'   => $playerStat['position'] - $player->position,
         ];
     }
 }

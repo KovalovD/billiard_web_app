@@ -18,6 +18,9 @@ Route::group(['prefix' => 'official-ratings'], static function () {
         [OfficialRatingsController::class, 'topPlayers'])->name('official-ratings.top-players');
     Route::get('/{officialRating}/players/{userId}',
         [OfficialRatingsController::class, 'playerRating'])->name('official-ratings.player-rating');
+
+    Route::middleware('auth:sanctum')->get('/{officialRating}/player-delta',
+        [OfficialRatingsController::class, 'playerDelta'])->name('official-ratings.player-delta');
 });
 // Admin official ratings routes
 Route::middleware(['auth:sanctum', AdminMiddleware::class])
