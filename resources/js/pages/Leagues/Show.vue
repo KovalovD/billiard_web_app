@@ -25,9 +25,8 @@ import {
     UsersIcon
 } from 'lucide-vue-next';
 import {computed, onMounted, ref, watch} from 'vue';
-import {useLocale} from '@/composables/useLocale';
 import AddPlayerModal from "@/Components/AddPlayerModal.vue";
-import { useLocale } from '@/composables/useLocale';
+import {useLocale} from '@/composables/useLocale';
 
 const adminDropdownOpen = ref(false);
 const adminDropdownRef = ref(null);
@@ -39,7 +38,6 @@ const props = defineProps<{
 }>();
 
 const {user, isAuthenticated, isAdmin} = useAuth();
-const { t } = useLocale();
 const leagues = useLeagues();
 const { t } = useLocale();
 const {getLeagueStatus, canJoinLeague, getJoinErrorMessage} = useLeagueStatus();
