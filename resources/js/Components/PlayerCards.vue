@@ -4,6 +4,7 @@ import {Button} from '@/Components/ui';
 import type {MultiplayerGamePlayer} from '@/types/api';
 import {computed} from 'vue';
 import {ArrowDownIcon, ArrowRightIcon, HandIcon} from "lucide-vue-next";
+import {useLocale} from '@/composables/useLocale';
 
 interface Props {
     player: MultiplayerGamePlayer;
@@ -13,6 +14,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const emit = defineEmits(['select-card']);
+const { t } = useLocale();
 
 // Check if a card is available
 const hasCard = (cardType: 'skip_turn' | 'pass_turn' | 'hand_shot'): boolean => {
@@ -34,11 +36,11 @@ const selectCard = (cardType: 'skip_turn' | 'pass_turn' | 'hand_shot') => {
 const getCardDisplayText = (cardType: string): string => {
     switch (cardType) {
         case 'skip_turn':
-            return 'Skip Turn';
+            return t('Skip Turn');
         case 'pass_turn':
-            return 'Pass Turn';
+            return t('Pass Turn');
         case 'hand_shot':
-            return 'Hand Shot';
+            return t('Hand Shot');
         default:
             return cardType;
     }
@@ -48,11 +50,11 @@ const getCardDisplayText = (cardType: string): string => {
 const getCardDescription = (cardType: string): string => {
     switch (cardType) {
         case 'skip_turn':
-            return 'Skip your turn, game moves to the next player';
+            return t('Skip your turn, game moves to the next player');
         case 'pass_turn':
-            return 'Pass your turn to another player. After they play, the turn will return to you';
+            return t('Pass your turn to another player. After they play, the turn will return to you');
         case 'hand_shot':
-            return 'Place the cue ball anywhere on the table and play any ball';
+            return t('Place the cue ball anywhere on the table and play any ball');
         default:
             return '';
     }
@@ -64,7 +66,7 @@ const getCardDescription = (cardType: string): string => {
     <div class="space-y-2">
         <div v-if="!hasAnyCards"
              class="rounded-md bg-gray-100 p-3 text-center text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-            <p>No cards available</p>
+            <p>{{ t('No cards available') }}</p>
         </div>
 
         <div v-else class="flex flex-wrap gap-2">

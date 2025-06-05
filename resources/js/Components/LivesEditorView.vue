@@ -4,6 +4,7 @@ import {Button, Card, CardContent, CardHeader, CardTitle} from '@/Components/ui'
 import type {MultiplayerGamePlayer} from '@/types/api';
 import {CheckIcon} from 'lucide-vue-next';
 import {computed} from 'vue';
+import {useLocale} from '@/composables/useLocale';
 
 interface Props {
     players: MultiplayerGamePlayer[];
@@ -13,6 +14,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const emit = defineEmits(['increment-lives', 'decrement-lives', 'set-turn']);
+const { t } = useLocale();
 
 // Sort players by turn order
 const sortedPlayers = computed(() => {
@@ -41,11 +43,11 @@ const setCurrentTurn = (player: MultiplayerGamePlayer) => {
 <template>
     <Card>
         <CardHeader>
-            <CardTitle>Lives Editor</CardTitle>
+            <CardTitle>{{ t('Lives Editor') }}</CardTitle>
         </CardHeader>
         <CardContent>
             <div v-if="players.length === 0" class="py-4 text-center text-gray-500 dark:text-gray-400">
-                No active players
+                {{ t('No active players') }}
             </div>
 
             <div v-else class="divide-y">
@@ -74,7 +76,7 @@ const setCurrentTurn = (player: MultiplayerGamePlayer) => {
 
                     <div class="flex items-center space-x-3">
                         <div class="flex items-center space-x-2">
-                            <span class="text-sm font-medium">Lives: {{ player.lives }}</span>
+                            <span class="text-sm font-medium">{{ t('Lives') }}: {{ player.lives }}</span>
 
                             <Button
                                 :disabled="isLoading"
@@ -99,11 +101,11 @@ const setCurrentTurn = (player: MultiplayerGamePlayer) => {
                             v-if="player.user.id !== currentTurnPlayerId"
                             :disabled="isLoading"
                             size="sm"
-                            title="Set as current turn"
+                            :title="t('Set as current turn')"
                             variant="outline"
                             @click="setCurrentTurn(player)"
                         >
-                            Set Turn
+                            {{ t('Set Turn') }}
                         </Button>
                     </div>
                 </div>
