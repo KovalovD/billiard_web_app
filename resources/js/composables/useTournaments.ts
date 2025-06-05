@@ -4,44 +4,44 @@ import {del, get, post, put} from '@/lib/apiClient';
 import type {Tournament, TournamentPlayer, CreateTournamentPayload} from '@/types/api';
 
 export function useTournaments() {
-    // Fetch all tournaments
+    // Отримати всі турніри
     const fetchTournaments = (filters?: Record<string, any>) => {
         const params = new URLSearchParams(filters || {}).toString();
         const url = params ? `/api/tournaments?${params}` : '/api/tournaments';
         return useApi<Tournament[]>(() => get(url));
     };
 
-    // Fetch upcoming tournaments
+    // Отримати майбутні турніри
     const fetchUpcomingTournaments = () => {
         return useApi<Tournament[]>(() => get('/api/tournaments/upcoming'));
     };
 
-    // Fetch active tournaments
+    // Отримати активні турніри
     const fetchActiveTournaments = () => {
         return useApi<Tournament[]>(() => get('/api/tournaments/active'));
     };
 
-    // Fetch completed tournaments
+    // Отримати завершені турніри
     const fetchCompletedTournaments = () => {
         return useApi<Tournament[]>(() => get('/api/tournaments/completed'));
     };
 
-    // Fetch single tournament
+    // Отримати конкретний турнір
     const fetchTournament = (tournamentId: number | string) => {
         return useApi<Tournament>(() => get(`/api/tournaments/${tournamentId}`));
     };
 
-    // Fetch tournament players
+    // Отримати гравців турніру
     const fetchTournamentPlayers = (tournamentId: number | string) => {
         return useApi<TournamentPlayer[]>(() => get(`/api/tournaments/${tournamentId}/players`));
     };
 
-    // Fetch tournament results
+    // Отримати результати турніру
     const fetchTournamentResults = (tournamentId: number | string) => {
         return useApi<any>(() => get(`/api/tournaments/${tournamentId}/results`));
     };
 
-    // Admin actions
+    // Дії адміністратора
     const createTournament = () => {
         return useApiAction((payload: CreateTournamentPayload | undefined) =>
             post<Tournament>('/api/admin/tournaments', payload)
@@ -99,7 +99,7 @@ export function useTournaments() {
     };
 
     return {
-        // Public API
+        // Публічний API
         fetchTournaments,
         fetchUpcomingTournaments,
         fetchActiveTournaments,
@@ -108,7 +108,7 @@ export function useTournaments() {
         fetchTournamentPlayers,
         fetchTournamentResults,
 
-        // Admin API
+        // API адміністратора
         createTournament,
         updateTournament,
         deleteTournament,

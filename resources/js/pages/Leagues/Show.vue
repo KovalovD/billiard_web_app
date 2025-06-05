@@ -39,7 +39,7 @@ const props = defineProps<{
 }>();
 
 const {user, isAuthenticated, isAdmin} = useAuth();
-const {t} = useLocale();
+const { t } = useLocale();
 const leagues = useLeagues();
 const { t } = useLocale();
 const {getLeagueStatus, canJoinLeague, getJoinErrorMessage} = useLeagueStatus();
