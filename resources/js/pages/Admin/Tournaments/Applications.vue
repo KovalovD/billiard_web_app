@@ -206,19 +206,19 @@ onMounted(() => {
             <!-- Header -->
             <div class="mb-6 flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">Tournament Applications</h1>
+                    <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">{{ t('Tournament Applications') }}</h1>
                     <p class="text-gray-600 dark:text-gray-400">
-                        {{ tournament ? tournament.name : 'Loading...' }}
+                        {{ tournament ? tournament.name : t('Loading...') }}
                     </p>
                 </div>
                 <div class="flex space-x-3">
                     <Button :disabled="isLoadingApplications" variant="outline" @click="refreshData">
                         <RefreshCwIcon :class="{ 'animate-spin': isLoadingApplications }" class="mr-2 h-4 w-4"/>
-                        Refresh
+                        {{ t('Refresh') }}
                     </Button>
                     <Button variant="outline" @click="router.visit(`/tournaments/${props.tournamentId}`)">
                         <ArrowLeftIcon class="mr-2 h-4 w-4"/>
-                        Back to Tournament
+                        {{ t('Back to Tournament') }}
                     </Button>
                 </div>
             </div>
@@ -236,25 +236,25 @@ onMounted(() => {
                             <div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
                                 {{ tournament.pending_applications_count }}
                             </div>
-                            <div class="text-sm text-gray-600 dark:text-gray-400">Pending</div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('Pending') }}</div>
                         </div>
                         <div class="text-center">
                             <div class="text-2xl font-bold text-green-600 dark:text-green-400">
                                 {{ tournament.confirmed_players_count }}
                             </div>
-                            <div class="text-sm text-gray-600 dark:text-gray-400">Confirmed</div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('Confirmed') }}</div>
                         </div>
                         <div class="text-center">
                             <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
                                 {{ tournament.players_count }}
                             </div>
-                            <div class="text-sm text-gray-600 dark:text-gray-400">Total Applications</div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('Total Applications') }}</div>
                         </div>
                         <div class="text-center">
                             <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">
                                 {{ tournament.max_participants || '∞' }}
                             </div>
-                            <div class="text-sm text-gray-600 dark:text-gray-400">Max Participants</div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('Max Participants') }}</div>
                         </div>
                     </div>
                 </CardContent>
@@ -263,21 +263,20 @@ onMounted(() => {
             <!-- Bulk Actions -->
             <Card v-if="pendingApplications.length > 0" class="mb-6">
                 <CardHeader>
-                    <CardTitle>Bulk Actions</CardTitle>
+                    <CardTitle>{{ t('Bulk Actions') }}</CardTitle>
                     <CardDescription>
-                        {{ selectedPendingApplications.length }} of {{ pendingApplications.length }} pending
-                        applications selected
+                        {{ t(':selected of :total pending applications selected', {selected: selectedPendingApplications.length, total: pendingApplications.length}) }}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div class="space-y-4">
                         <div class="flex space-x-4">
                             <Button variant="outline" @click="selectAllPending">
-                                Select All Pending
+                                {{ t('Select All Pending') }}
                             </Button>
                             <Button :disabled="selectedApplicationIds.length === 0" variant="outline"
                                     @click="clearSelection">
-                                Clear Selection
+                                {{ t('Clear Selection') }}
                             </Button>
                         </div>
 
@@ -289,7 +288,7 @@ onMounted(() => {
                             >
                                 <UserCheckIcon class="mr-2 h-4 w-4"/>
                                 <Spinner v-if="isProcessingApplication" class="mr-2 h-4 w-4"/>
-                                Confirm Selected ({{ selectedPendingApplications.length }})
+                                {{ t('Confirm Selected (:count)', {count: selectedPendingApplications.length}) }}
                             </Button>
                             <Button
                                 v-if="!showBulkRejectReason"
@@ -298,7 +297,7 @@ onMounted(() => {
                                 @click="showBulkRejectReason = true"
                             >
                                 <UserXIcon class="mr-2 h-4 w-4"/>
-                                Reject Selected ({{ selectedPendingApplications.length }})
+                                {{ t('Reject Selected (:count)', {count: selectedPendingApplications.length}) }}
                             </Button>
                         </div>
 
@@ -312,10 +311,10 @@ onMounted(() => {
                                 >
                                     <UserXIcon class="mr-2 h-4 w-4"/>
                                     <Spinner v-if="isProcessingApplication" class="mr-2 h-4 w-4"/>
-                                    Confirm Rejection
+                                    {{ t('Confirm Rejection') }}
                                 </Button>
                                 <Button variant="outline" @click="showBulkRejectReason = false; rejectionReason = ''">
-                                    Cancel
+                                    {{ t('Cancel') }}
                                 </Button>
                             </div>
                         </div>
@@ -328,9 +327,9 @@ onMounted(() => {
                 <CardHeader>
                     <CardTitle class="flex items-center gap-2">
                         <UserCheckIcon class="h-5 w-5 text-yellow-600"/>
-                        Pending Applications ({{ pendingApplications.length }})
+                        {{ t('Pending Applications (:count)', {count: pendingApplications.length}) }}
                     </CardTitle>
-                    <CardDescription>Applications waiting for approval</CardDescription>
+                    <CardDescription>{{ t('Applications waiting for approval') }}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div class="space-y-4">
@@ -355,7 +354,7 @@ onMounted(() => {
                                         {{ application.user?.email }}
                                     </p>
                                     <p class="text-sm text-gray-500">
-                                        Applied: {{ formatDateTime(application.applied_at) }}
+                                        {{ t('Applied: :date', {date: formatDateTime(application.applied_at)}) }}
                                     </p>
                                 </div>
                             </div>
@@ -391,9 +390,9 @@ onMounted(() => {
                 <CardHeader>
                     <CardTitle class="flex items-center gap-2">
                         <UserCheckIcon class="h-5 w-5 text-green-600"/>
-                        Confirmed Players ({{ confirmedApplications.length }})
+                        {{ t('Confirmed Players (:count)', {count: confirmedApplications.length}) }}
                     </CardTitle>
-                    <CardDescription>Players confirmed for the tournament</CardDescription>
+                    <CardDescription>{{ t('Players confirmed for the tournament') }}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -407,7 +406,7 @@ onMounted(() => {
                                     {{ application.user?.firstname }} {{ application.user?.lastname }}
                                 </p>
                                 <p class="text-sm text-gray-600 dark:text-gray-400">
-                                    Confirmed: {{ formatDateTime(application.confirmed_at) }}
+                                    {{ t('Confirmed: :date', {date: formatDateTime(application.confirmed_at)}) }}
                                 </p>
                             </div>
                             <span
@@ -424,9 +423,9 @@ onMounted(() => {
                 <CardHeader>
                     <CardTitle class="flex items-center gap-2">
                         <UserXIcon class="h-5 w-5 text-red-600"/>
-                        Rejected Applications ({{ rejectedApplications.length }})
+                        {{ t('Rejected Applications (:count)', {count: rejectedApplications.length}) }}
                     </CardTitle>
-                    <CardDescription>Applications that were rejected</CardDescription>
+                    <CardDescription>{{ t('Applications that were rejected') }}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -440,7 +439,7 @@ onMounted(() => {
                                     {{ application.user?.firstname }} {{ application.user?.lastname }}
                                 </p>
                                 <p class="text-sm text-gray-600 dark:text-gray-400">
-                                    Rejected: {{ formatDateTime(application.rejected_at) }}
+                                    {{ t('Rejected: :date', {date: formatDateTime(application.rejected_at)}) }}
                                 </p>
                             </div>
                             <span
@@ -455,16 +454,16 @@ onMounted(() => {
             <!-- Loading State -->
             <div v-if="isLoadingApplications" class="flex items-center justify-center py-10">
                 <Spinner class="text-primary h-8 w-8"/>
-                <span class="ml-2 text-gray-500 dark:text-gray-400">Loading applications...</span>
+                <span class="ml-2 text-gray-500 dark:text-gray-400">{{ t('Loading applications...') }}</span>
             </div>
 
             <!-- Empty State -->
             <Card v-if="!isLoadingApplications && allApplications.length === 0">
                 <CardContent class="py-10 text-center">
                     <UserCheckIcon class="mx-auto h-12 w-12 text-gray-400"/>
-                    <p class="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">No Applications Yet</p>
+                    <p class="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">{{ t('No Applications Yet') }}</p>
                     <p class="mt-2 text-gray-600 dark:text-gray-400">
-                        No one has applied to this tournament yet.
+                        {{ t('No one has applied to this tournament yet.') }}
                     </p>
                 </CardContent>
             </Card>
