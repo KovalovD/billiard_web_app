@@ -392,30 +392,29 @@ onMounted(() => {
                             <CardContent>
                                 <div class="space-y-4">
                                     <div v-if="tournament.details">
-                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">Description</h4>
+                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">{{ t('Description') }}</h4>
                                         <p class="mt-1 text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
                                             {{ tournament.details }}</p>
                                     </div>
 
                                     <div v-if="tournament.regulation">
-                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">Regulation</h4>
+                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">{{ t('Regulation') }}</h4>
                                         <p class="mt-1 text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
                                             {{ tournament.regulation }}</p>
                                     </div>
 
                                     <div v-if="tournament.format">
-                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">Format</h4>
+                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">{{ t('Format') }}</h4>
                                         <p class="mt-1 text-gray-600 dark:text-gray-400">{{ tournament.format }}</p>
                                     </div>
 
                                     <div v-if="tournament.organizer">
-                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">Organizer</h4>
+                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">{{ t('Organizer') }}</h4>
                                         <p class="mt-1 text-gray-600 dark:text-gray-400">{{ tournament.organizer }}</p>
                                     </div>
 
                                     <div v-if="tournament.application_deadline">
-                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">Application
-                                            Deadline</h4>
+                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">{{ t('Application Deadline') }}</h4>
                                         <p class="mt-1 text-gray-600 dark:text-gray-400">
                                             {{ formatDateTime(tournament.application_deadline) }}</p>
                                     </div>
@@ -424,7 +423,7 @@ onMounted(() => {
                                          class="flex justify-between">
                                         <dt class="text-gray-600 dark:text-gray-400">
                                             <StarIcon class="h-4 w-4 inline mr-1"/>
-                                            Official Rating:
+                                            {{ t('Official Rating:') }}
                                         </dt>
                                         <dd class="font-medium">
                                             {{ tournament.official_ratings[0].name }}
@@ -528,7 +527,7 @@ onMounted(() => {
                                             {{ player.status_display }}
                                         </p>
                                         <p v-if="player.confirmed_at" class="text-xs text-gray-500">
-                                            Confirmed: {{ formatDate(player.confirmed_at) }}
+                                            {{ t('Confirmed:') }} {{ formatDate(player.confirmed_at) }}
                                         </p>
                                     </div>
                                 </div>
@@ -560,7 +559,7 @@ onMounted(() => {
                                             <p class="font-medium">{{ application.user?.firstname }}
                                                 {{ application.user?.lastname }}</p>
                                             <p class="text-sm text-gray-600 dark:text-gray-400">
-                                                Applied: {{ formatDate(application.applied_at) }}
+                                                {{ t('Applied:') }} {{ formatDate(application.applied_at) }}
                                             </p>
                                         </div>
                                         <span
@@ -592,7 +591,7 @@ onMounted(() => {
                                             <p class="font-medium">{{ application.user?.firstname }}
                                                 {{ application.user?.lastname }}</p>
                                             <p class="text-sm text-gray-600 dark:text-gray-400">
-                                                Rejected: {{ formatDate(application.rejected_at) }}
+                                                {{ t('Rejected:') }} {{ formatDate(application.rejected_at) }}
                                             </p>
                                         </div>
                                         <span
@@ -662,7 +661,7 @@ onMounted(() => {
                                                 <p class="font-medium">{{ player.user?.firstname }}
                                                     {{ player.user?.lastname }}</p>
                                                 <p v-if="player.is_winner"
-                                                   class="text-sm text-yellow-600 dark:text-yellow-400">🏆 Winner</p>
+                                                   class="text-sm text-yellow-600 dark:text-yellow-400">🏆 {{ t('Winner') }}</p>
                                             </div>
                                         </td>
                                         <td class="px-4 py-3 text-center">
