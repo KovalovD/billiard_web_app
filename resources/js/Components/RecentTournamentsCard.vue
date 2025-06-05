@@ -18,13 +18,13 @@ const { t } = useLocale();
 const getStatusBadge = (tournament: Tournament) => {
     switch (tournament.status) {
         case 'upcoming':
-            return {text: 'Upcoming', class: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'};
+            return {text: t('Upcoming'), class: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'};
         case 'active':
-            return {text: 'Active', class: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'};
+            return {text: t('Active'), class: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'};
         case 'completed':
-            return {text: 'Completed', class: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'};
+            return {text: t('Completed'), class: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'};
         case 'cancelled':
-            return {text: 'Cancelled', class: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'};
+            return {text: t('Cancelled'), class: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'};
         default:
             return {text: tournament.status, class: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'};
     }
@@ -40,7 +40,7 @@ const formatDate = (dateString: string | null) => {
 // Format registration info
 const getRegistrationInfo = (tournament: Tournament) => {
     if (!tournament.is_registration_open) {
-        return 'Registration closed';
+        return t('Registration closed');
     }
 
     if (tournament.max_participants) {
