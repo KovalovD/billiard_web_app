@@ -25,8 +25,9 @@ import {
     UsersIcon
 } from 'lucide-vue-next';
 import {computed, onMounted, ref, watch} from 'vue';
-import AddPlayerModal from "@/Components/AddPlayerModal.vue";
 import {useLocale} from '@/composables/useLocale';
+import AddPlayerModal from "@/Components/AddPlayerModal.vue";
+import { useLocale } from '@/composables/useLocale';
 
 const adminDropdownOpen = ref(false);
 const adminDropdownRef = ref(null);
@@ -40,6 +41,7 @@ const props = defineProps<{
 const {user, isAuthenticated, isAdmin} = useAuth();
 const { t } = useLocale();
 const leagues = useLeagues();
+const { t } = useLocale();
 const {getLeagueStatus, canJoinLeague, getJoinErrorMessage} = useLeagueStatus();
 
 // State for modals
@@ -172,7 +174,7 @@ const isMatchSender = (match: MatchGame): boolean => {
 // Actions (only for authenticated users)
 const handleJoinLeague = async () => {
     if (!isAuthenticated.value) {
-        displayMessage('You must be logged in to join this league.');
+        displayMessage(t('You must be logged in to join this league.'));
         return;
     }
 
@@ -180,7 +182,7 @@ const handleJoinLeague = async () => {
     if (success) {
         await fetchPlayers();
     } else if (joinError.value) {
-        displayMessage(`Failed to join league: ${joinError.value.message || 'Unknown error'}`);
+        displayMessage(`${t('Failed to join league')}: ${joinError.value.message || t('Unknown error')}`);
     }
 };
 
@@ -191,7 +193,7 @@ const showAddPlayerModal = ref(false);
 const handlePlayerAdded = async () => {
     if (!isAuthenticated.value || !isAdmin.value) return;
     await fetchPlayers();
-    displayMessage('Player added successfully');
+    displayMessage(t('Player added successfully'));
 };
 
 const handleLeaveLeague = async () => {
@@ -201,13 +203,13 @@ const handleLeaveLeague = async () => {
     if (success) {
         await fetchPlayers();
     } else if (leaveError.value) {
-        displayMessage(`Failed to leave league: ${leaveError.value.message || 'Unknown error'}`);
+        displayMessage(`${t('Failed to leave league')}: ${leaveError.value.message || t('Unknown error')}`);
     }
 };
 
 const openChallengeModal = (player: Player) => {
     if (!isAuthenticated.value) {
-        displayMessage('You must be logged in to challenge players.');
+        displayMessage(t('You must be logged in to challenge players.'));
         return;
     }
     targetPlayerForChallenge.value = player;
@@ -222,7 +224,7 @@ const handleChallengeSuccess = (message: string) => {
 
 const openResultModal = (match: MatchGame) => {
     if (!isAuthenticated.value) {
-        displayMessage('You must be logged in to submit results.');
+        displayMessage(t('You must be logged in to submit results.'));
         return;
     }
     matchForResults.value = match;
@@ -232,7 +234,7 @@ const openResultModal = (match: MatchGame) => {
 // Decline match function (authenticated users only)
 const declineMatch = async (match: MatchGame) => {
     if (!isAuthenticated.value) {
-        displayMessage('You must be logged in to decline matches.');
+        displayMessage(t('You must be logged in to decline matches.'));
         return;
     }
 
@@ -243,11 +245,11 @@ const declineMatch = async (match: MatchGame) => {
         await apiClient(`/api/leagues/${props.leagueId}/players/match-games/${match.id}/decline`, {
             method: 'post',
         });
-        displayMessage('Match declined successfully.');
+        displayMessage(t('Match declined successfully.'));
         await fetchMatches();
         await fetchPlayers();
     } catch (error: any) {
-        displayMessage(`Failed to decline match: ${error.message || 'Unknown error'}`);
+        displayMessage(`${t('Failed to decline match')}: ${error.message || t('Unknown error')}`);
     } finally {
         isProcessingAction.value = false;
     }
@@ -429,12 +431,12 @@ watch(
             <!-- League Loading State -->
             <div v-if="isLoadingLeague" class="p-10 text-center">
                 <Spinner class="text-primary mx-auto h-8 w-8"/>
-                <p class="mt-2 text-gray-500">Loading league information...</p>
+                <p class="mt-2 text-gray-500">{{ t('Loading league information...') }}</p>
             </div>
 
             <!-- League Error State -->
-            <div v-else-if="leagueError" class="mb-6 rounded bg-red-100 p-4 text-red-500">Error loading league:
-                {{ leagueError.message }}
+            <div v-else-if="leagueError" class="mb-6 rounded bg-red-100 p-4 text-red-500">
+                {{ t('Error loading league: :error', { error: leagueError.message }) }}
             </div>
 
             <!-- League Content -->
@@ -456,17 +458,17 @@ watch(
                                     <div class="mt-2 flex flex-wrap gap-4">
                                        <span class="flex items-center gap-1">
                                            <TrophyIcon class="h-4 w-4"/>
-                                           Game: {{ league.game ?? 'N/A' }}
+                                           {{ t('Game') }}: {{ league.game ?? t('N/A') }}
                                        </span>
                                         <span class="flex items-center gap-1">
                                            <UsersIcon class="h-4 w-4"/>
-                                           Players: {{
+                                           {{ t('Players') }}: {{
                                                 league.active_players ?? 0
                                             }}{{ league.max_players ? `/${league.max_players}` : '' }}
                                        </span>
                                         <span class="flex items-center gap-1">
                                            <SmileIcon class="h-4 w-4"/>
-                                           Rating: {{
+                                           {{ t('Rating') }}: {{
                                                 league.has_rating ? `Enabled (${league.start_rating})` : 'Disabled'
                                             }}
                                        </span>
@@ -481,27 +483,27 @@ watch(
                     </CardHeader>
                     <CardContent>
                         <p v-if="league.details" class="mb-4 whitespace-pre-wrap">{{ league.details }}</p>
-                        <p v-else class="mb-4 text-gray-500 italic">No details provided for this league.</p>
+                        <p v-else class="mb-4 text-gray-500 italic">{{ t('No details provided for this league.') }}</p>
 
                         <div class="mt-4 grid grid-cols-1 gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
                             <div v-if="league.started_at" class="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
-                                <span class="font-medium text-gray-600 dark:text-gray-400">Start Date</span>
+                                <span class="font-medium text-gray-600 dark:text-gray-400">{{ t('Start Date') }}</span>
                                 <p class="text-gray-900 dark:text-gray-200">
                                     {{ new Date(league.started_at).toLocaleDateString() }}
                                 </p>
                             </div>
                             <div v-if="league.finished_at" class="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
-                                <span class="font-medium text-gray-600 dark:text-gray-400">End Date</span>
+                                <span class="font-medium text-gray-600 dark:text-gray-400">{{ t('End Date') }}</span>
                                 <p class="text-gray-900 dark:text-gray-200">
                                     {{ new Date(league.finished_at).toLocaleDateString() }}
                                 </p>
                             </div>
                             <div v-if="!league.game_multiplayer" class="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
-                                <span class="font-medium text-gray-600 dark:text-gray-400">Max Score</span>
+                                <span class="font-medium text-gray-600 dark:text-gray-400">{{ t('Max Score') }}</span>
                                 <p class="text-gray-900 dark:text-gray-200">{{ league.max_score || 'N/A' }}</p>
                             </div>
                             <div v-if="!league.game_multiplayer" class="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
-                                <span class="font-medium text-gray-600 dark:text-gray-400">Invite Expiry</span>
+                                <span class="font-medium text-gray-600 dark:text-gray-400">{{ t('Invite Expiry') }}</span>
                                 <p class="text-gray-900 dark:text-gray-200">{{ league.invite_days_expire || 'N/A' }}
                                     days</p>
                             </div>
@@ -512,7 +514,7 @@ watch(
                             <Link :href="`/leagues/${leagueId}/multiplayer-games`">
                                 <Button variant="secondary">
                                     <GamepadIcon class="mr-2 h-4 w-4"/>
-                                    View Multiplayer Games
+                                    {{ t('View Multiplayer Games') }}
                                 </Button>
                             </Link>
                         </div>
@@ -523,7 +525,7 @@ watch(
                                 <Button v-if="canUserJoinLeague" :disabled="isJoining" @click="handleJoinLeague">
                                     <Spinner v-if="isJoining" class="mr-2 h-4 w-4"/>
                                     <UserPlusIcon v-else class="mr-2 h-4 w-4"/>
-                                    Join League
+                                    {{ t('Join League') }}
                                 </Button>
                                 <div v-else class="text-sm text-gray-500 dark:text-gray-400">
                                     {{ joinErrorMessage }}
@@ -533,7 +535,7 @@ watch(
                             <Button v-else :disabled="isLeaving" variant="secondary" @click="handleLeaveLeague">
                                 <Spinner v-if="isLeaving" class="mr-2 h-4 w-4"/>
                                 <LogOutIcon v-else class="mr-2 h-4 w-4"/>
-                                Leave League
+                                {{ t('Leave League') }}
                             </Button>
                         </div>
 
@@ -593,8 +595,8 @@ watch(
                 <!-- Matches Card - Show to everyone but limit actions for guests -->
                 <Card v-if="!league.game_multiplayer">
                     <CardHeader>
-                        <CardTitle>Matches</CardTitle>
-                        <CardDescription>Recent challenges and games.</CardDescription>
+                        <CardTitle>{{ t('Matches') }}</CardTitle>
+                        <CardDescription>{{ t('Recent challenges and games.') }}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div v-if="isLoadingMatches">
@@ -787,10 +789,10 @@ watch(
     <!-- Generic Message Modal -->
     <Modal :show="showGenericModal" @close="showGenericModal = false">
         <div class="p-6">
-            <h3 class="mb-3 text-lg font-medium">Notification</h3>
+            <h3 class="mb-3 text-lg font-medium">{{ t('Notification') }}</h3>
             <p>{{ genericModalMessage }}</p>
             <div class="mt-6 flex justify-end">
-                <Button @click="showGenericModal = false"> Close</Button>
+                <Button @click="showGenericModal = false">{{ t('Close') }}</Button>
             </div>
         </div>
     </Modal>

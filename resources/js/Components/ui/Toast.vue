@@ -78,7 +78,7 @@
                                 class="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                                 @click="hide"
                             >
-                                <span class="sr-only">Close</span>
+                                <span class="sr-only">{{ t('Close') }}</span>
                                 <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                                     <path
                                         clip-rule="evenodd"
@@ -97,6 +97,7 @@
 
 <script lang="ts" setup>
 import {ref, watch, onMounted} from 'vue';
+import {useLocale} from '@/composables/useLocale';
 
 interface Props {
     show: boolean;
@@ -110,6 +111,8 @@ const props = withDefaults(defineProps<Props>(), {
     type: 'info',
     duration: 5000
 });
+
+const { t } = useLocale();
 
 const emit = defineEmits<{
     hide: [];
