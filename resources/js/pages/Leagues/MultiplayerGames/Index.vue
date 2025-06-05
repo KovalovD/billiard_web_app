@@ -21,6 +21,7 @@ import {
     XIcon
 } from 'lucide-vue-next';
 import {computed, onMounted, ref} from 'vue';
+import {useLocale} from '@/composables/useLocale';
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -29,6 +30,7 @@ const props = defineProps<{
 }>();
 
 const {isAdmin, isAuthenticated} = useAuth();
+const { t } = useLocale();
 const {getMultiplayerGames, error, startMultiplayerGame} = useMultiplayerGames();
 
 const league = ref<League | null>(null);
@@ -168,12 +170,12 @@ onMounted(() => {
                     <Link :href="`/leagues/${leagueId}`">
                         <Button variant="outline">
                             <ArrowLeftIcon class="mr-2 h-4 w-4"/>
-                            Back to League
+                            {{ t('Back to League') }}
                         </Button>
                     </Link>
                     <div>
                         <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">
-                            Multiplayer Games
+                            {{ t('Multiplayer Games') }}
                         </h1>
                         <p v-if="league" class="text-gray-600 dark:text-gray-400">
                             {{ league.name }}
@@ -184,7 +186,7 @@ onMounted(() => {
                 <!-- Admin create button -->
                 <Button v-if="isAuthenticated && isAdmin && league?.game_multiplayer" @click="openCreateModal">
                     <PlusIcon class="mr-2 h-4 w-4"/>
-                    Create Game
+                    {{ t('Create Game') }}
                 </Button>
             </div>
 
@@ -228,23 +230,23 @@ onMounted(() => {
                     <div v-else-if="league && !league.game_multiplayer"
                          class="py-10 text-center text-gray-500 dark:text-gray-400">
                         <GamepadIcon class="mx-auto h-12 w-12 mb-4 opacity-50"/>
-                        <p class="text-lg">Multiplayer Not Supported</p>
-                        <p class="text-sm">This league does not support multiplayer games.</p>
+                        <p class="text-lg">{{ t('Multiplayer Not Supported') }}</p>
+                        <p class="text-sm">{{ t('This league does not support multiplayer games.') }}</p>
                     </div>
 
                     <!-- Empty state -->
                     <div v-else-if="filteredGames.length === 0"
                          class="py-10 text-center text-gray-500 dark:text-gray-400">
                         <GamepadIcon class="mx-auto h-12 w-12 mb-4 opacity-50"/>
-                        <p class="text-lg">No games found</p>
+                        <p class="text-lg">{{ t('No games found') }}</p>
                         <p class="text-sm">
                             {{
-                                selectedStatus === 'all' ? 'No multiplayer games for this league.' : `No ${selectedStatus} games.`
+                                selectedStatus === 'all' ? t('No multiplayer games for this league.') : t('No :status games.', { status: selectedStatus })
                             }}
                             <span v-if="isAuthenticated && isAdmin"> Create one to get started!</span>
                             <span v-else-if="!isAuthenticated">
                                 <Link :href="route('login')" class="text-blue-600 hover:underline dark:text-blue-400">
-                                    Login to create games.
+                                    {{ t('Login to create games.') }}
                                 </Link>
                             </span>
                         </p>
@@ -402,7 +404,7 @@ onMounted(() => {
                                         <!-- Guest login prompt for admin actions -->
                                         <div v-else-if="!isAuthenticated && game.status === 'registration'"
                                              class="text-center">
-                                            <Link :href="route('login')" title="Login to manage">
+                                            <Link :href="route('login')" :title="t('Login to manage')">
                                                 <Button size="sm" variant="outline">
                                                     <LogInIcon class="h-4 w-4"/>
                                                 </Button>

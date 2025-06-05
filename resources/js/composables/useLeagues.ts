@@ -8,12 +8,12 @@ import type {League, LeaguePayload, MatchGame, Rating} from '@/types/api';
  * Centralizes all league-related API calls in one place.
  */
 export function useLeagues() {
-    // Fetch all leagues
+    // Отримати всі ліги
     const fetchLeagues = () => {
         return useApi<League[]>(() => get('/api/leagues'));
     };
 
-    // Fetch a single league by ID
+    // Отримати одну лігу за ID
     const fetchLeague = (leagueId: number | string) => {
         return useApi<League>(() => get(`/api/leagues/${leagueId}`));
     };
@@ -22,69 +22,69 @@ export function useLeagues() {
         return useApi<Rating>(() => get(`/api/leagues/${leagueId}/load-user-rating`));
     };
 
-    // Create a new league
+    // Створити нову лігу
     const createLeague = () => {
         return useApiAction((payload: LeaguePayload | undefined) => post<League>('/api/leagues', payload));
     };
 
-    // Update an existing league
+    // Оновити існуючу лігу
     const updateLeague = (leagueId: number | string) => {
         return useApiAction((payload: LeaguePayload | undefined) => put<League>(`/api/leagues/${leagueId}`, payload));
     };
 
-    // Delete a league
+    // Видалити лігу
     const deleteLeague = (leagueId: number | string) => {
         return useApiAction(() => del(`/api/leagues/${leagueId}`));
     };
 
-    // Fetch players/ratings for a league
+    // Отримати гравців/рейтинги ліги
     const fetchLeaguePlayers = (leagueId: number | string) => {
         return useApi<Rating[]>(() => get(`/api/leagues/${leagueId}/players`));
     };
 
-    // Fetch matches for a league
+    // Отримати ігри ліги
     const fetchLeagueMatches = (leagueId: number | string) => {
         return useApi<MatchGame[]>(() => get(`/api/leagues/${leagueId}/games`));
     };
 
-    // Join a league as a player
+    // Приєднатися до ліги як гравець
     const joinLeague = (leagueId: number | string) => {
         return useApiAction(() => post(`/api/leagues/${leagueId}/players/enter`));
     };
 
-    // Leave a league
+    // Покинути лігу
     const leaveLeague = (leagueId: number | string) => {
         return useApiAction(() => post(`/api/leagues/${leagueId}/players/leave`));
     };
 
-    // Send a match challenge to another player
+    // Надіслати виклик на матч іншому гравцю
     const sendChallenge = (leagueId: number | string, playerId: number | string, payload: any) => {
         return useApiAction(() => post(`/api/leagues/${leagueId}/players/${playerId}/send-match-game`, payload));
     };
 
-    // Accept a match invitation
+    // Прийняти запрошення на матч
     const acceptMatch = (leagueId: number | string, matchId: number | string) => {
         return useApiAction(() => post(`/api/leagues/${leagueId}/players/match-games/${matchId}/accept`));
     };
 
-    // Decline a match invitation
+    // Відхилити запрошення на матч
     const declineMatch = (leagueId: number | string, matchId: number | string) => {
         return useApiAction(() => post(`/api/leagues/${leagueId}/players/match-games/${matchId}/decline`));
     };
 
-    // Submit match results
+    // Надіслати результати матчу
     const submitMatchResult = (leagueId: number | string, matchId: number | string, payload: any) => {
         return useApiAction(() => post(`/api/leagues/${leagueId}/players/match-games/${matchId}/send-result`, payload));
     };
 
-    // Utility function to check if the current user is in a league
+    // Допоміжна функція для перевірки, чи є поточний користувач у лізі
     const isPlayerInLeague = (players: Rating[], userId: number | null): boolean => {
         if (!userId || !players || !players.length) return false;
         return players.some((rating) => rating.player?.id === userId);
     };
 
     return {
-        // API composables
+        // API-композабли
         fetchLeagues,
         fetchLeague,
         createLeague,
@@ -100,7 +100,7 @@ export function useLeagues() {
         submitMatchResult,
         loadUserRating,
 
-        // Utility functions
+        // Допоміжні функції
         isPlayerInLeague,
     };
 }

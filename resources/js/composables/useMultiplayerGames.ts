@@ -7,7 +7,7 @@ export function useMultiplayerGames() {
     const isLoading = ref(false);
     const error = ref<string | null>(null);
 
-    // Get all multiplayer games for a league
+    // Отримати всі мультиплеєрні ігри для ліги
     const getMultiplayerGames = async (leagueId: number | string): Promise<MultiplayerGame[]> => {
         isLoading.value = true;
         error.value = null;
@@ -15,14 +15,14 @@ export function useMultiplayerGames() {
         try {
             return await apiClient<MultiplayerGame[]>(`/api/leagues/${leagueId}/multiplayer-games`);
         } catch (err: any) {
-            error.value = err.message || 'Failed to load multiplayer games';
+            error.value = err.message || 'Не вдалося завантажити мультиплеєрні ігри';
             return [];
         } finally {
             isLoading.value = false;
         }
     };
 
-    // Get a specific multiplayer game
+    // Отримати конкретну мультиплеєрну гру
     const getMultiplayerGame = async (leagueId: number | string, gameId: number | string): Promise<MultiplayerGame> => {
         isLoading.value = true;
         error.value = null;
@@ -30,14 +30,14 @@ export function useMultiplayerGames() {
         try {
             return await apiClient<MultiplayerGame>(`/api/leagues/${leagueId}/multiplayer-games/${gameId}`);
         } catch (err: any) {
-            error.value = err.message || 'Failed to load multiplayer game';
+            error.value = err.message || 'Не вдалося завантажити мультиплеєрну гру';
             throw err;
         } finally {
             isLoading.value = false;
         }
     };
 
-    // Create a new multiplayer game
+    // Створити нову мультиплеєрну гру
     const createMultiplayerGame = async (
         leagueId: number | string,
         payload: CreateMultiplayerGamePayload
@@ -51,14 +51,14 @@ export function useMultiplayerGames() {
                 data: payload
             });
         } catch (err: any) {
-            error.value = err.message || 'Failed to create multiplayer game';
+            error.value = err.message || 'Не вдалося створити мультиплеєрну гру';
             throw err;
         } finally {
             isLoading.value = false;
         }
     };
 
-    // Join a multiplayer game
+    // Приєднатися до мультиплеєрної гри
     const joinMultiplayerGame = async (leagueId: number | string, gameId: number | string): Promise<MultiplayerGame> => {
         isLoading.value = true;
         error.value = null;
@@ -68,14 +68,14 @@ export function useMultiplayerGames() {
                 method: 'post'
             });
         } catch (err: any) {
-            error.value = err.message || 'Failed to join multiplayer game';
+            error.value = err.message || 'Не вдалося приєднатися до мультиплеєрної гри';
             throw err;
         } finally {
             isLoading.value = false;
         }
     };
 
-    // Leave a multiplayer game
+    // Вийти з мультиплеєрної гри
     const leaveMultiplayerGame = async (leagueId: number | string, gameId: number | string): Promise<MultiplayerGame> => {
         isLoading.value = true;
         error.value = null;
@@ -85,14 +85,14 @@ export function useMultiplayerGames() {
                 method: 'post'
             });
         } catch (err: any) {
-            error.value = err.message || 'Failed to leave multiplayer game';
+            error.value = err.message || 'Не вдалося вийти з мультиплеєрної гри';
             throw err;
         } finally {
             isLoading.value = false;
         }
     };
 
-    // Start a multiplayer game (admin only)
+    // Почати мультиплеєрну гру (лише адміністратор)
     const startMultiplayerGame = async (leagueId: number | string, gameId: number | string): Promise<MultiplayerGame> => {
         isLoading.value = true;
         error.value = null;
@@ -102,14 +102,14 @@ export function useMultiplayerGames() {
                 method: 'post'
             });
         } catch (err: any) {
-            error.value = err.message || 'Failed to start multiplayer game';
+            error.value = err.message || 'Не вдалося почати мультиплеєрну гру';
             throw err;
         } finally {
             isLoading.value = false;
         }
     };
 
-    // Cancel a multiplayer game (admin only)
+    // Скасувати мультиплеєрну гру (лише адміністратор)
     const cancelMultiplayerGame = async (leagueId: number | string, gameId: number | string): Promise<void> => {
         isLoading.value = true;
         error.value = null;
@@ -119,14 +119,14 @@ export function useMultiplayerGames() {
                 method: 'post'
             });
         } catch (err: any) {
-            error.value = err.message || 'Failed to cancel multiplayer game';
+            error.value = err.message || 'Не вдалося скасувати мультиплеєрну гру';
             throw err;
         } finally {
             isLoading.value = false;
         }
     };
 
-    // Perform a game action (increment/decrement lives, use card, record turn)
+    // Виконати дію гри (збільшити/зменшити життя, використати карту, зафіксувати хід)
     const performGameAction = async (
         leagueId: number | string,
         gameId: number | string,
@@ -150,14 +150,14 @@ export function useMultiplayerGames() {
                 data: payload
             });
         } catch (err: any) {
-            error.value = err.message || 'Failed to perform game action';
+            error.value = err.message || 'Не вдалося виконати дію гри';
             throw err;
         } finally {
             isLoading.value = false;
         }
     };
 
-    // Finish a game and set final positions
+    // Завершити гру та встановити фінальні позиції
     const finishGame = async (
         leagueId: number | string,
         gameId: number | string,
@@ -172,14 +172,14 @@ export function useMultiplayerGames() {
                 data: {positions}
             });
         } catch (err: any) {
-            error.value = err.message || 'Failed to finish game';
+            error.value = err.message || 'Не вдалося завершити гру';
             throw err;
         } finally {
             isLoading.value = false;
         }
     };
 
-    // Set a user as game moderator
+    // Призначити користувача модератором гри
     const setGameModerator = async (
         leagueId: number | string,
         gameId: number | string,
@@ -194,14 +194,14 @@ export function useMultiplayerGames() {
                 data: {user_id: userId}
             });
         } catch (err: any) {
-            error.value = err.message || 'Failed to set game moderator';
+            error.value = err.message || 'Не вдалося призначити модератора гри';
             throw err;
         } finally {
             isLoading.value = false;
         }
     };
 
-    // Get financial summary
+    // Отримати фінансовий звіт
     const getFinancialSummary = async (
         leagueId: number | string,
         gameId: number | string
@@ -212,14 +212,14 @@ export function useMultiplayerGames() {
         try {
             return await apiClient<any>(`/api/leagues/${leagueId}/multiplayer-games/${gameId}/financial-summary`);
         } catch (err: any) {
-            error.value = err.message || 'Failed to get financial summary';
+            error.value = err.message || 'Не вдалося отримати фінансовий звіт';
             throw err;
         } finally {
             isLoading.value = false;
         }
     };
 
-    // Get rating summary
+    // Отримати підсумок рейтингу
     const getRatingSummary = async (
         leagueId: number | string,
         gameId: number | string
@@ -230,7 +230,7 @@ export function useMultiplayerGames() {
         try {
             return await apiClient<any>(`/api/leagues/${leagueId}/multiplayer-games/${gameId}/rating-summary`);
         } catch (err: any) {
-            error.value = err.message || 'Failed to get rating summary';
+            error.value = err.message || 'Не вдалося отримати рейтинг';
             throw err;
         } finally {
             isLoading.value = false;
