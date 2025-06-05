@@ -7,6 +7,7 @@ import type {MultiplayerGame} from '@/types/api';
 import {Link} from '@inertiajs/vue3';
 import {LogInIcon, UserPlusIcon, UsersIcon} from 'lucide-vue-next';
 import {computed} from 'vue';
+import {useLocale} from '@/composables/useLocale';
 
 interface Props {
     game: MultiplayerGame;
@@ -15,6 +16,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const emit = defineEmits(['updated']);
+const { t } = useLocale();
 
 const {user, isAuthenticated} = useAuth();
 const {joinMultiplayerGame, leaveMultiplayerGame, isLoading} = useMultiplayerGames();
@@ -90,7 +92,7 @@ const handleLeave = async () => {
             <CardHeader>
                 <CardTitle class="flex items-center gap-2">
                     <UsersIcon class="h-5 w-5"/>
-                    Game Registration
+                    {{ t('Game Registration') }}
                 </CardTitle>
             </CardHeader>
             <CardContent>
@@ -99,15 +101,15 @@ const handleLeave = async () => {
                     <div class="rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
                         <div class="flex items-center justify-between">
                             <div>
-                                <h3 class="font-medium text-blue-800 dark:text-blue-300">Registration Open</h3>
+                                <h3 class="font-medium text-blue-800 dark:text-blue-300">{{ t('Registration Open') }}</h3>
                                 <p class="text-sm text-blue-600 dark:text-blue-400">
                                     {{ game.total_players_count }}
-                                    {{ game.total_players_count === 1 ? 'player' : 'players' }} registered
+                                    {{ game.total_players_count === 1 ? t('player') : t('players') }} {{ t('registered') }}
                                     {{ game.max_players ? ` (${game.max_players} max)` : '' }}
                                 </p>
                             </div>
                             <div class="text-right">
-                                <p class="text-sm text-blue-600 dark:text-blue-400">Deadline:</p>
+                                <p class="text-sm text-blue-600 dark:text-blue-400">{{ t('Deadline:') }}</p>
                                 <p class="font-medium text-blue-800 dark:text-blue-300">
                                     {{ formatDateTime(game.registration_ends_at) }}
                                 </p>
@@ -118,47 +120,47 @@ const handleLeave = async () => {
                     <!-- Game Details -->
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div class="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
-                            <h4 class="font-medium text-gray-900 dark:text-gray-100">Entry Fee</h4>
+                            <h4 class="font-medium text-gray-900 dark:text-gray-100">{{ t('Entry Fee') }}</h4>
                             <p class="text-lg font-bold text-green-600 dark:text-green-400">
                                 {{ formatCurrency(game.entrance_fee) }}
                             </p>
                         </div>
                         <div class="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
-                            <h4 class="font-medium text-gray-900 dark:text-gray-100">Total Prize Pool</h4>
+                            <h4 class="font-medium text-gray-900 dark:text-gray-100">{{ t('Total Prize Pool') }}</h4>
                             <p class="text-lg font-bold text-yellow-600 dark:text-yellow-400">
                                 {{ formatCurrency(totalPrizePool) }}
                             </p>
                         </div>
                         <div class="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
-                            <h4 class="font-medium text-gray-900 dark:text-gray-100">Starting Lives</h4>
+                            <h4 class="font-medium text-gray-900 dark:text-gray-100">{{ t('Starting Lives') }}</h4>
                             <p class="text-lg font-bold">{{ game.initial_lives }}</p>
                         </div>
                         <div class="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
-                            <h4 class="font-medium text-gray-900 dark:text-gray-100">Player Targeting</h4>
+                            <h4 class="font-medium text-gray-900 dark:text-gray-100">{{ t('Player Targeting') }}</h4>
                             <p class="text-sm">
-                                {{ game.allow_player_targeting ? 'Allowed' : 'Moderator Only' }}
+                                {{ game.allow_player_targeting ? t('Allowed') : t('Moderator Only') }}
                             </p>
                         </div>
                     </div>
 
                     <!-- Prize Distribution -->
                     <div class="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
-                        <h4 class="mb-3 font-medium text-gray-900 dark:text-gray-100">Prize Distribution</h4>
+                        <h4 class="mb-3 font-medium text-gray-900 dark:text-gray-100">{{ t('Prize Distribution') }}</h4>
                         <div class="grid grid-cols-1 gap-2 sm:grid-cols-3">
                             <div class="text-center">
-                                <p class="text-sm text-gray-600 dark:text-gray-400">1st Place</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('1st Place') }}</p>
                                 <p class="font-bold text-yellow-600 dark:text-yellow-400">{{
                                         game.first_place_percent
                                     }}%</p>
                             </div>
                             <div class="text-center">
-                                <p class="text-sm text-gray-600 dark:text-gray-400">2nd Place</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('2nd Place') }}</p>
                                 <p class="font-bold text-gray-600 dark:text-gray-400">{{
                                         game.second_place_percent
                                     }}%</p>
                             </div>
                             <div class="text-center">
-                                <p class="text-sm text-gray-600 dark:text-gray-400">Grand Final Fund</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('Grand Final Fund') }}</p>
                                 <p class="font-bold text-blue-600 dark:text-blue-400">{{
                                         game.grand_final_percent
                                     }}%</p>
@@ -177,17 +179,17 @@ const handleLeave = async () => {
                                     @click="handleJoin"
                                 >
                                     <UserPlusIcon class="mr-2 h-4 w-4"/>
-                                    {{ isLoading ? 'Joining...' : 'Join Game' }}
+                                    {{ isLoading ? t('Joining...') : t('Join Game') }}
                                 </Button>
                                 <div v-else class="text-center text-gray-500 dark:text-gray-400">
-                                    <p>Registration is closed for this game.</p>
+                                    <p>{{ t('Registration is closed for this game.') }}</p>
                                 </div>
                             </template>
                             <template v-else>
                                 <div class="text-center">
                                     <div class="mb-3 rounded-lg bg-green-50 p-3 dark:bg-green-900/20">
                                         <p class="font-medium text-green-800 dark:text-green-300">
-                                            ✓ You are registered for this game!
+                                            ✓ {{ t('You are registered for this game!') }}
                                         </p>
                                     </div>
                                     <Button
@@ -195,7 +197,7 @@ const handleLeave = async () => {
                                         variant="outline"
                                         @click="handleLeave"
                                     >
-                                        {{ isLoading ? 'Leaving...' : 'Leave Game' }}
+                                        {{ isLoading ? t('Leaving...') : t('Leave Game') }}
                                     </Button>
                                 </div>
                             </template>
@@ -204,13 +206,13 @@ const handleLeave = async () => {
                             <div class="text-center">
                                 <div class="mb-4 rounded-lg bg-yellow-50 p-4 dark:bg-yellow-900/20">
                                     <p class="text-yellow-800 dark:text-yellow-300">
-                                        You need to be logged in to join this game.
+                                        {{ t('You need to be logged in to join this game.') }}
                                     </p>
                                 </div>
                                 <Link :href="route('login')">
                                     <Button size="lg">
                                         <LogInIcon class="mr-2 h-4 w-4"/>
-                                        Login to Join
+                                        {{ t('Login to Join') }}
                                     </Button>
                                 </Link>
                             </div>
@@ -223,11 +225,11 @@ const handleLeave = async () => {
         <!-- Registered Players List -->
         <Card>
             <CardHeader>
-                <CardTitle>Registered Players ({{ game.total_players_count }})</CardTitle>
+                <CardTitle>{{ t('Registered Players') }} ({{ game.total_players_count }})</CardTitle>
             </CardHeader>
             <CardContent>
                 <div v-if="game.total_players_count === 0" class="py-8 text-center text-gray-500 dark:text-gray-400">
-                    No players registered yet. Be the first to join!
+                    {{ t('No players registered yet. Be the first to join!') }}
                 </div>
                 <div v-else class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                     <div
@@ -244,11 +246,11 @@ const handleLeave = async () => {
                             <p class="font-medium">{{ player.user.firstname }} {{ player.user.lastname }}</p>
                             <p v-if="isAuthenticated && player.user.id === user?.id"
                                class="text-xs text-blue-600 dark:text-blue-400">
-                                (You)
+                                {{ t('(You)') }}
                             </p>
                         </div>
                         <div class="text-sm text-gray-500 dark:text-gray-400">
-                            Joined: {{ new Date(player.joined_at).toLocaleDateString() }}
+                            {{ t('Joined:') }} {{ new Date(player.joined_at).toLocaleDateString() }}
                         </div>
                     </div>
                 </div>
