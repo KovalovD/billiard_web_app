@@ -14,8 +14,10 @@ import {
 import {useAuth} from '@/composables/useAuth';
 import {Head, useForm} from '@inertiajs/vue3';
 import {ref} from 'vue';
+import {useLocale} from '@/composables/useLocale';
 
 const auth = useAuth();
+const {t} = useLocale();
 const form = useForm({
     email: '',
     password: '',
@@ -41,7 +43,7 @@ async function submit() {
         // Redirect to dashboard
         window.location.href = route('dashboard');
     } catch (err: any) {
-        formError.value = err.message || 'Failed to login. Please check your credentials.';
+        formError.value = err.message || t('Failed to login. Please check your credentials.');
         form.reset('password');
     } finally {
         processing.value = false;
@@ -58,14 +60,14 @@ function handleKeydown(event: KeyboardEvent) {
 </script>
 
 <template>
-    <Head title="Log in" />
+    <Head :title="t('Log in')" />
 
     <div class="flex min-h-screen flex-col items-center bg-gray-100 pt-6 sm:justify-center sm:pt-0 dark:bg-gray-900">
         <div class="mt-6 w-full px-6 py-4 sm:max-w-md">
             <Card>
                 <CardHeader class="space-y-1">
-                    <CardTitle class="text-2xl font-bold">Login</CardTitle>
-                    <CardDescription>Enter your credentials to access your account</CardDescription>
+                    <CardTitle class="text-2xl font-bold">{{ t('Login') }}</CardTitle>
+                    <CardDescription>{{ t('Enter your credentials to access your account') }}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form class="space-y-4" @keydown="handleKeydown" @submit.prevent="submit">
@@ -75,7 +77,7 @@ function handleKeydown(event: KeyboardEvent) {
                         </div>
 
                         <div class="space-y-2">
-                            <Label for="email">Email</Label>
+                            <Label for="email">{{ t('Email') }}</Label>
                             <Input
                                 id="email"
                                 v-model="form.email"
@@ -89,7 +91,7 @@ function handleKeydown(event: KeyboardEvent) {
 
                         <div class="space-y-2">
                             <div class="flex items-center justify-between">
-                                <Label for="password">Password</Label>
+                                <Label for="password">{{ t('Password') }}</Label>
                                 <!--                                <a href="/forgot-password" class="text-sm text-blue-600 hover:underline dark:text-blue-400">
                                                                     Forgot password?
                                                                 </a>-->
@@ -112,7 +114,7 @@ function handleKeydown(event: KeyboardEvent) {
                                 type="checkbox"
                                 class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:border-gray-700 dark:bg-gray-900 dark:focus:ring-offset-gray-800"
                             />
-                            <Label for="remember_me">Remember me</Label>
+                            <Label for="remember_me">{{ t('Remember me') }}</Label>
                         </div>
 
                         <!-- Hidden submit button to handle Enter key -->
@@ -121,14 +123,14 @@ function handleKeydown(event: KeyboardEvent) {
                 </CardContent>
                 <CardFooter class="flex flex-col space-y-4">
                     <Button :disabled="processing" class="w-full" type="button" @click="submit">
-                        <span v-if="processing">Logging in...</span>
-                        <span v-else>Sign in</span>
+                        <span v-if="processing">{{ t('Logging in...') }}</span>
+                        <span v-else>{{ t('Sign in') }}</span>
                     </Button>
                     <p class="text-center text-sm text-gray-600 dark:text-gray-400">
-                        Don't have an account?
+                        {{ t("Don't have an account?") }}
                         <a :href="route('register')"
                            class="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">
-                            Register </a>
+                            {{ t('Register') }} </a>
                     </p>
                 </CardFooter>
             </Card>

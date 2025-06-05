@@ -14,9 +14,11 @@ import {
     ZapIcon
 } from 'lucide-vue-next';
 import {ref} from 'vue';
+import {useLocale} from '@/composables/useLocale';
 
 // State for modal visibility
 const showRegisterModal = ref(false);
+const {t} = useLocale();
 
 const openRegisterModal = () => {
     showRegisterModal.value = true;
@@ -109,15 +111,15 @@ const stats = [
                     <div class="hidden md:flex items-center space-x-8">
                         <Link class="text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors"
                               href="/leagues">
-                            Leagues
+                            {{ t('Leagues') }}
                         </Link>
                         <Link class="text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors"
                               href="/tournaments">
-                            Tournaments
+                            {{ t('Tournaments') }}
                         </Link>
                         <Link class="text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors"
                               href="/official-ratings">
-                            Rankings
+                            {{ t('Rankings') }}
                         </Link>
                     </div>
 
@@ -126,18 +128,18 @@ const stats = [
                         <template v-if="$page.props.auth && $page.props.auth.user">
                             <Link :href="route('dashboard')"
                                   class="text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors">
-                                Dashboard
+                                {{ t('Dashboard') }}
                             </Link>
                         </template>
                         <template v-else>
                             <Link :href="route('login')"
                                   class="text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors">
                                 <LogInIcon class="mr-1 inline h-4 w-4"/>
-                                Login
+                                {{ t('Login') }}
                             </Link>
                             <Button @click="openRegisterModal">
                                 <UserIcon class="mr-2 h-4 w-4"/>
-                                Register
+                                {{ t('Register') }}
                             </Button>
                         </template>
                     </div>
@@ -157,17 +159,16 @@ const stats = [
                     </h1>
 
                     <p class="mx-auto mt-6 max-w-2xl text-lg leading-8 text-gray-600 dark:text-gray-300">
-                        The premier billiard league management platform. Join competitive leagues,
-                        participate in tournaments, and track your progress with our advanced rating system.
+                        {{ t('The premier billiard league management platform. Join competitive leagues, participate in tournaments, and track your progress with our advanced rating system.') }}
                     </p>
 
                     <div class="mt-10 flex items-center justify-center gap-x-6">
                         <Button size="lg" @click="openRegisterModal">
-                            Get Started
+                            {{ t('Get Started') }}
                         </Button>
                         <Link :href="route('leagues.index.page')">
                             <Button size="lg" variant="outline">
-                                Browse Leagues
+                                {{ t('Browse Leagues') }}
                             </Button>
                         </Link>
                     </div>
@@ -192,10 +193,10 @@ const stats = [
             <div class="mx-auto max-w-7xl">
                 <div class="text-center mb-16">
                     <h2 class="text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">
-                        Everything you need to compete
+                        {{ t('Everything you need to compete') }}
                     </h2>
                     <p class="mt-4 text-lg text-gray-600 dark:text-gray-300">
-                        Professional tools for serious billiard players
+                        {{ t('Professional tools for serious billiard players') }}
                     </p>
                 </div>
 
@@ -223,10 +224,10 @@ const stats = [
             <div class="mx-auto max-w-7xl">
                 <div class="text-center mb-16">
                     <h2 class="text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">
-                        How it works
+                        {{ t('How it works') }}
                     </h2>
                     <p class="mt-4 text-lg text-gray-600 dark:text-gray-300">
-                        Get started in three simple steps
+                        {{ t('Get started in three simple steps') }}
                     </p>
                 </div>
 
@@ -236,9 +237,9 @@ const stats = [
                             class="mx-auto w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-6">
                             <span class="text-2xl font-bold text-blue-600 dark:text-blue-400">1</span>
                         </div>
-                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Create Account</h3>
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">{{ t('Create Account') }}</h3>
                         <p class="text-gray-600 dark:text-gray-300">
-                            Sign up with your basic information and set up your player profile
+                            {{ t('Sign up with your basic information and set up your player profile') }}
                         </p>
                     </div>
 
@@ -247,9 +248,9 @@ const stats = [
                             class="mx-auto w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-6">
                             <span class="text-2xl font-bold text-green-600 dark:text-green-400">2</span>
                         </div>
-                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Join League</h3>
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">{{ t('Join League') }}</h3>
                         <p class="text-gray-600 dark:text-gray-300">
-                            Browse and join leagues that match your skill level and game preferences
+                            {{ t('Browse and join leagues that match your skill level and game preferences') }}
                         </p>
                     </div>
 
@@ -258,9 +259,9 @@ const stats = [
                             class="mx-auto w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mb-6">
                             <span class="text-2xl font-bold text-purple-600 dark:text-purple-400">3</span>
                         </div>
-                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Start Playing</h3>
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">{{ t('Start Playing') }}</h3>
                         <p class="text-gray-600 dark:text-gray-300">
-                            Challenge players, participate in tournaments, and climb the rankings
+                            {{ t('Challenge players, participate in tournaments, and climb the rankings') }}
                         </p>
                     </div>
                 </div>
@@ -271,25 +272,25 @@ const stats = [
         <section class="py-20 px-4 sm:px-6 lg:px-8">
             <div class="mx-auto max-w-4xl text-center">
                 <h2 class="text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">
-                    Ready to break into the competition?
+                    {{ t('Ready to break into the competition?') }}
                 </h2>
                 <p class="mt-6 text-lg text-gray-600 dark:text-gray-300">
-                    Join thousands of players already competing in leagues and tournaments worldwide.
+                    {{ t('Join thousands of players already competing in leagues and tournaments worldwide.') }}
                 </p>
                 <div class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
                     <Button size="lg" @click="openRegisterModal">
                         <UserIcon class="mr-2 h-5 w-5"/>
-                        Create Free Account
+                        {{ t('Create Free Account') }}
                     </Button>
                     <Link :href="route('login')">
                         <Button size="lg" variant="outline">
                             <LogInIcon class="mr-2 h-5 w-5"/>
-                            Sign In
+                            {{ t('Sign In') }}
                         </Button>
                     </Link>
                 </div>
                 <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">
-                    No credit card required. Start competing today!
+                    {{ t('No credit card required. Start competing today!') }}
                 </p>
             </div>
         </section>
@@ -299,10 +300,10 @@ const stats = [
             <div class="mx-auto max-w-7xl">
                 <div class="text-center mb-12">
                     <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
-                        Explore without signing up
+                        {{ t('Explore without signing up') }}
                     </h2>
                     <p class="mt-2 text-gray-600 dark:text-gray-300">
-                        Take a look around and see what WinnerBreak has to offer
+                        {{ t('Take a look around and see what WinnerBreak has to offer') }}
                     </p>
                 </div>
 
@@ -314,11 +315,11 @@ const stats = [
                                     class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mb-4">
                                     <TrophyIcon class="h-6 w-6 text-blue-600 dark:text-blue-400"/>
                                 </div>
-                                <CardTitle>Browse Leagues</CardTitle>
+                                <CardTitle>{{ t('Browse Leagues') }}</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <CardDescription>
-                                    Explore active leagues and see how players are ranked
+                                    {{ t('Explore active leagues and see how players are ranked') }}
                                 </CardDescription>
                             </CardContent>
                         </Card>
@@ -331,11 +332,11 @@ const stats = [
                                     class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center mb-4">
                                     <CalendarIcon class="h-6 w-6 text-green-600 dark:text-green-400"/>
                                 </div>
-                                <CardTitle>View Tournaments</CardTitle>
+                                <CardTitle>{{ t('View Tournaments') }}</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <CardDescription>
-                                    Check out upcoming and completed tournaments
+                                    {{ t('Check out upcoming and completed tournaments') }}
                                 </CardDescription>
                             </CardContent>
                         </Card>
@@ -348,11 +349,11 @@ const stats = [
                                     class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center mb-4">
                                     <StarIcon class="h-6 w-6 text-purple-600 dark:text-purple-400"/>
                                 </div>
-                                <CardTitle>Official Rankings</CardTitle>
+                                <CardTitle>{{ t('Official Rankings') }}</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <CardDescription>
-                                    View professional player rankings and standings
+                                    {{ t('View professional player rankings and standings') }}
                                 </CardDescription>
                             </CardContent>
                         </Card>
@@ -370,14 +371,14 @@ const stats = [
                     </div>
 
                     <div class="flex space-x-6 text-sm text-gray-400">
-                        <Link class="hover:text-white transition-colors" href="/leagues">Leagues</Link>
-                        <Link class="hover:text-white transition-colors" href="/tournaments">Tournaments</Link>
-                        <Link class="hover:text-white transition-colors" href="/official-ratings">Rankings</Link>
+                        <Link class="hover:text-white transition-colors" href="/leagues">{{ t('Leagues') }}</Link>
+                        <Link class="hover:text-white transition-colors" href="/tournaments">{{ t('Tournaments') }}</Link>
+                        <Link class="hover:text-white transition-colors" href="/official-ratings">{{ t('Rankings') }}</Link>
                     </div>
                 </div>
 
                 <div class="mt-8 pt-8 border-t border-gray-800 text-center text-sm text-gray-400">
-                    <p>&copy; 2025 WinnerBreak. All rights reserved.</p>
+                    <p>&copy; 2025 WinnerBreak. {{ t('All rights reserved.') }}</p>
                 </div>
             </div>
         </footer>
