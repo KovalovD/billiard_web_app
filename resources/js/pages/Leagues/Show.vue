@@ -25,6 +25,7 @@ import {
     UsersIcon
 } from 'lucide-vue-next';
 import {computed, onMounted, ref, watch} from 'vue';
+import {useLocale} from '@/composables/useLocale';
 import AddPlayerModal from "@/Components/AddPlayerModal.vue";
 import { useLocale } from '@/composables/useLocale';
 
@@ -38,6 +39,7 @@ const props = defineProps<{
 }>();
 
 const {user, isAuthenticated, isAdmin} = useAuth();
+const {t} = useLocale();
 const leagues = useLeagues();
 const { t } = useLocale();
 const {getLeagueStatus, canJoinLeague, getJoinErrorMessage} = useLeagueStatus();
@@ -172,7 +174,7 @@ const isMatchSender = (match: MatchGame): boolean => {
 // Actions (only for authenticated users)
 const handleJoinLeague = async () => {
     if (!isAuthenticated.value) {
-        displayMessage('You must be logged in to join this league.');
+        displayMessage(t('You must be logged in to join this league.'));
         return;
     }
 
@@ -180,7 +182,7 @@ const handleJoinLeague = async () => {
     if (success) {
         await fetchPlayers();
     } else if (joinError.value) {
-        displayMessage(`Failed to join league: ${joinError.value.message || 'Unknown error'}`);
+        displayMessage(`${t('Failed to join league')}: ${joinError.value.message || t('Unknown error')}`);
     }
 };
 
@@ -191,7 +193,7 @@ const showAddPlayerModal = ref(false);
 const handlePlayerAdded = async () => {
     if (!isAuthenticated.value || !isAdmin.value) return;
     await fetchPlayers();
-    displayMessage('Player added successfully');
+    displayMessage(t('Player added successfully'));
 };
 
 const handleLeaveLeague = async () => {
@@ -201,13 +203,13 @@ const handleLeaveLeague = async () => {
     if (success) {
         await fetchPlayers();
     } else if (leaveError.value) {
-        displayMessage(`Failed to leave league: ${leaveError.value.message || 'Unknown error'}`);
+        displayMessage(`${t('Failed to leave league')}: ${leaveError.value.message || t('Unknown error')}`);
     }
 };
 
 const openChallengeModal = (player: Player) => {
     if (!isAuthenticated.value) {
-        displayMessage('You must be logged in to challenge players.');
+        displayMessage(t('You must be logged in to challenge players.'));
         return;
     }
     targetPlayerForChallenge.value = player;
@@ -222,7 +224,7 @@ const handleChallengeSuccess = (message: string) => {
 
 const openResultModal = (match: MatchGame) => {
     if (!isAuthenticated.value) {
-        displayMessage('You must be logged in to submit results.');
+        displayMessage(t('You must be logged in to submit results.'));
         return;
     }
     matchForResults.value = match;
@@ -232,7 +234,7 @@ const openResultModal = (match: MatchGame) => {
 // Decline match function (authenticated users only)
 const declineMatch = async (match: MatchGame) => {
     if (!isAuthenticated.value) {
-        displayMessage('You must be logged in to decline matches.');
+        displayMessage(t('You must be logged in to decline matches.'));
         return;
     }
 
@@ -243,11 +245,11 @@ const declineMatch = async (match: MatchGame) => {
         await apiClient(`/api/leagues/${props.leagueId}/players/match-games/${match.id}/decline`, {
             method: 'post',
         });
-        displayMessage('Match declined successfully.');
+        displayMessage(t('Match declined successfully.'));
         await fetchMatches();
         await fetchPlayers();
     } catch (error: any) {
-        displayMessage(`Failed to decline match: ${error.message || 'Unknown error'}`);
+        displayMessage(`${t('Failed to decline match')}: ${error.message || t('Unknown error')}`);
     } finally {
         isProcessingAction.value = false;
     }
@@ -456,17 +458,17 @@ watch(
                                     <div class="mt-2 flex flex-wrap gap-4">
                                        <span class="flex items-center gap-1">
                                            <TrophyIcon class="h-4 w-4"/>
-                                           Game: {{ league.game ?? 'N/A' }}
+                                           {{ t('Game') }}: {{ league.game ?? t('N/A') }}
                                        </span>
                                         <span class="flex items-center gap-1">
                                            <UsersIcon class="h-4 w-4"/>
-                                           Players: {{
+                                           {{ t('Players') }}: {{
                                                 league.active_players ?? 0
                                             }}{{ league.max_players ? `/${league.max_players}` : '' }}
                                        </span>
                                         <span class="flex items-center gap-1">
                                            <SmileIcon class="h-4 w-4"/>
-                                           Rating: {{
+                                           {{ t('Rating') }}: {{
                                                 league.has_rating ? `Enabled (${league.start_rating})` : 'Disabled'
                                             }}
                                        </span>
@@ -629,7 +631,7 @@ watch(
                                                 v-if="isAuthenticated && match.status === 'must_be_confirmed' && needsConfirmation(match)"
                                                 class="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
                                             >
-                                               Needs your confirmation
+                                               {{ t('Needs your confirmation') }}
                                            </span>
                                             <span
                                                 v-else-if="
@@ -640,7 +642,7 @@ watch(
                                                "
                                                 class="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-800 dark:bg-green-900/30 dark:text-green-300"
                                             >
-                                               Waiting for opponent to confirm
+                                               {{ t('Waiting for opponent to confirm') }}
                                            </span>
                                         </div>
                                         <h3 class="mt-1 font-medium">
@@ -713,7 +715,7 @@ watch(
                                                "
                                                 @click="openResultModal(match)"
                                             >
-                                                {{ needsConfirmation(match) ? 'Confirm Result' : 'Submit Result' }}
+                                                {{ needsConfirmation(match) ? t('Confirm Result') : t('Submit Result') }}
                                             </Button>
 
                                             <!-- Only receivers can decline -->
@@ -725,7 +727,7 @@ watch(
                                                 variant="outline"
                                                 @click="declineMatch(match)"
                                             >
-                                                {{ isProcessingAction ? 'Processing...' : 'Decline' }}
+                                                {{ isProcessingAction ? t('Processing...') : t('Decline') }}
                                             </Button>
                                         </div>
                                         <!-- Login prompt for guests to participate -->
@@ -787,10 +789,10 @@ watch(
     <!-- Generic Message Modal -->
     <Modal :show="showGenericModal" @close="showGenericModal = false">
         <div class="p-6">
-            <h3 class="mb-3 text-lg font-medium">Notification</h3>
+            <h3 class="mb-3 text-lg font-medium">{{ t('Notification') }}</h3>
             <p>{{ genericModalMessage }}</p>
             <div class="mt-6 flex justify-end">
-                <Button @click="showGenericModal = false"> Close</Button>
+                <Button @click="showGenericModal = false">{{ t('Close') }}</Button>
             </div>
         </div>
     </Modal>
