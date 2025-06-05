@@ -22,6 +22,7 @@ import {apiClient} from '@/lib/apiClient';
 import type {ApiError, City, Club, User} from '@/types/api';
 import {Head, Link} from '@inertiajs/vue3';
 import {onMounted, ref} from 'vue';
+import {useLocale} from '@/composables/useLocale';
 
 // Phone validation regex - matches formats like +1234567890, (123) 456-7890, 123-456-7890
 const phonePattern = /^(\+?\d{1,3}[-\s]?)?\(?(\d{3})\)?[-\s]?(\d{3})[-\s]?(\d{4})$/;
@@ -37,6 +38,8 @@ const isLoadingCities = ref(false);
 const isLoadingClubs = ref(false);
 
 const isPhoneValid = ref(true);
+
+const { t } = useLocale();
 
 const profileForm = ref({
     firstname: '',
@@ -145,7 +148,7 @@ const validatePhone = () => {
 
     // Add validation error if phone is invalid
     if (!isPhoneValid.value) {
-        profileErrors.value.phone = ['Please enter a valid phone number format (e.g., +1234567890, 123-456-7890)'];
+        profileErrors.value.phone = [t('Please enter a valid phone number format (e.g., +1234567890, 123-456-7890)')];
     } else {
         // Remove phone error if it exists
         if (profileErrors.value.phone) {
@@ -244,17 +247,17 @@ onMounted(() => {
 </script>
 
 <template>
-    <Head title="Profile Settings"/>
+    <Head :title="t('Profile Settings')"/>
 
     <div class="py-12">
         <div class="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
             <!-- Profile Navigation -->
             <div class="mb-6 flex space-x-4">
                 <Link :href="route('profile.edit')">
-                    <Button class="bg-primary text-primary-foreground" variant="outline"> Edit Profile</Button>
+                    <Button class="bg-primary text-primary-foreground" variant="outline">{{ t('Edit Profile') }}</Button>
                 </Link>
                 <Link :href="route('profile.stats')">
-                    <Button class="bg-gray-100 dark:bg-gray-800" variant="outline"> Statistics</Button>
+                    <Button class="bg-gray-100 dark:bg-gray-800" variant="outline">{{ t('Statistics') }}</Button>
                 </Link>
             </div>
 
@@ -266,26 +269,26 @@ onMounted(() => {
             <!-- Update Profile Information -->
             <Card v-else>
                 <CardHeader>
-                    <CardTitle>Profile Information</CardTitle>
-                    <CardDescription>Update your account's profile information and email address.</CardDescription>
+                    <CardTitle>{{ t('Profile Information') }}</CardTitle>
+                    <CardDescription>{{ t("Update your account's profile information and email address.") }}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form @submit.prevent="updateProfile" class="space-y-4">
                         <div v-if="profileSuccess"
                              class="rounded-md bg-green-50 p-3 text-sm text-green-600 dark:bg-green-900/30 dark:text-green-400">
-                            Profile updated successfully.
+                            {{ t('Profile updated successfully.') }}
                         </div>
 
                         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div class="space-y-2">
-                                <Label for="firstname">First Name</Label>
+                                <Label for="firstname">{{ t('First Name') }}</Label>
                                 <Input id="firstname" v-model="profileForm.firstname" :disabled="isProcessingProfile" required
                                        type="text"/>
                                 <InputError :message="profileErrors.firstname?.join(', ')"/>
                             </div>
 
                             <div class="space-y-2">
-                                <Label for="lastname">Last Name</Label>
+                                <Label for="lastname">{{ t('Last Name') }}</Label>
                                 <Input id="lastname" v-model="profileForm.lastname" :disabled="isProcessingProfile" required
                                        type="text"/>
                                 <InputError :message="profileErrors.lastname?.join(', ')"/>
@@ -293,14 +296,14 @@ onMounted(() => {
                         </div>
 
                         <div class="space-y-2">
-                            <Label for="email">Email</Label>
+                            <Label for="email">{{ t('Email') }}</Label>
                             <Input id="email" v-model="profileForm.email" :disabled="isProcessingProfile" required
                                    type="email"/>
                             <InputError :message="profileErrors.email?.join(', ')"/>
                         </div>
 
                         <div class="space-y-2">
-                            <Label for="phone">Phone Number</Label>
+                            <Label for="phone">{{ t('Phone Number') }}</Label>
                             <Input
                                 id="phone"
                                 v-model="profileForm.phone"
@@ -308,7 +311,7 @@ onMounted(() => {
                                 required
                                 :disabled="isProcessingProfile"
                                 :class="{ 'border-red-300 focus:border-red-300 focus:ring-red-300': !isPhoneValid }"
-                                placeholder="e.g., (123) 456-7890"
+                                :placeholder="t('e.g., (123) 456-7890')"
                                 @blur="validatePhone"
                                 @input="validatePhone"
                             />
@@ -317,7 +320,7 @@ onMounted(() => {
 
                         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div class="space-y-2">
-                                <Label for="home_city">Hometown</Label>
+                                <Label for="home_city">{{ t('Hometown') }}</Label>
                                 <Select
                                     :disabled="isProcessingProfile || isLoadingCities"
                                     :modelValue="profileForm.home_city_id"
@@ -325,10 +328,10 @@ onMounted(() => {
                                 >
                                     <SelectTrigger id="home_city">
                                         <SelectValue
-                                            :placeholder="isLoadingCities ? 'Loading cities...' : user?.home_city?.name || 'Select city'"/>
+                                            :placeholder="isLoadingCities ? t('Loading cities...') : user?.home_city?.name || t('Select city')"/>
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">None</SelectItem>
+                                        <SelectItem value="">{{ t('None') }}</SelectItem>
                                         <SelectItem v-for="city in cities" :key="city.id" :value="city.id">
                                             {{ city.name }} ({{ city.country.name }})
                                         </SelectItem>
@@ -338,7 +341,7 @@ onMounted(() => {
                             </div>
 
                             <div class="space-y-2">
-                                <Label for="home_club">Home Club</Label>
+                                <Label for="home_club">{{ t('Home Club') }}</Label>
                                 <Select
                                     :disabled="isProcessingProfile || isLoadingClubs || !profileForm.home_city_id"
                                     :modelValue="profileForm.home_club_id"
@@ -346,10 +349,10 @@ onMounted(() => {
                                 >
                                     <SelectTrigger id="home_club">
                                         <SelectValue
-                                            :placeholder="isLoadingClubs ? 'Loading clubs...' : user?.home_club?.name || 'Select club'"/>
+                                            :placeholder="isLoadingClubs ? t('Loading clubs...') : user?.home_club?.name || t('Select club')"/>
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">None</SelectItem>
+                                        <SelectItem value="">{{ t('None') }}</SelectItem>
                                         <SelectItem v-for="club in clubs" :key="club.id" :value="club.id">
                                             {{ club.name }}
                                         </SelectItem>
@@ -361,8 +364,8 @@ onMounted(() => {
 
                         <div class="flex justify-end">
                             <Button :disabled="isProcessingProfile || !isPhoneValid" type="submit">
-                                <span v-if="isProcessingProfile">Saving...</span>
-                                <span v-else>Save</span>
+                                <span v-if="isProcessingProfile">{{ t('Saving...') }}</span>
+                                <span v-else>{{ t('Save') }}</span>
                             </Button>
                         </div>
                     </form>
@@ -372,8 +375,8 @@ onMounted(() => {
             <!-- Update Password -->
             <Card>
                 <CardHeader>
-                    <CardTitle>Update Password</CardTitle>
-                    <CardDescription>Ensure your account is using a secure password.</CardDescription>
+                    <CardTitle>{{ t('Update Password') }}</CardTitle>
+                    <CardDescription>{{ t('Ensure your account is using a secure password.') }}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form @submit.prevent="updatePassword" class="space-y-4">
@@ -381,11 +384,11 @@ onMounted(() => {
                             v-if="passwordSuccess"
                             class="rounded-md bg-green-50 p-3 text-sm text-green-600 dark:bg-green-900/30 dark:text-green-400"
                         >
-                            Password updated successfully.
+                            {{ t('Password updated successfully.') }}
                         </div>
 
                         <div class="space-y-2">
-                            <Label for="current_password">Current Password</Label>
+                            <Label for="current_password">{{ t('Current Password') }}</Label>
                             <Input
                                 id="current_password"
                                 v-model="passwordForm.current_password"
@@ -398,7 +401,7 @@ onMounted(() => {
                         </div>
 
                         <div class="space-y-2">
-                            <Label for="password">New Password</Label>
+                            <Label for="password">{{ t('New Password') }}</Label>
                             <Input
                                 id="password"
                                 v-model="passwordForm.password"
@@ -411,7 +414,7 @@ onMounted(() => {
                         </div>
 
                         <div class="space-y-2">
-                            <Label for="password_confirmation">Confirm Password</Label>
+                            <Label for="password_confirmation">{{ t('Confirm Password') }}</Label>
                             <Input
                                 id="password_confirmation"
                                 v-model="passwordForm.password_confirmation"
@@ -425,8 +428,8 @@ onMounted(() => {
 
                         <div class="flex justify-end">
                             <Button :disabled="isProcessingPassword" type="submit">
-                                <span v-if="isProcessingPassword">Updating...</span>
-                                <span v-else>Update Password</span>
+                                <span v-if="isProcessingPassword">{{ t('Updating...') }}</span>
+                                <span v-else>{{ t('Update Password') }}</span>
                             </Button>
                         </div>
                     </form>
@@ -436,13 +439,13 @@ onMounted(() => {
             <!-- Delete Account -->
             <Card>
                 <CardHeader>
-                    <CardTitle>Delete Account</CardTitle>
+                    <CardTitle>{{ t('Delete Account') }}</CardTitle>
                     <CardDescription class="text-red-500">
-                        Once your account is deleted, all of its resources and data will be permanently deleted.
+                        {{ t('Once your account is deleted, all of its resources and data will be permanently deleted.') }}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Button variant="destructive" @click="showDeleteModal = true"> Delete Account</Button>
+                    <Button variant="destructive" @click="showDeleteModal = true">{{ t('Delete Account') }}</Button>
                 </CardContent>
             </Card>
         </div>
@@ -451,28 +454,25 @@ onMounted(() => {
     <!-- Delete Account Modal -->
     <div v-if="showDeleteModal" class="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4">
         <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-lg dark:bg-gray-800">
-            <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">Are you sure you want to delete your
-                account?</h3>
+            <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">{{ t('Are you sure you want to delete your account?') }}</h3>
             <p class="mb-4 text-gray-600 dark:text-gray-400">
-                Once your account is deleted, all of its resources and data will be permanently deleted. Please enter
-                your password to confirm you
-                would like to permanently delete your account.
+                {{ t('Once your account is deleted, all of its resources and data will be permanently deleted. Please enter your password to confirm you would like to permanently delete your account.') }}
             </p>
 
             <form @submit.prevent="deleteAccount">
                 <div class="mb-4">
-                    <Label for="delete_password">Password</Label>
+                    <Label for="delete_password">{{ t('Password') }}</Label>
                     <Input id="delete_password" v-model="deleteForm.password" :disabled="isProcessingDelete" class="mt-1"
                            required type="password"/>
                     <InputError :message="deleteErrors.password?.join(', ')" class="mt-1"/>
                 </div>
 
                 <div class="flex justify-end space-x-3">
-                    <Button :disabled="isProcessingDelete" variant="outline" @click="showDeleteModal = false"> Cancel
+                    <Button :disabled="isProcessingDelete" variant="outline" @click="showDeleteModal = false"> {{ t('Cancel') }}
                     </Button>
                     <Button :disabled="isProcessingDelete" type="submit" variant="destructive">
-                        <span v-if="isProcessingDelete">Deleting...</span>
-                        <span v-else>Delete Account</span>
+                        <span v-if="isProcessingDelete">{{ t('Deleting...') }}</span>
+                        <span v-else>{{ t('Delete Account') }}</span>
                     </Button>
                 </div>
             </form>
