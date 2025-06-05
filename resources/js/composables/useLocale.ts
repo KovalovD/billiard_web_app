@@ -43,6 +43,15 @@ const getLocaleFromStorage = (): string | null => {
     }
 };
 
+const removeLocaleFromStorage = (): void => {
+    try {
+        localStorage.removeItem(LOCALE_STORAGE_KEY);
+// eslint-disable-next-line
+    } catch (e) {
+
+    }
+};
+
 // Функція для визначення локалі браузера
 const getBrowserLocale = (): string => {
     if (typeof navigator !== 'undefined') {
@@ -273,6 +282,7 @@ export function useLocale() {
         currentLanguageName,
 
         // Методи
+        removeLocaleFromStorage,
         initializeLocale,
         setLocale,
         loadTranslations,
