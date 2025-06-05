@@ -4,6 +4,7 @@ import InputError from '@/Components/InputError.vue';
 import {Button, Input, Label, Modal, Spinner} from '@/Components/ui';
 import {useMultiplayerGames} from '@/composables/useMultiplayerGames';
 import {computed, ref, watch} from 'vue';
+import {useLocale} from '@/composables/useLocale';
 
 interface Props {
     show: boolean;
@@ -14,6 +15,7 @@ const props = defineProps<Props>();
 const emit = defineEmits(['close', 'created']);
 
 const {createMultiplayerGame, isLoading, error} = useMultiplayerGames();
+const { t } = useLocale();
 
 const form = ref({
     name: '',
@@ -31,7 +33,7 @@ const validationErrors = ref<Record<string, string[]>>({});
 
 const formattedError = computed(() => {
     if (!error.value) return null;
-    return 'An error occurred while creating the game';
+    return t('An error occurred while creating the game');
 });
 
 // Check if percentages add up to 100%
@@ -43,7 +45,7 @@ const percentageSum = computed(() => {
 
 const percentageError = computed(() => {
     if (percentageSum.value !== 100) {
-        return 'Prize percentages must add up to 100%';
+        return t('Prize percentages must add up to 100%');
     }
     return null;
 });
@@ -76,7 +78,7 @@ const handleSubmit = async () => {
         if (percentageSum.value !== 100) {
             validationErrors.value = {
                 ...validationErrors.value,
-                prize_distribution: ['Prize percentages must add up to 100%']
+                prize_distribution: [t('Prize percentages must add up to 100%')]
             };
             return;
         }
@@ -108,7 +110,7 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-    <Modal :show="show" title="Create Multiplayer Game" @close="emit('close')">
+    <Modal :show="show" :title="t('Create Multiplayer Game')" @close="emit('close')">
         <form class="space-y-4" @submit.prevent="handleSubmit">
             <div v-if="formattedError"
                  class="rounded bg-red-100 p-3 text-sm text-red-600 dark:bg-red-900/30 dark:text-red-400">
@@ -116,13 +118,13 @@ const handleSubmit = async () => {
             </div>
 
             <div class="space-y-2">
-                <Label for="game_name">Game Name</Label>
+                <Label for="game_name">{{ t('Game Name') }}</Label>
                 <Input
                     id="game_name"
                     v-model="form.name"
                     :disabled="isLoading"
                     class="mt-1"
-                    placeholder="Enter game name"
+                    :placeholder="t('Enter game name')"
                     required
                     type="text"
                 />
@@ -130,27 +132,27 @@ const handleSubmit = async () => {
             </div>
 
             <div class="space-y-2">
-                <Label for="max_players">Maximum Players (Optional)</Label>
+                <Label for="max_players">{{ t('Maximum Players (Optional)') }}</Label>
                 <Input
                     id="max_players"
                     v-model.number="form.max_players"
                     :disabled="isLoading"
                     class="mt-1"
                     min="2"
-                    placeholder="Leave empty for unlimited"
+                    :placeholder="t('Leave empty for unlimited')"
                     type="number"
                 />
                 <InputError :message="validationErrors.max_players?.join(', ')"/>
             </div>
 
             <div class="space-y-2">
-                <Label for="registration_ends_at">Registration End Date/Time (Optional)</Label>
+                <Label for="registration_ends_at">{{ t('Registration End Date/Time (Optional)') }}</Label>
                 <Input
                     id="registration_ends_at"
                     v-model="form.registration_ends_at"
                     :disabled="isLoading"
                     class="mt-1"
-                    placeholder="Leave empty for no end date"
+                    :placeholder="t('Leave empty for no end date')"
                     type="datetime-local"
                 />
                 <InputError :message="validationErrors.registration_ends_at?.join(', ')"/>
@@ -165,19 +167,19 @@ const handleSubmit = async () => {
                         class="text-primary focus:ring-primary focus:border-primary focus:ring-opacity-50 h-4 w-4 rounded border-gray-300 shadow-sm"
                         type="checkbox"
                     />
-                    <Label for="allow_player_targeting">Allow Player Targeting</Label>
+                    <Label for="allow_player_targeting">{{ t('Allow Player Targeting') }}</Label>
                 </div>
                 <p class="text-xs text-gray-500">
-                    If enabled, players can directly add or remove lives from other players.
-                    Otherwise, only moderators can target other players.
+                    {{ t('If enabled, players can directly add or remove lives from other players.') }}
+                    {{ t('Otherwise, only moderators can target other players.') }}
                 </p>
                 <InputError :message="validationErrors.allow_player_targeting?.join(', ')"/>
             </div>
 
-            <h3 class="mt-4 font-medium">Financial Settings</h3>
+            <h3 class="mt-4 font-medium">{{ t('Financial Settings') }}</h3>
 
             <div class="space-y-2">
-                <Label for="entrance_fee">Entrance Fee</Label>
+                <Label for="entrance_fee">{{ t('Entrance Fee') }}</Label>
                 <Input
                     id="entrance_fee"
                     v-model.number="form.entrance_fee"
@@ -191,7 +193,7 @@ const handleSubmit = async () => {
 
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div class="space-y-2">
-                    <Label for="first_place_percent">1st Place %</Label>
+                    <Label for="first_place_percent">{{ t('1st Place %') }}</Label>
                     <Input
                         id="first_place_percent"
                         v-model.number="form.first_place_percent"
@@ -204,7 +206,7 @@ const handleSubmit = async () => {
                 </div>
 
                 <div class="space-y-2">
-                    <Label for="second_place_percent">2nd Place %</Label>
+                    <Label for="second_place_percent">{{ t('2nd Place %') }}</Label>
                     <Input
                         id="second_place_percent"
                         v-model.number="form.second_place_percent"
@@ -217,7 +219,7 @@ const handleSubmit = async () => {
                 </div>
 
                 <div class="space-y-2">
-                    <Label for="grand_final_percent">Grand Final %</Label>
+                    <Label for="grand_final_percent">{{ t('Grand Final %') }}</Label>
                     <Input
                         id="grand_final_percent"
                         v-model.number="form.grand_final_percent"
@@ -236,7 +238,7 @@ const handleSubmit = async () => {
             <InputError :message="validationErrors.prize_distribution?.join(', ')"/>
 
             <div class="space-y-2">
-                <Label for="penalty_fee">Penalty Fee</Label>
+                <Label for="penalty_fee">{{ t('Penalty Fee') }}</Label>
                 <Input
                     id="penalty_fee"
                     v-model.number="form.penalty_fee"
@@ -246,16 +248,16 @@ const handleSubmit = async () => {
                     type="number"
                 />
                 <p class="text-xs text-gray-500">
-                    First half of eliminated players pay this fee, which goes to the time fund.
+                    {{ t('First half of eliminated players pay this fee, which goes to the time fund.') }}
                 </p>
                 <InputError :message="validationErrors.penalty_fee?.join(', ')"/>
             </div>
 
             <div class="flex justify-end space-x-3 pt-4">
-                <Button :disabled="isLoading" type="button" variant="outline" @click="emit('close')"> Cancel</Button>
+                <Button :disabled="isLoading" type="button" variant="outline" @click="emit('close')"> {{ t('Cancel') }}</Button>
                 <Button :disabled="isLoading || percentageError !== null" type="submit">
                     <Spinner v-if="isLoading" class="mr-2 h-4 w-4"/>
-                    Create Game
+                    {{ t('Create Game') }}
                 </Button>
             </div>
         </form>

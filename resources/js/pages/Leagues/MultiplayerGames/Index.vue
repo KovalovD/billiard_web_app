@@ -41,11 +41,11 @@ const showCreateModal = ref(false);
 const selectedStatus = ref<string>('all');
 
 const statusOptions = [
-    {value: 'all', label: 'All Games'},
-    {value: 'registration', label: 'Registration'},
-    {value: 'in_progress', label: 'In Progress'},
-    {value: 'completed', label: 'Completed'},
-    {value: 'cancelled', label: 'Cancelled'}
+    {value: 'all', label: t('All Games')},
+    {value: 'registration', label: t('Registration')},
+    {value: 'in_progress', label: t('In Progress')},
+    {value: 'completed', label: t('Completed')},
+    {value: 'cancelled', label: t('Cancelled')}
 ];
 
 const filteredGames = computed(() => {
@@ -131,13 +131,13 @@ const getPlayersText = (game: MultiplayerGame): number => {
 
 const getGameDateInfo = (game: MultiplayerGame): string => {
     if (game.completed_at) {
-        return `Completed: ${formatDateTime(game.completed_at)}`;
+        return `${t('Completed:')} ${formatDateTime(game.completed_at)}`;
     } else if (game.started_at) {
-        return `Started: ${formatDateTime(game.started_at)}`;
+        return `${t('Started:')} ${formatDateTime(game.started_at)}`;
     } else if (game.registration_ends_at) {
-        return `Reg. ends: ${formatDateTime(game.registration_ends_at)}`;
+        return `${t('Reg. ends:')} ${formatDateTime(game.registration_ends_at)}`;
     } else {
-        return `Created: ${formatDate(game.created_at)}`;
+        return `${t('Created:')} ${formatDate(game.created_at)}`;
     }
 };
 
@@ -161,7 +161,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <Head :title="league ? `Multiplayer Games - ${league.name}` : 'Multiplayer Games'"/>
+    <Head :title="league ? `${t('Multiplayer Games')} - ${league.name}` : t('Multiplayer Games')"/>
     <div class="py-12">
         <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
             <!-- Header with back button -->
@@ -216,7 +216,7 @@ onMounted(() => {
                 <CardHeader>
                     <CardTitle class="flex items-center gap-2">
                         <GamepadIcon class="h-5 w-5"/>
-                        Multiplayer Games
+                        {{ t('Multiplayer Games') }}
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -243,7 +243,7 @@ onMounted(() => {
                             {{
                                 selectedStatus === 'all' ? t('No multiplayer games for this league.') : t('No :status games.', { status: selectedStatus })
                             }}
-                            <span v-if="isAuthenticated && isAdmin"> Create one to get started!</span>
+                            <span v-if="isAuthenticated && isAdmin">{{ t('Create one to get started!') }}</span>
                             <span v-else-if="!isAuthenticated">
                                 <Link :href="route('login')" class="text-blue-600 hover:underline dark:text-blue-400">
                                     {{ t('Login to create games.') }}
@@ -258,25 +258,25 @@ onMounted(() => {
                             <thead class="bg-gray-50 dark:bg-gray-800">
                             <tr>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                                    Game
+                                    {{ t('Game') }}
                                 </th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                                    Status
+                                    {{ t('Status') }}
                                 </th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                                    Players
+                                    {{ t('Players') }}
                                 </th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                                    Date Info
+                                    {{ t('Date Info') }}
                                 </th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                                    Entry Fee
+                                    {{ t('Entry Fee') }}
                                 </th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                                    Registration
+                                    {{ t('Registration') }}
                                 </th>
                                 <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                                    Actions
+                                    {{ t('Actions') }}
                                 </th>
                             </tr>
                             </thead>
@@ -351,11 +351,11 @@ onMounted(() => {
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div v-if="game.is_registration_open" class="flex items-center">
                                         <div class="h-2 w-2 bg-green-400 rounded-full mr-2"></div>
-                                        <span class="text-sm text-green-600 dark:text-green-400">Open</span>
+                                        <span class="text-sm text-green-600 dark:text-green-400">{{ t('Open') }}</span>
                                     </div>
                                     <div v-else class="flex items-center">
                                         <div class="h-2 w-2 bg-red-400 rounded-full mr-2"></div>
-                                        <span class="text-sm text-red-600 dark:text-red-400">Closed</span>
+                                        <span class="text-sm text-red-600 dark:text-red-400">{{ t('Closed') }}</span>
                                     </div>
                                 </td>
 
@@ -364,7 +364,7 @@ onMounted(() => {
                                     <div class="flex justify-end space-x-2">
                                         <!-- Everyone can view -->
                                         <Link :href="`/leagues/${leagueId}/multiplayer-games/${game.id}`">
-                                            <Button size="sm" title="View Game" variant="outline">
+                                            <Button size="sm" :title="t('View Game')" variant="outline">
                                                 <EyeIcon class="h-4 w-4"/>
                                             </Button>
                                         </Link>
@@ -375,7 +375,7 @@ onMounted(() => {
                                                 v-if="game.status === 'registration'"
                                                 :disabled="game.total_players_count < 2"
                                                 size="sm"
-                                                title="Start Game"
+                                                :title="t('Start Game')"
                                                 variant="outline"
                                                 @click="handleStart(game)"
                                             >
@@ -385,7 +385,7 @@ onMounted(() => {
                                             <Button
                                                 v-if="['registration', 'in_progress'].includes(game.status)"
                                                 size="sm"
-                                                title="Manage Game"
+                                                :title="t('Manage Game')"
                                                 variant="outline"
                                             >
                                                 <SettingsIcon class="h-4 w-4"/>
@@ -394,7 +394,7 @@ onMounted(() => {
                                             <Button
                                                 v-if="game.status === 'registration'"
                                                 size="sm"
-                                                title="Cancel Game"
+                                                :title="t('Cancel Game')"
                                                 variant="destructive"
                                             >
                                                 <XIcon class="h-4 w-4"/>

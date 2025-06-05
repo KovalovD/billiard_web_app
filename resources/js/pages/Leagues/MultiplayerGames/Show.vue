@@ -61,7 +61,7 @@ const handlePlayerAdded = async () => {
     await fetchGame();
     actionFeedback.value = {
         type: 'success',
-        message: 'Player added successfully'
+        message: t('Player added successfully')
     };
 };
 
@@ -71,22 +71,22 @@ const formattedStatusMessage = computed(() => {
 
     if (game.value.status === 'registration') {
         if (!isAuthenticated.value) {
-            return 'The game is currently in the registration phase. Login to join and participate.';
+            return t('The game is currently in the registration phase. Login to join and participate.');
         }
-        return 'The game is currently in the registration phase. Players can join until the game starts.';
+        return t('The game is currently in the registration phase. Players can join until the game starts.');
     } else if (game.value.status === 'in_progress') {
         if (!isAuthenticated.value) {
-            return 'This game is currently in progress. You can watch the live action below.';
+            return t('This game is currently in progress. You can watch the live action below.');
         }
         if (isModerator.value) {
-            return 'You are the moderator. You can perform actions for any player.';
+            return t('You are the moderator. You can perform actions for any player.');
         } else if (game.value.current_turn_player_id === user.value?.id) {
-            return "It's your turn to play.";
+            return t("It's your turn to play.");
         } else {
-            return 'Waiting for the current player to make a move.';
+            return t('Waiting for the current player to make a move.');
         }
     } else if (game.value.status === 'completed') {
-        return 'The game has finished. Check the results below.';
+        return t('The game has finished. Check the results below.');
     }
 
     return '';
@@ -223,13 +223,13 @@ const handleAction = async (
         if (action === 'increment_lives' && game.value) {
             actionFeedback.value = {
                 type: 'success',
-                message: `Life successfully incremented`
+                message: t('Life successfully incremented')
             };
         }
         if (action === 'decrement_lives' && game.value) {
             actionFeedback.value = {
                 type: 'success',
-                message: `Life successfully decremented`
+                message: t('Life successfully decremented')
             };
         }
 
@@ -244,7 +244,7 @@ const handleAction = async (
                 // Show a notification that turn has changed
                 actionFeedback.value = {
                     type: 'success',
-                    message: `Turn passed to ${newCurrentTurnPlayer.user.firstname} ${newCurrentTurnPlayer.user.lastname}`
+                    message: t('Turn passed to :player', {player: `${newCurrentTurnPlayer.user.firstname} ${newCurrentTurnPlayer.user.lastname}`})
                 };
             }
         }
@@ -252,7 +252,7 @@ const handleAction = async (
         // Show error feedback
         actionFeedback.value = {
             type: 'error',
-            message: err.message || `Failed to perform ${action}`
+            message: err.message || t('Failed to perform :action', {action})
         };
     }
 };
@@ -273,16 +273,16 @@ const handleUseCard = async (cardType: 'skip_turn' | 'pass_turn' | 'hand_shot', 
         );
 
         // Show success feedback
-        let message = `Used ${cardType.replace('_', ' ')} card successfully`;
+        let message = t('Used :card card successfully', {card: cardType.replace('_', ' ')});
 
         // Add more specific messages for each card type
         if (cardType === 'skip_turn') {
-            message = 'Skip Turn card used - your turn is skipped, game moves to the next player';
+            message = t('Skip Turn card used - your turn is skipped, game moves to the next player');
         } else if (cardType === 'pass_turn') {
             const targetPlayer = game.value.active_players.find(p => p.user.id === targetPlayerId);
-            message = `Pass Turn card used - turn passed to ${targetPlayer?.user.firstname} ${targetPlayer?.user.lastname}. After they play, the turn will return to you`;
+            message = t('Pass Turn card used - turn passed to :player. After they play, the turn will return to you', {player: `${targetPlayer?.user.firstname} ${targetPlayer?.user.lastname}`});
         } else if (cardType === 'hand_shot') {
-            message = 'Hand Shot card used - you can place the cue ball anywhere on the table';
+            message = t('Hand Shot card used - you can place the cue ball anywhere on the table');
         }
 
         actionFeedback.value = {
@@ -300,7 +300,7 @@ const handleUseCard = async (cardType: 'skip_turn' | 'pass_turn' | 'hand_shot', 
         // Show error feedback
         actionFeedback.value = {
             type: 'error',
-            message: err.message || `Failed to use card ${cardType}`
+            message: err.message || t('Failed to use card :card', {card: cardType})
         };
     }
 };
@@ -316,14 +316,14 @@ const handleSetModerator = async (userId: number) => {
 
         actionFeedback.value = {
             type: 'success',
-            message: 'Moderator set successfully'
+            message: t('Moderator set successfully')
         };
 
         await fetchGame();
     } catch (err: any) {
         actionFeedback.value = {
             type: 'error',
-            message: err.message || 'Failed to set moderator'
+            message: err.message || t('Failed to set moderator')
         };
     }
 };
@@ -491,7 +491,7 @@ onMounted(() => {
                                 ]"
                                 @click="activeTab = 'game'"
                             >
-                                Game
+                                {{ t('Game') }}
                             </button>
                             <button
                                 :class="[
@@ -502,7 +502,7 @@ onMounted(() => {
                                 ]"
                                 @click="activeTab = 'prizes'"
                             >
-                                Prizes
+                                {{ t('Prizes') }}
                             </button>
                             <button
                                 :class="[
@@ -513,7 +513,7 @@ onMounted(() => {
                                 ]"
                                 @click="activeTab = 'ratings'"
                             >
-                                Rating Points
+                                {{ t('Rating Points') }}
                             </button>
                             <button
                                 :class="[
@@ -524,7 +524,7 @@ onMounted(() => {
                                 ]"
                                 @click="activeTab = 'timefund'"
                             >
-                                Time Fund
+                                {{ t('Time Fund') }}
                             </button>
                         </nav>
                     </div>
@@ -575,12 +575,12 @@ onMounted(() => {
                                                                 player.user.lastname
                                                             }}</p>
                                                         <p v-if="isAuthenticated && player.user.id === user?.id"
-                                                           class="text-xs text-blue-600">(You)</p>
+                                                           class="text-xs text-blue-600">{{ t('(You)') }}</p>
                                                     </div>
                                                 </div>
 
                                                 <div class="text-sm text-gray-500">
-                                                    Eliminated: {{ formatDate(player?.eliminated_at) }}
+                                                    {{ t('Eliminated:') }} {{ formatDate(player?.eliminated_at) }}
                                                 </div>
                                             </div>
                                         </div>
@@ -616,7 +616,7 @@ onMounted(() => {
                                 </div>
 
                                 <div v-else class="rounded-lg border p-4 text-center text-gray-500 dark:text-gray-400">
-                                    <p>Select a player to view their actions or wait for your turn.</p>
+                                    <p>{{ t('Select a player to view their actions or wait for your turn.') }}</p>
                                 </div>
                             </div>
 
@@ -625,18 +625,17 @@ onMounted(() => {
                                  class="order-1 lg:order-2 lg:col-span-2">
                                 <Card>
                                     <CardHeader>
-                                        <CardTitle>Game in Progress</CardTitle>
+                                        <CardTitle>{{ t('Game in Progress') }}</CardTitle>
                                     </CardHeader>
                                     <CardContent>
                                         <div class="text-center py-8">
                                             <p class="text-gray-600 dark:text-gray-400 mb-4">
-                                                This multiplayer game is currently in progress. You can watch the live
-                                                action by viewing the player list on the left.
+                                                {{ t('This multiplayer game is currently in progress. You can watch the live action by viewing the player list on the left.') }}
                                             </p>
                                             <Link :href="route('login')">
                                                 <Button>
                                                     <LogInIcon class="mr-2 h-4 w-4"/>
-                                                    Login to Participate
+                                                    {{ t('Login to Participate') }}
                                                 </Button>
                                             </Link>
                                         </div>
@@ -649,7 +648,7 @@ onMounted(() => {
                                  class="order-1 lg:order-2 lg:col-span-2">
                                 <Card>
                                     <CardHeader>
-                                        <CardTitle>Game Results</CardTitle>
+                                        <CardTitle>{{ t('Game Results') }}</CardTitle>
                                     </CardHeader>
                                     <CardContent>
                                         <div class="space-y-4">
@@ -657,10 +656,10 @@ onMounted(() => {
                                                 <table class="w-full">
                                                     <thead>
                                                     <tr class="border-b dark:border-gray-700">
-                                                        <th class="px-4 py-2 text-left">Position</th>
-                                                        <th class="px-4 py-2 text-left">Player</th>
-                                                        <th class="px-4 py-2 text-center">Rating Points</th>
-                                                        <th class="px-4 py-2 text-right">Prize</th>
+                                                        <th class="px-4 py-2 text-left">{{ t('Position') }}</th>
+                                                        <th class="px-4 py-2 text-left">{{ t('Player') }}</th>
+                                                        <th class="px-4 py-2 text-center">{{ t('Rating Points') }}</th>
+                                                        <th class="px-4 py-2 text-right">{{ t('Prize') }}</th>
                                                     </tr>
                                                     </thead>
                                                     <tbody>
@@ -684,7 +683,7 @@ onMounted(() => {
                                                         <td class="px-4 py-2">
                                                             {{ player.user.firstname }} {{ player.user.lastname }}
                                                             <span v-if="isAuthenticated && player.user.id === user?.id"
-                                                                  class="ml-1 text-xs text-blue-600">(You)</span>
+                                                                  class="ml-1 text-xs text-blue-600">{{ t('(You)') }}</span>
                                                         </td>
                                                         <td class="px-4 py-2 text-center">
                                                             <span

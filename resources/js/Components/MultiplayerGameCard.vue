@@ -101,7 +101,7 @@ const handleStart = async () => {
 const handleCancel = async () => {
     if (!isAuthenticated.value || !isAdmin.value) return;
 
-    if (!confirm('Are you sure you want to cancel this game?')) {
+    if (!confirm(t('Are you sure you want to cancel this game?'))) {
         return;
     }
 
@@ -143,19 +143,19 @@ const statusBadgeClass = computed(() => {
                     </span>
                 </h2>
                 <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                    Players: {{ game.total_players_count }} / {{ game.max_players || 'Unlimited' }}
+                    {{ t('Players') }}: {{ game.total_players_count }} / {{ game.max_players || t('Unlimited') }}
                 </p>
             </div>
         </div>
 
         <div class="space-y-2 text-sm">
             <div v-if="game.status === 'registration'" class="flex items-center justify-between">
-                <span class="text-gray-600 dark:text-gray-400">Registration ends:</span>
+                <span class="text-gray-600 dark:text-gray-400">{{ t('Registration ends:') }}</span>
                 <span>{{ formatDate(game.registration_ends_at) }}</span>
             </div>
             <div v-if="game.status === 'in_progress' || game.status === 'completed'"
                  class="flex items-center justify-between">
-                <span class="text-gray-600 dark:text-gray-400">Started:</span>
+                <span class="text-gray-600 dark:text-gray-400">{{ t('Started:') }}</span>
                 <span>{{ formatDate(game.started_at) }}</span>
             </div>
             <div v-if="game.status === 'completed'" class="flex items-center justify-between">
