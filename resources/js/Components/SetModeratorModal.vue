@@ -3,6 +3,7 @@
 import {Button, Modal, Spinner} from '@/Components/ui';
 import type {MultiplayerGame} from '@/types/api';
 import {ref, watch} from 'vue';
+import {useLocale} from '@/composables/useLocale';
 
 interface Props {
     show: boolean;
@@ -11,6 +12,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const emit = defineEmits(['close', 'set-moderator']);
+const { t } = useLocale();
 
 const isLoading = ref(false);
 const selectedUserId = ref<number | null>(null);
@@ -27,7 +29,7 @@ watch(() => props.show, onShowChange, {immediate: true});
 
 const setModerator = () => {
     if (!selectedUserId.value) {
-        alert('Please select a player to be the moderator');
+        alert(t('Please select a player to be the moderator'));
         return;
     }
 
@@ -38,11 +40,10 @@ const setModerator = () => {
 </script>
 
 <template>
-    <Modal :show="show" title="Set Game Moderator" @close="emit('close')">
+    <Modal :show="show" :title="t('Set Game Moderator')" @close="emit('close')">
         <div class="space-y-4 p-2">
             <div class="mb-4 text-gray-700 dark:text-gray-300">
-                <p>Choose a player to be the game moderator. The moderator can perform actions on behalf of any
-                    player.</p>
+                <p>{{ t('Choose a player to be the game moderator. The moderator can perform actions on behalf of any player.') }}</p>
             </div>
 
             <div class="space-y-2">
@@ -59,8 +60,7 @@ const setModerator = () => {
                 >
                     <div class="flex-1">
                         <p class="font-medium">{{ player.user.firstname }} {{ player.user.lastname }}</p>
-                        <p v-if="player.user.id === game?.moderator_user_id" class="text-xs text-purple-600">Current
-                            Moderator</p>
+                        <p v-if="player.user.id === game?.moderator_user_id" class="text-xs text-purple-600">{{ t('Current Moderator') }}</p>
                     </div>
 
                     <div class="flex h-5 w-5 items-center justify-center rounded-full border border-gray-300">
@@ -73,10 +73,10 @@ const setModerator = () => {
             </div>
 
             <div class="mt-6 flex justify-end space-x-2">
-                <Button variant="outline" @click="emit('close')">Cancel</Button>
+                <Button variant="outline" @click="emit('close')">{{ t('Cancel') }}</Button>
                 <Button :disabled="!selectedUserId || isLoading" @click="setModerator">
                     <Spinner v-if="isLoading" class="mr-2 h-4 w-4"/>
-                    Set Moderator
+                    {{ t('Set Moderator') }}
                 </Button>
             </div>
         </div>

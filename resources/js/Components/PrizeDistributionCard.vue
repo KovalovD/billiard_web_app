@@ -3,12 +3,14 @@
 import {Card, CardContent, CardHeader, CardTitle} from '@/Components/ui';
 import type {MultiplayerGame} from '@/types/api';
 import {computed} from 'vue';
+import {useLocale} from '@/composables/useLocale';
 
 interface Props {
     game: MultiplayerGame;
 }
 
 const props = defineProps<Props>();
+const { t } = useLocale();
 
 // Format currency amount
 const formatCurrency = (amount: number) => {
@@ -54,20 +56,20 @@ const totalTimeFund = computed(() => {
 <template>
     <Card>
         <CardHeader>
-            <CardTitle>Prize Distribution</CardTitle>
+            <CardTitle>{{ t('Prize Distribution') }}</CardTitle>
         </CardHeader>
         <CardContent>
             <div v-if="!showPrizeData" class="text-center text-gray-500 dark:text-gray-400">
-                <p>Prizes will be distributed when the game is completed.</p>
+                <p>{{ t('Prizes will be distributed when the game is completed.') }}</p>
             </div>
 
             <div v-else class="space-y-6">
                 <!-- Prize winners -->
                 <div>
-                    <h3 class="mb-2 font-medium">Prize Winners</h3>
+                    <h3 class="mb-2 font-medium">{{ t('Prize Winners') }}</h3>
 
                     <div v-if="playersWithPrizes.length === 0" class="text-center text-gray-500 dark:text-gray-400">
-                        <p>No prizes have been distributed yet.</p>
+                        <p>{{ t('No prizes have been distributed yet.') }}</p>
                     </div>
 
                     <div v-else class="divide-y">
@@ -98,24 +100,24 @@ const totalTimeFund = computed(() => {
                     </div>
 
                     <div class="mt-2 flex justify-between border-t pt-2 text-sm">
-                        <span class="text-gray-500">Grand Final Fund:</span>
+                        <span class="text-gray-500">{{ t('Grand Final Fund:') }}</span>
                         <span class="font-medium">
                             {{ formatCurrency(props.game.financial_data?.grand_final_fund || 0) }}
                         </span>
                     </div>
 
                     <div class="flex justify-between text-sm font-medium">
-                        <span class="text-gray-500">Total Prize Pool:</span>
+                        <span class="text-gray-500">{{ t('Total Prize Pool:') }}</span>
                         <span>{{ formatCurrency(totalPrizePool) }}</span>
                     </div>
                 </div>
 
                 <!-- Time Fund -->
                 <div>
-                    <h3 class="mb-2 font-medium">Time Fund Contributors</h3>
+                    <h3 class="mb-2 font-medium">{{ t('Time Fund Contributors') }}</h3>
 
                     <div v-if="playersWithPenalty.length === 0" class="text-center text-gray-500 dark:text-gray-400">
-                        <p>No time fund contributions have been recorded yet.</p>
+                        <p>{{ t('No time fund contributions have been recorded yet.') }}</p>
                     </div>
 
                     <div v-else class="divide-y">
@@ -140,13 +142,13 @@ const totalTimeFund = computed(() => {
                     </div>
 
                     <div class="mt-2 flex justify-between border-t pt-2 text-sm font-medium">
-                        <span class="text-gray-500">Total Time Fund:</span>
+                        <span class="text-gray-500">{{ t('Total Time Fund:') }}</span>
                         <span>{{ formatCurrency(totalTimeFund) }}</span>
                     </div>
                 </div>
 
                 <div class="text-xs text-gray-500">
-                    <p>The Time Fund is used by the winner to cover the cost of the table time.</p>
+                    <p>{{ t('The Time Fund is used by the winner to cover the cost of the table time.') }}</p>
                 </div>
             </div>
         </CardContent>

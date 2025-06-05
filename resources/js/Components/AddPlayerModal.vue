@@ -2,6 +2,7 @@
 import UnifiedAddPlayerModal from '@/Components/UnifiedAddPlayerModal.vue';
 import type {ApiError} from '@/types/api';
 import {computed, ref} from 'vue';
+import {useLocale} from '@/composables/useLocale';
 
 interface Props {
     show: boolean;
@@ -18,11 +19,14 @@ interface Emits {
 
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
+const { t } = useLocale();
 
 const error = ref<string | null>(null);
 
 const modalTitle = computed(() => {
-    return props.entityType === 'league' ? 'Add Player to League' : 'Add Player to Game';
+    return props.entityType === 'league'
+        ? t('Add Player to League')
+        : t('Add Player to Game');
 });
 
 const handleClose = () => {
@@ -36,7 +40,7 @@ const handleAdded = () => {
 };
 
 const handleError = (apiError: ApiError) => {
-    error.value = apiError.message || 'Failed to add player';
+    error.value = apiError.message || t('Failed to add player');
 };
 </script>
 
