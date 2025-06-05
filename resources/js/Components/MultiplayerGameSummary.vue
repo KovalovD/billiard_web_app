@@ -3,12 +3,14 @@
 import {Card, CardContent, CardHeader, CardTitle} from '@/Components/ui';
 import type {MultiplayerGame} from '@/types/api';
 import {computed} from 'vue';
+import {useLocale} from '@/composables/useLocale';
 
 interface Props {
     game: MultiplayerGame;
 }
 
 const props = defineProps<Props>();
+const { t } = useLocale();
 
 // Format date for display
 const formatDate = (dateString: string | null): string => {
@@ -56,10 +58,10 @@ const statusText = computed(() => {
 
 // Get moderator name
 const moderatorName = computed(() => {
-    if (!props.game.moderator_user_id) return 'No moderator assigned';
+    if (!props.game.moderator_user_id) return t('No moderator assigned');
 
     const moderator = props.game.active_players.find(p => p.user.id === props.game.moderator_user_id);
-    if (!moderator) return 'Unknown moderator';
+    if (!moderator) return t('Unknown moderator');
 
     return `${moderator.user.firstname} ${moderator.user.lastname}`;
 });
@@ -71,7 +73,7 @@ const winnerName = computed(() => {
     const winner = [...props.game.eliminated_players, ...props.game.active_players]
         .find(p => p.finish_position === 1);
 
-    if (!winner) return 'No winner determined';
+    if (!winner) return t('No winner determined');
 
     return `${winner.user.firstname} ${winner.user.lastname}`;
 });
@@ -86,7 +88,7 @@ const timeFundTotal = computed(() => {
 <template>
     <Card>
         <CardHeader>
-            <CardTitle>Game Summary</CardTitle>
+            <CardTitle>{{ t('Game Summary') }}</CardTitle>
         </CardHeader>
         <CardContent>
             <div class="space-y-4">
@@ -99,53 +101,53 @@ const timeFundTotal = computed(() => {
 
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <div class="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Players</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('Players') }}</p>
                         <p class="font-medium">
                             {{ props.game.active_players_count }} active / {{ props.game.total_players_count }} total
                         </p>
                     </div>
 
                     <div class="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Initial Lives</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('Initial Lives') }}</p>
                         <p class="font-medium">{{ props.game.initial_lives }}</p>
                     </div>
 
                     <div class="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Moderator</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('Moderator') }}</p>
                         <p class="font-medium">{{ moderatorName }}</p>
                     </div>
 
                     <div v-if="props.game.status !== 'registration'" class="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Started</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('Started') }}</p>
                         <p class="font-medium">{{ formatDate(props.game.started_at) }}</p>
                     </div>
 
                     <div v-if="props.game.status === 'completed'" class="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Completed</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('Completed') }}</p>
                         <p class="font-medium">{{ formatDate(props.game.completed_at) }}</p>
                     </div>
 
                     <div v-if="winnerName" class="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Winner</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('Winner') }}</p>
                         <p class="font-medium">{{ winnerName }}</p>
                     </div>
                 </div>
 
                 <div class="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
-                    <h3 class="mb-2 font-medium">Financial Summary</h3>
+                    <h3 class="mb-2 font-medium">{{ t('Financial Summary') }}</h3>
 
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
                             <p class="text-sm">
-                                <span class="text-gray-500 dark:text-gray-400">Entrance Fee:</span>
+                                <span class="text-gray-500 dark:text-gray-400">{{ t('Entrance Fee:') }}</span>
                                 {{ formatCurrency(props.game.entrance_fee) }}
                             </p>
                             <p class="text-sm">
-                                <span class="text-gray-500 dark:text-gray-400">Total Prize Pool:</span>
+                                <span class="text-gray-500 dark:text-gray-400">{{ t('Total Prize Pool:') }}</span>
                                 {{ formatCurrency(props.game.entrance_fee * props.game.total_players_count) }}
                             </p>
                             <p class="text-sm">
-                                <span class="text-gray-500 dark:text-gray-400">Distribution:</span>
+                                <span class="text-gray-500 dark:text-gray-400">{{ t('Distribution:') }}</span>
                                 1st: {{ props.game.first_place_percent }}%,
                                 2nd: {{ props.game.second_place_percent }}%,
                                 Grand Final: {{ props.game.grand_final_percent }}%
@@ -154,15 +156,15 @@ const timeFundTotal = computed(() => {
 
                         <div>
                             <p class="text-sm">
-                                <span class="text-gray-500 dark:text-gray-400">Penalty Fee:</span>
+                                <span class="text-gray-500 dark:text-gray-400">{{ t('Penalty Fee:') }}</span>
                                 {{ formatCurrency(props.game.penalty_fee) }}
                             </p>
                             <p class="text-sm">
-                                <span class="text-gray-500 dark:text-gray-400">Penalty Players:</span>
+                                <span class="text-gray-500 dark:text-gray-400">{{ t('Penalty Players:') }}</span>
                                 {{ props.game.eliminated_players.filter(p => p.penalty_paid).length }}
                             </p>
                             <p class="text-sm">
-                                <span class="text-gray-500 dark:text-gray-400">Time Fund:</span>
+                                <span class="text-gray-500 dark:text-gray-400">{{ t('Time Fund:') }}</span>
                                 {{ formatCurrency(timeFundTotal) }}
                             </p>
                         </div>
