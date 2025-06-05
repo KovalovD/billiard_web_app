@@ -9,7 +9,11 @@ import {useAuth} from '@/composables/useAuth';
 import {Head, Link} from '@inertiajs/vue3';
 import axios from 'axios';
 import {onMounted, ref} from 'vue';
+import LocaleSwitcher from "@/Components/LocaleSwitcher.vue";
+import {useLocale} from '@/composables/useLocale';
 
+// Add to existing code
+const {t} = useLocale();
 // Simple local state management
 const { user } = useAuth();
 const isLoading = ref(true);
@@ -106,6 +110,7 @@ onMounted(() => {
                         </div>
 
                         <div class="hidden sm:ml-6 sm:flex sm:items-center">
+                            <LocaleSwitcher/>
                             <div v-if="user" class="relative ml-3">
                                 <Dropdown align="right" width="48">
                                     <template #trigger>

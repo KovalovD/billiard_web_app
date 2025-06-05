@@ -5,6 +5,8 @@ import {createApp, DefineComponent, h} from 'vue';
 import {ZiggyVue} from 'ziggy-js';
 import '../css/app.css'; // Tailwind styles
 import {Ziggy} from './ziggy';
+import {initGlobalLocale} from './composables/useLocale';
+import {createPinia} from 'pinia';
 
 // Make route globally available
 declare global {
@@ -47,16 +49,24 @@ createInertiaApp({
                 return '/'; // Fallback to home
             }
         };
-
+        const pinia = createPinia();
         // Apply plugins
         vueApp.use(plugin);
+        vueApp.use(pinia);
         vueApp.use(ZiggyVue, ziggyData); // Pass the merged Ziggy config
 
         // Auth initialization is now handled within useAuth composable,
         // typically called from the main layout component's onMounted hook.
 
         // Mount the app
-        vueApp.mount(el);
+
+        initGlobalLocale().then(() => {
+            vueApp.mount(el);
+        }).catch((error) => {
+            console.error('Failed to initialize locale:', error);
+            vueApp.mount(el);
+        });
+
         console.log('[App] Vue App mounted.');
     },
 
