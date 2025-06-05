@@ -193,7 +193,8 @@ export function useLocale() {
 
     // Функція для отримання перекладу
     const t = (key: string, params?: Record<string, string | number>): string => {
-        const keys = key.split('.');
+        const Tkey = 'translate.' + key;
+        const keys = Tkey.split('.');
         let value: any = translations.value;
 
         // Проходимо по ключах для отримання значення
@@ -239,8 +240,8 @@ export function useLocale() {
     // Отримання назви мови
     const getLanguageName = (locale: string): string => {
         const languageNames: Record<string, string> = {
-            en: t('common.english'),
-            uk: t('common.ukrainian')
+            en: t('English'),
+            uk: t('Ukrainian')
         };
         return languageNames[locale] || locale;
     };
