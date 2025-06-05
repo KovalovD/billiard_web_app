@@ -5,6 +5,7 @@ import PlayerCards from '@/Components/PlayerCards.vue';
 import {Button, Spinner} from '@/Components/ui';
 import type {MultiplayerGamePlayer} from '@/types/api';
 import {computed, ref, watch} from 'vue';
+import {useLocale} from '@/composables/useLocale';
 
 interface Props {
     player: MultiplayerGamePlayer;
@@ -20,6 +21,7 @@ const emit = defineEmits([
     'use-card',
     'record-turn'
 ]);
+const { t } = useLocale();
 
 // Local state
 const selectedCardType = ref<'skip_turn' | 'pass_turn' | 'hand_shot' | null>(null);
@@ -105,7 +107,7 @@ const handleRecordTurn = () => {
                 <h3 class="font-medium flex items-center">
                     {{ player.user.firstname }} {{ player.user.lastname }}
                     <span v-if="isCurrentTurn"
-                          class="ml-2 px-2 py-0.5 text-xs text-white bg-green-600 rounded-full font-semibold dark:bg-green-700">Current Turn</span>
+                          class="ml-2 px-2 py-0.5 text-xs text-white bg-green-600 rounded-full font-semibold dark:bg-green-700">{{ t('Current Turn') }}</span>
                 </h3>
             </div>
         </div>
@@ -139,11 +141,11 @@ const handleRecordTurn = () => {
                         @click="handleRecordTurn"
                     >
                         <Spinner v-if="isLoading" class="mr-2 h-4 w-4"/>
-                        End Turn
+                        {{ t('End Turn') }}
                     </Button>
                 </div>
             </div>
-            <h4 class="mb-2 text-sm font-medium">Available Cards:</h4>
+            <h4 class="mb-2 text-sm font-medium">{{ t('Available Cards:') }}</h4>
             <PlayerCards
                 :disabled="isLoading"
                 :player="player"
@@ -153,7 +155,7 @@ const handleRecordTurn = () => {
         </div>
 
         <div v-if="needsTarget && targetPlayers?.length" class="border-t pt-3">
-            <h4 class="mb-2 text-sm font-medium">Select Target Player:</h4>
+            <h4 class="mb-2 text-sm font-medium">{{ t('Select Target Player:') }}</h4>
             <div class="flex flex-wrap gap-2">
                 <Button
                     v-for="targetPlayer in targetPlayers"
@@ -176,9 +178,9 @@ const handleRecordTurn = () => {
                 :variant="selectedCardType === 'skip_turn' ? 'destructive' : 'default'"
             >
                 <Spinner v-if="isLoading" class="mr-2 h-4 w-4"/>
-                Use {{
-                    selectedCardType === 'skip_turn' ? 'Skip Turn' : selectedCardType === 'pass_turn' ? 'Pass Turn' : 'Hand Shot'
-                }} Card
+                {{ t('Use') }} {{
+                    selectedCardType === 'skip_turn' ? t('Skip Turn') : selectedCardType === 'pass_turn' ? t('Pass Turn') : t('Hand Shot')
+                }} {{ t('Card') }}
             </Button>
         </div>
     </div>
