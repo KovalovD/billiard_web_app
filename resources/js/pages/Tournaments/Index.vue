@@ -125,19 +125,19 @@ const getParticipationBadgeText = (participation: TournamentPlayer): string => {
     switch (participation.status) {
         case 'confirmed':
             if (participation.position === 1) {
-                return '🏆 Winner';
+                return `🏆 ${t('Winner')}`;
             } else if (participation.position && participation.position <= 3) {
-                return `🥉 ${participation.position}${getOrdinalSuffix(participation.position)} Place`;
+                return `🥉 ${participation.position}${getOrdinalSuffix(participation.position)} ${t('Place')}`;
             } else if (participation.position) {
-                return `${participation.position}${getOrdinalSuffix(participation.position)} Place`;
+                return `${participation.position}${getOrdinalSuffix(participation.position)} ${t('Place')}`;
             }
-            return 'Participated';
+            return t('Participated');
         case 'applied':
-            return 'Applied';
+            return t('Applied');
         case 'rejected':
-            return 'Rejected';
+            return t('Rejected');
         default:
-            return 'Registered';
+            return t('Registered');
     }
 };
 
@@ -207,7 +207,7 @@ onMounted(() => {
                         <span v-if="isAuthenticated && userParticipations.length > 0"
                               class="inline-flex items-center ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full dark:bg-blue-900/30 dark:text-blue-300">
                             <StarIcon class="w-3 h-3 mr-1"/>
-                            {{ userParticipations.length }} participations
+                            {{ userParticipations.length }} {{ t('participations') }}
                         </span>
                     </p>
                 </div>
@@ -358,7 +358,7 @@ onMounted(() => {
                                             </div>
                                             <div v-if="tournament.organizer"
                                                  class="text-sm text-gray-500 dark:text-gray-400">
-                                                by {{ tournament.organizer }}
+                                                {{ t('by') }} {{ tournament.organizer }}
                                             </div>
                                         </div>
                                     </div>
