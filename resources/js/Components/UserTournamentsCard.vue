@@ -4,6 +4,7 @@ import {apiClient} from '@/lib/apiClient';
 import type {Tournament, TournamentPlayer} from '@/types/api';
 import {Link} from '@inertiajs/vue3';
 import {computed, onMounted, ref} from 'vue';
+import {useLocale} from '@/composables/useLocale';
 
 interface TournamentWithParticipation {
     tournament: Tournament;
@@ -31,6 +32,7 @@ interface UserTournamentData {
 const tournamentsData = ref<UserTournamentData | null>(null);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
+const { t } = useLocale();
 
 const emit = defineEmits(['pendingApplicationsFound']);
 
@@ -116,13 +118,13 @@ onMounted(fetchUserTournaments);
 <template>
     <Card>
         <CardHeader>
-            <CardTitle>Your Tournaments</CardTitle>
-            <CardDescription>Tournaments you've participated in or applied to</CardDescription>
+            <CardTitle>{{ t('Your Tournaments') }}</CardTitle>
+            <CardDescription>{{ t("Tournaments you've participated in or applied to") }}</CardDescription>
         </CardHeader>
         <CardContent>
             <div v-if="isLoading" class="py-4 text-center text-gray-500 dark:text-gray-400">
                 <Spinner class="text-primary mx-auto mb-2 h-6 w-6"/>
-                <span>Loading your tournaments...</span>
+                <span>{{ t('Loading your tournaments...') }}</span>
             </div>
 
             <div v-else-if="error" class="py-4 text-center text-red-500 dark:text-red-400">
@@ -131,10 +133,10 @@ onMounted(fetchUserTournaments);
 
             <div v-else-if="!tournamentsData || activeTournaments.length === 0"
                  class="py-4 text-center text-gray-500 dark:text-gray-400">
-                <p>No active tournament participations.</p>
+                <p>{{ t('No active tournament participations.') }}</p>
                 <Link :href="route('tournaments.index.page')"
                       class="mt-2 block text-blue-600 hover:underline dark:text-blue-400">
-                    Browse tournaments to join
+                    {{ t('Browse tournaments to join') }}
                 </Link>
             </div>
 
@@ -144,19 +146,19 @@ onMounted(fetchUserTournaments);
                      class="mb-4 rounded-lg bg-gray-50 p-3 dark:bg-gray-800/50">
                     <div class="grid grid-cols-2 gap-2 text-sm">
                         <div>
-                            <span class="text-gray-600 dark:text-gray-400">Tournaments:</span>
+                            <span class="text-gray-600 dark:text-gray-400">{{ t('Tournaments:') }}</span>
                             <span class="ml-1 font-semibold">{{ tournamentsData.stats.total_tournaments }}</span>
                         </div>
                         <div>
-                            <span class="text-gray-600 dark:text-gray-400">Wins:</span>
+                            <span class="text-gray-600 dark:text-gray-400">{{ t('Wins:') }}</span>
                             <span class="ml-1 font-semibold">{{ tournamentsData.stats.total_wins }}</span>
                         </div>
                         <div>
-                            <span class="text-gray-600 dark:text-gray-400">Win Rate:</span>
+                            <span class="text-gray-600 dark:text-gray-400">{{ t('Win Rate:') }}</span>
                             <span class="ml-1 font-semibold">{{ tournamentsData.stats.win_rate }}%</span>
                         </div>
                         <div>
-                            <span class="text-gray-600 dark:text-gray-400">Top 3:</span>
+                            <span class="text-gray-600 dark:text-gray-400">{{ t('Top 3:') }}</span>
                             <span class="ml-1 font-semibold">{{ tournamentsData.stats.top_three_rate }}%</span>
                         </div>
                     </div>
@@ -188,7 +190,7 @@ onMounted(fetchUserTournaments);
                             </div>
                             <Link :href="`/tournaments/${item.tournament.id}`"
                                   class="text-sm text-blue-600 hover:underline dark:text-blue-400">
-                                View
+                                {{ t('View') }}
                             </Link>
                         </div>
                     </li>
@@ -198,7 +200,7 @@ onMounted(fetchUserTournaments);
                 <div v-if="activeTournaments.length >= 5" class="mt-4 text-center">
                     <Link :href="route('tournaments.index.page')"
                           class="text-sm text-blue-600 hover:underline dark:text-blue-400">
-                        View all tournaments →
+                        {{ t('View all tournaments →') }}
                     </Link>
                 </div>
             </div>
