@@ -6,6 +6,7 @@ import type {Tournament, TournamentPlayer} from '@/types/api';
 import {Head, router} from '@inertiajs/vue3';
 import {ArrowLeftIcon, CheckIcon, RefreshCwIcon, UserCheckIcon, UserXIcon, XIcon} from 'lucide-vue-next';
 import {computed, onMounted, ref} from 'vue';
+import {useLocale} from "@/composables/useLocale";
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -24,6 +25,8 @@ const showBulkRejectReason = ref(false);
 const isLoadingTournament = ref(true);
 const isLoadingApplications = ref(true);
 const isProcessingApplication = ref(false);
+
+const {t} = useLocale();
 
 // Error handling
 const error = ref<string | null>(null);
