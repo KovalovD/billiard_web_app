@@ -37,9 +37,9 @@ const getCardDisplayText = (cardType: string): string => {
         case 'skip_turn':
             return t('Skip Turn');
         case 'pass_turn':
-            return t('Pass Turn');
+          return t('Select Player');
         case 'hand_shot':
-            return t('Hand Shot');
+          return t('Ball in Hand');
         default:
             return cardType;
     }

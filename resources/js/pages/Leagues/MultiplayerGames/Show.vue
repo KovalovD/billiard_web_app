@@ -132,13 +132,13 @@ const statusText = computed(() => {
 
     switch (game.value.status) {
         case 'registration':
-            return 'Registration Open';
+          return t('Registration Open');
         case 'in_progress':
-            return 'In Progress';
+          return t('In Progress');
         case 'completed':
-            return 'Completed';
+          return t('Completed');
         case 'finished':
-            return 'Finished';
+          return t('Finished');
         default:
             return game.value.status;
     }
@@ -536,7 +536,7 @@ onMounted(() => {
                             <div class="order-2 lg:order-1 lg:col-span-1">
                                 <Card v-if="game.active_players.length > 0">
                                     <CardHeader>
-                                        <CardTitle>Active Players</CardTitle>
+                                      <CardTitle>{{ t('Active Players') }}</CardTitle>
                                     </CardHeader>
                                     <CardContent>
                                         <PlayersList
@@ -556,7 +556,7 @@ onMounted(() => {
                                     :class="game.active_players.length > 0 ? 'mt-6' : ''"
                                 >
                                     <CardHeader>
-                                        <CardTitle>Eliminated Players</CardTitle>
+                                      <CardTitle>{{ t('Eliminated Players') }}</CardTitle>
                                     </CardHeader>
                                     <CardContent>
                                         <div class="divide-y">

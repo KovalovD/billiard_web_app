@@ -44,13 +44,13 @@ const statusBadgeClass = computed(() => {
 const statusText = computed(() => {
     switch (props.game.status) {
         case 'registration':
-            return 'Registration Open';
+          return t('Registration Open');
         case 'in_progress':
-            return 'In Progress';
+          return t('In Progress');
         case 'completed':
-            return 'Completed';
+          return t('Completed');
         case 'finished':
-            return 'Finished';
+          return t('Finished');
         default:
             return props.game.status;
     }
@@ -148,9 +148,9 @@ const timeFundTotal = computed(() => {
                             </p>
                             <p class="text-sm">
                                 <span class="text-gray-500 dark:text-gray-400">{{ t('Distribution:') }}</span>
-                                1st: {{ props.game.first_place_percent }}%,
-                                2nd: {{ props.game.second_place_percent }}%,
-                                Grand Final: {{ props.game.grand_final_percent }}%
+                              {{ t('1st') }}: {{ props.game.first_place_percent }}%,
+                              {{ t('2nd') }}: {{ props.game.second_place_percent }}%,
+                              {{ t('Grand Final') }}: {{ props.game.grand_final_percent }}%
                             </p>
                         </div>
 
