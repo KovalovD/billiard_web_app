@@ -138,7 +138,7 @@ npm run dev
 composer dev
 ```
 
-8. Access the application at `http://localhost:8000`
+8. Access the application at `http://localhost:8001`
 
 ### Development Commands
 
