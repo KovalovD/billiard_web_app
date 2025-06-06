@@ -719,4 +719,54 @@ return [
     'Loading applications...'                                                                                                => 'Завантаження заявок...',
     'No Applications Yet'                                                                                                    => 'Заявок поки що немає',
     'No one has applied to this tournament yet.'                                                                             => 'Ще ніхто не подав заявку на цей турнір.',
+    'Tournament Name'
+                                             => 'Назва турніру',
+    'Enter tournament name'
+                                             => 'Введіть назву турніру',
+    'Select specific game'
+                                             => 'Оберіть конкретну гру',
+    'Loading games...'
+                                             => 'Завантаження ігор...',
+    'Games filtered by selected rating type'
+                                             => 'Ігри відфільтровані за обраним типом рейтингу',
+    'Official Rating Association'
+                                             => 'Прив\'язка до офіційного рейтингу',
+    'Official Rating'
+                                             => 'Офіційний рейтинг',
+    'Select official rating (optional)'
+                                             => 'Оберіть офіційний рейтинг (необов\'язково)',
+    'Loading ratings...'
+                                             => 'Завантаження рейтингів...',
+    'Associate this tournament with an official rating system'
+                                             => 'Пов\'яжіть цей турнір з офіційною рейтинговою системою',
+    'Rating Coefficient'
+                                             => 'Коефіцієнт рейтингу',
+    'Multiplier for rating points (0.1 - 5.0)'
+                                             => 'Множник рейтингових очок (0.1 - 5.0)',
+    'Location'
+                                             => 'Місце проведення',
+    'City'
+                                             => 'Місто',
+    'Select city'
+                                             => 'Оберіть місто',
+    'Club'
+                                             => 'Клуб',
+    'Select club'
+                                             => 'Оберіть клуб',
+    'Financial Details'
+                                             => 'Фінансова інформація',
+    'Additional Information'
+                                             => 'Додаткова інформація',
+    'Tournament organizer'
+                                             => 'Організатор турніру',
+    'e.g., Single Elimination, Round Robin'
+                                             => 'напр., Олімпійська система, Круговий турнір',
+    'Tournament description and additional details'
+                                             => 'Опис турніру та додаткова інформація',
+    'Tournament rules and regulations'
+                                             => 'Правила та регламент турніру',
+    'Error creating tournament'
+                                             => 'Помилка створення турніру',
+    'Creating...'
+                                             => 'Створення...',
 ];
