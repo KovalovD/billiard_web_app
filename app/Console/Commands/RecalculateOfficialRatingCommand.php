@@ -19,7 +19,7 @@ class RecalculateOfficialRatingCommand extends Command
                            {--dry-run : Show what would be changed without making changes}
                            {--force : Force recalculation without confirmation}';
 
-    protected $description = 'Recalculate official rating from existing tournament_players data';
+    protected $description = 'Recalculate official rating from existing tournament_players data.';
 
     private OfficialRatingService $ratingService;
 
