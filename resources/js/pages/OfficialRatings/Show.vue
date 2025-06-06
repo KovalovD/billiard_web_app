@@ -110,6 +110,13 @@ const formatDate = (dateString: string | undefined): string => {
     return new Date(dateString).toLocaleDateString();
 };
 
+const formatCurrency = (amount: number): string => {
+    return amount.toLocaleString('uk-UA', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }) + '₴';
+};
+
 const fetchRating = async () => {
     isLoadingRating.value = true;
     error.value = null;
@@ -241,13 +248,13 @@ onMounted(() => {
                                         </span>
                                         <span class="flex items-center gap-1">
                                             <CalendarIcon class="h-4 w-4"/>
-                                            {{ rating.tournaments_count }} tournaments
+                                            {{ rating.tournaments_count }} {{ t('tournaments') }}
                                         </span>
                                         <!-- User's position indicator -->
                                         <span v-if="currentUserPlayer"
                                               class="flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full dark:bg-blue-900/30 dark:text-blue-300">
                                             <UserIcon class="h-3 w-3"/>
-                                            Your position: #{{ currentUserPlayer.position }}
+                                            {{ t('Your position') }}: #{{ currentUserPlayer.position }}
                                         </span>
                                     </div>
                                 </CardDescription>
@@ -349,6 +356,32 @@ onMounted(() => {
                                         {{ ratingDelta.points_delta >= 0 ? `+${ratingDelta.points_delta}` : ratingDelta.points_delta }} pts
                                     </span>,
                                     {{ t('position :before → :after', {before: ratingDelta.position_before, after: ratingDelta.current_position}) }}
+                                    <span v-if="ratingDelta.prize_amount_delta !== 0" class="ml-2">
+                                        {{ t('Prize') }}:
+                                        <span
+                                            :class="ratingDelta.prize_amount_delta >= 0 ? 'text-green-600' : 'text-red-600'">
+                                            {{
+                                                ratingDelta.prize_amount_delta >= 0 ? `+${ratingDelta.prize_amount_delta.toFixed(2)}` : 0.00
+                                            }}₴
+                                        </span>
+                                    </span><span v-if="ratingDelta.bonus_amount_delta !== 0" class="ml-2">
+                                        {{ t('Bonus') }}:
+                                        <span
+                                            :class="ratingDelta.bonus_amount_delta >= 0 ? 'text-green-600' : 'text-red-600'">
+                                            {{
+                                                ratingDelta.bonus_amount_delta >= 0 ? `+${ratingDelta.bonus_amount_delta.toFixed(2)}` : 0.00
+                                            }}₴
+                                        </span>
+                                    </span>
+                                    <span v-if="ratingDelta.achievement_amount_delta !== 0" class="ml-2">
+                                        {{ t('Achievement') }}:
+                                        <span
+                                            :class="ratingDelta.achievement_amount_delta >= 0 ? 'text-green-600' : 'text-red-600'">
+                                            {{
+                                                ratingDelta.achievement_amount_delta >= 0 ? `+${ratingDelta.achievement_amount_delta.toFixed(2)}` : 0.00
+                                            }}₴
+                                        </span>
+                                    </span>
                                 </div>
                             </div>
                             <div v-if="isLoadingPlayers" class="flex justify-center py-8">
@@ -368,6 +401,10 @@ onMounted(() => {
                                         <th class="px-4 py-3 text-center">{{ t('Tournaments') }}</th>
                                         <th class="px-4 py-3 text-center">{{ t('Wins') }}</th>
                                         <th class="px-4 py-3 text-center">{{ t('Win Rate') }}</th>
+                                        <th class="px-4 py-3 text-center">{{ t('Prize') }}</th>
+                                        <th class="px-4 py-3 text-center">{{ t('Bonus') }}</th>
+                                        <th class="px-4 py-3 text-center">{{ t('Achievement') }}</th>
+                                        <th class="px-4 py-3 text-center">{{ t('Total Money') }}</th>
                                         <th class="px-4 py-3 text-center">{{ t('Last Tournament') }}</th>
                                     </tr>
                                     </thead>
@@ -462,6 +499,42 @@ onMounted(() => {
                                             ]">
                                                 {{ player.win_rate }}%
                                             </span>
+                                        </td>
+                                        <td class="px-4 py-3 text-center">
+                                            <span v-if="player.total_prize_amount > 0" :class="[
+                                                'font-medium text-green-600 dark:text-green-400',
+                                                isCurrentUser(player) ? 'font-bold' : ''
+                                            ]">
+                                                {{ formatCurrency(player.total_prize_amount) }}
+                                            </span>
+                                            <span v-else class="text-gray-400">—</span>
+                                        </td>
+                                        <td class="px-4 py-3 text-center">
+                                            <span v-if="player.total_bonus_amount > 0" :class="[
+                                                'font-medium text-orange-600 dark:text-orange-400',
+                                                isCurrentUser(player) ? 'font-bold' : ''
+                                            ]">
+                                                {{ formatCurrency(player.total_bonus_amount) }}
+                                            </span>
+                                            <span v-else class="text-gray-400">—</span>
+                                        </td>
+                                        <td class="px-4 py-3 text-center">
+                                            <span v-if="player.total_achievement_amount > 0" :class="[
+                                                'font-medium text-purple-600 dark:text-purple-400',
+                                                isCurrentUser(player) ? 'font-bold' : ''
+                                            ]">
+                                                {{ formatCurrency(player.total_achievement_amount) }}
+                                            </span>
+                                            <span v-else class="text-gray-400">—</span>
+                                        </td>
+                                        <td class="px-4 py-3 text-center">
+                                            <span v-if="player.total_money_earned > 0" :class="[
+                                                'font-bold text-indigo-600 dark:text-indigo-400',
+                                                isCurrentUser(player) ? 'text-indigo-800 dark:text-indigo-200' : ''
+                                            ]">
+                                                {{ formatCurrency(player.total_money_earned) }}
+                                            </span>
+                                            <span v-else class="text-gray-400">—</span>
                                         </td>
                                         <td class="px-4 py-3 text-center text-sm text-gray-600 dark:text-gray-400">
                                             {{

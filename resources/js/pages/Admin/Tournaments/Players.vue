@@ -193,6 +193,13 @@ const getStatusBadgeClass = (status: string): string => {
     }
 };
 
+const formatCurrency = (amount: number): string => {
+    return amount.toLocaleString('uk-UA', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }) + '₴';
+};
+
 const handleBackToTournament = () => {
     router.visit(`/tournaments/${props.tournamentId}`);
 };
@@ -291,6 +298,9 @@ onMounted(() => {
                                 <th class="px-4 py-3 text-center">{{ t('Status') }}</th>
                                 <th class="px-4 py-3 text-center">{{ t('Rating Points') }}</th>
                                 <th class="px-4 py-3 text-center">{{ t('Prize') }}</th>
+                                <th class="px-4 py-3 text-center">{{ t('Bonus') }}</th>
+                                <th class="px-4 py-3 text-center">{{ t('Achievement') }}</th>
+                                <th class="px-4 py-3 text-center">{{ t('Total') }}</th>
                                 <th class="px-4 py-3 text-center">{{ t('Actions') }}</th>
                             </tr>
                             </thead>
@@ -328,7 +338,28 @@ onMounted(() => {
                                 <td class="px-4 py-3 text-center">
                                     <span v-if="player.prize_amount > 0"
                                           class="font-medium text-green-600 dark:text-green-400">
-                                        ₴{{ player.prize_amount.toLocaleString() }}
+                                        {{ formatCurrency(player.prize_amount) }}
+                                    </span>
+                                    <span v-else class="text-gray-400">—</span>
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    <span v-if="player.bonus_amount > 0"
+                                          class="font-medium text-orange-600 dark:text-orange-400">
+                                        {{ formatCurrency(player.bonus_amount) }}
+                                    </span>
+                                    <span v-else class="text-gray-400">—</span>
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    <span v-if="player.achievement_amount > 0"
+                                          class="font-medium text-purple-600 dark:text-purple-400">
+                                        {{ formatCurrency(player.achievement_amount) }}
+                                    </span>
+                                    <span v-else class="text-gray-400">—</span>
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    <span v-if="player.total_amount > 0"
+                                          class="font-bold text-indigo-600 dark:text-indigo-400">
+                                        {{ formatCurrency(player.total_amount) }}
                                     </span>
                                     <span v-else class="text-gray-400">—</span>
                                 </td>
