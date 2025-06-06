@@ -311,6 +311,10 @@ export interface OfficialRatingPlayer {
     official_rating_id: number;
     user_id: number;
     rating_points: number;
+    total_bonus_amount: number;
+    total_achievement_amount: number;
+    total_money_earned: number;
+    total_prize_amount: number;
     position: number;
     tournaments_played: number;
     tournaments_won: number;
@@ -345,6 +349,9 @@ export interface RatingDelta {
     current_points: number;
     points_before: number;
     points_delta: number;
+    bonus_amount_delta: number;
+    achievement_amount_delta: number;
+    prize_amount_delta: number;
 }
 
 export interface CreateOfficialRatingPayload {
@@ -410,6 +417,9 @@ export interface TournamentPlayer {
     position?: number;
     rating_points: number;
     prize_amount: number;
+    bonus_amount: number;
+    achievement_amount: number;
+    total_amount: number;
     status: 'applied' | 'confirmed' | 'rejected' | 'eliminated' | 'dnf';
     status_display: string;
     is_confirmed: boolean;

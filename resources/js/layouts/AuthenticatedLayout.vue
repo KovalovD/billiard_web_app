@@ -212,12 +212,14 @@ onMounted(() => {
                     </div>
                     <div v-if="user" class="border-t border-gray-200 pt-4 pb-1 dark:border-gray-700">
                         <div class="px-4">
+
                             <div class="text-base font-medium text-gray-800 dark:text-gray-200">
                                 {{ user.firstname || user.name || t('User') }}
                             </div>
                             <div class="text-sm font-medium text-gray-500">{{ user.email }}</div>
                         </div>
                         <div class="mt-3 space-y-1">
+                            <LocaleSwitcher/>
                             <ResponsiveNavLink :href="'/profile/edit'"> {{ t('Profile') }}</ResponsiveNavLink>
                             <ResponsiveNavLink as="button" @click.prevent="handleLogout"> {{
                                     t('Log Out')

@@ -161,7 +161,7 @@ readonly class AdminTournamentsController
     }
 
     /**
-     * Update player position and rating points
+     * Update player position, rating points, and financial rewards
      * @admin
      */
     public function updatePlayer(Request $request, Tournament $tournament, TournamentPlayer $player): JsonResponse
@@ -173,10 +173,12 @@ readonly class AdminTournamentsController
         }
 
         $validated = $request->validate([
-            'position'      => 'nullable|integer|min:1',
-            'rating_points' => 'integer|min:0',
-            'prize_amount'  => 'numeric|min:0',
-            'status'        => 'string|in:registered,confirmed,eliminated,dnf',
+            'position'           => 'nullable|integer|min:1',
+            'rating_points'      => 'integer|min:0',
+            'prize_amount'       => 'numeric|min:0',
+            'bonus_amount'       => 'numeric|min:0',
+            'achievement_amount' => 'numeric|min:0',
+            'status'             => 'string|in:registered,confirmed,eliminated,dnf',
         ]);
 
         $player = $this->tournamentService->updateTournamentPlayer($player, $validated);
@@ -188,17 +190,19 @@ readonly class AdminTournamentsController
     }
 
     /**
-     * Set tournament results
+     * Set tournament results with bonus and achievement amounts
      * @admin
      */
     public function setResults(Request $request, Tournament $tournament): JsonResponse
     {
         $validated = $request->validate([
-            'results'                 => 'required|array',
-            'results.*.player_id'     => 'required|integer|exists:tournament_players,id',
-            'results.*.position'      => 'required|integer|min:1',
-            'results.*.rating_points' => 'integer|min:0',
-            'results.*.prize_amount'  => 'numeric|min:0',
+            'results'                      => 'required|array',
+            'results.*.player_id'          => 'required|integer|exists:tournament_players,id',
+            'results.*.position'           => 'required|integer|min:1',
+            'results.*.rating_points'      => 'integer|min:0',
+            'results.*.prize_amount'       => 'numeric|min:0',
+            'results.*.bonus_amount'       => 'numeric|min:0',
+            'results.*.achievement_amount' => 'numeric|min:0',
         ]);
 
         try {

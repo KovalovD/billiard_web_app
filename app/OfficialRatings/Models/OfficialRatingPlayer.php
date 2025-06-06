@@ -19,12 +19,18 @@ class OfficialRatingPlayer extends Model
         'last_tournament_at',
         'is_active',
         'tournament_records',
+        'total_bonus_amount',
+        'total_achievement_amount',
+        'total_prize_amount',
     ];
 
     protected $casts = [
-        'last_tournament_at' => 'datetime',
-        'is_active'          => 'boolean',
-        'tournament_records' => 'array',
+        'last_tournament_at'       => 'datetime',
+        'is_active'                => 'boolean',
+        'tournament_records'       => 'array',
+        'total_bonus_amount'       => 'decimal:2',
+        'total_achievement_amount' => 'decimal:2',
+        'total_prize_amount'       => 'decimal:2',
     ];
 
     public function officialRating(): BelongsTo
@@ -52,13 +58,24 @@ class OfficialRatingPlayer extends Model
     }
 
     /**
-     * Add or update tournament record
+     * Get total money earned (prize + bonus + achievement)
+     */
+    public function getTotalMoneyEarnedAttribute(): float
+    {
+        return (float) ($this->total_prize_amount + $this->total_bonus_amount + $this->total_achievement_amount);
+    }
+
+    /**
+     * Add or update tournament record with prize, bonus and achievement amounts
      */
     public function addTournament(
         int $tournamentId,
         int $ratingPoints,
         Carbon $tournamentFinishDate,
         bool $won = false,
+        float $prizeAmount = 0,
+        float $bonusAmount = 0,
+        float $achievementAmount = 0,
     ): void {
         $records = $this->tournament_records ?? [];
 
@@ -72,30 +89,42 @@ class OfficialRatingPlayer extends Model
         }
 
         $oldPoints = 0;
+        $oldPrizeAmount = 0;
+        $oldBonusAmount = 0;
+        $oldAchievementAmount = 0;
         $wasAlreadyWon = false;
 
         if ($existingTournamentIndex !== null) {
             // Tournament exists, get old values
             $oldRecord = $records[$existingTournamentIndex];
             $oldPoints = $oldRecord['rating_points'];
+            $oldPrizeAmount = $oldRecord['prize_amount'] ?? 0;
+            $oldBonusAmount = $oldRecord['bonus_amount'] ?? 0;
+            $oldAchievementAmount = $oldRecord['achievement_amount'] ?? 0;
             $wasAlreadyWon = $oldRecord['won'];
 
             // Update existing record
             $records[$existingTournamentIndex] = [
-                'tournament_id'   => $tournamentId,
-                'rating_points'   => $ratingPoints,
-                'tournament_date' => $tournamentFinishDate->format('Y-m-d'),
-                'won'             => $won,
-                'updated_at'      => now()->format('Y-m-d H:i:s'),
+                'tournament_id'      => $tournamentId,
+                'rating_points'      => $ratingPoints,
+                'prize_amount'       => $prizeAmount,
+                'bonus_amount'       => $bonusAmount,
+                'achievement_amount' => $achievementAmount,
+                'tournament_date'    => $tournamentFinishDate->format('Y-m-d'),
+                'won'                => $won,
+                'updated_at'         => now()->format('Y-m-d H:i:s'),
             ];
         } else {
             // Add new tournament record
             $records[] = [
-                'tournament_id'   => $tournamentId,
-                'rating_points'   => $ratingPoints,
-                'tournament_date' => $tournamentFinishDate->format('Y-m-d'),
-                'won'             => $won,
-                'added_at'        => now()->format('Y-m-d H:i:s'),
+                'tournament_id'      => $tournamentId,
+                'rating_points'      => $ratingPoints,
+                'prize_amount'       => $prizeAmount,
+                'bonus_amount'       => $bonusAmount,
+                'achievement_amount' => $achievementAmount,
+                'tournament_date'    => $tournamentFinishDate->format('Y-m-d'),
+                'won'                => $won,
+                'added_at'           => now()->format('Y-m-d H:i:s'),
             ];
 
             // Increment tournaments played only if it's a new tournament
@@ -104,6 +133,11 @@ class OfficialRatingPlayer extends Model
 
         // Update rating points: remove old points and add new points
         $this->rating_points = $this->rating_points - $oldPoints + $ratingPoints;
+
+        // Update prize, bonus and achievement amounts
+        $this->total_prize_amount = $this->total_prize_amount - $oldPrizeAmount + $prizeAmount;
+        $this->total_bonus_amount = $this->total_bonus_amount - $oldBonusAmount + $bonusAmount;
+        $this->total_achievement_amount = $this->total_achievement_amount - $oldAchievementAmount + $achievementAmount;
 
         // Update tournaments won count
         if ($won && !$wasAlreadyWon) {
@@ -147,6 +181,11 @@ class OfficialRatingPlayer extends Model
 
         // Update rating points
         $this->rating_points -= $removedRecord['rating_points'];
+
+        // Update prize, bonus and achievement amounts
+        $this->total_prize_amount -= $removedRecord['prize_amount'] ?? 0;
+        $this->total_bonus_amount -= $removedRecord['bonus_amount'] ?? 0;
+        $this->total_achievement_amount -= $removedRecord['achievement_amount'] ?? 0;
 
         // Update tournaments count
         $this->decrement('tournaments_played');
@@ -198,11 +237,17 @@ class OfficialRatingPlayer extends Model
             $this->rating_points = $this->officialRating->initial_rating;
             $this->tournaments_played = 0;
             $this->tournaments_won = 0;
+            $this->total_prize_amount = 0;
+            $this->total_bonus_amount = 0;
+            $this->total_achievement_amount = 0;
             $this->last_tournament_at = null;
         } else {
             $this->rating_points = $this->officialRating->initial_rating + $this->getTotalPointsFromRecords();
             $this->tournaments_played = count($records);
             $this->tournaments_won = collect($records)->where('won', true)->count();
+            $this->total_prize_amount = collect($records)->sum('prize_amount');
+            $this->total_bonus_amount = collect($records)->sum('bonus_amount');
+            $this->total_achievement_amount = collect($records)->sum('achievement_amount');
 
             $latestTournament = collect($records)->sortByDesc('tournament_date')->first();
             $this->last_tournament_at = Carbon::parse($latestTournament['tournament_date']);
@@ -219,5 +264,35 @@ class OfficialRatingPlayer extends Model
         $records = $this->tournament_records ?? [];
 
         return collect($records)->sum('rating_points');
+    }
+
+    /**
+     * Get total prize amount from all tournament records
+     */
+    public function getTotalPrizeFromRecords(): float
+    {
+        $records = $this->tournament_records ?? [];
+
+        return collect($records)->sum('prize_amount');
+    }
+
+    /**
+     * Get total bonus amount from all tournament records
+     */
+    public function getTotalBonusFromRecords(): float
+    {
+        $records = $this->tournament_records ?? [];
+
+        return collect($records)->sum('bonus_amount');
+    }
+
+    /**
+     * Get total achievement amount from all tournament records
+     */
+    public function getTotalAchievementFromRecords(): float
+    {
+        $records = $this->tournament_records ?? [];
+
+        return collect($records)->sum('achievement_amount');
     }
 }

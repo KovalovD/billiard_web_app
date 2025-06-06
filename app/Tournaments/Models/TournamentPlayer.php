@@ -14,6 +14,8 @@ class TournamentPlayer extends Model
         'position',
         'rating_points',
         'prize_amount',
+        'bonus_amount',
+        'achievement_amount',
         'status',
         'registered_at',
         'applied_at',
@@ -22,11 +24,13 @@ class TournamentPlayer extends Model
     ];
 
     protected $casts = [
-        'prize_amount'  => 'decimal:2',
-        'registered_at' => 'datetime',
-        'applied_at'   => 'datetime',
-        'confirmed_at' => 'datetime',
-        'rejected_at'  => 'datetime',
+        'prize_amount'       => 'decimal:2',
+        'bonus_amount'       => 'decimal:2',
+        'achievement_amount' => 'decimal:2',
+        'registered_at'      => 'datetime',
+        'applied_at'         => 'datetime',
+        'confirmed_at'       => 'datetime',
+        'rejected_at'        => 'datetime',
     ];
 
     public function tournament(): BelongsTo
@@ -74,5 +78,13 @@ class TournamentPlayer extends Model
     public function isRejected(): bool
     {
         return $this->status === 'rejected';
+    }
+
+    /**
+     * Get total financial amount (prize + bonus + achievement)
+     */
+    public function getTotalAmountAttribute(): float
+    {
+        return (float) ($this->prize_amount + $this->bonus_amount + $this->achievement_amount);
     }
 }

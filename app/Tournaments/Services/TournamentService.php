@@ -193,13 +193,16 @@ class TournamentService
             ],
             'results'    => $players->map(function ($player) {
                 return [
-                    'position'      => $player->position,
-                    'player'        => [
+                    'position'           => $player->position,
+                    'player'             => [
                         'id'   => $player->user->id,
                         'name' => $player->user->firstname.' '.$player->user->lastname,
                     ],
-                    'rating_points' => $player->rating_points,
-                    'prize_amount'  => $player->prize_amount,
+                    'rating_points'      => $player->rating_points,
+                    'prize_amount'       => $player->prize_amount,
+                    'bonus_amount'       => $player->bonus_amount,
+                    'achievement_amount' => $player->achievement_amount,
+                    'total_amount'       => $player->total_amount,
                 ];
             }),
         ];
@@ -278,12 +281,15 @@ class TournamentService
         $confirmedAt = $tournament->auto_approve_applications ? now() : null;
 
         return TournamentPlayer::create([
-            'tournament_id' => $tournament->id,
-            'user_id'       => $userId,
-            'status'        => $status,
-            'registered_at' => now(),
-            'applied_at'    => now(),
-            'confirmed_at'  => $confirmedAt,
+            'tournament_id'      => $tournament->id,
+            'user_id'            => $userId,
+            'status'             => $status,
+            'registered_at'      => now(),
+            'applied_at'         => now(),
+            'confirmed_at'       => $confirmedAt,
+            'prize_amount'       => 0,
+            'bonus_amount'       => 0,
+            'achievement_amount' => 0,
         ]);
     }
 
@@ -296,7 +302,7 @@ class TournamentService
     }
 
     /**
-     * Update tournament player
+     * Update tournament player with bonus and achievement amounts
      */
     public function updateTournamentPlayer(TournamentPlayer $player, array $data): TournamentPlayer
     {
@@ -305,7 +311,7 @@ class TournamentService
     }
 
     /**
-     * Set tournament results
+     * Set tournament results with bonus and achievement amounts
      * @throws Throwable
      */
     public function setTournamentResults(Tournament $tournament, array $results): void
@@ -319,10 +325,12 @@ class TournamentService
                 }
 
                 $player->update([
-                    'position'      => $result['position'],
-                    'rating_points' => $result['rating_points'] ?? 0,
-                    'prize_amount'  => $result['prize_amount'] ?? 0,
-                    'status'        => 'confirmed',
+                    'position'           => $result['position'],
+                    'rating_points'      => $result['rating_points'] ?? 0,
+                    'prize_amount'       => $result['prize_amount'] ?? 0,
+                    'bonus_amount'       => $result['bonus_amount'] ?? 0,
+                    'achievement_amount' => $result['achievement_amount'] ?? 0,
+                    'status'             => 'confirmed',
                 ]);
             }
 
@@ -348,8 +356,7 @@ class TournamentService
             try {
                 $this->officialRatingService->updateRatingFromTournament($officialRating, $tournament);
             } catch (Throwable) {
-                // Log error but don't fail the entire transaction
-                // You might want to add proper logging here
+                // Continue with other ratings if one fails
                 continue;
             }
         }

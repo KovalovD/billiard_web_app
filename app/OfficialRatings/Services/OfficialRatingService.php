@@ -175,11 +175,13 @@ class OfficialRatingService
         }
 
         $player = OfficialRatingPlayer::create([
-            'official_rating_id' => $rating->id,
-            'user_id'            => $userId,
-            'rating_points'      => $initialRating ?? $rating->initial_rating,
-            'position'           => $rating->players()->count() + 1,
-            'tournament_records' => [],
+            'official_rating_id'       => $rating->id,
+            'user_id'                  => $userId,
+            'rating_points'            => $initialRating ?? $rating->initial_rating,
+            'position'                 => $rating->players()->count() + 1,
+            'tournament_records'       => [],
+            'total_bonus_amount'       => 0,
+            'total_achievement_amount' => 0,
         ]);
 
         // Recalculate positions
@@ -299,13 +301,16 @@ class OfficialRatingService
                 $basePoints = $tournamentPlayer->rating_points;
                 $adjustedPoints = (int) ($basePoints * $ratingTournament->pivot->rating_coefficient);
 
-                // Update player using the new tournament record system
+                // Update player using the new tournament record system with prize, bonus and achievement amounts
                 $won = $tournamentPlayer->position === 1;
                 $ratingPlayer->addTournament(
                     $tournament->id,
                     $adjustedPoints,
                     $tournament->end_date,
                     $won,
+                    (float) $tournamentPlayer->prize_amount,
+                    (float) $tournamentPlayer->bonus_amount,
+                    (float) $tournamentPlayer->achievement_amount,
                 );
 
                 $updatedCount++;
@@ -350,15 +355,55 @@ class OfficialRatingService
 
         foreach ($players as $player) {
             $calculatedPoints = $rating->initial_rating + $player->getTotalPointsFromRecords();
+            $calculatedPrizeAmount = $player->getTotalPrizeFromRecords();
+            $calculatedBonusAmount = $player->getTotalBonusFromRecords();
+            $calculatedAchievementAmount = $player->getTotalAchievementFromRecords();
+
+            $hasIssues = false;
+            $playerIssues = [];
 
             if ($calculatedPoints !== $player->rating_points) {
+                $hasIssues = true;
+                $playerIssues['rating_points'] = [
+                    'current'    => $player->rating_points,
+                    'calculated' => $calculatedPoints,
+                    'difference' => $player->rating_points - $calculatedPoints,
+                ];
+            }
+
+            if (abs($calculatedPrizeAmount - (float) $player->total_prize_amount) > 0.01) {
+                $hasIssues = true;
+                $playerIssues['prize_amount'] = [
+                    'current'    => (float) $player->total_prize_amount,
+                    'calculated' => $calculatedPrizeAmount,
+                    'difference' => (float) $player->total_prize_amount - $calculatedPrizeAmount,
+                ];
+            }
+
+            if (abs($calculatedBonusAmount - (float) $player->total_bonus_amount) > 0.01) {
+                $hasIssues = true;
+                $playerIssues['bonus_amount'] = [
+                    'current'    => (float) $player->total_bonus_amount,
+                    'calculated' => $calculatedBonusAmount,
+                    'difference' => (float) $player->total_bonus_amount - $calculatedBonusAmount,
+                ];
+            }
+
+            if (abs($calculatedAchievementAmount - (float) $player->total_achievement_amount) > 0.01) {
+                $hasIssues = true;
+                $playerIssues['achievement_amount'] = [
+                    'current'    => (float) $player->total_achievement_amount,
+                    'calculated' => $calculatedAchievementAmount,
+                    'difference' => (float) $player->total_achievement_amount - $calculatedAchievementAmount,
+                ];
+            }
+
+            if ($hasIssues) {
                 $issues[] = [
                     'player_id'                => $player->id,
                     'player_name'              => $player->user->firstname.' '.$player->user->lastname,
-                    'current_points'           => $player->rating_points,
-                    'calculated_points'        => $calculatedPoints,
-                    'difference'               => $player->rating_points - $calculatedPoints,
                     'tournament_records_count' => count($player->tournament_records ?? []),
+                    'issues' => $playerIssues,
                 ];
             }
         }
@@ -384,12 +429,18 @@ class OfficialRatingService
         foreach ($players as $player) {
             $records = $player->tournament_records ?? [];
             $beforePoints = $rating->initial_rating;
+            $beforePrizeAmount = 0;
+            $beforeBonusAmount = 0;
+            $beforeAchievementAmount = 0;
             $wins = 0;
             $played = 0;
 
             foreach ($records as $record) {
                 if (Carbon::parse($record['tournament_date'])->lt($date)) {
                     $beforePoints += $record['rating_points'];
+                    $beforePrizeAmount += $record['prize_amount'] ?? 0;
+                    $beforeBonusAmount += $record['bonus_amount'] ?? 0;
+                    $beforeAchievementAmount += $record['achievement_amount'] ?? 0;
                     $played++;
                     if (!empty($record['won'])) {
                         $wins++;
@@ -398,11 +449,14 @@ class OfficialRatingService
             }
 
             $stats[] = [
-                'player_id' => $player->id,
-                'user_id'   => $player->user_id,
-                'points'    => $beforePoints,
-                'wins'      => $wins,
-                'played'    => $played,
+                'player_id'          => $player->id,
+                'user_id'            => $player->user_id,
+                'points'             => $beforePoints,
+                'prize_amount'       => $beforePrizeAmount,
+                'bonus_amount'       => $beforeBonusAmount,
+                'achievement_amount' => $beforeAchievementAmount,
+                'wins'               => $wins,
+                'played'             => $played,
             ];
         }
 
@@ -430,12 +484,21 @@ class OfficialRatingService
         }
 
         return [
-            'current_points'   => $player->rating_points,
-            'points_before'    => $playerStat['points'],
-            'points_delta'     => $player->rating_points - $playerStat['points'],
-            'current_position' => $player->position,
-            'position_before'  => $playerStat['position'],
-            'position_delta'   => $playerStat['position'] - $player->position,
+            'current_points'             => $player->rating_points,
+            'points_before'              => $playerStat['points'],
+            'points_delta'               => $player->rating_points - $playerStat['points'],
+            'current_position'           => $player->position,
+            'position_before'            => $playerStat['position'],
+            'position_delta'             => $playerStat['position'] - $player->position,
+            'current_prize_amount'       => (float) $player->total_prize_amount,
+            'prize_amount_before'        => $playerStat['prize_amount'],
+            'prize_amount_delta'         => (float) $player->total_prize_amount - $playerStat['prize_amount'],
+            'current_bonus_amount'       => (float) $player->total_bonus_amount,
+            'bonus_amount_before'        => $playerStat['bonus_amount'],
+            'bonus_amount_delta'         => (float) $player->total_bonus_amount - $playerStat['bonus_amount'],
+            'current_achievement_amount' => (float) $player->total_achievement_amount,
+            'achievement_amount_before'  => $playerStat['achievement_amount'],
+            'achievement_amount_delta'   => (float) $player->total_achievement_amount - $playerStat['achievement_amount'],
         ];
     }
 }

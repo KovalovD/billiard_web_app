@@ -371,9 +371,9 @@ onMounted(() => {
                             :class="[
                                 'py-4 px-1 text-sm font-medium border-b-2',
                                 activeTab === 'results'
-? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
-                                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                           ]"
+                                    ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                            ]"
                             @click="activeTab = 'results'"
                         >
                             {{ t('Results') }}
@@ -638,6 +638,9 @@ onMounted(() => {
                                         <th class="px-4 py-3 text-left">{{ t('Player') }}</th>
                                         <th class="px-4 py-3 text-center">{{ t('Rating Points') }}</th>
                                         <th class="px-4 py-3 text-right">{{ t('Prize') }}</th>
+                                        <th class="px-4 py-3 text-right">{{ t('Bonus') }}</th>
+                                        <th class="px-4 py-3 text-right">{{ t('Achievement') }}</th>
+                                        <th class="px-4 py-3 text-right">{{ t('Total') }}</th>
                                     </tr>
                                     </thead>
                                     <tbody>
@@ -677,6 +680,27 @@ onMounted(() => {
                                            <span v-if="player.prize_amount > 0"
                                                  class="font-medium text-green-600 dark:text-green-400">
                                                {{ formatCurrency(player.prize_amount) }}
+                                           </span>
+                                            <span v-else class="text-gray-400">—</span>
+                                        </td>
+                                        <td class="px-4 py-3 text-right">
+                                           <span v-if="player.bonus_amount > 0"
+                                                 class="font-medium text-orange-600 dark:text-orange-400">
+                                               {{ formatCurrency(player.bonus_amount) }}
+                                           </span>
+                                            <span v-else class="text-gray-400">—</span>
+                                        </td>
+                                        <td class="px-4 py-3 text-right">
+                                           <span v-if="player.achievement_amount > 0"
+                                                 class="font-medium text-purple-600 dark:text-purple-400">
+                                               {{ formatCurrency(player.achievement_amount) }}
+                                           </span>
+                                            <span v-else class="text-gray-400">—</span>
+                                        </td>
+                                        <td class="px-4 py-3 text-right">
+                                           <span v-if="player.total_amount > 0"
+                                                 class="font-bold text-indigo-600 dark:text-indigo-400">
+                                               {{ formatCurrency(player.total_amount) }}
                                            </span>
                                             <span v-else class="text-gray-400">—</span>
                                         </td>

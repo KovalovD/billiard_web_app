@@ -28,6 +28,8 @@ const resultForm = ref<Array<{
     position: number;
     rating_points: number;
     prize_amount: number;
+    bonus_amount: number;
+    achievement_amount: number;
 }>>([]);
 
 const isLoading = ref(true);
@@ -43,11 +45,28 @@ const isFormValid = computed(() => {
 
     return uniquePositions.size === positions.length &&
         positions.every(p => p > 0) &&
-        resultForm.value.every(r => r.rating_points >= 0 && r.prize_amount >= 0);
+        resultForm.value.every(r =>
+            r.rating_points >= 0 &&
+            r.prize_amount >= 0 &&
+            r.bonus_amount >= 0 &&
+            r.achievement_amount >= 0
+        );
 });
 
 const totalPrizeDistributed = computed(() => {
     return resultForm.value.reduce((sum, result) => useToNumber(sum).value + useToNumber(result.prize_amount).value, 0);
+});
+
+const totalBonusDistributed = computed(() => {
+    return resultForm.value.reduce((sum, result) => useToNumber(sum).value + useToNumber(result.bonus_amount).value, 0);
+});
+
+const totalAchievementDistributed = computed(() => {
+    return resultForm.value.reduce((sum, result) => useToNumber(sum).value + useToNumber(result.achievement_amount).value, 0);
+});
+
+const totalMoneyDistributed = computed(() => {
+    return totalPrizeDistributed.value + totalBonusDistributed.value + totalAchievementDistributed.value;
 });
 
 const fetchData = async () => {
@@ -81,7 +100,9 @@ const initializeForm = () => {
         player_id: player.id,
         position: player.position || 0,
         rating_points: player.rating_points || 0,
-        prize_amount: player.prize_amount || 0
+        prize_amount: player.prize_amount || 0,
+        bonus_amount: player.bonus_amount || 0,
+        achievement_amount: player.achievement_amount || 0
     }));
 };
 
@@ -167,7 +188,7 @@ onMounted(() => {
     <Head :title="tournament ? `Tournament Results: ${tournament.name}` : 'Tournament Results'"/>
 
     <div class="py-12">
-        <div class="mx-auto max-w-4xl sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-6xl sm:px-6 lg:px-8">
             <!-- Header -->
             <div class="mb-6 flex items-center justify-between">
                 <Link :href="`/tournaments/${props.tournamentId}`">
@@ -225,7 +246,8 @@ onMounted(() => {
                     <div class="flex items-center justify-between">
                         <div>
                             <CardTitle>Tournament Results</CardTitle>
-                            <CardDescription>Set positions, rating points, and prize distribution</CardDescription>
+                            <CardDescription>Set positions, rating points, prize money, bonuses and achievements
+                            </CardDescription>
                         </div>
                         <Button variant="outline" @click="autoFillPositions">
                             Auto Fill Positions
@@ -242,7 +264,10 @@ onMounted(() => {
                                     <th class="px-4 py-3 text-left">Player</th>
                                     <th class="px-4 py-3 text-center">Position</th>
                                     <th class="px-4 py-3 text-center">Rating Points</th>
-                                    <th class="px-4 py-3 text-right">Prize Amount (₴)</th>
+                                    <th class="px-4 py-3 text-right">Prize (₴)</th>
+                                    <th class="px-4 py-3 text-right">Bonus (₴)</th>
+                                    <th class="px-4 py-3 text-right">Achievement (₴)</th>
+                                    <th class="px-4 py-3 text-right">Total (₴)</th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -284,13 +309,41 @@ onMounted(() => {
                                             type="number"
                                         />
                                     </td>
+                                    <td class="px-4 py-3">
+                                        <Input
+                                            v-model.number="result.bonus_amount"
+                                            class="w-32 text-right"
+                                            min="0"
+                                            placeholder="0.00"
+                                            step="0.01"
+                                            type="number"
+                                        />
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <Input
+                                            v-model.number="result.achievement_amount"
+                                            class="w-32 text-right"
+                                            min="0"
+                                            placeholder="0.00"
+                                            step="0.01"
+                                            type="number"
+                                        />
+                                    </td>
+                                    <td class="px-4 py-3 text-right font-medium">
+                                        {{
+                                            (+result.prize_amount + +result.bonus_amount + +result.achievement_amount).toLocaleString('uk-UA', {
+                                                minimumFractionDigits: 2,
+                                                maximumFractionDigits: 2
+                                            })
+                                        }}₴
+                                    </td>
                                 </tr>
                                 </tbody>
                             </table>
                         </div>
 
                         <!-- Summary -->
-                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-5">
                             <div class="text-center p-4 bg-gray-50 rounded-lg dark:bg-gray-800">
                                 <div class="text-lg font-bold text-blue-600 dark:text-blue-400">
                                     {{ resultForm.filter(r => r.position > 0).length }}
@@ -302,14 +355,28 @@ onMounted(() => {
                                 <div class="text-lg font-bold text-green-600 dark:text-green-400">
                                     {{ totalPrizeDistributed.toLocaleString() }}₴
                                 </div>
-                                <div class="text-sm text-gray-600 dark:text-gray-400">Total Prize Distributed</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">Prize Money</div>
+                            </div>
+
+                            <div class="text-center p-4 bg-gray-50 rounded-lg dark:bg-gray-800">
+                                <div class="text-lg font-bold text-orange-600 dark:text-orange-400">
+                                    {{ totalBonusDistributed.toLocaleString() }}₴
+                                </div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">Bonus Money</div>
                             </div>
 
                             <div class="text-center p-4 bg-gray-50 rounded-lg dark:bg-gray-800">
                                 <div class="text-lg font-bold text-purple-600 dark:text-purple-400">
-                                    {{ resultForm.reduce((sum, r) => sum + r.rating_points, 0) }}
+                                    {{ totalAchievementDistributed.toLocaleString() }}₴
                                 </div>
-                                <div class="text-sm text-gray-600 dark:text-gray-400">Total Rating Points</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">Achievement Money</div>
+                            </div>
+
+                            <div class="text-center p-4 bg-gray-50 rounded-lg dark:bg-gray-800">
+                                <div class="text-lg font-bold text-indigo-600 dark:text-indigo-400">
+                                    {{ totalMoneyDistributed.toLocaleString() }}₴
+                                </div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">Total Money</div>
                             </div>
                         </div>
 
