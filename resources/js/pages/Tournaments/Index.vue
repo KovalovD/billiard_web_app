@@ -296,7 +296,9 @@ onMounted(() => {
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
                                     {{ t('Prize Pool') }}
                                 </th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                                <th
+                                    class="sticky right-0 z-10 px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50 dark:bg-gray-800"
+                                >
                                     {{ t('Actions') }}
                                 </th>
                             </tr>
@@ -432,7 +434,7 @@ onMounted(() => {
                                 </td>
 
                                 <!-- Actions -->
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <td class="sticky right-0 z-10 px-6 py-4 whitespace-nowrap text-right text-sm font-medium bg-white dark:bg-gray-900">
                                     <div class="flex justify-end space-x-2">
                                         <!-- Everyone can view -->
                                         <Link :href="`/tournaments/${tournament.id}`">
