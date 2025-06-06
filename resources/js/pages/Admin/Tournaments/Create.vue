@@ -200,25 +200,25 @@ onMounted(() => {
                         <!-- Basic Information -->
                         <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
                             <div class="space-y-2">
-                                <Label for="name">Tournament Name *</Label>
+                                <Label for="name">{{ t('Tournament Name') }} *</Label>
                                 <Input
                                     id="name"
                                     v-model="form.name"
-                                    placeholder="Enter tournament name"
+                                      :placeholder="t('Enter tournament name')"
                                     required
                                 />
                             </div>
 
                             <div class="space-y-2">
-                                <Label for="game_id">Game *</Label>
+                                <Label for="game_id">{{ t('Game') }} *</Label>
                                 <Select v-model="form.game_id" required>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select specific game"/>
+                                          <SelectValue :placeholder="t('Select specific game')"/>
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem v-if="isLoadingGames" :value="0">
-                                            Loading games...
-                                        </SelectItem>
+                                          <SelectItem v-if="isLoadingGames" :value="0">
+                                              {{ t('Loading games...') }}
+                                          </SelectItem>
                                         <SelectItem
                                             v-for="game in filteredGames"
                                             v-else
@@ -229,16 +229,16 @@ onMounted(() => {
                                         </SelectItem>
                                     </SelectContent>
                                 </Select>
-                                <p v-if="form.official_rating_id" class="text-sm text-gray-500 dark:text-gray-400">
-                                    Games filtered by selected rating type
-                                </p>
+                                  <p v-if="form.official_rating_id" class="text-sm text-gray-500 dark:text-gray-400">
+                                      {{ t('Games filtered by selected rating type') }}
+                                  </p>
                             </div>
                         </div>
 
                         <!-- Dates -->
                         <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
                             <div class="space-y-2">
-                                <Label for="start_date">Start Date *</Label>
+                                <Label for="start_date">{{ t('Start Date') }} *</Label>
                                 <Input
                                     id="start_date"
                                     v-model="form.start_date"
@@ -248,7 +248,7 @@ onMounted(() => {
                             </div>
 
                             <div class="space-y-2">
-                                <Label for="end_date">End Date *</Label>
+                                <Label for="end_date">{{ t('End Date') }} *</Label>
                                 <Input
                                     id="end_date"
                                     v-model="form.end_date"
@@ -260,22 +260,22 @@ onMounted(() => {
 
                         <!-- Official Rating Association -->
                         <div class="space-y-4">
-                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                                <StarIcon class="h-5 w-5"/>
-                                Official Rating Association
-                            </h3>
+                              <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                                  <StarIcon class="h-5 w-5"/>
+                                  {{ t('Official Rating Association') }}
+                              </h3>
 
                             <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
                                 <div class="space-y-2">
-                                    <Label for="official_rating_id">Official Rating</Label>
+                                      <Label for="official_rating_id">{{ t('Official Rating') }}</Label>
                                     <Select v-model="form.official_rating_id">
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Select official rating (optional)"/>
+                                              <SelectValue :placeholder="t('Select official rating (optional)')"/>
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem v-if="isLoadingRatings" :value="0">
-                                                Loading ratings...
-                                            </SelectItem>
+                                              <SelectItem v-if="isLoadingRatings" :value="0">
+                                                  {{ t('Loading ratings...') }}
+                                              </SelectItem>
                                             <SelectItem
                                                 v-for="rating in filteredOfficialRatings"
                                                 v-else
@@ -286,13 +286,13 @@ onMounted(() => {
                                             </SelectItem>
                                         </SelectContent>
                                     </Select>
-                                    <p class="text-sm text-gray-500 dark:text-gray-400">
-                                        Associate this tournament with an official rating system
-                                    </p>
+                                      <p class="text-sm text-gray-500 dark:text-gray-400">
+                                          {{ t('Associate this tournament with an official rating system') }}
+                                      </p>
                                 </div>
 
                                 <div class="space-y-2">
-                                    <Label for="rating_coefficient">Rating Coefficient</Label>
+                                      <Label for="rating_coefficient">{{ t('Rating Coefficient') }}</Label>
                                     <Input
                                         id="rating_coefficient"
                                         v-model.number="form.rating_coefficient"
@@ -302,26 +302,26 @@ onMounted(() => {
                                         step="0.1"
                                         type="number"
                                     />
-                                    <p class="text-sm text-gray-500 dark:text-gray-400">
-                                        Multiplier for rating points (0.1 - 5.0)
-                                    </p>
+                                      <p class="text-sm text-gray-500 dark:text-gray-400">
+                                          {{ t('Multiplier for rating points (0.1 - 5.0)') }}
+                                      </p>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Location -->
                         <div class="space-y-4">
-                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                                <MapPinIcon class="h-5 w-5"/>
-                                Location
-                            </h3>
+                              <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                                  <MapPinIcon class="h-5 w-5"/>
+                                  {{ t('Location') }}
+                              </h3>
 
                             <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
                                 <div class="space-y-2">
-                                    <Label for="city_id">City</Label>
+                                      <Label for="city_id">{{ t('City') }}</Label>
                                     <Select v-model="form.city_id">
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Select city"/>
+                                              <SelectValue :placeholder="t('Select city')"/>
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem
@@ -336,10 +336,10 @@ onMounted(() => {
                                 </div>
 
                                 <div class="space-y-2">
-                                    <Label for="club_id">Club</Label>
+                                      <Label for="club_id">{{ t('Club') }}</Label>
                                     <Select v-model="form.club_id" :disabled="!form.city_id">
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Select club"/>
+                                              <SelectValue :placeholder="t('Select club')"/>
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem
@@ -357,11 +357,11 @@ onMounted(() => {
 
                         <!-- Financial Information -->
                         <div class="space-y-4">
-                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Financial Details</h3>
+                              <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ t('Financial Details') }}</h3>
 
                             <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
                                 <div class="space-y-2">
-                                    <Label for="entry_fee">Entry Fee (₴)</Label>
+                                      <Label for="entry_fee">{{ t('Entry Fee') }} (₴)</Label>
                                     <Input
                                         id="entry_fee"
                                         v-model.number="form.entry_fee"
@@ -372,7 +372,7 @@ onMounted(() => {
                                 </div>
 
                                 <div class="space-y-2">
-                                    <Label for="prize_pool">Prize Pool (₴)</Label>
+                                      <Label for="prize_pool">{{ t('Prize Pool') }} (₴)</Label>
                                     <Input
                                         id="prize_pool"
                                         v-model.number="form.prize_pool"
@@ -383,12 +383,12 @@ onMounted(() => {
                                 </div>
 
                                 <div class="space-y-2">
-                                    <Label for="max_participants">Max Participants</Label>
+                                      <Label for="max_participants">{{ t('Max Participants') }}</Label>
                                     <Input
                                         id="max_participants"
                                         v-model.number="form.max_participants"
                                         min="2"
-                                        placeholder="Unlimited"
+                                          :placeholder="t('Unlimited')"
                                         type="number"
                                     />
                                 </div>
@@ -397,44 +397,44 @@ onMounted(() => {
 
                         <!-- Additional Details -->
                         <div class="space-y-4">
-                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Additional Information</h3>
+                              <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ t('Additional Information') }}</h3>
 
                             <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
                                 <div class="space-y-2">
-                                    <Label for="organizer">Organizer</Label>
+                                    <Label for="organizer">{{ t('Organizer') }}</Label>
                                     <Input
                                         id="organizer"
                                         v-model="form.organizer"
-                                        placeholder="Tournament organizer"
+                                        :placeholder="t('Tournament organizer')"
                                     />
                                 </div>
 
                                 <div class="space-y-2">
-                                    <Label for="format">Format</Label>
+                                    <Label for="format">{{ t('Format') }}</Label>
                                     <Input
                                         id="format"
                                         v-model="form.format"
-                                        placeholder="e.g., Single Elimination, Round Robin"
+                                        :placeholder="t('e.g., Single Elimination, Round Robin')"
                                     />
                                 </div>
                             </div>
 
                             <div class="space-y-2">
-                                <Label for="details">Description</Label>
+                                <Label for="details">{{ t('Description') }}</Label>
                                 <Textarea
                                     id="details"
                                     v-model="form.details"
-                                    placeholder="Tournament description and additional details"
+                                    :placeholder="t('Tournament description and additional details')"
                                     rows="3"
                                 />
                             </div>
 
                             <div class="space-y-2">
-                                <Label for="regulation">Regulation</Label>
+                                <Label for="regulation">{{ t('Regulation') }}</Label>
                                 <Textarea
                                     id="regulation"
                                     v-model="form.regulation"
-                                    placeholder="Tournament rules and regulations"
+                                    :placeholder="t('Tournament rules and regulations')"
                                     rows="4"
                                 />
                             </div>
@@ -443,14 +443,14 @@ onMounted(() => {
                         <!-- Form Actions -->
                         <div class="flex justify-end space-x-4 border-t pt-6">
                             <Button type="button" variant="outline" @click="handleCancel">
-                                Cancel
+                                {{ t('Cancel') }}
                             </Button>
                             <Button
                                 :disabled="!isFormValid || isSubmitting"
                                 type="submit"
                             >
                                 <Spinner v-if="isSubmitting" class="mr-2 h-4 w-4"/>
-                                {{ isSubmitting ? 'Creating...' : 'Create Tournament' }}
+                                {{ isSubmitting ? t('Creating...') : t('Create Tournament') }}
                             </Button>
                         </div>
                     </form>
@@ -460,7 +460,7 @@ onMounted(() => {
             <!-- Error Display -->
             <div v-if="createApi.error.value"
                  class="mt-4 rounded bg-red-100 p-4 text-red-600 dark:bg-red-900/30 dark:text-red-400">
-                Error creating tournament: {{ createApi.error.value.message }}
+                {{ t('Error creating tournament') }}: {{ createApi.error.value.message }}
             </div>
         </div>
     </div>
