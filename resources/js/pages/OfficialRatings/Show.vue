@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Spinner} from '@/Components/ui';
+import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Spinner, Textarea} from '@/Components/ui';
 import {useAuth} from '@/composables/useAuth';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
@@ -11,6 +11,7 @@ import {
     CalendarIcon,
     ChevronDownIcon,
     CrownIcon,
+    Loader2,
     PencilIcon,
     StarIcon,
     TrophyIcon,
@@ -20,6 +21,8 @@ import {
 } from 'lucide-vue-next';
 import {computed, nextTick, onMounted, ref} from 'vue';
 import DataTable from '@/Components/ui/data-table/DataTable.vue';
+import {useGameRules} from '@/composables/useGameRules';
+import {useToastStore} from '@/stores/toast';
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -38,12 +41,24 @@ const isLoadingRating = ref(true);
 const isLoadingPlayers = ref(true);
 const isLoadingTournaments = ref(true);
 const error = ref<string | null>(null);
-const activeTab = ref<'players' | 'tournaments'>('players');
+const activeTab = ref<'players' | 'tournaments' | 'rules'>('players');
 const showScrollToUser = ref(false);
 const deltaDate = ref('');
 const ratingDelta = ref<RatingDelta | null>(null);
 const isLoadingDelta = ref(false);
 const tableRef = ref<HTMLElement | null>(null);
+
+const {
+    currentRule,
+    isLoading: isLoadingRules,
+    error: rulesError,
+    fetchRuleByRating,
+    updateRule,
+    deleteRule,
+    createRule
+} = useGameRules();
+
+const toastStore = useToastStore();
 
 const allActivePlayers = computed(() => {
     return players.value.filter(p => p.is_active);
@@ -176,10 +191,71 @@ const fetchDelta = async () => {
     }
 };
 
+const isEditingRules = ref(false);
+
+const startEditingRules = async () => {
+    if (!currentRule.value) {
+        currentRule.value = {
+            id: 0,
+            official_rating_id: Number(props.ratingId),
+            rules: '',
+            created_at: '',
+            updated_at: ''
+        };
+    }
+    isEditingRules.value = true;
+};
+
+const cancelEditRules = () => {
+    isEditingRules.value = false;
+    if (currentRule.value?.id === 0) {
+        currentRule.value = null;
+    }
+};
+
+const saveRules = async () => {
+    if (!currentRule.value) return;
+
+    try {
+        if (currentRule.value.id === 0 || currentRule.value.id === undefined) {
+            await createRule({
+                official_rating_id: Number(props.ratingId),
+                rules: currentRule.value.rules
+            });
+        } else {
+            await updateRule(currentRule.value.id, {
+                rules: currentRule.value.rules
+            });
+        }
+        isEditingRules.value = false;
+        toastStore.success(t('Rules updated successfully'));
+    } catch (error: any) {
+        console.error('Failed to save rules:', error);
+        toastStore.error(error.message || t('Failed to save rules'));
+    }
+};
+
+const deleteRules = async () => {
+    if (!currentRule.value) return;
+
+    if (!confirm(t('Are you sure you want to delete these rules?'))) {
+        return;
+    }
+
+    try {
+        await deleteRule(currentRule.value.id);
+        toastStore.success(t('Rules deleted successfully'));
+    } catch (e) {
+        console.error('Failed to delete rules:', e);
+        toastStore.error(t('Failed to delete rules'));
+    }
+};
+
 onMounted(() => {
     fetchRating();
     fetchPlayers();
     fetchTournaments();
+    fetchRuleByRating(Number(props.ratingId));
 });
 
 // Add columns definition before the template
@@ -419,6 +495,17 @@ const getRowClass = (player: OfficialRatingPlayer): string => {
                         >
                             {{ t('Tournaments') }} ({{ rating.tournaments_count }})
                         </button>
+                        <button
+                            :class="[
+                                'py-4 px-1 text-sm font-medium border-b-2',
+                                activeTab === 'rules'
+                                    ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                            ]"
+                            @click="activeTab = 'rules'"
+                        >
+                            {{ t('Rules') }}
+                        </button>
                     </nav>
                 </div>
 
@@ -609,7 +696,6 @@ const getRowClass = (player: OfficialRatingPlayer): string => {
                                         <span v-else class="text-gray-400">—</span>
                                     </template>
 
-
                                     <template #cell-bonus="{ value }">
                                         <span v-if="value.amount > 0" :class="[
                                             'font-medium text-orange-600 dark:text-orange-400',
@@ -706,6 +792,99 @@ const getRowClass = (player: OfficialRatingPlayer): string => {
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                <!-- Rules Tab -->
+                <div v-if="activeTab === 'rules'">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle class="flex items-center justify-between">
+                                <span class="flex items-center gap-2">
+                                    <PencilIcon class="h-5 w-5"/>
+                                    {{ t('Game Rules') }}
+                                </span>
+                                <div v-if="isAdmin" class="flex items-center space-x-2">
+                                    <Button
+                                        v-if="!isEditingRules"
+                                        :disabled="isLoadingRules"
+                                        size="sm"
+                                        variant="outline"
+                                        @click="startEditingRules"
+                                    >
+                                        <PencilIcon class="h-4 w-4 mr-2"/>
+                                        {{ currentRule ? t('Edit Rules') : t('Add Rules') }}
+                                    </Button>
+                                    <template v-else>
+                                        <Button
+                                            :disabled="isLoadingRules"
+                                            size="sm"
+                                            variant="outline"
+                                            @click="cancelEditRules"
+                                        >
+                                            {{ t('Cancel') }}
+                                        </Button>
+                                        <Button
+                                            :disabled="isLoadingRules"
+                                            size="sm"
+                                            variant="default"
+                                            @click="saveRules"
+                                        >
+                                            <Spinner v-if="isLoadingRules" class="h-4 w-4 mr-2"/>
+                                            {{ t('Save') }}
+                                        </Button>
+                                    </template>
+                                    <Button
+                                        v-if="currentRule && currentRule.id > 0 && !isEditingRules"
+                                        :disabled="isLoadingRules"
+                                        size="sm"
+                                        variant="destructive"
+                                        @click="deleteRules"
+                                    >
+                                        {{ t('Delete') }}
+                                    </Button>
+                                </div>
+                            </CardTitle>
+                            <CardDescription>{{ t('Official rating rules and regulations') }}</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div v-if="isLoadingRules" class="flex justify-center py-4">
+                                <Loader2 class="h-6 w-6 animate-spin"/>
+                            </div>
+                            <div v-else-if="rulesError" class="text-red-500">
+                                {{ rulesError }}
+                            </div>
+                            <div v-else>
+                                <div v-if="!isEditingRules">
+                                    <div v-if="currentRule?.rules" class="prose max-w-none whitespace-pre-wrap">
+                                        {{ currentRule.rules }}
+                                    </div>
+                                    <div v-else class="text-gray-500 text-center py-8">
+                                        {{ t('No rules defined yet') }}
+                                        <p v-if="isAdmin" class="text-sm mt-2">
+                                            {{ t('Click "Add Rules" to create game rules for this rating.') }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div v-else class="space-y-4">
+                                    <Textarea
+                                        :disabled="isLoadingRules"
+                                        :model-value="currentRule?.rules || ''"
+                                        :placeholder="t('Enter game rules here...')"
+                                        class="min-h-64"
+                                        rows="10"
+                                        @update:model-value="(value) => {
+                                            if (currentRule) {
+                                                currentRule.rules = value;
+                                            }
+                                        }"
+                                    />
+                                    <p class="text-sm text-gray-500">
+                                        {{ t('Define the official rules and regulations for this rating system.') }}
+                                    </p>
                                 </div>
                             </div>
                         </CardContent>

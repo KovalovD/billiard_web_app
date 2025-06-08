@@ -6,7 +6,7 @@ interface Toast {
     type: 'success' | 'error' | 'info';
     title: string;
     message?: string;
-    duration?: number;
+    duration: 5000;
 }
 
 export const useToastStore = defineStore('toast', () => {
@@ -16,7 +16,6 @@ export const useToastStore = defineStore('toast', () => {
         const id = Date.now().toString() + Math.random().toString(36).substr(2, 9);
         const newToast: Toast = {
             id,
-            duration: 5000,
             ...toast
         };
 
@@ -44,16 +43,16 @@ export const useToastStore = defineStore('toast', () => {
     };
 
     // Зручні методи для різних типів повідомлень
-    const success = (title: string, message?: string, duration?: number) => {
-        return addToast({type: 'success', title, message, duration});
+    const success = (title: string, message?: string) => {
+        return addToast({type: 'success', title, message, duration: 5000});
     };
 
-    const error = (title: string, message?: string, duration?: number) => {
-        return addToast({type: 'error', title, message, duration});
-    };
+    const error = (title: string, message?: string) => {
+        return addToast({type: 'error', title, message, duration: 5000});
+    }
 
-    const info = (title: string, message?: string, duration?: number) => {
-        return addToast({type: 'info', title, message, duration});
+    const info = (title: string, message?: string) => {
+        return addToast({type: 'info', title, message, duration: 5000});
     };
 
     return {

@@ -53,4 +53,16 @@ return [
     'Rating Details'                                                                 => 'Rating Details',
     'Initial Rating'                                                                 => 'Initial Rating',
     'Calculation Method'                                                             => 'Calculation Method',
+    // Game Rules
+    'Rules'                                        => 'Rules',
+    'Official rating rules and regulations'        => 'Official rating rules and regulations',
+    'Edit Rules'                                   => 'Edit Rules',
+    'No rules defined yet'                         => 'No rules defined yet',
+    'Save'                                         => 'Save',
+    'Cancel'                                       => 'Cancel',
+    'Failed to save rules'                         => 'Failed to save rules',
+    'Rules updated successfully'                   => 'Rules updated successfully',
+    'Are you sure you want to delete these rules?' => 'Are you sure you want to delete these rules?',
+    'Rules deleted successfully'                   => 'Rules deleted successfully',
+    'Failed to delete rules'                       => 'Failed to delete rules',
 ];

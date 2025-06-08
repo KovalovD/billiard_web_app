@@ -7,6 +7,7 @@ use App\Leagues\Http\Controllers\AdminPlayersController;
 use App\Leagues\Http\Controllers\LeaguesController;
 use App\Leagues\Http\Controllers\PlayersController;
 use App\Matches\Http\Controllers\MatchGamesController;
+use App\OfficialRatings\Http\Controllers\GameRuleController;
 use App\User\Http\Controllers\CitiesController;
 use App\User\Http\Controllers\ClubsController;
 use App\User\Http\Controllers\ProfileController;
@@ -95,4 +96,12 @@ Route::middleware('auth:sanctum')->group(function () {
             });
         });
     });
+
+    // Game Rules Routes
+    Route::get('/game-rules', [GameRuleController::class, 'index']);
+    Route::post('/game-rules', [GameRuleController::class, 'store']);
+    Route::get('/game-rules/{gameRule}', [GameRuleController::class, 'show']);
+    Route::put('/game-rules/{gameRule}', [GameRuleController::class, 'update']);
+    Route::delete('/game-rules/{gameRule}', [GameRuleController::class, 'destroy']);
+    Route::get('/official-ratings/{officialRating}/rules', [GameRuleController::class, 'getByRating']);
 });

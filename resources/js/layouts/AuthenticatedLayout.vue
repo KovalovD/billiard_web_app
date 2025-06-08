@@ -11,6 +11,7 @@ import axios from 'axios';
 import {onMounted, ref} from 'vue';
 import LocaleSwitcher from "@/Components/LocaleSwitcher.vue";
 import {useLocale} from '@/composables/useLocale';
+import ToastContainer from '@/Components/ToastContainer.vue';
 
 // Add to existing code
 const {t} = useLocale();
@@ -86,6 +87,7 @@ onMounted(() => {
     <div v-else>
         <Head :title="$page.props.title || 'B2B League'"/>
         <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
+            <ToastContainer/>
             <nav class="border-b border-gray-100 bg-white dark:border-gray-700 dark:bg-gray-800">
                 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div class="flex h-16 justify-between">

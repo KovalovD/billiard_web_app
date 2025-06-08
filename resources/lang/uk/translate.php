@@ -753,4 +753,17 @@ return [
 	'Grand Final'                                                                                                                                                                       => 'Гранд Фінал',
     'League Details'                        => 'Деталі ліги',
     'League: :name:suffix'                  => 'Ліга: :name:suffix',
+
+    // Game Rules
+    'Rules'                                        => 'Правила',
+    'Official rating rules and regulations'        => 'Правила та положення офіційного рейтингу',
+    'Edit Rules'                                   => 'Редагувати правила',
+    'No rules defined yet'                         => 'Правила ще не визначені',
+    'Save'                                         => 'Зберегти',
+    'Cancel'                                       => 'Скасувати',
+    'Failed to save rules'                         => 'Не вдалося зберегти правила',
+    'Rules updated successfully'                   => 'Правила успішно оновлено',
+    'Are you sure you want to delete these rules?' => 'Ви впевнені, що хочете видалити ці правила?',
+    'Rules deleted successfully'                   => 'Правила успішно видалено',
+    'Failed to delete rules'                       => 'Не вдалося видалити правила',
 ];
