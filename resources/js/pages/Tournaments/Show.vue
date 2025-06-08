@@ -48,7 +48,7 @@ const sortedPlayers = computed(() => {
             return aStatus - bStatus;
         }
 
-        if (a.position !== null && b.position !== null) {
+        if (a.position !== null && b.position !== null && a.position != undefined && b.position !== undefined) {
             return a.position - b.position;
         }
         if (a.position !== null) return -1;
