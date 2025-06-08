@@ -91,12 +91,10 @@ const isCurrentUserInLeague = computed(() => {
 
 // Page title
 const pageTitle = computed(() => {
-    if (!league.value) return 'League Details';
-
+    if (!league.value) return t('League Details');
     const status = getLeagueStatus(league.value);
     const suffix = status ? ` (${status.text})` : '';
-
-    return `League: ${league.value.name}${suffix}`;
+    return t('League: :name:suffix', {name: league.value.name, suffix});
 });
 
 const leagueStatus = computed(() => getLeagueStatus(league.value));
@@ -113,11 +111,11 @@ const findMatchById = (id: string): MatchGame | null => {
 const getMatchStatusDisplay = (status: string): string => {
     switch (status) {
         case 'in_progress':
-            return 'In Progress';
+            return t('In Progress');
         case 'completed':
-            return 'Completed';
+            return t('Completed');
         case 'must_be_confirmed':
-            return 'Needs Confirmation';
+            return t('Needs Confirmation');
         default:
             return status;
     }
@@ -159,7 +157,7 @@ const needsConfirmation = (match: MatchGame): boolean => {
 
 // Utility function to display messages
 const displayMessage = (message: string) => {
-    genericModalMessage.value = message;
+    genericModalMessage.value = t(message);
     showGenericModal.value = true;
 };
 

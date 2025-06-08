@@ -9,6 +9,9 @@ import {
 import type {User} from '@/types';
 import {Link} from '@inertiajs/vue3';
 import {LogOut, Settings} from 'lucide-vue-next';
+import {useLocale} from '@/composables/useLocale';
+
+const {t} = useLocale();
 
 interface Props {
     user: User;
@@ -28,7 +31,7 @@ defineProps<Props>();
         <DropdownMenuItem :as-child="true">
             <Link :href="route('profile.edit')" as="button" class="block w-full">
                 <Settings class="mr-2 h-4 w-4"/>
-                Settings
+                {{ t('Settings') }}
             </Link>
         </DropdownMenuItem>
     </DropdownMenuGroup>
@@ -36,7 +39,7 @@ defineProps<Props>();
     <DropdownMenuItem :as-child="true">
         <Link :href="route('logout')" as="button" class="block w-full" method="post">
             <LogOut class="mr-2 h-4 w-4"/>
-            Log out
+            {{ t('Log Out') }}
         </Link>
     </DropdownMenuItem>
 </template>

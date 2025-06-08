@@ -20,6 +20,7 @@ import type {BreadcrumbItem, NavItem} from '@/types';
 import {Link, usePage} from '@inertiajs/vue3';
 import {BookOpen, Folder, LayoutGrid, Menu, Search} from 'lucide-vue-next';
 import {computed} from 'vue';
+import {useLocale} from '@/composables/useLocale';
 
 interface Props {
     breadcrumbs?: BreadcrumbItem[];
@@ -38,9 +39,11 @@ const activeItemStyles = computed(
     () => (url: string) => (isCurrentRoute.value(url) ? 'text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100' : ''),
 );
 
+const {t} = useLocale();
+
 const mainNavItems: NavItem[] = [
     {
-        title: 'Dashboard',
+        title: t('Dashboard'),
         href: '/dashboard',
         icon: LayoutGrid,
     },
@@ -48,12 +51,12 @@ const mainNavItems: NavItem[] = [
 
 const rightNavItems: NavItem[] = [
     {
-        title: 'Repository',
+        title: t('Repository'),
         href: 'https://github.com/laravel/vue-starter-kit',
         icon: Folder,
     },
     {
-        title: 'Documentation',
+        title: t('Documentation'),
         href: 'https://laravel.com/docs/starter-kits',
         icon: BookOpen,
     },

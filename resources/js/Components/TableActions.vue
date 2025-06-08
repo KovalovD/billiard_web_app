@@ -11,6 +11,9 @@ import {MoreVerticalIcon} from 'lucide-vue-next';
 import {computed} from 'vue';
 import {Button} from "@/Components/ui";
 import {Link} from '@inertiajs/vue3';
+import {useLocale} from '@/composables/useLocale';
+
+const {t} = useLocale();
 
 export interface ActionItem {
     label: string;
@@ -40,7 +43,7 @@ const visibleActions = computed(() =>
     <DropdownMenu>
         <DropdownMenuTrigger asChild>
             <Button :size="size" class="h-8 w-8 p-0" variant="ghost">
-                <span class="sr-only">Open menu</span>
+                <span class="sr-only">{{ t('Open menu') }}</span>
                 <MoreVerticalIcon class="h-4 w-4"/>
             </Button>
         </DropdownMenuTrigger>

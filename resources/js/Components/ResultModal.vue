@@ -136,7 +136,7 @@ const validateScores = (): boolean => {
 
     // Check tie game
     if (form.first_user_score === form.second_user_score) {
-        newErrors.general = ['Tie games are not allowed. One player must have a higher score.'];
+        newErrors.general = [t('Tie games are not allowed. One player must have a higher score.')];
         isValid = false;
     }
 
@@ -147,17 +147,17 @@ const validateScores = (): boolean => {
 
         // Check if either player exceeded max score
         if (form.first_user_score > props.maxScore) {
-            newErrors.first_user_score = [`Maximum score is ${props.maxScore}`];
+            newErrors.first_user_score = [t('Maximum score is :max', {max: props.maxScore})];
             isValid = false;
         }
         if (form.second_user_score > props.maxScore) {
-            newErrors.second_user_score = [`Maximum score is ${props.maxScore}`];
+            newErrors.second_user_score = [t('Maximum score is :max', {max: props.maxScore})];
             isValid = false;
         }
 
         // Check if valid match result (one player must have exactly max score)
         if (isValid && !isMaxScoreReached) {
-            newErrors.general = [`One player must reach exactly ${props.maxScore} points to win`];
+            newErrors.general = [t('One player must reach exactly :max points to win', {max: props.maxScore})];
             isValid = false;
         }
 
@@ -165,7 +165,7 @@ const validateScores = (): boolean => {
         if (isValid) {
             const winnerScore = Math.max(form.first_user_score, form.second_user_score);
             if (winnerScore !== props.maxScore) {
-                newErrors.general = [`The winner must have exactly ${props.maxScore} points`];
+                newErrors.general = [t('The winner must have exactly :max points', {max: props.maxScore})];
                 isValid = false;
             }
         }
@@ -230,8 +230,8 @@ const submitResult = async () => {
         // Handle different message based on state
         const message =
             props.matchGame.status === 'must_be_confirmed'
-                ? 'Result confirmed! Game completed.'
-                : 'Result submitted. Waiting for opponent to confirm.';
+                ? t('Result confirmed! Game completed.')
+                : t('Result submitted. Waiting for opponent to confirm.');
 
         emit('success', message);
         emit('close');
@@ -241,7 +241,7 @@ const submitResult = async () => {
         if (apiError.data?.errors) {
             formErrors.value = apiError.data.errors;
         } else {
-            generalError.value = apiError.message || 'Failed to send result.';
+            generalError.value = apiError.message || t('Failed to send result.');
         }
 
         emit('error', apiError);
@@ -272,117 +272,79 @@ const rejectOtherPlayerResult = () => {
 </script>
 
 <template>
-    <Modal :show="show" :title="t('Submit Match Result')" @close="$emit('close')">
-        <form class="space-y-4" @submit.prevent="submitResult">
-            <div v-if="generalError"
-                 class="rounded bg-red-100 p-3 text-sm text-red-600 dark:bg-red-900/30 dark:text-red-400">
-                {{ generalError }}
-            </div>
+    <Modal :show="show" @close="emit('close')">
+        <div class="p-6">
+            <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+                {{ t('Submit Match Result') }}
+            </h2>
 
-            <!-- If user has already confirmed, show this message -->
-            <div v-if="isUserConfirmed" class="mb-4 rounded-md bg-green-50 p-4 dark:bg-green-900/20">
-                <h3 class="mb-2 font-medium text-green-800 dark:text-green-300">{{ t('Your Result Has Been Submitted') }}</h3>
-                <p class="mb-3 text-sm text-green-700 dark:text-green-400">
-                    {{ t("You've already submitted your score for this match. Waiting for your opponent to confirm or the match to be completed.") }}
-                </p>
-            </div>
-
-            <!-- Show confirmation dialog if needed -->
-            <div v-else-if="isConfirmationNeeded && otherPlayerSubmission"
-                 class="mb-4 rounded-md bg-blue-50 p-4 dark:bg-blue-900/20">
-                <h3 class="mb-2 font-medium text-blue-800 dark:text-blue-300">{{ t("Confirm Opponent's Result") }}</h3>
-                <p class="mb-3 text-sm text-blue-700 dark:text-blue-400">{{ t('Your opponent has submitted a result:') }}</p>
-                <p class="mb-3 text-sm text-blue-700 dark:text-blue-400">
-                    {{ firstPlayer?.name }}
-                    <strong>{{ otherPlayerSubmission.first_user_score }} - {{
-                            otherPlayerSubmission.second_user_score
-                        }}</strong>
-                    {{ secondPlayer?.name }}
-                </p>
-                <p class="mb-3 text-sm text-blue-700 dark:text-blue-400">{{ t('Do you confirm this result?') }}</p>
-                <div class="mt-4 flex gap-3">
-                    <Button class="border-red-300 text-red-600 hover:bg-red-50" type="button" variant="outline"
-                            @click="rejectOtherPlayerResult">
-                        {{ t('Reject') }}
-                    </Button>
-                    <Button type="button" @click="acceptOtherPlayerResult"> {{ t('Confirm Result') }}</Button>
-                </div>
-            </div>
-
-            <!-- Hide form input when waiting for confirmation or already submitted -->
-            <div v-if="!isConfirmationNeeded && !isUserConfirmed">
-                <p class="text-sm text-gray-600 dark:text-gray-400">
-                    {{ t('Enter the final score for the match between') }}
-                    <strong class="text-gray-800 dark:text-gray-200">{{ firstPlayer?.name || 'Player 1' }}</strong> and
-                    <strong class="text-gray-800 dark:text-gray-200">{{ secondPlayer?.name || 'Player 2' }}</strong
-                    >.
-                </p>
-
-                <div v-if="maxScore" class="mt-2 text-sm text-blue-600 dark:text-blue-400">
-                    {{ t('This match is played to :maxScore wins. One player must reach exactly :maxScore points to win.', {maxScore}) }}
-                </div>
-
-                <div class="mt-4 grid grid-cols-2 items-start gap-4">
-                    <div>
-                        <Label :for="`first_score_${matchGame?.id}`">{{ firstPlayer?.name || 'Player 1' }} {{ t('Score') }}</Label>
-                        <Input
-                            :id="`first_score_${matchGame?.id}`"
-                            v-model.number="form.first_user_score"
-                            :disabled="isLoading"
-                            :max="maxScore || undefined"
-                            class="mt-1"
-                            min="0"
-                            required
-                            type="number"
-                        />
-                        <InputError :message="formErrors.first_user_score?.join(', ')" class="mt-1"/>
+            <div class="mt-4">
+                <div v-if="isConfirmationNeeded" class="mb-4">
+                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                        {{ t('Your opponent has submitted the following result:') }}
+                    </p>
+                    <div class="mt-2 rounded-md bg-gray-50 p-3 dark:bg-gray-800">
+                        <p class="text-sm">
+                            {{ firstPlayer?.name }}: {{ otherPlayerSubmission?.first_user_score }}
+                            {{ t('vs') }}
+                            {{ secondPlayer?.name }}: {{ otherPlayerSubmission?.second_user_score }}
+                        </p>
                     </div>
-                    <div>
-                        <Label :for="`second_score_${matchGame?.id}`">{{ secondPlayer?.name || 'Player 2' }}
-                            {{ t('Score') }}</Label>
-                        <Input
-                            :id="`second_score_${matchGame?.id}`"
-                            v-model.number="form.second_user_score"
-                            :disabled="isLoading"
-                            :max="maxScore || undefined"
-                            class="mt-1"
-                            min="0"
-                            required
-                            type="number"
-                        />
-                        <InputError :message="formErrors.second_user_score?.join(', ')" class="mt-1"/>
+                    <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                        {{ t('Please confirm if this result is correct.') }}
+                    </p>
+                </div>
+
+                <div v-else-if="isUserConfirmed" class="mb-4">
+                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                        {{ t('You have already submitted a result for this match.') }}
+                    </p>
+                </div>
+
+                <div v-else>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <Label :for="'first_user_score'">{{ firstPlayer?.name }}</Label>
+                            <Input
+                                id="first_user_score"
+                                v-model.number="form.first_user_score"
+                                :disabled="isLoading"
+                                class="mt-1 block w-full"
+                                min="0"
+                                type="number"
+                            />
+                            <InputError :message="formErrors.first_user_score?.[0]" class="mt-2"/>
+                        </div>
+
+                        <div>
+                            <Label :for="'second_user_score'">{{ secondPlayer?.name }}</Label>
+                            <Input
+                                id="second_user_score"
+                                v-model.number="form.second_user_score"
+                                :disabled="isLoading"
+                                class="mt-1 block w-full"
+                                min="0"
+                                type="number"
+                            />
+                            <InputError :message="formErrors.second_user_score?.[0]" class="mt-2"/>
+                        </div>
                     </div>
-                </div>
 
-                <!-- Show warning about max score -->
-                <div
-                    v-if="formErrors.general"
-                    class="mt-3 rounded-md bg-red-50 p-2 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"
-                >
-                    {{ formErrors.general[0] }}
-                </div>
-
-                <!-- Show warning about status -->
-                <div
-                    v-if="matchGame?.status === 'must_be_confirmed' && otherPlayerSubmission"
-                    class="mt-3 rounded-md bg-amber-50 p-2 text-sm text-amber-700 dark:bg-amber-900/20 dark:text-amber-400"
-                >
-                    {{ t('Your opponent submitted a different result. If you submit this, their result will be discarded.') }}
+                    <InputError :message="formErrors.general?.[0]" class="mt-2"/>
+                    <InputError :message="generalError" class="mt-2"/>
                 </div>
             </div>
 
-            <!-- Footer buttons -->
-            <div class="flex justify-end space-x-3 pt-4">
-                <Button :disabled="isLoading" type="button" variant="outline" @click="$emit('close')"> {{ t('Close') }}</Button>
+            <div class="mt-6 flex justify-end">
                 <Button
-                    v-if="!isConfirmationNeeded && !isUserConfirmed"
-                    :disabled="isLoading || form.first_user_score === form.second_user_score || Object.keys(formErrors).length > 0"
-                    type="submit"
+                    :disabled="isLoading || isUserConfirmed"
+                    class="ml-3"
+                    @click="submitResult"
                 >
                     <Spinner v-if="isLoading" class="mr-2 h-4 w-4"/>
-                    {{ t('Submit Result') }}
+                    {{ isConfirmationNeeded ? t('Confirm Result') : t('Submit Result') }}
                 </Button>
             </div>
-        </form>
+        </div>
     </Modal>
 </template>
