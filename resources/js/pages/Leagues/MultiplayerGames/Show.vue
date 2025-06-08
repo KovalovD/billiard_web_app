@@ -37,6 +37,7 @@ const {
     getMultiplayerGame,
     performGameAction,
     setGameModerator,
+    startMultiplayerGame,
     error,
     isLoading: isActionLoading
 } = useMultiplayerGames();
@@ -387,6 +388,18 @@ const handlePlayerAction = (actionData: any) => {
     }
 };
 
+const handleStart = async () => {
+    if (!isAuthenticated.value || !isAdmin.value) return;
+
+    try {
+        await startMultiplayerGame(props.leagueId, props.gameId);
+        await fetchGame();
+        // eslint-disable-next-line
+    } catch (err) {
+        // Error is handled by the composable
+    }
+};
+
 const handleGameFinished = () => {
     fetchLeague();
     fetchGame();
@@ -452,6 +465,14 @@ onMounted(() => {
                         >
                             <TrophyIcon class="mr-2 h-4 w-4"/>
                             {{ t('Finish Game') }}
+                        </Button>
+                        <Button
+                            v-if="game?.status === 'registration'"
+                            variant="outline"
+                            @click="handleStart"
+                        >
+                            <TrophyIcon class="mr-2 h-4 w-4"/>
+                            {{ t('Start Game') }}
                         </Button>
                         <Button
                             v-if="game?.status === 'in_progress'"
