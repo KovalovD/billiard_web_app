@@ -85,6 +85,6 @@ class TournamentPlayer extends Model
      */
     public function getTotalAmountAttribute(): float
     {
-        return (float) ($this->prize_amount + $this->bonus_amount + $this->achievement_amount);
+        return (float) ($this->prize_amount + $this->achievement_amount);
     }
 }

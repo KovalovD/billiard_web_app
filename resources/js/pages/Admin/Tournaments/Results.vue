@@ -66,7 +66,7 @@ const totalAchievementDistributed = computed(() => {
 });
 
 const totalMoneyDistributed = computed(() => {
-    return totalPrizeDistributed.value + totalBonusDistributed.value + totalAchievementDistributed.value;
+    return totalPrizeDistributed.value + totalAchievementDistributed.value;
 });
 
 const fetchData = async () => {
@@ -264,8 +264,8 @@ onMounted(() => {
                                     <th class="px-4 py-3 text-left">Player</th>
                                     <th class="px-4 py-3 text-center">Position</th>
                                     <th class="px-4 py-3 text-center">Rating Points</th>
+                                    <th class="px-4 py-3 text-right">Bonus</th>
                                     <th class="px-4 py-3 text-right">Prize (₴)</th>
-                                    <th class="px-4 py-3 text-right">Bonus (₴)</th>
                                     <th class="px-4 py-3 text-right">Achievement (₴)</th>
                                     <th class="px-4 py-3 text-right">Total (₴)</th>
                                 </tr>
@@ -301,7 +301,7 @@ onMounted(() => {
                                     </td>
                                     <td class="px-4 py-3">
                                         <Input
-                                            v-model.number="result.prize_amount"
+                                            v-model.number="result.bonus_amount"
                                             class="w-32 text-right"
                                             min="0"
                                             placeholder="0.00"
@@ -311,7 +311,7 @@ onMounted(() => {
                                     </td>
                                     <td class="px-4 py-3">
                                         <Input
-                                            v-model.number="result.bonus_amount"
+                                            v-model.number="result.prize_amount"
                                             class="w-32 text-right"
                                             min="0"
                                             placeholder="0.00"
@@ -331,7 +331,7 @@ onMounted(() => {
                                     </td>
                                     <td class="px-4 py-3 text-right font-medium">
                                         {{
-                                            (+result.prize_amount + +result.bonus_amount + +result.achievement_amount).toLocaleString('uk-UA', {
+                                            (+result.prize_amount + +result.achievement_amount).toLocaleString('uk-UA', {
                                                 minimumFractionDigits: 2,
                                                 maximumFractionDigits: 2
                                             })
@@ -360,9 +360,9 @@ onMounted(() => {
 
                             <div class="text-center p-4 bg-gray-50 rounded-lg dark:bg-gray-800">
                                 <div class="text-lg font-bold text-orange-600 dark:text-orange-400">
-                                    {{ totalBonusDistributed.toLocaleString() }}₴
+                                    {{ totalBonusDistributed.toLocaleString() }}
                                 </div>
-                                <div class="text-sm text-gray-600 dark:text-gray-400">Bonus Money</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">Bonuses</div>
                             </div>
 
                             <div class="text-center p-4 bg-gray-50 rounded-lg dark:bg-gray-800">

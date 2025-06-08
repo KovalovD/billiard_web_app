@@ -147,7 +147,7 @@ const formatCurrency = (amount: number): string => {
     return amount.toLocaleString('uk-UA', {
         style: 'currency',
         currency: 'UAH'
-    }).replace('UAH', '₴');
+    }).replace('UAH', '₴').replace('грн', '₴');
 };
 
 const fetchTournament = async () => {
@@ -637,8 +637,8 @@ onMounted(() => {
                                         <th class="px-4 py-3 text-left">{{ t('Position') }}</th>
                                         <th class="px-4 py-3 text-left">{{ t('Player') }}</th>
                                         <th class="px-4 py-3 text-center">{{ t('Rating Points') }}</th>
-                                        <th class="px-4 py-3 text-right">{{ t('Prize') }}</th>
                                         <th class="px-4 py-3 text-right">{{ t('Bonus') }}</th>
+                                        <th class="px-4 py-3 text-right">{{ t('Prize') }}</th>
                                         <th class="px-4 py-3 text-right">{{ t('Achievement') }}</th>
                                         <th class="px-4 py-3 text-right">{{ t('Total') }}</th>
                                     </tr>
@@ -676,17 +676,19 @@ onMounted(() => {
                                            </span>
                                             <span v-else class="text-gray-400">—</span>
                                         </td>
-                                        <td class="px-4 py-3 text-right">
-                                           <span v-if="player.prize_amount > 0"
-                                                 class="font-medium text-green-600 dark:text-green-400">
-                                               {{ formatCurrency(player.prize_amount) }}
-                                           </span>
-                                            <span v-else class="text-gray-400">—</span>
-                                        </td>
+
                                         <td class="px-4 py-3 text-right">
                                            <span v-if="player.bonus_amount > 0"
                                                  class="font-medium text-orange-600 dark:text-orange-400">
                                                {{ formatCurrency(player.bonus_amount) }}
+                                           </span>
+                                            <span v-else class="text-gray-400">—</span>
+                                        </td>
+
+                                        <td class="px-4 py-3 text-right">
+                                           <span v-if="player.prize_amount > 0"
+                                                 class="font-medium text-green-600 dark:text-green-400">
+                                               {{ formatCurrency(player.prize_amount) }}
                                            </span>
                                             <span v-else class="text-gray-400">—</span>
                                         </td>
