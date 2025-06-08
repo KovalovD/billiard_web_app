@@ -17,6 +17,7 @@ import {
     TrendingUpIcon,
     TrophyIcon
 } from 'lucide-vue-next';
+import DataTable from '@/Components/ui/data-table/DataTable.vue';
 
 defineOptions({ layout: AuthenticatedLayout });
 
@@ -304,6 +305,127 @@ onMounted(() => {
     fetchOverallStats();
     fetchGameTypeStats();
 });
+
+// Add columns definitions
+const gameTypeColumns = computed(() => [
+    {
+        key: 'game_type',
+        label: t('Game Type'),
+        align: 'left' as const,
+        render: (stats: any, type: string) => getGameTypeDisplayName(type)
+    },
+    {
+        key: 'matches',
+        label: t('Matches'),
+        align: 'center' as const,
+        render: (stats: any) => stats.matches
+    },
+    {
+        key: 'wins',
+        label: t('Wins'),
+        align: 'center' as const,
+        render: (stats: any) => stats.wins
+    },
+    {
+        key: 'losses',
+        label: t('Losses'),
+        align: 'center' as const,
+        render: (stats: any) => stats.losses
+    },
+    {
+        key: 'win_rate',
+        label: t('Win Rate'),
+        align: 'center' as const,
+        render: (stats: any) => stats.win_rate
+    }
+]);
+
+const leagueRatingsColumns = computed(() => [
+    {
+        key: 'league',
+        label: t('League'),
+        align: 'left' as const,
+        render: (rating: any) => rating.league?.name ?? t('Unknown League')
+    },
+    {
+        key: 'game_type',
+        label: t('Game Type'),
+        align: 'left' as const,
+        render: (rating: any) => getGameTypeDisplayName(rating.league?.game_type ?? 'unknown')
+    },
+    {
+        key: 'rating',
+        label: t('Rating'),
+        align: 'right' as const,
+        render: (rating: any) => rating.rating
+    },
+    {
+        key: 'position',
+        label: t('Position'),
+        align: 'right' as const,
+        render: (rating: any) => rating.position
+    },
+    {
+        key: 'matches',
+        label: t('Matches'),
+        align: 'right' as const,
+        render: (rating: any) => rating.matches_count ?? 0
+    },
+    {
+        key: 'status',
+        label: t('Status'),
+        align: 'center' as const,
+        render: (rating: any) => rating.is_active
+    }
+]);
+
+const recentMatchesColumns = computed(() => [
+    {
+        key: 'date',
+        label: t('Date'),
+        align: 'left' as const,
+        render: (match: any) => formatDate(match.finished_at ?? match.updated_at ?? match.created_at)
+    },
+    {
+        key: 'league',
+        label: t('League'),
+        align: 'left' as const,
+        render: (match: any) => match.league?.name ?? t('N/A')
+    },
+    {
+        key: 'opponent',
+        label: t('Opponent'),
+        align: 'left' as const,
+        render: (match: any) => getOpponentName(match)
+    },
+    {
+        key: 'score',
+        label: t('Score (You - Opp.)'),
+        align: 'center' as const,
+        render: (match: any) => ({
+            firstScore: isUserFirstPlayer(match) ? match.first_user_score : match.second_user_score,
+            secondScore: isUserFirstPlayer(match) ? match.second_user_score : match.first_user_score
+        })
+    },
+    {
+        key: 'result',
+        label: t('Result'),
+        align: 'center' as const,
+        render: (match: any) => ({
+            result: getMatchResult(match),
+            class: getResultClass(match)
+        })
+    },
+    {
+        key: 'rating_change',
+        label: t('Rating Change'),
+        align: 'center' as const,
+        render: (match: any) => ({
+            change: getUserRatingChange(match),
+            class: getRatingChangeClass(match)
+        })
+    }
+]);
 </script>
 
 <template>
@@ -431,32 +553,25 @@ onMounted(() => {
                     <CardDescription>{{ t('Your statistics by game type') }}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm">
-                            <thead class="text-left">
-                            <tr class="border-b dark:border-gray-700">
-                                <th class="px-2 py-3 font-medium">{{ t('Game Type') }}</th>
-                                <th class="px-2 py-3 text-center font-medium">{{ t('Matches') }}</th>
-                                <th class="px-2 py-3 text-center font-medium">{{ t('Wins') }}</th>
-                                <th class="px-2 py-3 text-center font-medium">{{ t('Losses') }}</th>
-                                <th class="px-2 py-3 text-center font-medium">{{ t('Win Rate') }}</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr v-for="(stats, type) in gameTypeStats" :key="type"
-                                class="border-b last:border-b-0 dark:border-gray-700">
-                                <td class="px-2 py-3 font-medium">{{ getGameTypeDisplayName(type) }}</td>
-                                <td class="px-2 py-3 text-center">{{ stats.matches }}</td>
-                                <td class="px-2 py-3 text-center text-green-600 dark:text-green-400">{{
-                                        stats.wins
-                                    }}
-                                </td>
-                                <td class="px-2 py-3 text-center text-red-600 dark:text-red-400">{{ stats.losses }}</td>
-                                <td class="px-2 py-3 text-center font-semibold">{{ stats.win_rate }}%</td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    <DataTable
+                        :columns="gameTypeColumns"
+                        :compact-mode="true"
+                        :data="Object.entries(gameTypeStats).map(([type, stats]) => ({ type, ...stats }))"
+                        :empty-message="t('No game type statistics available.')"
+                        :loading="isLoadingGameTypeStats"
+                    >
+                        <template #cell-wins="{ value }">
+                            <span class="text-green-600 dark:text-green-400">{{ value }}</span>
+                        </template>
+
+                        <template #cell-losses="{ value }">
+                            <span class="text-red-600 dark:text-red-400">{{ value }}</span>
+                        </template>
+
+                        <template #cell-win_rate="{ value }">
+                            <span class="font-semibold">{{ value }}%</span>
+                        </template>
+                    </DataTable>
                 </CardContent>
             </Card>
             <Card v-else-if="isLoadingGameTypeStats">
@@ -474,51 +589,26 @@ onMounted(() => {
                     <CardDescription>{{ t('Your current ratings across different leagues') }}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div v-if="isLoadingRatings" class="flex min-h-[150px] items-center justify-center py-8">
-                        <Spinner class="text-primary h-8 w-8"/>
-                    </div>
-                    <div v-else-if="userRatings.length === 0" class="py-6 text-center text-gray-500 dark:text-gray-400">
-                        {{ t("You haven't joined any leagues yet or no ratings found.") }}
-                    </div>
-                    <div v-else class="overflow-x-auto">
-                        <table class="w-full text-sm">
-                            <thead class="text-left">
-                            <tr class="border-b dark:border-gray-700">
-                                <th class="px-2 py-3 font-medium">League</th>
-                                <th class="px-2 py-3 font-medium">Game Type</th>
-                                <th class="px-2 py-3 text-right font-medium">Rating</th>
-                                <th class="px-2 py-3 text-right font-medium">Position</th>
-                                <th class="px-2 py-3 text-right font-medium">Matches</th>
-                                <th class="px-2 py-3 text-center font-medium">Status</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr v-for="rating in userRatings" :key="rating.id"
-                                class="border-b last:border-b-0 dark:border-gray-700">
-                                <td class="px-2 py-3">{{ rating.league?.name ?? t('Unknown League') }}</td>
-                                <td class="px-2 py-3">{{
-                                        getGameTypeDisplayName(rating.league?.game_type ?? 'unknown')
-                                    }}
-                                </td>
-                                <td class="px-2 py-3 text-right font-semibold">{{ rating.rating }}</td>
-                                <td class="px-2 py-3 text-right">#{{ rating.position ?? t('N/A') }}</td>
-                                <td class="px-2 py-3 text-right">{{ rating.matches_count ?? 0 }}</td>
-                                <td class="px-2 py-3 text-center">
-                                        <span
-                                            :class="
-                                                rating.is_active
-                                                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                                                    : 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300'
-                                            "
-                                            class="rounded-full px-2 py-1 text-xs font-medium"
-                                        >
-                                            {{ rating.is_active ? t('Active') : t('Inactive') }}
-                                        </span>
-                                </td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    <DataTable
+                        :columns="leagueRatingsColumns"
+                        :compact-mode="true"
+                        :data="userRatings"
+                        :empty-message="t('You haven\'t joined any leagues yet or no ratings found.')"
+                        :loading="isLoadingRatings"
+                    >
+                        <template #cell-position="{ value }">
+                            #{{ value ?? t('N/A') }}
+                        </template>
+
+                        <template #cell-status="{ value }">
+                            <span
+                                :class="value ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300'"
+                                class="rounded-full px-2 py-1 text-xs font-medium"
+                            >
+                                {{ value ? t('Active') : t('Inactive') }}
+                            </span>
+                        </template>
+                    </DataTable>
                 </CardContent>
             </Card>
 
@@ -528,54 +618,32 @@ onMounted(() => {
                     <CardDescription>{{ t('Your most recent match results (up to 15)') }}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div v-if="isLoadingMatches" class="flex min-h-[200px] items-center justify-center py-8">
-                        <Spinner class="text-primary h-8 w-8"/>
-                    </div>
-                    <div v-else-if="userMatches.length === 0" class="py-6 text-center text-gray-500 dark:text-gray-400">
-                        {{ t("You haven't played any matches yet.") }}
-                    </div>
-                    <div v-else class="overflow-x-auto">
-                        <table class="w-full text-sm">
-                            <thead class="text-left">
-                            <tr class="border-b dark:border-gray-700">
-                                <th class="px-2 py-3 font-medium">{{ t('Date') }}</th>
-                                <th class="px-2 py-3 font-medium">{{ t('League') }}</th>
-                                <th class="px-2 py-3 font-medium">{{ t('Opponent') }}</th>
-                                <th class="px-2 py-3 text-center font-medium">{{ t('Score (You - Opp.)') }}</th>
-                                <th class="px-2 py-3 text-center font-medium">{{ t('Result') }}</th>
-                                <th class="px-2 py-3 text-center font-medium">{{ t('Rating Change') }}</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr v-for="match in userMatches.slice(0, 15)" :key="match.id"
-                                class="border-b last:border-b-0 dark:border-gray-700">
-                                <td class="px-2 py-3 whitespace-nowrap">
-                                    {{ formatDate(match.finished_at ?? match.updated_at ?? match.created_at) }}
-                                </td>
-                                <td class="px-2 py-3">{{ match.league?.name ?? t('N/A') }}</td>
-                                <td class="px-2 py-3">{{ getOpponentName(match) }}</td>
-                                <td class="px-2 py-3 text-center font-medium whitespace-nowrap">
-                                    {{
-                                        isUserFirstPlayer(match)
-                                            ? `${match.first_user_score ?? '-'} : ${match.second_user_score ?? '-'}`
-                                            : `${match.second_user_score ?? '-'} : ${match.first_user_score ?? '-'}`
-                                    }}
-                                </td>
-                                <td class="px-2 py-3 text-center">
-                                        <span :class="getResultClass(match)"
-                                              class="rounded-full px-2 py-1 text-xs font-semibold whitespace-nowrap">
-                                            {{ getMatchResult(match) }}
-                                        </span>
-                                </td>
-                                <td class="px-2 py-3 text-center font-medium">
-                                        <span :class="getRatingChangeClass(match)">
-                                            {{ getUserRatingChange(match) }}
-                                        </span>
-                                </td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    <DataTable
+                        :columns="recentMatchesColumns"
+                        :compact-mode="true"
+                        :data="userMatches.slice(0, 15)"
+                        :empty-message="t('You haven\'t played any matches yet.')"
+                        :loading="isLoadingMatches"
+                    >
+                        <template #cell-score="{ value }">
+                            <span class="font-medium whitespace-nowrap">
+                                {{ value.firstScore ?? '-' }} : {{ value.secondScore ?? '-' }}
+                            </span>
+                        </template>
+
+                        <template #cell-result="{ value }">
+                            <span :class="value.class"
+                                  class="rounded-full px-2 py-1 text-xs font-semibold whitespace-nowrap">
+                                {{ value.result }}
+                            </span>
+                        </template>
+
+                        <template #cell-rating_change="{ value }">
+                            <span :class="value.class" class="font-medium">
+                                {{ value.change }}
+                            </span>
+                        </template>
+                    </DataTable>
                 </CardContent>
             </Card>
         </div>

@@ -12,7 +12,7 @@ class LocaleController
 {
     public function getLocale(): JsonResponse
     {
-        $locale = Session::get('locale');
+        $locale = Session::get('locale') ?: 'UK';
         App::setLocale($locale);
 
         return response()->json([

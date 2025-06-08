@@ -404,7 +404,7 @@ return [
 	'No description provided.'                                                                                                                                                          => 'Опис відсутній.',
 	'Player Rankings'                                                                                                                                                                   => 'Рейтинги гравців',
 	'Current standings in the :rating rating'                                                                                                                                           => 'Поточні позиції у рейтингу :rating',
-	'Find Me (#:position)'                                                                                                                                                              => 'Знайти мене (#:position)',
+    'Find Me' => 'Знайти мене',
 	'Load Delta'                                                                                                                                                                        => 'Завантажити дельту',
 	'Change since :date:'                                                                                                                                                               => 'Зміна з :date:',
 	'position :before → :after'                                                                                                                                                         => 'позиція :before → :after',

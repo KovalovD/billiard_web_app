@@ -62,7 +62,7 @@ class OfficialRatingPlayer extends Model
      */
     public function getTotalMoneyEarnedAttribute(): float
     {
-        return (float) ($this->total_prize_amount + $this->total_bonus_amount + $this->total_achievement_amount);
+        return (float) ($this->total_prize_amount + $this->total_achievement_amount);
     }
 
     /**

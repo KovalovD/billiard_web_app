@@ -1,5 +1,7 @@
 <script lang="ts" setup>
-import {Button, Card, CardContent, CardHeader, CardTitle, Spinner} from '@/Components/ui';
+import {Button, Card, CardContent, CardHeader, CardTitle} from '@/Components/ui';
+import DataTable from '@/Components/ui/data-table/DataTable.vue';
+import TableActions, {type ActionItem} from '@/Components/TableActions.vue';
 import {useAuth} from '@/composables/useAuth';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
@@ -36,6 +38,52 @@ const filteredRatings = computed(() => {
     return ratings.value.filter(rating => rating.is_active);
 });
 
+// Define table columns
+const columns = computed(() => [
+    {
+        key: 'name',
+        label: t('Rating System'),
+        align: 'left' as const,
+        render: (rating: OfficialRating) => ({
+            name: rating.name,
+            description: rating.description
+        })
+    },
+    {
+        key: 'game',
+        label: t('Game'),
+        hideOnMobile: true,
+        render: (rating: OfficialRating) => rating.game_type_name || 'N/A'
+    },
+    {
+        key: 'status',
+        label: t('Status'),
+        align: 'center' as const,
+        render: (rating: OfficialRating) => rating.is_active
+    },
+    {
+        key: 'players',
+        label: t('Players'),
+        align: 'center' as const,
+        hideOnMobile: true,
+        render: (rating: OfficialRating) => rating.players_count
+    },
+    {
+        key: 'tournaments',
+        label: t('Tournaments'),
+        align: 'center' as const,
+        hideOnTablet: true,
+        render: (rating: OfficialRating) => rating.tournaments_count
+    },
+    {
+        key: 'actions',
+        label: t('Actions'),
+        align: 'right' as const,
+        sticky: true,
+        width: '80px'
+    }
+]);
+
 const fetchRatings = async () => {
     isLoading.value = true;
     error.value = null;
@@ -47,6 +95,38 @@ const fetchRatings = async () => {
     } finally {
         isLoading.value = false;
     }
+};
+
+const getActions = (rating: OfficialRating): ActionItem[] => {
+    const actions: ActionItem[] = [
+        {
+            label: t('View'),
+            icon: EyeIcon,
+            href: `/official-ratings/${rating.id}`,
+            show: true
+        }
+    ];
+
+    if (isAuthenticated.value && isAdmin.value) {
+        actions.push({
+            separator: true,
+            show: true
+        });
+        actions.push({
+            label: t('Manage'),
+            icon: SettingsIcon,
+            href: `/admin/official-ratings/${rating.id}/manage`,
+            show: true
+        });
+        actions.push({
+            label: t('Edit'),
+            icon: PencilIcon,
+            href: `/admin/official-ratings/${rating.id}/edit`,
+            show: true
+        });
+    }
+
+    return actions;
 };
 
 onMounted(() => {
@@ -94,154 +174,74 @@ onMounted(() => {
                         {{ t('Rating Systems') }}
                     </CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <!-- Loading State -->
-                    <div v-if="isLoading" class="flex items-center justify-center py-10">
-                        <Spinner class="text-primary h-8 w-8"/>
-                        <span class="ml-2 text-gray-500 dark:text-gray-400">{{ t('Loading official ratings...') }}</span>
-                    </div>
-
-                    <!-- Error State -->
-                    <div v-else-if="error"
-                         class="rounded bg-red-100 p-4 text-center text-red-600 dark:bg-red-900/30 dark:text-red-400">
-                        {{ t('Error loading official ratings: :error', {error}) }}
-                    </div>
-
-                    <!-- Empty State -->
-                    <div v-else-if="filteredRatings.length === 0"
-                         class="py-10 text-center text-gray-500 dark:text-gray-400">
-                        <StarIcon class="mx-auto h-12 w-12 mb-4 opacity-50"/>
-                        <p class="text-lg">{{ t('No official ratings found') }}</p>
-                        <p class="text-sm">
-                            {{
-                                showInactiveRatings ? t('No ratings have been created yet.') : t('No active ratings available.')
-                            }}
-                        </p>
-                    </div>
-
-                    <!-- Ratings Table -->
-                    <div v-else class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                            <thead class="bg-gray-50 dark:bg-gray-800">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                                    {{ t('Rating System') }}
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                                    {{ t('Game') }}
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                                    {{ t('Status') }}
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                                    {{ t('Players') }}
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                                    {{ t('Tournaments') }}
-                                </th>
-                                <th
-                                    class="sticky right-0 z-10 px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50 dark:bg-gray-800"
-                                >
-                                    {{ t('Actions') }}
-                                </th>
-                            </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
-                            <tr
-                                v-for="rating in filteredRatings"
-                                :key="rating.id"
-                                :class="[
-                                        'hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors',
-                                        !rating.is_active && 'opacity-60'
-                                    ]"
-                            >
-                                <!-- Rating System Name -->
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <div class="flex-shrink-0 h-8 w-8">
-                                            <div
-                                                class="h-8 w-8 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
-                                                <StarIcon class="h-4 w-4 text-yellow-600 dark:text-yellow-400"/>
-                                            </div>
-                                        </div>
-                                        <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                                {{ rating.name }}
-                                            </div>
-                                            <div v-if="rating.description"
-                                                 class="text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">
-                                                {{ rating.description }}
-                                            </div>
-                                        </div>
+                <CardContent class="p-0">
+                    <DataTable
+                        :columns="columns"
+                        :compact-mode="true"
+                        :data="filteredRatings"
+                        :empty-message="showInactiveRatings ? t('No ratings have been created yet.') : t('No active ratings available.')"
+                        :loading="isLoading"
+                    >
+                        <!-- Custom cell renderers -->
+                        <template #cell-name="{ value, item }">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-8 w-8">
+                                    <div
+                                        class="h-8 w-8 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
+                                        <StarIcon class="h-4 w-4 text-yellow-600 dark:text-yellow-400"/>
                                     </div>
-                                </td>
-
-                                <!-- Game -->
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center text-sm text-gray-900 dark:text-gray-100">
-                                        <TrophyIcon class="h-4 w-4 mr-2 text-gray-400"/>
-                                        {{ rating.game_type_name || 'N/A' }}
+                                </div>
+                                <div class="ml-4">
+                                    <div :class="[
+                                        'text-sm font-medium text-gray-900 dark:text-gray-100',
+                                        !item.is_active && 'opacity-60'
+                                    ]">
+                                        {{ value.name }}
                                     </div>
-                                </td>
-
-                                <!-- Status -->
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <CheckCircleIcon v-if="rating.is_active" class="h-4 w-4 text-green-500 mr-2"/>
-                                        <XCircleIcon v-else class="h-4 w-4 text-red-500 mr-2"/>
-                                        <span
-                                            :class="rating.is_active ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
-                                            {{ rating.is_active ? t('Active') : t('Inactive') }}
-                                            </span>
+                                    <div v-if="value.description"
+                                         class="text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">
+                                        {{ value.description }}
                                     </div>
-                                </td>
+                                </div>
+                            </div>
+                        </template>
 
-                                <!-- Players -->
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center text-sm text-gray-900 dark:text-gray-100">
-                                        <UsersIcon class="h-4 w-4 mr-2 text-gray-400"/>
-                                        {{ rating.players_count }}
-                                    </div>
-                                </td>
+                        <template #cell-game="{ value }">
+                            <div class="flex items-center text-sm text-gray-900 dark:text-gray-100">
+                                <TrophyIcon class="h-4 w-4 mr-2 text-gray-400"/>
+                                {{ value }}
+                            </div>
+                        </template>
 
-                                <!-- Tournaments -->
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center text-sm text-gray-900 dark:text-gray-100">
-                                        <TrophyIcon class="h-4 w-4 mr-2 text-gray-400"/>
-                                        {{ rating.tournaments_count }}
-                                    </div>
-                                </td>
+                        <template #cell-status="{ value }">
+                            <div class="flex items-center">
+                                <CheckCircleIcon v-if="value" class="h-4 w-4 text-green-500 mr-2"/>
+                                <XCircleIcon v-else class="h-4 w-4 text-red-500 mr-2"/>
+                                <span
+                                    :class="value ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+                                    {{ value ? t('Active') : t('Inactive') }}
+                                </span>
+                            </div>
+                        </template>
 
-                                <!-- Actions -->
-                                <td class="sticky right-0 z-10 px-6 py-4 whitespace-nowrap text-right text-sm font-medium bg-white dark:bg-gray-900">
-                                    <div class="flex justify-end space-x-2">
-                                        <!-- Everyone can view -->
-                                        <Link :href="`/official-ratings/${rating.id}`">
-                                            <Button size="sm" variant="outline">
-                                                <EyeIcon class="h-4 w-4"/>
-                                            </Button>
-                                        </Link>
+                        <template #cell-players="{ value }">
+                            <div class="flex items-center text-sm text-gray-900 dark:text-gray-100">
+                                <UsersIcon class="h-4 w-4 mr-2 text-gray-400"/>
+                                {{ value }}
+                            </div>
+                        </template>
 
-                                        <!-- Only authenticated admins can manage/edit -->
-                                        <Link v-if="isAuthenticated && isAdmin"
-                                              :href="`/admin/official-ratings/${rating.id}/manage`">
-                                            <Button size="sm" variant="outline">
-                                                <SettingsIcon class="h-4 w-4"/>
-                                            </Button>
-                                        </Link>
+                        <template #cell-tournaments="{ value }">
+                            <div class="flex items-center text-sm text-gray-900 dark:text-gray-100">
+                                <TrophyIcon class="h-4 w-4 mr-2 text-gray-400"/>
+                                {{ value }}
+                            </div>
+                        </template>
 
-                                        <Link v-if="isAuthenticated && isAdmin"
-                                              :href="`/admin/official-ratings/${rating.id}/edit`">
-                                            <Button size="sm" variant="outline">
-                                                <PencilIcon class="h-4 w-4"/>
-                                            </Button>
-                                        </Link>
-                                    </div>
-                                </td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                        <template #cell-actions="{ item }">
+                            <TableActions :actions="getActions(item)"/>
+                        </template>
+                    </DataTable>
                 </CardContent>
             </Card>
         </div>

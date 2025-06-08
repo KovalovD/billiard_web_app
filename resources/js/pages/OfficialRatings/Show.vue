@@ -19,6 +19,7 @@ import {
     UsersIcon,
 } from 'lucide-vue-next';
 import {computed, nextTick, onMounted, ref} from 'vue';
+import DataTable from '@/Components/ui/data-table/DataTable.vue';
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -42,6 +43,7 @@ const showScrollToUser = ref(false);
 const deltaDate = ref('');
 const ratingDelta = ref<RatingDelta | null>(null);
 const isLoadingDelta = ref(false);
+const tableRef = ref<HTMLElement | null>(null);
 
 const allActivePlayers = computed(() => {
     return players.value.filter(p => p.is_active);
@@ -57,24 +59,25 @@ const isCurrentUser = (player: OfficialRatingPlayer): boolean | null => {
 };
 
 const scrollToUser = async () => {
-    if (currentUserPlayer.value) {
-        await nextTick();
-        // Find the user's row element by data attribute
-        const userRowElement = document.querySelector(`[data-user-row="${currentUserPlayer.value.user?.id}"]`) as HTMLElement;
+    if (!currentUserPlayer.value) return;
 
-        if (userRowElement) {
-            userRowElement.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center'
-            });
+    await nextTick();
 
-            // Flash highlight effect
-            userRowElement.classList.add('animate-pulse');
-            setTimeout(() => {
-                userRowElement.classList.remove('animate-pulse');
-            }, 2000);
-        }
-    }
+    // Find the user's row element
+    const userRow = document.querySelector(`[data-user-id="${currentUserPlayer.value.user?.id}"]`);
+    if (!userRow) return;
+
+    // Scroll the row into view with smooth behavior
+    userRow.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+    });
+
+    // Add highlight effect
+    userRow.classList.add('animate-pulse', 'bg-blue-100', 'dark:bg-blue-900/30');
+    setTimeout(() => {
+        userRow.classList.remove('animate-pulse', 'bg-blue-100', 'dark:bg-blue-900/30');
+    }, 2000);
 };
 
 const getPositionBadgeClass = (position: number): string => {
@@ -178,6 +181,109 @@ onMounted(() => {
     fetchPlayers();
     fetchTournaments();
 });
+
+// Add columns definition before the template
+const columns = computed(() => [
+    {
+        key: 'position',
+        label: t('Rank'),
+        align: 'left' as const,
+        render: (player: OfficialRatingPlayer) => ({
+            position: player.position,
+            isCurrentUser: isCurrentUser(player)
+        })
+    },
+    {
+        key: 'division',
+        label: t('Division'),
+        align: 'left' as const,
+        render: (player: OfficialRatingPlayer) => ({
+            division: player.division,
+            isCurrentUser: isCurrentUser(player)
+        })
+    },
+    {
+        key: 'player',
+        label: t('Player'),
+        align: 'left' as const,
+        render: (player: OfficialRatingPlayer) => ({
+            name: `${player.user?.firstname} ${player.user?.lastname}`,
+            isCurrentUser: isCurrentUser(player),
+            isChampion: player.position === 1
+        })
+    },
+    {
+        key: 'rating',
+        label: t('Rating'),
+        align: 'center' as const,
+        render: (player: OfficialRatingPlayer) => ({
+            points: player.rating_points,
+            isCurrentUser: isCurrentUser(player)
+        })
+    },
+    {
+        key: 'tournaments',
+        label: t('Tournaments'),
+        align: 'center' as const,
+        render: (player: OfficialRatingPlayer) => ({
+            played: player.tournaments_played,
+            isCurrentUser: isCurrentUser(player)
+        })
+    },
+    {
+        key: 'prize',
+        label: t('Prize'),
+        align: 'center' as const,
+        render: (player: OfficialRatingPlayer) => ({
+            amount: player.total_prize_amount,
+            isCurrentUser: isCurrentUser(player)
+        })
+    },
+    {
+        key: 'achievement',
+        label: t('Achievement'),
+        align: 'center' as const,
+        render: (player: OfficialRatingPlayer) => ({
+            amount: player.total_achievement_amount,
+            isCurrentUser: isCurrentUser(player)
+        })
+    },
+    {
+        key: 'total',
+        label: t('Total Money'),
+        align: 'center' as const,
+        render: (player: OfficialRatingPlayer) => ({
+            amount: player.total_money_earned,
+            isCurrentUser: isCurrentUser(player)
+        })
+    },
+    {
+        key: 'bonus',
+        label: t('Bonus'),
+        align: 'center' as const,
+        render: (player: OfficialRatingPlayer) => ({
+            amount: player.total_bonus_amount,
+            isCurrentUser: isCurrentUser(player)
+        })
+    },
+    {
+        key: 'lastTournament',
+        label: t('Last Tournament'),
+        align: 'center' as const,
+        render: (player: OfficialRatingPlayer) => ({
+            date: player.last_tournament_at,
+            isCurrentUser: isCurrentUser(player)
+        })
+    }
+]);
+
+const getRowClass = (player: OfficialRatingPlayer): string => {
+    const baseClass = 'transition-colors duration-200';
+    if (isCurrentUser(player)) {
+        return `${baseClass} bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 border-l-4 border-blue-300`;
+    }
+    return baseClass;
+};
 </script>
 
 <template>
@@ -340,7 +446,7 @@ onMounted(() => {
                                     @click="scrollToUser"
                                 >
                                     <UserIcon class="h-4 w-4"/>
-                                    {{ t('Find Me (#:position)', {position: currentUserPlayer.position}) }}
+                                    {{ t('Find Me') }} (#{{ currentUserPlayer.position }})
                                     <ChevronDownIcon class="h-4 w-4"/>
                                 </Button>
                             </div>
@@ -391,159 +497,137 @@ onMounted(() => {
                                 {{ t('No active players in this rating.') }}
                             </div>
                             <div v-else class="overflow-auto">
-                                <table class="w-full">
-                                    <thead>
-                                    <tr class="border-b dark:border-gray-700">
-                                        <th class="px-4 py-3 text-left">{{ t('Rank') }}</th>
-                                        <th class="px-4 py-3 text-left">{{ t('Division') }}</th>
-                                        <th class="px-4 py-3 text-left">{{ t('Player') }}</th>
-                                        <th class="px-4 py-3 text-center">{{ t('Rating') }}</th>
-                                        <th class="px-4 py-3 text-center">{{ t('Tournaments') }}</th>
-                                        <th class="px-4 py-3 text-center">{{ t('Wins') }}</th>
-                                        <th class="px-4 py-3 text-center">{{ t('Win Rate') }}</th>
-                                        <th class="px-4 py-3 text-center">{{ t('Prize') }}</th>
-                                        <th class="px-4 py-3 text-center">{{ t('Bonus') }}</th>
-                                        <th class="px-4 py-3 text-center">{{ t('Achievement') }}</th>
-                                        <th class="px-4 py-3 text-center">{{ t('Total Money') }}</th>
-                                        <th class="px-4 py-3 text-center">{{ t('Last Tournament') }}</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    <tr
-                                        v-for="player in allActivePlayers"
-                                        :key="player.id"
-                                        :class="[
-                                            'border-b dark:border-gray-700 transition-all duration-200',
-                                            isCurrentUser(player)
-                                                ? 'bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 border-l-4 border-blue-500 shadow-sm'
-                                                : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
-                                        ]"
-                                        :data-user-row="player.user?.id"
-                                    >
-                                        <td class="px-4 py-3">
-                                            <div class="flex items-center gap-2">
-                                                <span
-                                                    :class="[
-                                                        'inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium',
-                                                        getPositionBadgeClass(player.position)
-                                                    ]"
-                                                >
-                                                    {{ player.position }}
-                                                </span>
-                                                <!-- Current user indicator -->
-                                                <UserIcon
-                                                    v-if="isCurrentUser(player)"
-                                                    class="h-4 w-4 text-blue-600 dark:text-blue-400"
-                                                    title="This is you!"
-                                                />
-                                            </div>
-                                        </td>
-                                        <td class="px-4 py-3">
-                                                <span
-                                                    :class="[
-                                                        'inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium',
-                                                        isCurrentUser(player)
-                                                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
-                                                            : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
-                                                    ]"
-                                                >
-                                                    {{ player.division }}
-                                                </span>
-                                        </td>
-                                        <td class="px-4 py-3">
-                                            <div class="flex items-center gap-2">
-                                                <div>
-                                                    <p :class="[
-                                                        'font-medium',
-                                                        isCurrentUser(player)
-                                                            ? 'text-blue-900 dark:text-blue-100'
-                                                            : 'text-gray-900 dark:text-gray-100'
-                                                    ]">
-                                                        {{ player.user?.firstname }} {{ player.user?.lastname }}
-                                                        <span v-if="isCurrentUser(player)"
-                                                              class="text-xs text-blue-600 dark:text-blue-400 ml-1">(You)</span>
-                                                    </p>
-                                                    <p v-if="player.position === 1"
-                                                       class="text-sm text-yellow-600 dark:text-yellow-400">
-                                                        👑 Champion
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="px-4 py-3 text-center">
-                                            <span :class="[
-                                                'font-bold text-lg',
-                                                isCurrentUser(player)
-                                                    ? 'text-blue-900 dark:text-blue-100'
-                                                    : 'text-gray-900 dark:text-gray-100'
-                                            ]">
-                                                {{ player.rating_points }}
-                                            </span>
-                                        </td>
-                                        <td class="px-4 py-3 text-center">
+                                <DataTable
+                                    ref="tableRef"
+                                    :columns="columns"
+                                    :compact-mode="true"
+                                    :data="allActivePlayers"
+                                    :empty-message="t('No active players in this rating.')"
+                                    :loading="isLoadingPlayers"
+                                    :row-attributes="(player) => ({
+                                        'data-user-id': player.user?.id?.toString()
+                                    })"
+                                    :row-class="getRowClass"
+                                >
+                                    <template #cell-position="{ value }">
+                                        <div class="flex items-center gap-2">
                                             <span
-                                                :class="isCurrentUser(player) ? 'font-semibold text-blue-900 dark:text-blue-100' : ''">
-                                                {{ player.tournaments_played }}
+                                                :class="[
+                                                    'inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium',
+                                                    getPositionBadgeClass(value.position)
+                                                ]"
+                                            >
+                                                {{ value.position }}
                                             </span>
-                                        </td>
-                                        <td class="px-4 py-3 text-center">
-                                            <span
-                                                :class="isCurrentUser(player) ? 'font-semibold text-blue-900 dark:text-blue-100' : ''">
-                                                {{ player.tournaments_won }}
-                                            </span>
-                                        </td>
-                                        <td class="px-4 py-3 text-center">
-                                            <span :class="[
-                                                'text-sm',
-                                                isCurrentUser(player) ? 'font-semibold text-blue-900 dark:text-blue-100' : ''
-                                            ]">
-                                                {{ player.win_rate }}%
-                                            </span>
-                                        </td>
-                                        <td class="px-4 py-3 text-center">
-                                            <span v-if="player.total_prize_amount > 0" :class="[
-                                                'font-medium text-green-600 dark:text-green-400',
-                                                isCurrentUser(player) ? 'font-bold' : ''
-                                            ]">
-                                                {{ formatCurrency(player.total_prize_amount) }}
-                                            </span>
-                                            <span v-else class="text-gray-400">—</span>
-                                        </td>
-                                        <td class="px-4 py-3 text-center">
-                                            <span v-if="player.total_bonus_amount > 0" :class="[
-                                                'font-medium text-orange-600 dark:text-orange-400',
-                                                isCurrentUser(player) ? 'font-bold' : ''
-                                            ]">
-                                                {{ formatCurrency(player.total_bonus_amount) }}
-                                            </span>
-                                            <span v-else class="text-gray-400">—</span>
-                                        </td>
-                                        <td class="px-4 py-3 text-center">
-                                            <span v-if="player.total_achievement_amount > 0" :class="[
-                                                'font-medium text-purple-600 dark:text-purple-400',
-                                                isCurrentUser(player) ? 'font-bold' : ''
-                                            ]">
-                                                {{ formatCurrency(player.total_achievement_amount) }}
-                                            </span>
-                                            <span v-else class="text-gray-400">—</span>
-                                        </td>
-                                        <td class="px-4 py-3 text-center">
-                                            <span v-if="player.total_money_earned > 0" :class="[
-                                                'font-bold text-indigo-600 dark:text-indigo-400',
-                                                isCurrentUser(player) ? 'text-indigo-800 dark:text-indigo-200' : ''
-                                            ]">
-                                                {{ formatCurrency(player.total_money_earned) }}
-                                            </span>
-                                            <span v-else class="text-gray-400">—</span>
-                                        </td>
-                                        <td class="px-4 py-3 text-center text-sm text-gray-600 dark:text-gray-400">
-                                            {{
-                                                player.last_tournament_at ? formatDate(player.last_tournament_at) : t('Never')
-                                            }}
-                                        </td>
-                                    </tr>
-                                    </tbody>
-                                </table>
+                                            <UserIcon
+                                                v-if="value.isCurrentUser"
+                                                class="h-4 w-4 text-blue-600 dark:text-blue-400"
+                                                title="This is you!"
+                                            />
+                                        </div>
+                                    </template>
+
+                                    <template #cell-division="{ value }">
+                                        <span
+                                            :class="[
+                                                'inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium',
+                                                value.isCurrentUser
+                                                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                                                    : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
+                                            ]"
+                                        >
+                                            {{ value.division }}
+                                        </span>
+                                    </template>
+
+                                    <template #cell-player="{ value }">
+                                        <div class="flex items-center gap-2">
+                                            <div>
+                                                <p :class="[
+                                                    'font-medium',
+                                                    value.isCurrentUser
+                                                        ? 'text-blue-900 dark:text-blue-100'
+                                                        : 'text-gray-900 dark:text-gray-100'
+                                                ]">
+                                                    {{ value.name }}
+                                                    <span v-if="value.isCurrentUser"
+                                                          class="text-xs text-blue-600 dark:text-blue-400 ml-1">(You)</span>
+                                                </p>
+                                                <p v-if="value.isChampion"
+                                                   class="text-sm text-yellow-600 dark:text-yellow-400">
+                                                    👑 Champion
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </template>
+
+                                    <template #cell-rating="{ value }">
+                                        <span :class="[
+                                            'font-bold text-lg',
+                                            value.isCurrentUser
+                                                ? 'text-blue-900 dark:text-blue-100'
+                                                : 'text-gray-900 dark:text-gray-100'
+                                        ]">
+                                            {{ value.points }}
+                                        </span>
+                                    </template>
+
+                                    <template #cell-tournaments="{ value }">
+                                        <span
+                                            :class="value.isCurrentUser ? 'font-semibold text-blue-900 dark:text-blue-100' : ''">
+                                            {{ value.played }}
+                                        </span>
+                                    </template>
+
+                                    <template #cell-prize="{ value }">
+                                        <span v-if="value.amount > 0" :class="[
+                                            'font-medium text-green-600 dark:text-green-400',
+                                            value.isCurrentUser ? 'font-bold' : ''
+                                        ]">
+                                            {{ formatCurrency(value.amount) }}
+                                        </span>
+                                        <span v-else class="text-gray-400">—</span>
+                                    </template>
+
+                                    <template #cell-achievement="{ value }">
+                                        <span v-if="value.amount > 0" :class="[
+                                            'font-medium text-purple-600 dark:text-purple-400',
+                                            value.isCurrentUser ? 'font-bold' : ''
+                                        ]">
+                                            {{ formatCurrency(value.amount) }}
+                                        </span>
+                                        <span v-else class="text-gray-400">—</span>
+                                    </template>
+
+                                    <template #cell-total="{ value }">
+                                        <span v-if="value.amount > 0" :class="[
+                                            'font-medium text-blue-600 dark:text-blue-400',
+                                            value.isCurrentUser ? 'font-bold' : ''
+                                        ]">
+                                            {{ formatCurrency(value.amount) }}
+                                        </span>
+                                        <span v-else class="text-gray-400">—</span>
+                                    </template>
+
+
+                                    <template #cell-bonus="{ value }">
+                                        <span v-if="value.amount > 0" :class="[
+                                            'font-medium text-orange-600 dark:text-orange-400',
+                                            value.isCurrentUser ? 'font-bold' : ''
+                                        ]">
+                                            {{ value.amount }}
+                                        </span>
+                                        <span v-else class="text-gray-400">—</span>
+                                    </template>
+
+                                    <template #cell-lastTournament="{ value }">
+                                        <span v-if="value.date"
+                                              :class="value.isCurrentUser ? 'font-semibold text-blue-900 dark:text-blue-100' : ''">
+                                            {{ formatDate(value.date) }}
+                                        </span>
+                                        <span v-else class="text-gray-400">—</span>
+                                    </template>
+                                </DataTable>
                             </div>
                         </CardContent>
                     </Card>

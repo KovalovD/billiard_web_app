@@ -1,4 +1,3 @@
-//resources/js/Components/ui/Button.vue
 <script lang="ts" setup>
 import {computed} from 'vue';
 import {cva, type VariantProps} from 'class-variance-authority';

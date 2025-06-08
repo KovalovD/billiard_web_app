@@ -1,7 +1,9 @@
-// resources/js/pages/Leagues/MultiplayerGames/Index.vue
+<!-- resources/js/pages/Leagues/MultiplayerGames/Index.vue -->
 <script lang="ts" setup>
 import CreateMultiplayerGameModal from '@/Components/CreateMultiplayerGameModal.vue';
-import {Button, Card, CardContent, CardHeader, CardTitle, Spinner} from '@/Components/ui';
+import {Button, Card, CardContent, CardHeader, CardTitle} from '@/Components/ui';
+import DataTable from '@/Components/ui/data-table/DataTable.vue';
+import TableActions, {type ActionItem} from '@/Components/TableActions.vue';
 import {useAuth} from '@/composables/useAuth';
 import {useMultiplayerGames} from '@/composables/useMultiplayerGames';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
@@ -13,7 +15,6 @@ import {
     CalendarIcon,
     EyeIcon,
     GamepadIcon,
-    LogInIcon,
     PlayIcon,
     PlusIcon,
     SettingsIcon,
@@ -31,7 +32,7 @@ const props = defineProps<{
 
 const {isAdmin, isAuthenticated} = useAuth();
 const { t } = useLocale();
-const {getMultiplayerGames, error, startMultiplayerGame} = useMultiplayerGames();
+const {getMultiplayerGames, error, startMultiplayerGame, cancelMultiplayerGame} = useMultiplayerGames();
 
 const league = ref<League | null>(null);
 const multiplayerGames = ref<MultiplayerGame[]>([]);
@@ -54,6 +55,59 @@ const filteredGames = computed(() => {
     }
     return multiplayerGames.value.filter(game => game.status === selectedStatus.value);
 });
+
+// Define table columns
+const columns = computed(() => [
+    {
+        key: 'name',
+        label: t('Game'),
+        align: 'left' as const,
+        render: (game: MultiplayerGame) => ({
+            name: game.name,
+            id: game.id
+        })
+    },
+    {
+        key: 'status',
+        label: t('Status'),
+        align: 'center' as const,
+        render: (game: MultiplayerGame) => game.status
+    },
+    {
+        key: 'players',
+        label: t('Players'),
+        align: 'center' as const,
+        hideOnMobile: true,
+        render: (game: MultiplayerGame) => game.total_players_count
+    },
+    {
+        key: 'date',
+        label: t('Date Info'),
+        hideOnMobile: true,
+        render: (game: MultiplayerGame) => getGameDateInfo(game)
+    },
+    {
+        key: 'entryFee',
+        label: t('Entry Fee'),
+        align: 'right' as const,
+        hideOnTablet: true,
+        render: (game: MultiplayerGame) => formatPrizePool(game.entrance_fee || 0)
+    },
+    {
+        key: 'registration',
+        label: t('Registration'),
+        align: 'center' as const,
+        hideOnTablet: true,
+        render: (game: MultiplayerGame) => game.is_registration_open
+    },
+    {
+        key: 'actions',
+        label: t('Actions'),
+        align: 'right' as const,
+        sticky: true,
+        width: '80px'
+    }
+]);
 
 // Load league and games
 const fetchLeague = async () => {
@@ -125,10 +179,6 @@ const formatPrizePool = (amount: number): string => {
     }).replace('UAH', '₴');
 };
 
-const getPlayersText = (game: MultiplayerGame): number => {
-    return game.total_players_count;
-};
-
 const getGameDateInfo = (game: MultiplayerGame): string => {
     if (game.completed_at) {
         return `${t('Completed:')} ${formatDateTime(game.completed_at)}`;
@@ -146,12 +196,75 @@ const handleStart = async (game: MultiplayerGame) => {
 
     try {
         await startMultiplayerGame(props.leagueId, game.id);
-
-        fetchGames();
+        await fetchGames();
         // eslint-disable-next-line
     } catch (err) {
         // Error is handled by the composable
     }
+};
+
+const handleCancel = async (game: MultiplayerGame) => {
+    if (!isAuthenticated.value || !isAdmin.value) return;
+
+    if (!confirm(t('Are you sure you want to cancel this game?'))) {
+        return;
+    }
+
+    try {
+        await cancelMultiplayerGame(props.leagueId, game.id);
+        await fetchGames();
+        // eslint-disable-next-line
+    } catch (err) {
+        // Error is handled by the composable
+    }
+};
+
+const getActions = (game: MultiplayerGame): ActionItem[] => {
+    const actions: ActionItem[] = [
+        {
+            label: t('View'),
+            icon: EyeIcon,
+            href: `/leagues/${props.leagueId}/multiplayer-games/${game.id}`,
+            show: true
+        }
+    ];
+
+    if (isAuthenticated.value && isAdmin.value) {
+        if (game.status === 'registration') {
+            actions.push({
+                separator: true,
+                show: true
+            });
+            actions.push({
+                label: t('Start Game'),
+                icon: PlayIcon,
+                action: () => handleStart(game),
+                show: game.total_players_count >= 2
+            });
+            actions.push({
+                label: t('Manage'),
+                icon: SettingsIcon,
+                href: `/leagues/${props.leagueId}/multiplayer-games/${game.id}`,
+                show: true
+            });
+            actions.push({
+                label: t('Cancel'),
+                icon: XIcon,
+                action: () => handleCancel(game),
+                variant: 'destructive',
+                show: true
+            });
+        } else if (game.status === 'in_progress') {
+            actions.push({
+                label: t('Manage'),
+                icon: SettingsIcon,
+                href: `/leagues/${props.leagueId}/multiplayer-games/${game.id}`,
+                show: true
+            });
+        }
+    }
+
+    return actions;
 };
 
 onMounted(() => {
@@ -219,205 +332,90 @@ onMounted(() => {
                         {{ t('Multiplayer Games') }}
                     </CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <!-- Loading state -->
-                    <div v-if="isLoadingGames" class="flex items-center justify-center py-10">
-                        <Spinner class="text-primary h-8 w-8"/>
-                        <span class="ml-2 text-gray-500 dark:text-gray-400">Loading games...</span>
-                    </div>
-
+                <CardContent class="p-0">
                     <!-- No multiplayer support message -->
-                    <div v-else-if="league && !league.game_multiplayer"
+                    <div v-if="!isLoadingGames && league && !league.game_multiplayer"
                          class="py-10 text-center text-gray-500 dark:text-gray-400">
                         <GamepadIcon class="mx-auto h-12 w-12 mb-4 opacity-50"/>
                         <p class="text-lg">{{ t('Multiplayer Not Supported') }}</p>
                         <p class="text-sm">{{ t('This league does not support multiplayer games.') }}</p>
                     </div>
 
-                    <!-- Empty state -->
-                    <div v-else-if="filteredGames.length === 0"
-                         class="py-10 text-center text-gray-500 dark:text-gray-400">
-                        <GamepadIcon class="mx-auto h-12 w-12 mb-4 opacity-50"/>
-                        <p class="text-lg">{{ t('No games found') }}</p>
-                        <p class="text-sm">
-                            {{
-                                selectedStatus === 'all' ? t('No multiplayer games for this league.') : t('No :status games.', { status: selectedStatus })
-                            }}
-                            <span v-if="isAuthenticated && isAdmin">{{ t('Create one to get started!') }}</span>
-                            <span v-else-if="!isAuthenticated">
-                                <Link :href="route('login')" class="text-blue-600 hover:underline dark:text-blue-400">
-                                    {{ t('Login to create games.') }}
-                                </Link>
-                            </span>
-                        </p>
-                    </div>
+                    <!-- Data Table -->
+                    <DataTable
+                        v-else
+                        :columns="columns"
+                        :compact-mode="true"
+                        :data="filteredGames"
+                        :empty-message="selectedStatus === 'all' ? t('No multiplayer games for this league.') : t('No :status games.', { status: selectedStatus })"
+                        :loading="isLoadingGames"
+                    >
+                        <!-- Custom cell renderers -->
+                        <template #cell-name="{ value }">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-8 w-8">
+                                    <div
+                                        class="h-8 w-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                                        <GamepadIcon class="h-4 w-4 text-purple-600 dark:text-purple-400"/>
+                                    </div>
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                        {{ value.name }}
+                                    </div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">
+                                        ID: {{ value.id }}
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
 
-                    <!-- Games Table -->
-                    <div v-else class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                            <thead class="bg-gray-50 dark:bg-gray-800">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                                    {{ t('Game') }}
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                                    {{ t('Status') }}
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                                    {{ t('Players') }}
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                                    {{ t('Date Info') }}
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                                    {{ t('Entry Fee') }}
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                                    {{ t('Registration') }}
-                                </th>
-                                <th
-                                    class="sticky right-0 z-10 px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50 dark:bg-gray-800"
-                                >
-                                    {{ t('Actions') }}
-                                </th>
-                            </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
-                            <tr
-                                v-for="game in filteredGames"
-                                :key="game.id"
-                                class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                        <template #cell-status="{ value }">
+                            <span
+                                :class="[
+                                    'inline-flex px-2 py-1 text-xs font-medium rounded-full',
+                                    getStatusBadgeClass(value)
+                                ]"
                             >
-                                <!-- Game Name -->
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <div class="flex-shrink-0 h-8 w-8">
-                                            <div
-                                                class="h-8 w-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                                                <GamepadIcon class="h-4 w-4 text-purple-600 dark:text-purple-400"/>
-                                            </div>
-                                        </div>
-                                        <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                                {{ game.name }}
-                                            </div>
-                                            <div class="text-sm text-gray-500 dark:text-gray-400">
-                                                ID: {{ game.id }}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </td>
+                                {{ value.replace('_', ' ').toUpperCase() }}
+                            </span>
+                        </template>
 
-                                <!-- Status -->
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                        <span
-                                            :class="[
-                                                'inline-flex px-2 py-1 text-xs font-medium rounded-full',
-                                                getStatusBadgeClass(game.status)
-                                            ]"
-                                        >
-                                            {{ game.status.replace('_', ' ').toUpperCase() }}
-                                        </span>
-                                </td>
+                        <template #cell-players="{ value }">
+                            <div class="flex items-center text-sm text-gray-900 dark:text-gray-100">
+                                <UsersIcon class="h-4 w-4 mr-2 text-gray-400"/>
+                                <div>{{ value }}</div>
+                            </div>
+                        </template>
 
-                                <!-- Players -->
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center text-sm text-gray-900 dark:text-gray-100">
-                                        <UsersIcon class="h-4 w-4 mr-2 text-gray-400"/>
-                                        <div>
-                                            {{ getPlayersText(game) }}
-                                        </div>
-                                    </div>
-                                </td>
+                        <template #cell-date="{ value }">
+                            <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                                <CalendarIcon class="h-4 w-4 mr-2"/>
+                                <div class="text-xs">{{ value }}</div>
+                            </div>
+                        </template>
 
-                                <!-- Date Info -->
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                                        <CalendarIcon class="h-4 w-4 mr-2"/>
-                                        <div class="text-xs">
-                                            {{ getGameDateInfo(game) }}
-                                        </div>
-                                    </div>
-                                </td>
+                        <template #cell-entryFee="{ value }">
+                            <span class="text-green-600 dark:text-green-400 font-medium">
+                                {{ value }}
+                            </span>
+                        </template>
 
-                                <!-- Entry Fee -->
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center text-sm">
-                                        <span class="text-green-600 dark:text-green-400 font-medium">
-                                                {{ formatPrizePool(game.entrance_fee || 0) }}
-                                            </span>
-                                    </div>
-                                </td>
+                        <template #cell-registration="{ value }">
+                            <div v-if="value" class="flex items-center">
+                                <div class="h-2 w-2 bg-green-400 rounded-full mr-2"></div>
+                                <span class="text-sm text-green-600 dark:text-green-400">{{ t('Open') }}</span>
+                            </div>
+                            <div v-else class="flex items-center">
+                                <div class="h-2 w-2 bg-red-400 rounded-full mr-2"></div>
+                                <span class="text-sm text-red-600 dark:text-red-400">{{ t('Closed') }}</span>
+                            </div>
+                        </template>
 
-                                <!-- Registration Status -->
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div v-if="game.is_registration_open" class="flex items-center">
-                                        <div class="h-2 w-2 bg-green-400 rounded-full mr-2"></div>
-                                        <span class="text-sm text-green-600 dark:text-green-400">{{ t('Open') }}</span>
-                                    </div>
-                                    <div v-else class="flex items-center">
-                                        <div class="h-2 w-2 bg-red-400 rounded-full mr-2"></div>
-                                        <span class="text-sm text-red-600 dark:text-red-400">{{ t('Closed') }}</span>
-                                    </div>
-                                </td>
-
-                                <!-- Actions -->
-                                <td class="sticky right-0 z-10 px-6 py-4 whitespace-nowrap text-right text-sm font-medium bg-white dark:bg-gray-900">
-                                    <div class="flex justify-end space-x-2">
-                                        <!-- Everyone can view -->
-                                        <Link :href="`/leagues/${leagueId}/multiplayer-games/${game.id}`">
-                                            <Button size="sm" :title="t('View Game')" variant="outline">
-                                                <EyeIcon class="h-4 w-4"/>
-                                            </Button>
-                                        </Link>
-
-                                        <!-- Admin only actions -->
-                                        <template v-if="isAuthenticated && isAdmin">
-                                            <Button
-                                                v-if="game.status === 'registration'"
-                                                :disabled="game.total_players_count < 2"
-                                                size="sm"
-                                                :title="t('Start Game')"
-                                                variant="outline"
-                                                @click="handleStart(game)"
-                                            >
-                                                <PlayIcon class="h-4 w-4"/>
-                                            </Button>
-
-                                            <Button
-                                                v-if="['registration', 'in_progress'].includes(game.status)"
-                                                size="sm"
-                                                :title="t('Manage Game')"
-                                                variant="outline"
-                                            >
-                                                <SettingsIcon class="h-4 w-4"/>
-                                            </Button>
-
-                                            <Button
-                                                v-if="game.status === 'registration'"
-                                                size="sm"
-                                                :title="t('Cancel Game')"
-                                                variant="destructive"
-                                            >
-                                                <XIcon class="h-4 w-4"/>
-                                            </Button>
-                                        </template>
-
-                                        <!-- Guest login prompt for admin actions -->
-                                        <div v-else-if="!isAuthenticated && game.status === 'registration'"
-                                             class="text-center">
-                                            <Link :href="route('login')" :title="t('Login to manage')">
-                                                <Button size="sm" variant="outline">
-                                                    <LogInIcon class="h-4 w-4"/>
-                                                </Button>
-                                            </Link>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                        <template #cell-actions="{ item }">
+                            <TableActions :actions="getActions(item)"/>
+                        </template>
+                    </DataTable>
                 </CardContent>
             </Card>
         </div>

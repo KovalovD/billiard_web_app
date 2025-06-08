@@ -17,6 +17,8 @@ import SelectValue from './SelectValue.vue';
 import Textarea from './Textarea.vue';
 import Spinner from './Spinner.vue';
 
+export {default as DataTable} from './data-table/DataTable.vue';
+
 // Export both as default and named exports to support both import styles
 export {
     Button,

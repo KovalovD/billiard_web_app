@@ -21,6 +21,7 @@ import {computed, onMounted, ref, watch} from 'vue';
 import {useLocale} from '@/composables/useLocale';
 import GameFinishModal from "@/Components/GameFinishModal.vue";
 import AddPlayerModal from "@/Components/AddPlayerModal.vue";
+import DataTable from '@/Components/ui/data-table/DataTable.vue';
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -143,6 +144,40 @@ const statusText = computed(() => {
             return game.value.status;
     }
 });
+
+// Add columns definition for completed game results
+const resultsColumns = computed(() => [
+    {
+        key: 'finish_position',
+        label: t('Position'),
+        align: 'left' as const,
+        render: (player: any) => ({
+            position: player.finish_position,
+            isWinner: player.finish_position === 1
+        })
+    },
+    {
+        key: 'player',
+        label: t('Player'),
+        align: 'left' as const,
+        render: (player: any) => ({
+            name: `${player.user.firstname} ${player.user.lastname}`,
+            isYou: isAuthenticated && player.user.id === user?.id
+        })
+    },
+    {
+        key: 'rating_points',
+        label: t('Rating Points'),
+        align: 'center' as const,
+        render: (player: any) => player.rating_points
+    },
+    {
+        key: 'prize_amount',
+        label: t('Prize'),
+        align: 'right' as const,
+        render: (player: any) => player.prize_amount
+    }
+]);
 
 // Fetch data
 const fetchLeague = async () => {
@@ -651,66 +686,46 @@ onMounted(() => {
                                         <CardTitle>{{ t('Game Results') }}</CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                        <div class="space-y-4">
-                                            <div class="overflow-auto">
-                                                <table class="w-full">
-                                                    <thead>
-                                                    <tr class="border-b dark:border-gray-700">
-                                                        <th class="px-4 py-2 text-left">{{ t('Position') }}</th>
-                                                        <th class="px-4 py-2 text-left">{{ t('Player') }}</th>
-                                                        <th class="px-4 py-2 text-center">{{ t('Rating Points') }}</th>
-                                                        <th class="px-4 py-2 text-right">{{ t('Prize') }}</th>
-                                                    </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                    <tr
-                                                        v-for="player in game.eliminated_players.sort((a, b) =>
-                                                            (a.finish_position || 999) - (b.finish_position || 999))"
-                                                        :key="player.id"
-                                                        class="border-b dark:border-gray-700"
-                                                    >
-                                                        <td class="px-4 py-2">
-                                                            <span
-                                                                :class="{
-                                                                    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300': player.finish_position === 1,
-                                                                    'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200': player.finish_position !== 1
-                                                                }"
-                                                                class="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium"
-                                                            >
-                                                                {{ player.finish_position }}
-                                                            </span>
-                                                        </td>
-                                                        <td class="px-4 py-2">
-                                                            {{ player.user.firstname }} {{ player.user.lastname }}
-                                                            <span v-if="isAuthenticated && player.user.id === user?.id"
-                                                                  class="ml-1 text-xs text-blue-600">{{ t('(You)') }}</span>
-                                                        </td>
-                                                        <td class="px-4 py-2 text-center">
-                                                            <span
-                                                                v-if="player.rating_points"
-                                                                class="rounded-full bg-blue-100 px-2 py-1 text-xs text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
-                                                            >
-                                                                +{{ player.rating_points }}
-                                                            </span>
-                                                            <span v-else>—</span>
-                                                        </td>
-                                                        <td class="px-4 py-2 text-right">
-                                                            <span v-if="player.prize_amount && player.prize_amount > 0"
-                                                                  class="font-medium">
-                                                                {{
-                                                                    (player.prize_amount || 0).toLocaleString('uk-UA', {
-                                                                        style: 'currency',
-                                                                        currency: 'UAH'
-                                                                    }).replace('UAH', '₴')
-                                                                }}
-                                                            </span>
-                                                            <span v-else>—</span>
-                                                        </td>
-                                                    </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
+                                        <DataTable
+                                            :columns="resultsColumns"
+                                            :compact-mode="true"
+                                            :data="game.eliminated_players.sort((a, b) => (a.finish_position || 999) - (b.finish_position || 999))"
+                                        >
+                                            <template #cell-finish_position="{ value }">
+                                                <span
+                                                    :class="{
+                                                        'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300': value.isWinner,
+                                                        'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200': !value.isWinner
+                                                    }"
+                                                    class="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium"
+                                                >
+                                                    {{ value.position }}
+                                                </span>
+                                            </template>
+                                            <template #cell-player="{ value }">
+                                                {{ value.name }}
+                                                <span v-if="value.isYou"
+                                                      class="ml-1 text-xs text-blue-600">{{ t('(You)') }}</span>
+                                            </template>
+                                            <template #cell-rating_points="{ value }">
+                                                <span v-if="value"
+                                                      class="rounded-full bg-blue-100 px-2 py-1 text-xs text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                                                    +{{ value }}
+                                                </span>
+                                                <span v-else>—</span>
+                                            </template>
+                                            <template #cell-prize_amount="{ value }">
+                                                <span v-if="value && value > 0" class="font-medium">
+                                                    {{
+                                                        (value || 0).toLocaleString('uk-UA', {
+                                                            style: 'currency',
+                                                            currency: 'UAH'
+                                                        }).replace('UAH', '₴')
+                                                    }}
+                                                </span>
+                                                <span v-else>—</span>
+                                            </template>
+                                        </DataTable>
                                     </CardContent>
                                 </Card>
                             </div>
