@@ -4,13 +4,19 @@ namespace App\Payment\Http\Controllers;
 
 use App\Payment\Models\Donation;
 use Carbon\Carbon;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class MonoWebhookController
 {
-    public function handle(Request $request): JsonResponse
+    public function handle(Request $request)
     {
+        /* ---------- 1. перевірочний пінг ---------- */
+        if ($request->isMethod('get')) {
+            // Monobank зараховує URL валідним, якщо бачить 200 OK
+            return response('pong', 200);
+        }
+
+        /* ---------- 2. робочий POST із подією ---------- */
         $payload = $request->json()?->all();
 
         if (($payload['type'] ?? '') !== 'StatementItem') {
@@ -20,7 +26,6 @@ class MonoWebhookController
         $tx = $payload['data']['statementItem'] ?? [];
         $acc = $payload['data']['account'] ?? '';
 
-        // Отфильтровываем события не нашей банки
         if ($acc !== config('services.monobank.jar_id')) {
             return response()->json(['ignored' => true]);
         }
@@ -33,7 +38,7 @@ class MonoWebhookController
                 'status'   => 'success',
                 'paid_at'  => Carbon::createFromTimestamp($tx['time']),
                 'payload'  => $tx,
-            ],
+            ]
         );
 
         return response()->json(['ok' => true]);

@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Route;
 // Public endpoints
 Route::apiResource('leagues', LeaguesController::class, ['only' => ['index', 'show']]);
 
-Route::post('/monobank/webhook', [MonoWebhookController::class, 'handle'])->name('monobank.webhook');
+Route::any('/monobank/webhook', [MonoWebhookController::class, 'handle'])->name('monobank.webhook');
 
 Route::prefix('locale')->group(function () {
     Route::post('/set', [LocaleController::class, 'setLocale']);
