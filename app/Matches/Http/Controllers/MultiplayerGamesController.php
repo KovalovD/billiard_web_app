@@ -2,6 +2,7 @@
 
 namespace App\Matches\Http\Controllers;
 
+use App\Core\Models\User;
 use App\Leagues\Models\League;
 use App\Matches\Http\Requests\CreateMultiplayerGameRequest;
 use App\Matches\Http\Requests\JoinMultiplayerGameRequest;
@@ -48,9 +49,11 @@ readonly class MultiplayerGamesController
         League $league,
         MultiplayerGame $multiplayerGame,
     ): JsonResponse {
+        /** @var User $user */
+        $user = Auth::user();
         return response()->json(
             new MultiplayerGameResource(
-                $this->service->join($league, $multiplayerGame, Auth::user()),
+                $this->service->join($league, $multiplayerGame, $user),
             ),
         );
     }
@@ -58,8 +61,10 @@ readonly class MultiplayerGamesController
     // Leave a game (if it's in registration status)
     public function leave(League $league, MultiplayerGame $multiplayerGame): JsonResponse
     {
+        /** @var User $user */
+        $user = Auth::user();
         return response()->json(new MultiplayerGameResource(
-            $this->service->leave($multiplayerGame, Auth::user()),
+            $this->service->leave($multiplayerGame, $user),
         ));
     }
 
@@ -82,8 +87,10 @@ readonly class MultiplayerGamesController
     // Set a user as game moderator (can perform actions for all players)
     public function setModerator(Request $request, League $league, MultiplayerGame $multiplayerGame): JsonResponse
     {
+        /** @var User $user */
+        $user = Auth::user();
         return response()->json(new MultiplayerGameResource(
-            $this->service->setModerator($multiplayerGame, $request->user_id, Auth::user()),
+            $this->service->setModerator($multiplayerGame, $request->user_id, $user),
         ));
     }
 
@@ -97,9 +104,11 @@ readonly class MultiplayerGamesController
         League $league,
         MultiplayerGame $multiplayerGame,
     ): JsonResponse {
+        /** @var User $user */
+        $user = Auth::user();
         return response()->json(new MultiplayerGameResource(
             $this->service->performAction(
-                Auth::user(),
+                $user,
                 $multiplayerGame,
                 $request->validated('action'),
                 $request->validated('target_user_id'),
@@ -109,9 +118,23 @@ readonly class MultiplayerGamesController
         ));
     }
 
-    public function finish(League $league, MultiplayerGame $multiplayerGame): void
+    public function finish(League $league, MultiplayerGame $multiplayerGame, Request $request): JsonResponse
     {
-        $this->service->finishGame($multiplayerGame, Auth::user());
+        try {
+            /** @var User $user */
+            $user = Auth::user();
+            $officialRatingId = $request->input('official_rating_id');
+            $this->service->finishGame($multiplayerGame, $user, $officialRatingId);
+
+            return response()->json([
+                'message' => 'Game finished successfully.',
+                'game'    => new MultiplayerGameResource($multiplayerGame->fresh(['players.user', 'game'])),
+            ]);
+        } catch (Throwable $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 400);
+        }
     }
 
     /**

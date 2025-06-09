@@ -94,7 +94,7 @@ class RecalculateOfficialRatingCommand extends Command
 
     private function processRating(OfficialRating $rating, bool $dryRun): int
     {
-        $this->line("Game: {$rating->game->name}");
+        $this->line("Game: {$rating->game_type->name}");
         $this->line("Initial Rating: {$rating->initial_rating}");
 
         // Get all tournaments associated with this rating

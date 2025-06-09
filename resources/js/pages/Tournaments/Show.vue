@@ -21,6 +21,7 @@ import {
     UsersIcon
 } from 'lucide-vue-next';
 import {computed, onMounted, ref} from 'vue';
+import DataTable from '@/Components/ui/data-table/DataTable.vue';
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -184,6 +185,68 @@ onMounted(() => {
     fetchTournament();
     fetchPlayers();
 });
+
+// Add columns definition before the template
+const columns = computed(() => [
+    {
+        key: 'position',
+        label: t('Position'),
+        align: 'left' as const,
+        render: (player: TournamentPlayer) => ({
+            position: player.position,
+            isWinner: player.is_winner
+        })
+    },
+    {
+        key: 'player',
+        label: t('Player'),
+        align: 'left' as const,
+        render: (player: TournamentPlayer) => ({
+            name: `${player.user?.firstname} ${player.user?.lastname}`,
+            isWinner: player.is_winner
+        })
+    },
+    {
+        key: 'rating',
+        label: t('Rating Points'),
+        align: 'center' as const,
+        render: (player: TournamentPlayer) => ({
+            points: player.rating_points
+        })
+    },
+    {
+        key: 'bonus',
+        label: t('Bonus'),
+        align: 'right' as const,
+        render: (player: TournamentPlayer) => ({
+            amount: player.bonus_amount
+        })
+    },
+    {
+        key: 'prize',
+        label: t('Prize'),
+        align: 'right' as const,
+        render: (player: TournamentPlayer) => ({
+            amount: player.prize_amount
+        })
+    },
+    {
+        key: 'achievement',
+        label: t('Achievement'),
+        align: 'right' as const,
+        render: (player: TournamentPlayer) => ({
+            amount: player.achievement_amount
+        })
+    },
+    {
+        key: 'total',
+        label: t('Total'),
+        align: 'right' as const,
+        render: (player: TournamentPlayer) => ({
+            amount: player.total_amount
+        })
+    }
+]);
 </script>
 
 <template>
@@ -631,84 +694,75 @@ onMounted(() => {
                                 {{ t('No results available yet.') }}
                             </div>
                             <div v-else class="overflow-auto">
-                                <table class="w-full">
-                                    <thead>
-                                    <tr class="border-b dark:border-gray-700">
-                                        <th class="px-4 py-3 text-left">{{ t('Position') }}</th>
-                                        <th class="px-4 py-3 text-left">{{ t('Player') }}</th>
-                                        <th class="px-4 py-3 text-center">{{ t('Rating Points') }}</th>
-                                        <th class="px-4 py-3 text-right">{{ t('Bonus') }}</th>
-                                        <th class="px-4 py-3 text-right">{{ t('Prize') }}</th>
-                                        <th class="px-4 py-3 text-right">{{ t('Achievement') }}</th>
-                                        <th class="px-4 py-3 text-right">{{ t('Total') }}</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    <tr
-                                        v-for="player in completedPlayers"
-                                        :key="player.id"
-                                        class="border-b dark:border-gray-700"
-                                    >
-                                        <td class="px-4 py-3">
-                                           <span
-                                               :class="[
-                                                   'inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium',
-                                                   getPositionBadgeClass(player.position || 0)
-                                               ]"
-                                           >
-                                               {{ player.position }}
-                                           </span>
-                                        </td>
-                                        <td class="px-4 py-3">
-                                            <div>
-                                                <p class="font-medium">{{ player.user?.firstname }}
-                                                    {{ player.user?.lastname }}</p>
-                                                <p v-if="player.is_winner"
-                                                   class="text-sm text-yellow-600 dark:text-yellow-400">🏆 {{ t('Winner') }}</p>
-                                            </div>
-                                        </td>
-                                        <td class="px-4 py-3 text-center">
-                                           <span
-                                               v-if="player.rating_points > 0"
-                                               class="rounded-full bg-blue-100 px-2 py-1 text-sm text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
-                                           >
-                                               +{{ player.rating_points }}
-                                           </span>
-                                            <span v-else class="text-gray-400">—</span>
-                                        </td>
+                                <DataTable
+                                    :columns="columns"
+                                    :compact-mode="true"
+                                    :data="completedPlayers"
+                                    :empty-message="t('No results available yet.')"
+                                >
+                                    <template #cell-position="{ value }">
+                                        <span
+                                            :class="[
+                                                'inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium',
+                                                getPositionBadgeClass(value.position)
+                                            ]"
+                                        >
+                                            {{ value.position }}
+                                        </span>
+                                    </template>
 
-                                        <td class="px-4 py-3 text-right">
-                                           <span v-if="player.bonus_amount > 0"
-                                                 class="font-medium text-orange-600 dark:text-orange-400">
-                                               {{ formatCurrency(player.bonus_amount) }}
-                                           </span>
-                                            <span v-else class="text-gray-400">—</span>
-                                        </td>
+                                    <template #cell-player="{ value }">
+                                        <div>
+                                            <p class="font-medium">{{ value.name }}</p>
+                                            <p v-if="value.isWinner"
+                                               class="text-sm text-yellow-600 dark:text-yellow-400">🏆 {{
+                                                    t('Winner')
+                                                }}</p>
+                                        </div>
+                                    </template>
 
-                                        <td class="px-4 py-3 text-right">
-                                           <span v-if="player.prize_amount > 0"
-                                                 class="font-medium text-green-600 dark:text-green-400">
-                                               {{ formatCurrency(player.prize_amount) }}
-                                           </span>
-                                            <span v-else class="text-gray-400">—</span>
-                                        </td>
-                                        <td class="px-4 py-3 text-right">
-                                           <span v-if="player.achievement_amount > 0"
-                                                 class="font-medium text-purple-600 dark:text-purple-400">
-                                               {{ formatCurrency(player.achievement_amount) }}
-                                           </span>
-                                            <span v-else class="text-gray-400">—</span>
-                                        </td>
-                                        <td class="px-4 py-3 text-right">
-                                           <span v-if="player.total_amount > 0"
-                                                 class="font-bold text-indigo-600 dark:text-indigo-400">
-                                               {{ formatCurrency(player.total_amount) }}
-                                           </span>
-                                            <span v-else class="text-gray-400">—</span>
-                                        </td>
-                                    </tr>
-                                    </tbody>
-                                </table>
+                                    <template #cell-rating="{ value }">
+                                        <span
+                                            v-if="value.points > 0"
+                                            class="rounded-full bg-blue-100 px-2 py-1 text-sm text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+                                        >
+                                            +{{ value.points }}
+                                        </span>
+                                        <span v-else class="text-gray-400">—</span>
+                                    </template>
+
+                                    <template #cell-bonus="{ value }">
+                                        <span v-if="value.amount > 0"
+                                              class="font-medium text-orange-600 dark:text-orange-400">
+                                            {{ formatCurrency(value.amount) }}
+                                        </span>
+                                        <span v-else class="text-gray-400">—</span>
+                                    </template>
+
+                                    <template #cell-prize="{ value }">
+                                        <span v-if="value.amount > 0"
+                                              class="font-medium text-green-600 dark:text-green-400">
+                                            {{ formatCurrency(value.amount) }}
+                                        </span>
+                                        <span v-else class="text-gray-400">—</span>
+                                    </template>
+
+                                    <template #cell-achievement="{ value }">
+                                        <span v-if="value.amount > 0"
+                                              class="font-medium text-purple-600 dark:text-purple-400">
+                                            {{ formatCurrency(value.amount) }}
+                                        </span>
+                                        <span v-else class="text-gray-400">—</span>
+                                    </template>
+
+                                    <template #cell-total="{ value }">
+                                        <span v-if="value.amount > 0"
+                                              class="font-bold text-indigo-600 dark:text-indigo-400">
+                                            {{ formatCurrency(value.amount) }}
+                                        </span>
+                                        <span v-else class="text-gray-400">—</span>
+                                    </template>
+                                </DataTable>
                             </div>
                         </CardContent>
                     </Card>

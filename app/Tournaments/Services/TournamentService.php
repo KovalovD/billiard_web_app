@@ -94,6 +94,7 @@ class TournamentService
             // Create tournament
             $tournament = Tournament::create([
                 'name'                 => $data['name'],
+                'status' => $data['status'] ?? 'upcoming',
                 'regulation'           => $data['regulation'] ?? null,
                 'details'              => $data['details'] ?? null,
                 'game_id'              => $data['game_id'],
@@ -347,7 +348,7 @@ class TournamentService
     /**
      * Update official ratings from tournament results
      */
-    private function updateOfficialRatingsFromTournament(Tournament $tournament): void
+    public function updateOfficialRatingsFromTournament(Tournament $tournament): void
     {
         // Get all official ratings associated with this tournament
         $officialRatings = $tournament->officialRatings()->where('is_counting', true)->get();

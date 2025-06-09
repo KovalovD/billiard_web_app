@@ -8,6 +8,8 @@ use App\Leagues\Services\RatingService;
 use App\Matches\Models\MultiplayerGame;
 use App\Matches\Models\MultiplayerGameLog;
 use App\Matches\Models\MultiplayerGamePlayer;
+use App\Tournaments\Models\TournamentPlayer;
+use App\Tournaments\Services\TournamentService;
 use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -767,7 +769,7 @@ class MultiplayerGameService
      * Finish the game and apply the rating changes to league ratings
      * @throws Throwable
      */
-    public function finishGame(MultiplayerGame $game, User $user): void
+    public function finishGame(MultiplayerGame $game, User $user, ?int $officialRatingId = null): void
     {
         // Check if user is admin or moderator
         if (!$user->is_admin && $user->id !== $game->moderator_user_id) {
@@ -777,6 +779,42 @@ class MultiplayerGameService
         // Game must be in completed status
         if ($game->status !== 'completed') {
             throw new RuntimeException('Game must be completed to finish it.');
+        }
+
+        // If official rating is provided, create a tournament and link it
+        if ($officialRatingId) {
+            DB::transaction(static function () use ($game, $officialRatingId) {
+                $tournamentService = app(TournamentService::class);
+                $tournamentData = [
+                    'name'               => $game->name,
+                    'status'             => 'completed',
+                    'game_id'            => $game->game_id,
+                    'start_date'         => $game->started_at ?? now(),
+                    'end_date'           => $game->completed_at ?? now(),
+                    'prize_pool'         => $game->prize_pool['total'] ?? 0,
+                    'official_rating_id' => $officialRatingId,
+                ];
+                $tournament = $tournamentService->createTournament($tournamentData);
+
+                // Create TournamentPlayers from MultiplayerGamePlayers
+                foreach ($game->players as $mpPlayer) {
+                    $playerData = [
+                        'tournament_id'      => $tournament->id,
+                        'user_id'            => $mpPlayer->user_id,
+                        'position'           => $mpPlayer->finish_position,
+                        'rating_points'      => $mpPlayer->prize_amount,
+                        'prize_amount'       => $mpPlayer->prize_amount,
+                        'bonus_amount'       => 0,
+                        'achievement_amount' => 0,
+                        'status'             => 'confirmed',
+                        'registered_at'      => $mpPlayer->joined_at,
+                        'confirmed_at'       => $mpPlayer->eliminated_at ?? $game->completed_at,
+                    ];
+                    TournamentPlayer::create($playerData);
+                }
+
+                $tournamentService->updateOfficialRatingsFromTournament($tournament);
+            });
         }
 
         // Apply rating points to league ratings

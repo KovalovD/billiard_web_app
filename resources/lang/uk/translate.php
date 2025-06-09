@@ -759,8 +759,6 @@ return [
     'Official rating rules and regulations'        => 'Правила та положення офіційного рейтингу',
     'Edit Rules'                                   => 'Редагувати правила',
     'No rules defined yet'                         => 'Правила ще не визначені',
-    'Save'                                         => 'Зберегти',
-    'Cancel'                                       => 'Скасувати',
     'Failed to save rules'                         => 'Не вдалося зберегти правила',
     'Rules updated successfully'                   => 'Правила успішно оновлено',
     'Are you sure you want to delete these rules?' => 'Ви впевнені, що хочете видалити ці правила?',

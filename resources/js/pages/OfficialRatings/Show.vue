@@ -316,20 +316,20 @@ const columns = computed(() => [
         })
     },
     {
+        key: 'killerPoolPrize',
+        label: t('Killer Pool Prize'),
+        align: 'center' as const,
+        render: (player: OfficialRatingPlayer) => ({
+            amount: player.total_killer_pool_prize_amount,
+            isCurrentUser: isCurrentUser(player)
+        })
+    },
+    {
         key: 'achievement',
         label: t('Achievement'),
         align: 'center' as const,
         render: (player: OfficialRatingPlayer) => ({
             amount: player.total_achievement_amount,
-            isCurrentUser: isCurrentUser(player)
-        })
-    },
-    {
-        key: 'total',
-        label: t('Total Money'),
-        align: 'center' as const,
-        render: (player: OfficialRatingPlayer) => ({
-            amount: player.total_money_earned,
             isCurrentUser: isCurrentUser(player)
         })
     },
@@ -676,9 +676,9 @@ const getRowClass = (player: OfficialRatingPlayer): string => {
                                         <span v-else class="text-gray-400">—</span>
                                     </template>
 
-                                    <template #cell-achievement="{ value }">
+                                    <template #cell-killerPoolPrize="{ value }">
                                         <span v-if="value.amount > 0" :class="[
-                                            'font-medium text-purple-600 dark:text-purple-400',
+                                            'font-medium text-indigo-600 dark:text-indigo-400',
                                             value.isCurrentUser ? 'font-bold' : ''
                                         ]">
                                             {{ formatCurrency(value.amount) }}
@@ -686,9 +686,9 @@ const getRowClass = (player: OfficialRatingPlayer): string => {
                                         <span v-else class="text-gray-400">—</span>
                                     </template>
 
-                                    <template #cell-total="{ value }">
+                                    <template #cell-achievement="{ value }">
                                         <span v-if="value.amount > 0" :class="[
-                                            'font-medium text-blue-600 dark:text-blue-400',
+                                            'font-medium text-purple-600 dark:text-purple-400',
                                             value.isCurrentUser ? 'font-bold' : ''
                                         ]">
                                             {{ formatCurrency(value.amount) }}

@@ -75,6 +75,7 @@ class MultiplayerGameResource extends JsonResource
             'id'                        => $this->resource->id ?? null,
             'league_id'                 => $this->resource->league_id ?? null,
             'game_id'                   => $this->resource->game_id ?? null,
+            'game_type'                 => $this->game->type->value,
             'name'                      => $this->resource->name ?? '',
             'status'                    => $this->resource->status ?? '',
             'initial_lives'             => $this->resource->initial_lives ?? null,

@@ -31,6 +31,7 @@ class OfficialRatingPlayerResource extends JsonResource
             'total_prize_amount'       => $this->total_prize_amount,
             'total_bonus_amount'       => $this->total_bonus_amount,
             'total_achievement_amount' => $this->total_achievement_amount,
+            'total_killer_pool_prize_amount' => $this->total_killer_pool_prize_amount,
             'total_money_earned'       => $this->total_money_earned,
             'last_tournament_at'       => $this->last_tournament_at,
             'is_active'                => $this->is_active,

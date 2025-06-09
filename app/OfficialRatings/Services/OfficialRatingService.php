@@ -308,9 +308,10 @@ class OfficialRatingService
                     $adjustedPoints,
                     $tournament->end_date,
                     $won,
-                    (float) $tournamentPlayer->prize_amount,
+                    $tournament->game->is_multiplayer ? 0 : (float) $tournamentPlayer->prize_amount,
                     (float) $tournamentPlayer->bonus_amount,
                     (float) $tournamentPlayer->achievement_amount,
+                    $tournament->game->is_multiplayer ? (float) $tournamentPlayer->prize_amount : 0,
                 );
 
                 $updatedCount++;

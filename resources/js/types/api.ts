@@ -205,6 +205,7 @@ export interface MultiplayerGame {
     id: number;
     league_id: number;
     game_id: number;
+    game_type: string;
     name: string;
     status: 'registration' | 'in_progress' | 'completed' | 'finished';
     initial_lives: number;
@@ -313,6 +314,7 @@ export interface OfficialRatingPlayer {
     rating_points: number;
     total_bonus_amount: number;
     total_achievement_amount: number;
+    total_killer_pool_prize_amount: number;
     total_money_earned: number;
     total_prize_amount: number;
     position: number;

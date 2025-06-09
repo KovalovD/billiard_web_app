@@ -50,6 +50,8 @@ class Tournament extends Model
 
     protected $withCount = ['players', 'confirmedPlayers', 'pendingApplications'];
 
+    protected $with = ['game', 'city', 'club'];
+
     public function game(): BelongsTo
     {
         return $this->belongsTo(Game::class);

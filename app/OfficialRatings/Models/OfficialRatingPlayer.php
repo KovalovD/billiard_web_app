@@ -22,6 +22,7 @@ class OfficialRatingPlayer extends Model
         'total_bonus_amount',
         'total_achievement_amount',
         'total_prize_amount',
+        'total_killer_pool_prize_amount',
     ];
 
     protected $casts = [
@@ -31,7 +32,10 @@ class OfficialRatingPlayer extends Model
         'total_bonus_amount'       => 'decimal:2',
         'total_achievement_amount' => 'decimal:2',
         'total_prize_amount'       => 'decimal:2',
+        'total_killer_pool_prize_amount' => 'decimal:2',
     ];
+
+    protected $with = ['user'];
 
     public function officialRating(): BelongsTo
     {
@@ -58,11 +62,11 @@ class OfficialRatingPlayer extends Model
     }
 
     /**
-     * Get total money earned (prize + bonus + achievement)
+     * Get total money earned (prize + bonus + achievement + killer pool prize)
      */
     public function getTotalMoneyEarnedAttribute(): float
     {
-        return (float) ($this->total_prize_amount + $this->total_achievement_amount);
+        return (float) ($this->total_prize_amount + $this->total_achievement_amount + $this->total_killer_pool_prize_amount);
     }
 
     /**
@@ -76,6 +80,7 @@ class OfficialRatingPlayer extends Model
         float $prizeAmount = 0,
         float $bonusAmount = 0,
         float $achievementAmount = 0,
+        float $killerPoolPrizeAmount = 0,
     ): void {
         $records = $this->tournament_records ?? [];
 
@@ -92,6 +97,7 @@ class OfficialRatingPlayer extends Model
         $oldPrizeAmount = 0;
         $oldBonusAmount = 0;
         $oldAchievementAmount = 0;
+        $oldKillerPoolPrizeAmount = 0;
         $wasAlreadyWon = false;
 
         if ($existingTournamentIndex !== null) {
@@ -101,6 +107,7 @@ class OfficialRatingPlayer extends Model
             $oldPrizeAmount = $oldRecord['prize_amount'] ?? 0;
             $oldBonusAmount = $oldRecord['bonus_amount'] ?? 0;
             $oldAchievementAmount = $oldRecord['achievement_amount'] ?? 0;
+            $oldKillerPoolPrizeAmount = $oldRecord['killer_pool_prize_amount'] ?? 0;
             $wasAlreadyWon = $oldRecord['won'];
 
             // Update existing record
@@ -110,6 +117,7 @@ class OfficialRatingPlayer extends Model
                 'prize_amount'       => $prizeAmount,
                 'bonus_amount'       => $bonusAmount,
                 'achievement_amount' => $achievementAmount,
+                'killer_pool_prize_amount' => $killerPoolPrizeAmount,
                 'tournament_date'    => $tournamentFinishDate->format('Y-m-d'),
                 'won'                => $won,
                 'updated_at'         => now()->format('Y-m-d H:i:s'),
@@ -122,6 +130,7 @@ class OfficialRatingPlayer extends Model
                 'prize_amount'       => $prizeAmount,
                 'bonus_amount'       => $bonusAmount,
                 'achievement_amount' => $achievementAmount,
+                'killer_pool_prize_amount' => $killerPoolPrizeAmount,
                 'tournament_date'    => $tournamentFinishDate->format('Y-m-d'),
                 'won'                => $won,
                 'added_at'           => now()->format('Y-m-d H:i:s'),
@@ -138,6 +147,7 @@ class OfficialRatingPlayer extends Model
         $this->total_prize_amount = $this->total_prize_amount - $oldPrizeAmount + $prizeAmount;
         $this->total_bonus_amount = $this->total_bonus_amount - $oldBonusAmount + $bonusAmount;
         $this->total_achievement_amount = $this->total_achievement_amount - $oldAchievementAmount + $achievementAmount;
+        $this->total_killer_pool_prize_amount = $this->total_killer_pool_prize_amount - $oldKillerPoolPrizeAmount + $killerPoolPrizeAmount;
 
         // Update tournaments won count
         if ($won && !$wasAlreadyWon) {
@@ -186,6 +196,7 @@ class OfficialRatingPlayer extends Model
         $this->total_prize_amount -= $removedRecord['prize_amount'] ?? 0;
         $this->total_bonus_amount -= $removedRecord['bonus_amount'] ?? 0;
         $this->total_achievement_amount -= $removedRecord['achievement_amount'] ?? 0;
+        $this->total_killer_pool_prize_amount -= $removedRecord['killer_pool_prize_amount'] ?? 0;
 
         // Update tournaments count
         $this->decrement('tournaments_played');
@@ -240,6 +251,7 @@ class OfficialRatingPlayer extends Model
             $this->total_prize_amount = 0;
             $this->total_bonus_amount = 0;
             $this->total_achievement_amount = 0;
+            $this->total_killer_pool_prize_amount = 0;
             $this->last_tournament_at = null;
         } else {
             $this->rating_points = $this->officialRating->initial_rating + $this->getTotalPointsFromRecords();
@@ -248,9 +260,8 @@ class OfficialRatingPlayer extends Model
             $this->total_prize_amount = collect($records)->sum('prize_amount');
             $this->total_bonus_amount = collect($records)->sum('bonus_amount');
             $this->total_achievement_amount = collect($records)->sum('achievement_amount');
-
-            $latestTournament = collect($records)->sortByDesc('tournament_date')->first();
-            $this->last_tournament_at = Carbon::parse($latestTournament['tournament_date']);
+            $this->total_killer_pool_prize_amount = collect($records)->sum('killer_pool_prize_amount');
+            $this->last_tournament_at = Carbon::parse(collect($records)->max('tournament_date'));
         }
 
         $this->save();
