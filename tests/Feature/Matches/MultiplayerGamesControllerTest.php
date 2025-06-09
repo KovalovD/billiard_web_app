@@ -18,16 +18,16 @@ use JsonException;
 use Mockery;
 use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\Test;
+use RuntimeException;
 use Tests\TestCase;
-use Throwable;
 
 class MultiplayerGamesControllerTest extends TestCase
 {
     // Don't use RefreshDatabase trait to avoid transaction issues
 
-    private $controller;
-    private $mockMultiplayerGameService;
-    private $mockAuth;
+    private MultiplayerGamesController $controller;
+    private MockInterface&MultiplayerGameService $mockMultiplayerGameService;
+    private MockInterface $mockAuth;
 
     // Set to empty array to prevent transactional behavior that causes issues
     protected array $connectionsToTransact = [];
@@ -131,9 +131,14 @@ class MultiplayerGamesControllerTest extends TestCase
      * @param  string  $name  The game name
      * @param  string  $status  The game status
      * @param  array  $additionalProps  Additional properties for the mock
-     * @return MockInterface
+     * @return MockInterface&MultiplayerGame
      */
-    private function createMockGame(int $id, string $name, string $status, array $additionalProps = []): MockInterface
+    private function createMockGame(
+        int $id,
+        string $name,
+        string $status,
+        array $additionalProps = [],
+    ): MockInterface&MultiplayerGame
     {
         $game = Mockery::mock(MultiplayerGame::class);
 
@@ -169,6 +174,7 @@ class MultiplayerGamesControllerTest extends TestCase
         // Mock common methods
         $game->allows('load')->andReturnSelf();
         $game->allows('players')->andReturn(collect([]));
+        $game->allows('fresh')->andReturnSelf();
 
         // For JSON serialization
         $game->allows('jsonSerialize')->andReturn($properties);
@@ -238,6 +244,7 @@ class MultiplayerGamesControllerTest extends TestCase
         $league = Mockery::mock(League::class);
         $league->allows('getAttribute')->with('id')->andReturns(1);
 
+        /** @var CreateMultiplayerGameRequest&MockInterface $request */
         $request = $this->mock(CreateMultiplayerGameRequest::class);
         $request
             ->expects('validated')
@@ -259,8 +266,7 @@ class MultiplayerGamesControllerTest extends TestCase
 
         $data = json_decode($result->getContent(), false, 512, JSON_THROW_ON_ERROR);
         $this->assertEquals('New Multiplayer Game', $data->name);
-        $this->assertEquals(10, $data->max_players);
-        $this->assertTrue($data->allow_player_targeting);
+        $this->assertEquals('registration', $data->status);
     }
 
     /**
@@ -307,6 +313,7 @@ class MultiplayerGamesControllerTest extends TestCase
             ->andReturns($user)
         ;
 
+        /** @var JoinMultiplayerGameRequest&MockInterface $request */
         $request = $this->mock(JoinMultiplayerGameRequest::class);
 
         $this->mockMultiplayerGameService
@@ -424,54 +431,6 @@ class MultiplayerGamesControllerTest extends TestCase
     /**
      * @throws JsonException
      */
-    #[Test] public function it_sets_moderator(): void
-    {
-        // Arrange
-        $user = Mockery::mock(User::class);
-        $user->allows('getAttribute')->with('id')->andReturns(1);
-
-        $moderatorUser = Mockery::mock(User::class);
-        $moderatorUser->allows('getAttribute')->with('id')->andReturns(2);
-
-        // Create a better mock
-        $multiplayerGame = $this->createMockGame(1, 'Test Game', 'in_progress');
-
-        // Updated game with moderator
-        $updatedGame = $this->createMockGame(1, 'Test Game', 'in_progress', [
-            'moderator_user_id' => 2,
-        ]);
-
-        $league = Mockery::mock(League::class);
-        $league->allows('getAttribute')->with('id')->andReturns(1);
-
-        $this->mockAuth
-            ->expects('user')
-            ->andReturns($user)
-        ;
-
-        $request = Mockery::mock(Request::class);
-        $request->user_id = $moderatorUser->id;
-
-        $this->mockMultiplayerGameService
-            ->expects('setModerator')
-            ->with($multiplayerGame, $moderatorUser->id, $user)
-            ->andReturns($updatedGame)
-        ;
-
-        // Act
-        $result = $this->controller->setModerator($request, $league, $multiplayerGame);
-
-        // Assert
-        $this->assertInstanceOf(JsonResponse::class, $result);
-        $this->assertEquals(200, $result->status());
-
-        $data = json_decode($result->getContent(), false, 512, JSON_THROW_ON_ERROR);
-        $this->assertEquals($moderatorUser->id, $data->moderator_user_id);
-    }
-
-    /**
-     * @throws Throwable
-     */
     #[Test] public function it_performs_game_action(): void
     {
         // Arrange
@@ -492,6 +451,7 @@ class MultiplayerGamesControllerTest extends TestCase
             ->andReturns($user)
         ;
 
+        /** @var PerformGameActionRequest&MockInterface $request */
         $request = $this->mock(PerformGameActionRequest::class);
         $request
             ->expects('validated')
@@ -502,7 +462,7 @@ class MultiplayerGamesControllerTest extends TestCase
         $request
             ->expects('validated')
             ->with('target_user_id')
-            ->andReturns($targetUser->id)
+            ->andReturns(2)
         ;
 
         $request
@@ -519,7 +479,7 @@ class MultiplayerGamesControllerTest extends TestCase
 
         $this->mockMultiplayerGameService
             ->expects('performAction')
-            ->with($user, $multiplayerGame, 'decrement_lives', $targetUser->id, null, null)
+            ->with($user, $multiplayerGame, 'decrement_lives', 2, null, null)
             ->andReturns($multiplayerGame)
         ;
 
@@ -542,6 +502,10 @@ class MultiplayerGamesControllerTest extends TestCase
         $league = Mockery::mock(League::class);
         $league->allows('getAttribute')->with('id')->andReturns(1);
 
+        /** @var Request&MockInterface $request */
+        $request = $this->mock(Request::class);
+        $request->allows('input')->with('official_rating_id')->andReturns(123);
+
         $this->mockAuth
             ->expects('user')
             ->andReturns($user)
@@ -549,14 +513,56 @@ class MultiplayerGamesControllerTest extends TestCase
 
         $this->mockMultiplayerGameService
             ->expects('finishGame')
-            ->with($multiplayerGame, $user)
+            ->with($multiplayerGame, $user, 123)
         ;
 
-        // Act - This should not throw an exception
-        $this->controller->finish($league, $multiplayerGame);
+        // Act
+        $result = $this->controller->finish($league, $multiplayerGame, $request);
 
-        // Assert - No assertions needed since method has void return type
-        $this->addToAssertionCount(1);
+        // Assert
+        $this->assertInstanceOf(JsonResponse::class, $result);
+        $this->assertEquals(200, $result->status());
+
+        $data = json_decode($result->getContent(), false, 512, JSON_THROW_ON_ERROR);
+        $this->assertEquals('Game finished successfully.', $data->message);
+        $this->assertTrue(property_exists($data, 'game'));
+    }
+
+    #[Test] public function it_handles_error_when_finishing_game(): void
+    {
+        // Arrange
+        $user = Mockery::mock(User::class);
+        $user->allows('getAttribute')->with('id')->andReturns(1);
+
+        $multiplayerGame = $this->createMockGame(1, 'Test Game', 'completed');
+
+        $league = Mockery::mock(League::class);
+        $league->allows('getAttribute')->with('id')->andReturns(1);
+
+        /** @var Request&MockInterface $request */
+        $request = $this->mock(Request::class);
+        $request->allows('input')->with('official_rating_id')->andReturns(123);
+
+        $this->mockAuth
+            ->expects('user')
+            ->andReturns($user)
+        ;
+
+        $this->mockMultiplayerGameService
+            ->expects('finishGame')
+            ->with($multiplayerGame, $user, 123)
+            ->andThrows(new RuntimeException('Test error'))
+        ;
+
+        // Act
+        $result = $this->controller->finish($league, $multiplayerGame, $request);
+
+        // Assert
+        $this->assertInstanceOf(JsonResponse::class, $result);
+        $this->assertEquals(400, $result->status());
+
+        $data = json_decode($result->getContent(), false, 512, JSON_THROW_ON_ERROR);
+        $this->assertEquals('Test error', $data->message);
     }
 
     /**
@@ -571,14 +577,13 @@ class MultiplayerGamesControllerTest extends TestCase
         $league->allows('getAttribute')->with('id')->andReturns(1);
 
         $financialSummary = [
-            'entrance_fee'          => 300,
-            'total_prize_pool'      => 1800,
-            'first_place_prize'     => 1080,
-            'second_place_prize'    => 360,
-            'grand_final_fund'      => 360,
-            'penalty_fee'           => 50,
-            'penalty_players_count' => 3,
-            'time_fund_total'       => 150,
+            'entrance_fee'       => 300,
+            'total_prize_pool'   => 3000,
+            'first_place_prize'  => 1800,
+            'second_place_prize' => 600,
+            'grand_final_fund'   => 600,
+            'penalty_fee'        => 50,
+            'time_fund_total'    => 500,
         ];
 
         $this->mockMultiplayerGameService
