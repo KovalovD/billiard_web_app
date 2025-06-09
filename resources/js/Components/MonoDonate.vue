@@ -46,7 +46,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const {t} = useLocale();
 
-const link = computed(() => `https://send.monobank.ua/jar/${import.meta.env.VITE_MONO_SEND_ID}`);
+const link = computed(() => `https://send.monobank.ua/jar/5Q4cPRLdV4`);
 const qrSrc = computed(() => `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(link.value)}`);
 const card = '4441 1111 2027 7292';
 
