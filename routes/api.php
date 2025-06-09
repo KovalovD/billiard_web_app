@@ -31,11 +31,19 @@ Route::get('user/tournaments/upcoming',
 Route::get('leagues/{league}/players', [LeaguesController::class, 'players'])->name('leagues.players');
 Route::get('leagues/{league}/games', [LeaguesController::class, 'games'])->name('leagues.games');
 
+Route::get('/game-rules', [GameRuleController::class, 'index']);
+Route::post('/game-rules', [GameRuleController::class, 'store']);
+Route::get('/game-rules/{gameRule}', [GameRuleController::class, 'show']);
+Route::get('/official-ratings/{officialRating}/rules', [GameRuleController::class, 'getByRating']);
+
 // Admin-only endpoints
 Route::middleware(['auth:sanctum', AdminMiddleware::class])->group(function () {
     Route::apiResource('leagues', LeaguesController::class,
         ['only' => ['store', 'update', 'destroy']],
     );
+
+    Route::put('/game-rules/{gameRule}', [GameRuleController::class, 'update']);
+    Route::delete('/game-rules/{gameRule}', [GameRuleController::class, 'destroy']);
 
     Route::group(['prefix' => 'leagues/{league}/admin'], static function () {
         Route::get('pending-players', [AdminPlayersController::class, 'pendingPlayers'])->name('admin.pending-players');
@@ -96,12 +104,4 @@ Route::middleware('auth:sanctum')->group(function () {
             });
         });
     });
-
-    // Game Rules Routes
-    Route::get('/game-rules', [GameRuleController::class, 'index']);
-    Route::post('/game-rules', [GameRuleController::class, 'store']);
-    Route::get('/game-rules/{gameRule}', [GameRuleController::class, 'show']);
-    Route::put('/game-rules/{gameRule}', [GameRuleController::class, 'update']);
-    Route::delete('/game-rules/{gameRule}', [GameRuleController::class, 'destroy']);
-    Route::get('/official-ratings/{officialRating}/rules', [GameRuleController::class, 'getByRating']);
 });
