@@ -15,6 +15,7 @@ import {
 } from 'lucide-vue-next';
 import {ref} from 'vue';
 import {useLocale} from '@/composables/useLocale';
+import MonoDonate from '@/Components/MonoDonate.vue';
 
 // State for modal visibility
 const showRegisterModal = ref(false);
@@ -125,6 +126,7 @@ const stats = [
 
                     <!-- Auth Links -->
                     <div class="flex items-center space-x-4">
+                        <MonoDonate :show-card="false" :show-qr="false"/>
                         <template v-if="$page.props.auth && $page.props.auth.user">
                             <Link :href="route('dashboard')"
                                   class="text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors">

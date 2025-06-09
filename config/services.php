@@ -34,5 +34,9 @@ return [
             'channel'              => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
-
+    'monobank' => [
+        'token'   => env('MONO_TOKEN'),
+        'jar_id'  => env('MONO_JAR_ID'),
+        'send_id' => env('MONO_SEND_ID'),
+    ],
 ];

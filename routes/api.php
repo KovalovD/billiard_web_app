@@ -8,6 +8,7 @@ use App\Leagues\Http\Controllers\LeaguesController;
 use App\Leagues\Http\Controllers\PlayersController;
 use App\Matches\Http\Controllers\MatchGamesController;
 use App\OfficialRatings\Http\Controllers\GameRuleController;
+use App\Payment\Http\Controllers\MonoWebhookController;
 use App\User\Http\Controllers\CitiesController;
 use App\User\Http\Controllers\ClubsController;
 use App\User\Http\Controllers\ProfileController;
@@ -17,6 +18,8 @@ use Illuminate\Support\Facades\Route;
 
 // Public endpoints
 Route::apiResource('leagues', LeaguesController::class, ['only' => ['index', 'show']]);
+
+Route::post('/monobank/webhook', [MonoWebhookController::class, 'handle'])->name('monobank.webhook');
 
 Route::prefix('locale')->group(function () {
     Route::post('/set', [LocaleController::class, 'setLocale']);

@@ -12,6 +12,7 @@ import {onMounted, ref} from 'vue';
 import LocaleSwitcher from "@/Components/LocaleSwitcher.vue";
 import {useLocale} from '@/composables/useLocale';
 import ToastContainer from '@/Components/ToastContainer.vue';
+import MonoDonate from '@/Components/MonoDonate.vue';
 
 // Add to existing code
 const {t} = useLocale();
@@ -117,6 +118,7 @@ onMounted(() => {
                         </div>
 
                         <div class="hidden sm:ml-6 sm:flex sm:items-center">
+                            <MonoDonate :show-card="false" :show-qr="false" class="mr-4"/>
                             <LocaleSwitcher/>
                             <div v-if="user" class="relative ml-3">
                                 <Dropdown align="right" width="48">
@@ -221,6 +223,7 @@ onMounted(() => {
                             <div class="text-sm font-medium text-gray-500">{{ user.email }}</div>
                         </div>
                         <div class="mt-3 space-y-1">
+                            <MonoDonate :show-card="false" :show-qr="false" class="mb-4"/>
                             <LocaleSwitcher/>
                             <ResponsiveNavLink :href="'/profile/edit'"> {{ t('Profile') }}</ResponsiveNavLink>
                             <ResponsiveNavLink as="button" @click.prevent="handleLogout"> {{

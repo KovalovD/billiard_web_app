@@ -764,4 +764,9 @@ return [
     'Are you sure you want to delete these rules?' => 'Ви впевнені, що хочете видалити ці правила?',
     'Rules deleted successfully'                   => 'Правила успішно видалено',
     'Failed to delete rules'                       => 'Не вдалося видалити правила',
+
+    // Donate Button
+    'Support'              => 'Підтримати',
+    'Loading...'           => 'Завантаження...',
+    'QR Code for donation' => 'QR-код для пожертви',
 ];

@@ -65,4 +65,8 @@ return [
     'Are you sure you want to delete these rules?' => 'Are you sure you want to delete these rules?',
     'Rules deleted successfully'                   => 'Rules deleted successfully',
     'Failed to delete rules'                       => 'Failed to delete rules',
+    // Donate Button
+    'Support'              => 'Support',
+    'Loading...'           => 'Loading...',
+    'QR Code for donation' => 'QR Code for donation',
 ];
