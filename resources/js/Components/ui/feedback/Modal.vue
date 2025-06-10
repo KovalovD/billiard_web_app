@@ -19,7 +19,7 @@ const props = withDefaults(defineProps<Props>(), {
     modalWrapperClass: 'bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-xl transform transition-all sm:w-full sm:mx-auto'
 });
 
-const { t } = useLocale();
+const {t} = useLocale();
 
 const emit = defineEmits(['close']);
 

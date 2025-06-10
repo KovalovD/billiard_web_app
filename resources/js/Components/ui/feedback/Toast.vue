@@ -96,7 +96,7 @@
 </template>
 
 <script lang="ts" setup>
-import {ref, watch, onMounted} from 'vue';
+import {onMounted, ref, watch} from 'vue';
 import {useLocale} from '@/composables/useLocale';
 
 interface Props {
@@ -112,7 +112,7 @@ const props = withDefaults(defineProps<Props>(), {
     duration: 5000
 });
 
-const { t } = useLocale();
+const {t} = useLocale();
 
 const emit = defineEmits<{
     hide: [];
