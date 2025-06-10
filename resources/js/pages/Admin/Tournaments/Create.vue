@@ -18,6 +18,7 @@ import {
 } from '@/Components/ui';
 import {useProfileApi} from '@/composables/useProfileApi';
 import {useTournaments} from '@/composables/useTournaments';
+import FormatSelector from '@/Components/Tournament/Structure/FormatSelector.vue';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
 import {useLocale} from '@/composables/useLocale';
@@ -37,6 +38,15 @@ const {fetchCities, fetchClubs} = useProfileApi();
 const form = ref<CreateTournamentPayload & {
     official_rating_id?: number;
     rating_coefficient?: number;
+    tournament_format: string;
+    seeding_method: string;
+    number_of_groups?: number;
+    players_per_group?: number;
+    advance_per_group?: number;
+    best_of_rule?: string;
+    has_lower_bracket?: boolean;
+    is_team_tournament?: boolean;
+    team_size?: number;
 }>({
     name: '',
     regulation: '',
@@ -52,6 +62,15 @@ const form = ref<CreateTournamentPayload & {
     prize_distribution: [],
     organizer: '',
     format: '',
+    tournament_format: 'single_elimination',
+    seeding_method: 'manual',
+    number_of_groups: undefined,
+    players_per_group: undefined,
+    advance_per_group: undefined,
+    best_of_rule: 'best_of_3',
+    has_lower_bracket: false,
+    is_team_tournament: false,
+    team_size: 2,
     official_rating_id: undefined,
     rating_coefficient: 1.0,
 });
@@ -80,7 +99,9 @@ const isFormValid = computed(() => {
     return form.value.name.trim() !== '' &&
         form.value.game_id > 0 &&
         form.value.start_date !== '' &&
-        form.value.end_date !== '';
+        form.value.end_date !== '' &&
+        form.value.tournament_format !== '' &&
+        form.value.seeding_method !== '';
 });
 
 // Watch for official rating changes to filter games
@@ -308,6 +329,9 @@ onMounted(() => {
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Tournament Format -->
+                        <FormatSelector v-model="form" />
 
                         <!-- Location -->
                         <div class="space-y-4">

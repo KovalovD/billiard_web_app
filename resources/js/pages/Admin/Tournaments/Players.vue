@@ -34,7 +34,8 @@ const {
     addPlayerToTournament,
     addNewPlayerToTournament,
     removePlayerFromTournament,
-    searchUsers
+    searchUsers,
+    updateTournamentPlayer
 } = useTournaments();
 
 // Data
@@ -155,6 +156,11 @@ const handleRemovePlayer = async (playerId: number) => {
     if (success) {
         await loadPlayers();
     }
+};
+
+const updateSeed = async (playerId: number, seed: number) => {
+    const api = updateTournamentPlayer(props.tournamentId, playerId);
+    await api.execute({seed});
 };
 
 const resetNewPlayerForm = () => {
@@ -294,6 +300,7 @@ onMounted(() => {
                             <thead>
                             <tr class="border-b dark:border-gray-700">
                                 <th class="px-4 py-3 text-left">{{ t('Position') }}</th>
+                                <th class="px-4 py-3 text-left">{{ t('Seed') }}</th>
                                 <th class="px-4 py-3 text-left">{{ t('Player') }}</th>
                                 <th class="px-4 py-3 text-center">{{ t('Status') }}</th>
                                 <th class="px-4 py-3 text-center">{{ t('Rating Points') }}</th>
@@ -313,6 +320,15 @@ onMounted(() => {
                                 <td class="px-4 py-3">
                                     <span v-if="player.position" class="font-bold">#{{ player.position }}</span>
                                     <span v-else class="text-gray-400">—</span>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <input
+                                        v-model.number="player.seed"
+                                        class="w-16 rounded border-gray-300 text-center"
+                                        min="1"
+                                        type="number"
+                                        @change="updateSeed(player.id, player.seed)"
+                                    />
                                 </td>
                                 <td class="px-4 py-3">
                                     <div>

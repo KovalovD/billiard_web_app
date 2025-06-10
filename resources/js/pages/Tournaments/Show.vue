@@ -5,6 +5,11 @@ import {useAuth} from '@/composables/useAuth';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
 import type {Tournament, TournamentPlayer} from '@/types/api';
+import type {TournamentGroup, TournamentBracket, TournamentMatch} from '@/types/tournament';
+import {useTournamentStructure} from '@/composables/useTournamentStructure';
+import GroupStandings from '@/Components/Tournament/Group/GroupStandings.vue';
+import BracketViewer from '@/Components/Tournament/Bracket/BracketViewer.vue';
+import MatchSchedule from '@/Components/Tournament/Match/MatchSchedule.vue';
 import {Head, Link} from '@inertiajs/vue3';
 import {useLocale} from '@/composables/useLocale';
 import {
@@ -31,13 +36,22 @@ const props = defineProps<{
 
 const {isAdmin, isAuthenticated} = useAuth();
 const {t} = useLocale();
+const {
+    fetchPublicGroups,
+    fetchPublicBrackets,
+    fetchPublicMatches
+} = useTournamentStructure();
 
 const tournament = ref<Tournament | null>(null);
 const players = ref<TournamentPlayer[]>([]);
+const groups = ref<TournamentGroup[]>([]);
+const brackets = ref<TournamentBracket[]>([]);
+const matches = ref<TournamentMatch[]>([]);
 const isLoadingTournament = ref(true);
 const isLoadingPlayers = ref(true);
+const isLoadingStructure = ref(true);
 const error = ref<string | null>(null);
-const activeTab = ref<'info' | 'players' | 'results' | 'applications'>('info');
+const activeTab = ref<'info' | 'players' | 'results' | 'applications' | 'groups' | 'brackets' | 'schedule'>('info');
 
 const sortedPlayers = computed(() => {
     return [...players.value].sort((a, b) => {
@@ -176,14 +190,32 @@ const fetchPlayers = async () => {
     }
 };
 
+const fetchStructure = async () => {
+    isLoadingStructure.value = true;
+    try {
+        const [g, b, m] = await Promise.all([
+            fetchPublicGroups(props.tournamentId).execute(),
+            fetchPublicBrackets(props.tournamentId).execute(),
+            fetchPublicMatches(props.tournamentId).execute()
+        ]);
+        if (g?.value) groups.value = g.value;
+        if (b?.value) brackets.value = b.value;
+        if (m?.value) matches.value = m.value;
+    } finally {
+        isLoadingStructure.value = false;
+    }
+};
+
 const handleApplicationUpdated = () => {
     fetchTournament();
     fetchPlayers();
+    fetchStructure();
 };
 
 onMounted(() => {
     fetchTournament();
     fetchPlayers();
+    fetchStructure();
 });
 
 // Add columns definition before the template
@@ -418,6 +450,42 @@ const columns = computed(() => [
                             {{ t('Players') }} ({{ tournament.confirmed_players_count }})
                         </button>
                         <button
+                            v-if="groups.length > 0"
+                            :class="[
+                                'py-4 px-1 text-sm font-medium border-b-2',
+                                activeTab === 'groups'
+                                    ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                            ]"
+                            @click="activeTab = 'groups'"
+                        >
+                            {{ t('Groups') }}
+                        </button>
+                        <button
+                            v-if="brackets.length > 0"
+                            :class="[
+                                'py-4 px-1 text-sm font-medium border-b-2',
+                                activeTab === 'brackets'
+                                    ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                            ]"
+                            @click="activeTab = 'brackets'"
+                        >
+                            {{ t('Bracket') }}
+                        </button>
+                        <button
+                            v-if="matches.length > 0"
+                            :class="[
+                                'py-4 px-1 text-sm font-medium border-b-2',
+                                activeTab === 'schedule'
+                                    ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                            ]"
+                            @click="activeTab = 'schedule'"
+                        >
+                            {{ t('Schedule') }}
+                        </button>
+                        <button
                             v-if="tournament.requires_application && (isAuthenticated && isAdmin || tournament.pending_applications_count > 0)"
                             :class="[
                                 'py-4 px-1 text-sm font-medium border-b-2',
@@ -597,6 +665,21 @@ const columns = computed(() => [
                             </div>
                         </CardContent>
                     </Card>
+                </div>
+
+                <!-- Groups Tab -->
+                <div v-if="activeTab === 'groups'">
+                    <GroupStandings :groups="groups" />
+                </div>
+
+                <!-- Brackets Tab -->
+                <div v-if="activeTab === 'brackets'">
+                    <BracketViewer :brackets="brackets" />
+                </div>
+
+                <!-- Schedule Tab -->
+                <div v-if="activeTab === 'schedule'">
+                    <MatchSchedule :matches="matches" :can-edit="false" />
                 </div>
 
                 <!-- Applications Tab -->

@@ -18,6 +18,7 @@ import {
 } from '@/Components/ui';
 import {useProfileApi} from '@/composables/useProfileApi';
 import {useTournaments} from '@/composables/useTournaments';
+import FormatSelector from '@/Components/Tournament/Structure/FormatSelector.vue';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
 import type {City, Club, Game, OfficialRating, Tournament} from '@/types/api';
@@ -49,6 +50,15 @@ const form = ref({
     prize_pool: 0,
     organizer: '',
     format: '',
+    tournament_format: 'single_elimination',
+    seeding_method: 'manual',
+    number_of_groups: undefined as number | undefined,
+    players_per_group: undefined as number | undefined,
+    advance_per_group: undefined as number | undefined,
+    best_of_rule: 'best_of_3',
+    has_lower_bracket: false,
+    is_team_tournament: false,
+    team_size: 2,
     status: 'upcoming' as 'upcoming' | 'active' | 'completed' | 'cancelled',
     official_rating_id: undefined as number | undefined,
     rating_coefficient: 1.0,
@@ -81,7 +91,9 @@ const isFormValid = computed(() => {
     return form.value.name.trim() !== '' &&
         form.value.game_id > 0 &&
         form.value.start_date !== '' &&
-        form.value.end_date !== '';
+        form.value.end_date !== '' &&
+        form.value.tournament_format !== '' &&
+        form.value.seeding_method !== '';
 });
 
 const statusOptions = [
@@ -173,6 +185,15 @@ const loadTournament = async () => {
             prize_pool: tournament.value.prize_pool || 0,
             organizer: tournament.value.organizer || '',
             format: tournament.value.format || '',
+            tournament_format: tournament.value.tournament_format || 'single_elimination',
+            seeding_method: tournament.value.seeding_method || 'manual',
+            number_of_groups: tournament.value.number_of_groups || undefined,
+            players_per_group: tournament.value.players_per_group || undefined,
+            advance_per_group: tournament.value.advance_per_group || undefined,
+            best_of_rule: tournament.value.best_of_rule || 'best_of_3',
+            has_lower_bracket: tournament.value.has_lower_bracket || false,
+            is_team_tournament: tournament.value.is_team_tournament || false,
+            team_size: tournament.value.team_size || 2,
             status: tournament.value.status as any,
             official_rating_id: tournament.value.official_ratings?.[0]?.id,
             rating_coefficient: tournament.value.official_ratings?.[0]?.rating_coefficient || 1.0,
@@ -410,6 +431,9 @@ onMounted(async () => {
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Tournament Format -->
+                        <FormatSelector v-model="form" />
 
                         <!-- Location -->
                         <div class="space-y-4">

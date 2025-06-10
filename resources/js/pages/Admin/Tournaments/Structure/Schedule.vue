@@ -36,7 +36,6 @@ const {fetchTournament} = useTournaments();
 const {fetchClubs} = useProfileApi();
 const {
     fetchMatches,
-    updateMatch,
     enterMatchResult,
     startMatch,
     cancelMatch,
