@@ -100,7 +100,6 @@ class TournamentBracket extends Model
         $structure = [
             'upper_bracket' => [],
             'lower_bracket' => [],
-            'finals'        => [],
         ];
 
         // Upper bracket
@@ -146,7 +145,7 @@ class TournamentBracket extends Model
 
         // Pair participants for first round
         $matchNumber = 1;
-        for ($i = 0; $i < count($positionKeys); $i += 2) {
+        for ($i = 0, $iMax = count($positionKeys); $i < $iMax; $i += 2) {
             $participant1 = $positions[$positionKeys[$i]] ?? null;
             $participant2 = $positions[$positionKeys[$i + 1]] ?? null;
 
@@ -208,7 +207,7 @@ class TournamentBracket extends Model
         }
 
         // Pair winners for next round
-        for ($i = 0; $i < count($winners); $i += 2) {
+        for ($i = 0, $iMax = count($winners); $i < $iMax; $i += 2) {
             $participant1 = $winners[$i] ?? null;
             $participant2 = $winners[$i + 1] ?? null;
 
@@ -299,7 +298,7 @@ class TournamentBracket extends Model
         $upperRounds = ceil(log($totalParticipants, 2));
 
         if ($round <= $upperRounds - 1) {
-            return ceil($totalParticipants / pow(2, $round + 1));
+            return ceil($totalParticipants / (2 ** ($round + 1)));
         }
 
         return 1; // Simplified

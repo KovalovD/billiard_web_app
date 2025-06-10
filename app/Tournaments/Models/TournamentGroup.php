@@ -139,7 +139,7 @@ class TournamentGroup extends Model
         }
 
         // Sort standings: Points DESC, Games Difference DESC, Games For DESC
-        usort($standings, function ($a, $b) {
+        usort($standings, static function ($a, $b) {
             if ($a['points'] !== $b['points']) {
                 return $b['points'] - $a['points'];
             }

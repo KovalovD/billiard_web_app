@@ -57,7 +57,7 @@ class TournamentTeam extends Model
     /**
      * Get matches where this team participates
      */
-    public function matches()
+    public function matches(): TournamentMatch
     {
         return TournamentMatch::where('tournament_id', $this->tournament_id)
             ->where(function ($query) {
@@ -99,20 +99,15 @@ class TournamentTeam extends Model
                 $stats['games_for'] += $match->participant_1_score;
                 $stats['games_against'] += $match->participant_2_score;
 
-                if ($match->winner_id === $this->id && $match->winner_type === 'team') {
-                    $stats['wins']++;
-                } else {
-                    $stats['losses']++;
-                }
             } else {
                 $stats['games_for'] += $match->participant_2_score;
                 $stats['games_against'] += $match->participant_1_score;
 
-                if ($match->winner_id === $this->id && $match->winner_type === 'team') {
-                    $stats['wins']++;
-                } else {
-                    $stats['losses']++;
-                }
+            }
+            if ($match->winner_id === $this->id && $match->winner_type === 'team') {
+                $stats['wins']++;
+            } else {
+                $stats['losses']++;
             }
         }
 

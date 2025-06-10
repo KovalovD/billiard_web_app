@@ -2,17 +2,17 @@
 
 namespace App\Tournaments\Http\Controllers;
 
-use App\Tournaments\Http\Requests\InitializeTournamentRequest;
+use App\Tournaments\Http\Requests\AssignPlayersRequest;
 use App\Tournaments\Http\Requests\CreateTournamentGroupRequest;
 use App\Tournaments\Http\Requests\CreateTournamentTeamRequest;
-use App\Tournaments\Http\Requests\AssignPlayersRequest;
+use App\Tournaments\Http\Requests\InitializeTournamentRequest;
+use App\Tournaments\Http\Resources\TournamentBracketResource;
 use App\Tournaments\Http\Resources\TournamentGroupResource;
 use App\Tournaments\Http\Resources\TournamentTeamResource;
-use App\Tournaments\Http\Resources\TournamentBracketResource;
 use App\Tournaments\Models\Tournament;
-use App\Tournaments\Models\TournamentGroup;
 use App\Tournaments\Models\TournamentTeam;
 use App\Tournaments\Services\TournamentManagementService;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use RuntimeException;
@@ -164,7 +164,7 @@ readonly class TournamentManagementController
             return response()->json([
                 'success' => true,
                 'message' => 'Team updated successfully',
-                'team'    => new TournamentTeamResource($team->fresh()->load('players.user')),
+                'team' => new TournamentTeamResource($team->fresh()?->load('players.user')),
             ]);
         } catch (RuntimeException $e) {
             return response()->json([
@@ -349,7 +349,7 @@ readonly class TournamentManagementController
                 'success' => true,
                 'message' => 'Tournament structure reset successfully',
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to reset tournament structure: '.$e->getMessage(),

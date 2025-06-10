@@ -2,23 +2,23 @@
 
 namespace App\Tournaments\Services;
 
-use App\Core\Models\User;
-use App\Tournaments\Enums\TournamentFormat;
 use App\Tournaments\Enums\SeedingMethod;
 use App\Tournaments\Models\Tournament;
-use App\Tournaments\Models\TournamentBracket;
 use App\Tournaments\Models\TournamentGroup;
 use App\Tournaments\Models\TournamentMatch;
 use App\Tournaments\Models\TournamentPlayer;
 use App\Tournaments\Models\TournamentTeam;
+use DateTime;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
+use Throwable;
 
 class TournamentManagementService
 {
     /**
      * Initialize tournament structure based on format
+     * @throws Throwable
      */
     public function initializeTournamentStructure(Tournament $tournament): void
     {
@@ -30,7 +30,7 @@ class TournamentManagementService
             throw new RuntimeException('At least 2 confirmed players required to initialize tournament');
         }
 
-        DB::transaction(function () use ($tournament) {
+        DB::transaction(static function () use ($tournament) {
             $tournament->initializeStructure();
             $tournament->update(['status' => 'active']);
         });
@@ -39,7 +39,7 @@ class TournamentManagementService
     /**
      * Create and configure tournament groups
      */
-    public function createTournamentGroups(Tournament $tournament, array $groupConfig): Collection
+    public function createTournamentGroups(Tournament $tournament, array $groupConfig): \Illuminate\Support\Collection
     {
         if (!$tournament->hasGroups()) {
             throw new RuntimeException('Tournament format does not support groups');
@@ -65,6 +65,7 @@ class TournamentManagementService
 
     /**
      * Create tournament teams for team-based tournaments
+     * @throws Throwable
      */
     public function createTournamentTeam(Tournament $tournament, array $teamData, array $playerIds): TournamentTeam
     {
@@ -72,7 +73,7 @@ class TournamentManagementService
             throw new RuntimeException('Tournament is not configured for teams');
         }
 
-        return DB::transaction(function () use ($tournament, $teamData, $playerIds) {
+        return DB::transaction(static function () use ($tournament, $teamData, $playerIds) {
             $team = TournamentTeam::create([
                 'tournament_id' => $tournament->id,
                 'name'          => $teamData['name'],
@@ -90,7 +91,7 @@ class TournamentManagementService
                 ;
 
                 if (!$player) {
-                    throw new RuntimeException("Player ID {$playerId} is not registered for this tournament");
+                    throw new RuntimeException("Player ID $playerId is not registered for this tournament");
                 }
 
                 $role = $index === 0 ? 'captain' : 'player';
@@ -207,6 +208,7 @@ class TournamentManagementService
 
     /**
      * Enter match result and advance tournament
+     * @throws Throwable
      */
     public function enterMatchResult(TournamentMatch $match, array $result): void
     {
@@ -230,7 +232,7 @@ class TournamentManagementService
      */
     public function rescheduleMatch(
         TournamentMatch $match,
-        \DateTime $newTime,
+        DateTime $newTime,
         ?int $tableNumber = null,
         ?int $clubId = null,
     ): void {
@@ -258,9 +260,9 @@ class TournamentManagementService
      */
     protected function getBracketParticipants(Tournament $tournament): array
     {
+        $participants = [];
         if ($tournament->tournament_format === 'group_playoff') {
             // Get advancing players from groups
-            $participants = [];
             foreach ($tournament->groups as $group) {
                 $advancing = $group->getAdvancingParticipants();
                 foreach ($advancing as $participant) {
@@ -275,7 +277,6 @@ class TournamentManagementService
         }
 
         // Direct bracket entry
-        $participants = [];
         $entities = $tournament->is_team_tournament
             ? $tournament->teams()->orderBy('seed')->get()
             : $tournament->confirmedPlayers()->orderBy('seed')->get();
@@ -425,7 +426,7 @@ class TournamentManagementService
 
         if ($tournament->hasBrackets()) {
             $this->calculateBracketStandings($tournament);
-        } elseif ($tournament->hasGroups() && $tournament->tournament_format === 'group_stage') {
+        } elseif ($tournament->tournament_format === 'group_stage' && $tournament->hasGroups()) {
             $this->calculateGroupStandings($tournament);
         }
     }
@@ -470,7 +471,7 @@ class TournamentManagementService
         }
 
         // Sort by points, then by games difference
-        usort($allStandings, function ($a, $b) {
+        usort($allStandings, static function ($a, $b) {
             if ($a['points'] !== $b['points']) {
                 return $b['points'] - $a['points'];
             }

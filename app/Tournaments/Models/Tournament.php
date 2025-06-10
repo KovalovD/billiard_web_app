@@ -323,7 +323,7 @@ class Tournament extends Model
             $this->assignToGroups($participants);
         }
 
-        if ($this->hasBrackets() && $this->tournament_format !== 'group_playoff') {
+        if ($this->tournament_format !== 'group_playoff' && $this->hasBrackets()) {
             $this->assignToBrackets($participants);
         }
     }
@@ -465,9 +465,13 @@ class Tournament extends Model
 
         if ($playerCount <= 8) {
             return 2;
-        } elseif ($playerCount <= 16) {
+        }
+
+        if ($playerCount <= 16) {
             return 4;
-        } elseif ($playerCount <= 32) {
+        }
+
+        if ($playerCount <= 32) {
             return 8;
         }
 

@@ -46,7 +46,7 @@ class TournamentStructureController
     public function getGroups(Tournament $tournament): AnonymousResourceCollection
     {
         if (!$tournament->hasGroups()) {
-            return TournamentGroupResource::collection(collect([]));
+            return TournamentGroupResource::collection(collect());
         }
 
         $groups = $tournament
@@ -82,7 +82,7 @@ class TournamentStructureController
     public function getBrackets(Tournament $tournament): AnonymousResourceCollection
     {
         if (!$tournament->hasBrackets()) {
-            return TournamentBracketResource::collection(collect([]));
+            return TournamentBracketResource::collection(collect());
         }
 
         $brackets = $tournament
@@ -171,7 +171,7 @@ class TournamentStructureController
     public function getTeams(Tournament $tournament): AnonymousResourceCollection
     {
         if (!$tournament->is_team_tournament) {
-            return TournamentTeamResource::collection(collect([]));
+            return TournamentTeamResource::collection(collect());
         }
 
         $teams = $tournament

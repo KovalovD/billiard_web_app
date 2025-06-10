@@ -3,6 +3,7 @@
 namespace App\Tournaments\Models;
 
 use App\Core\Models\Club;
+use DateTime;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -61,7 +62,7 @@ class TournamentMatch extends Model
     /**
      * Get participant 1 (player or team)
      */
-    public function participant1()
+    public function participant1(): BelongsTo
     {
         if ($this->participant_1_type === 'team') {
             return $this->belongsTo(TournamentTeam::class, 'participant_1_id');
@@ -72,7 +73,7 @@ class TournamentMatch extends Model
     /**
      * Get participant 2 (player or team)
      */
-    public function participant2()
+    public function participant2(): BelongsTo
     {
         if ($this->participant_2_type === 'team') {
             return $this->belongsTo(TournamentTeam::class, 'participant_2_id');
@@ -83,7 +84,7 @@ class TournamentMatch extends Model
     /**
      * Get winner (player or team)
      */
-    public function winner()
+    public function winner(): ?BelongsTo
     {
         if (!$this->winner_id) {
             return null;
@@ -128,10 +129,10 @@ class TournamentMatch extends Model
         $participant2Name = $this->getParticipantName(2);
 
         if ($this->match_type === 'group') {
-            return "Group {$this->group?->name}: {$participant1Name} vs {$participant2Name}";
+            return "Group {$this->group?->name}: $participant1Name vs $participant2Name";
         }
 
-        return "Round {$this->round_number}: {$participant1Name} vs {$participant2Name}";
+        return "Round $this->round_number: $participant1Name vs $participant2Name";
     }
 
     /**
@@ -210,18 +211,18 @@ class TournamentMatch extends Model
     /**
      * Cancel the match
      */
-    public function cancel(string $reason = null): void
+    public function cancel(?string $reason = null): void
     {
         $this->update([
             'status' => 'cancelled',
-            'notes'  => $reason ? "Cancelled: {$reason}" : 'Cancelled',
+            'notes' => $reason ? "Cancelled: $reason" : 'Cancelled',
         ]);
     }
 
     /**
      * Reschedule the match
      */
-    public function reschedule(\DateTime $newTime, int $tableNumber = null): void
+    public function reschedule(DateTime $newTime, ?int $tableNumber = null): void
     {
         $this->update([
             'scheduled_at' => $newTime,

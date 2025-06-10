@@ -133,7 +133,7 @@ class TournamentPlayer extends Model
     /**
      * Get matches where this player participates
      */
-    public function matches()
+    public function matches(): TournamentMatch
     {
         return TournamentMatch::where('tournament_id', $this->tournament_id)
             ->where(function ($query) {
@@ -155,7 +155,7 @@ class TournamentPlayer extends Model
     /**
      * Get completed matches
      */
-    public function completedMatches()
+    public function completedMatches(): TournamentMatch
     {
         return $this->matches()->where('status', 'completed');
     }
@@ -163,7 +163,7 @@ class TournamentPlayer extends Model
     /**
      * Get upcoming matches
      */
-    public function upcomingMatches()
+    public function upcomingMatches(): TournamentMatch
     {
         return $this->matches()->whereIn('status', ['pending', 'in_progress']);
     }
@@ -191,20 +191,15 @@ class TournamentPlayer extends Model
                 $stats['games_won'] += $match->participant_1_score;
                 $stats['games_lost'] += $match->participant_2_score;
 
-                if ($match->winner_id === $this->id && $match->winner_type === 'player') {
-                    $stats['matches_won']++;
-                } else {
-                    $stats['matches_lost']++;
-                }
             } else {
                 $stats['games_won'] += $match->participant_2_score;
                 $stats['games_lost'] += $match->participant_1_score;
 
-                if ($match->winner_id === $this->id && $match->winner_type === 'player') {
-                    $stats['matches_won']++;
-                } else {
-                    $stats['matches_lost']++;
-                }
+            }
+            if ($match->winner_id === $this->id && $match->winner_type === 'player') {
+                $stats['matches_won']++;
+            } else {
+                $stats['matches_lost']++;
             }
         }
 
@@ -268,20 +263,15 @@ class TournamentPlayer extends Model
                 $performance['games_for'] += $match->participant_1_score;
                 $performance['games_against'] += $match->participant_2_score;
 
-                if ($match->winner_id === $this->id) {
-                    $performance['wins']++;
-                } else {
-                    $performance['losses']++;
-                }
             } else {
                 $performance['games_for'] += $match->participant_2_score;
                 $performance['games_against'] += $match->participant_1_score;
 
-                if ($match->winner_id === $this->id) {
-                    $performance['wins']++;
-                } else {
-                    $performance['losses']++;
-                }
+            }
+            if ($match->winner_id === $this->id) {
+                $performance['wins']++;
+            } else {
+                $performance['losses']++;
             }
         }
 
@@ -372,7 +362,7 @@ class TournamentPlayer extends Model
             ],
         ];
 
-        if ($this->tournament->hasGroups() && $this->group) {
+        if ($this->group && $this->tournament->hasGroups()) {
             $summary['group_performance'] = $this->getGroupPerformance();
         }
 

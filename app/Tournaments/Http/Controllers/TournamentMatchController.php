@@ -9,6 +9,9 @@ use App\Tournaments\Http\Resources\TournamentMatchResource;
 use App\Tournaments\Models\Tournament;
 use App\Tournaments\Models\TournamentMatch;
 use App\Tournaments\Services\TournamentManagementService;
+use DateMalformedStringException;
+use DateTime;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -223,7 +226,7 @@ readonly class TournamentMatchController
         }
 
         try {
-            $newTime = new \DateTime($request->validated('scheduled_at'));
+            $newTime = new DateTime($request->validated('scheduled_at'));
 
             $this->managementService->rescheduleMatch(
                 $match,
@@ -237,7 +240,7 @@ readonly class TournamentMatchController
                 'message' => 'Match rescheduled successfully',
                 'match'   => new TournamentMatchResource($match->fresh()),
             ]);
-        } catch (RuntimeException $e) {
+        } catch (RuntimeException|DateMalformedStringException $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
@@ -353,7 +356,7 @@ readonly class TournamentMatchController
                     continue;
                 }
 
-                $newTime = new \DateTime($matchData['scheduled_at']);
+                $newTime = new DateTime($matchData['scheduled_at']);
 
                 $this->managementService->rescheduleMatch(
                     $match,
@@ -363,7 +366,7 @@ readonly class TournamentMatchController
                 );
 
                 $updatedCount++;
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $errors[] = "Match {$matchData['match_id']}: ".$e->getMessage();
             }
         }
@@ -373,7 +376,7 @@ readonly class TournamentMatchController
             'updated_count' => $updatedCount,
             'errors'        => $errors,
             'message'       => $updatedCount > 0
-                ? "Successfully updated {$updatedCount} matches"
+                ? "Successfully updated $updatedCount matches"
                 : 'No matches were updated',
         ]);
     }
