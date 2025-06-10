@@ -1,6 +1,7 @@
 <?php
 
 use App\Tournaments\Models\Tournament;
+use App\Tournaments\Models\TournamentGroup;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -14,13 +15,13 @@ return new class extends Migration {
             $table->string('name'); // Team name
             $table->string('short_name')->nullable(); // Abbreviated name
             $table->integer('seed')->nullable(); // Seeding position
-            $table->integer('group_id')->nullable(); // Reference to tournament_groups
+            $table->foreignIdFor(TournamentGroup::class,
+                'group_id')->nullable()->constrained()->nullOnDelete(); // Reference to tournament_groups
             $table->integer('bracket_position')->nullable(); // Position in bracket
             $table->boolean('is_active')->default(true);
             $table->json('roster_data')->nullable(); // Additional team data
             $table->timestamps();
 
-            $table->foreign('group_id')->references('id')->on('tournament_groups')->nullOnDelete();
             $table->index(['tournament_id', 'is_active']);
             $table->index(['tournament_id', 'group_id']);
         });

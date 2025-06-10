@@ -8,7 +8,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('official_rating_players', function (Blueprint $table) {
-            $table->decimal('total_killer_pool_prize_amount', 10, 2)->default(0)->after('total_achievement_amount');
+            $table->decimal('total_killer_pool_prize_amount', 10, 2)->default(0);
         });
     }
 
@@ -18,4 +18,4 @@ return new class extends Migration {
             $table->dropColumn('total_killer_pool_prize_amount');
         });
     }
-}; 
+};
