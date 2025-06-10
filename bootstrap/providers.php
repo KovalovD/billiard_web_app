@@ -7,7 +7,6 @@ use App\Core\Providers\RouteServiceProvider;
 use App\Leagues\Providers\LeaguesServiceProvider;
 use App\Matches\Providers\MatchesServiceProvider;
 use App\OfficialRatings\Providers\OfficialRatingsServiceProvider;
-use App\Tournaments\Providers\TournamentManagementServiceProvider;
 use App\Tournaments\Providers\TournamentsServiceProvider;
 
 return [
@@ -19,5 +18,4 @@ return [
     OfficialRatingsServiceProvider::class,
     TournamentsServiceProvider::class,
     LeaguesServiceProvider::class,
-    TournamentManagementServiceProvider::class,
 ];
