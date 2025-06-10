@@ -2,7 +2,6 @@
 
 use App\Core\Models\Club;
 use App\Tournaments\Models\Tournament;
-use App\Tournaments\Models\TournamentGroup;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -21,8 +20,8 @@ return new class extends Migration {
             $table->string('bracket_type')->nullable(); // upper, lower, final
 
             // Group stage specific
-            $table->foreignIdFor(TournamentGroup::class,
-                'group_id')->nullable()->constrained()->nullOnDelete(); // Reference to tournament_groups
+            $table->integer('group_id')->nullable();
+
             // Participants (can be players or teams)
             $table->integer('participant_1_id')->nullable(); // tournament_players.id or tournament_teams.id
             $table->string('participant_1_type')->default('player'); // player or team
@@ -52,6 +51,7 @@ return new class extends Migration {
             $table->timestamps();
 
             // Add foreign key for group_id
+            $table->foreign('group_id')->references('id')->on('tournament_groups')->nullOnDelete();
 
             // Indexes
             $table->index(['tournament_id', 'status']);

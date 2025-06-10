@@ -1,6 +1,6 @@
 <?php
 
-namespace Database\Seeders;
+namespace database\seeders;
 
 use App\Core\Models\City;
 use App\Core\Models\Club;
@@ -143,7 +143,5 @@ class DatabaseSeeder extends Seeder
             'name'    => 'B2B',
             'city_id' => City::firstWhere('name', 'Львів')->id,
         ]);
-
-        app(TournamentStructureSeeder::class)->run();
     }
 }

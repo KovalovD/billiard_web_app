@@ -1,7 +1,5 @@
 <?php
 
-use App\Tournaments\Models\TournamentGroup;
-use App\Tournaments\Models\TournamentTeam;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -13,10 +11,8 @@ return new class extends Migration {
             // Seeding and bracket information
             $table->integer('seed')->nullable()->after('position'); // Seeding position
             $table->integer('bracket_position')->nullable()->after('seed'); // Position in bracket
-            $table->foreignIdFor(TournamentGroup::class,
-                'group_id')->nullable()->constrained()->nullOnDelete(); // Reference to tournament_groups
-            $table->foreignIdFor(TournamentTeam::class,
-                'team_id')->nullable()->constrained()->nullOnDelete(); // Reference to tournament_groups
+            $table->integer('group_id')->nullable()->after('bracket_position'); // Reference to tournament_groups
+            $table->integer('team_id')->nullable()->after('group_id'); // Reference to tournament_teams
             $table->string('team_role')->nullable()->after('team_id'); // captain, player, substitute
 
             // Performance tracking
@@ -30,6 +26,10 @@ return new class extends Migration {
             // Additional tournament data
             $table->json('bracket_path')->nullable()->after('achievement_amount'); // Track progression through bracket
             $table->json('group_standings')->nullable()->after('bracket_path'); // Group stage performance
+
+            // Add foreign keys
+            $table->foreign('group_id')->references('id')->on('tournament_groups')->nullOnDelete();
+            $table->foreign('team_id')->references('id')->on('tournament_teams')->nullOnDelete();
 
             // Add indexes
             $table->index(['tournament_id', 'seed']);
