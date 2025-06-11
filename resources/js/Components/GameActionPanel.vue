@@ -12,6 +12,7 @@ interface Props {
     targetPlayers?: MultiplayerGamePlayer[];
     isCurrentTurn?: boolean;
     isLoading?: boolean;
+    maxLives?: number;
 }
 
 const props = defineProps<Props>();
@@ -114,7 +115,7 @@ const handleRecordTurn = () => {
 
         <div class="border-t pt-3">
             <div class="flex items-center space-x-4 mb-2">
-                <LivesTracker :lives="player.lives"/>
+                <LivesTracker :lives="player.lives" :max-lives="props.maxLives"/>
 
                 <div class="flex space-x-1">
                     <Button

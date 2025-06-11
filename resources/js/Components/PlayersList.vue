@@ -10,6 +10,7 @@ interface Props {
     title: string;
     emptyMessage?: string;
     showControls?: boolean;
+    maxLives?: number;
     highlightCurrentTurn?: boolean;
     selectedPlayerId?: number | null;
 }
@@ -113,7 +114,7 @@ const hasCard = (player: MultiplayerGamePlayer, cardType: 'skip_turn' | 'pass_tu
                 </div>
 
                 <div class="flex items-center space-x-2">
-                    <LivesTracker :lives="player.lives" :size="'sm'"/>
+                    <LivesTracker :lives="player.lives" :max-lives="props.maxLives" :size="'sm'"/>
                 </div>
             </div>
         </div>

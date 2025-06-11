@@ -617,6 +617,7 @@ onMounted(() => {
                                     </CardHeader>
                                     <CardContent>
                                         <PlayersList
+                                            :max-lives="game.initial_lives"
                                             :highlight-current-turn="true"
                                             :players="game.active_players"
                                             :selected-player-id="selectedActingPlayer?.id"
@@ -670,6 +671,7 @@ onMounted(() => {
                                  class="order-1 lg:order-2 lg:col-span-2">
                                 <div v-if="selectedActingPlayer" class="space-y-4">
                                     <GameActionPanel
+                                        :max-lives="game.initial_lives"
                                         :is-current-turn="selectedActingPlayer.is_current_turn"
                                         :is-loading="isActionLoading"
                                         :player="selectedActingPlayer"

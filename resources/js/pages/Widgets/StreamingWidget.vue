@@ -251,7 +251,8 @@ onUnmounted(stopPolling)
                         </h2>
                     </div>
 
-                    <LivesTracker :lives="gameData.current_player.lives" size="sm"/>
+                    <LivesTracker :lives="gameData.current_player.lives" :max-lives="gameData.game.initial_lives"
+                                  size="sm"/>
 
                     <div v-if="gameData.current_player.available_cards_count > 0"
                          class="ml-auto flex items-center gap-1">
@@ -278,7 +279,8 @@ onUnmounted(stopPolling)
                     </div>
                     <h2 class="text-2xl font-bold mb-2">{{ gameData.current_player.user.full_name }}</h2>
                     <div class="flex justify-center items-center mb-3">
-                        <LivesTracker :lives="gameData.current_player.lives" size="lg"/>
+                        <LivesTracker :lives="gameData.current_player.lives" :max-lives="gameData.game.initial_lives"
+                                      size="lg"/>
                     </div>
                     <div v-if="gameData.current_player.available_cards_count > 0" class="border-t pt-4">
                         <div class="text-center mb-3">
@@ -317,7 +319,7 @@ onUnmounted(stopPolling)
                             :class="['flex items-center justify-between gap-2 text-xs', index === 0 ? 'font-semibold' : 'opacity-75']"
                         >
                             <div>{{ index + 2 }}. {{ player.user.full_name }}</div>
-                            <LivesTracker :lives="player.lives" size="xs"/>
+                            <LivesTracker :lives="player.lives" :max-lives="gameData.game.initial_lives" size="sm"/>
                         </div>
                     </div>
                 </div>
@@ -333,7 +335,7 @@ onUnmounted(stopPolling)
                             class="flex items-center justify-between p-2 rounded"
                         >
                             <div class="text-sm">{{ index + 2 }}. {{ player.user.full_name }}</div>
-                            <LivesTracker :lives="player.lives" size="sm"/>
+                            <LivesTracker :lives="player.lives" :max-lives="gameData.game.initial_lives" size="sm"/>
                         </div>
                     </div>
                 </div>

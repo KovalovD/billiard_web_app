@@ -1,4 +1,3 @@
-// resources/js/Components/LivesTracker.vue
 <script lang="ts" setup>
 import {HeartIcon} from 'lucide-vue-next';
 import {computed} from 'vue';
