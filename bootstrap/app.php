@@ -20,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withRouting(
         api: __DIR__.'/../routes/widgets/api.php',
+        health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->statefulApi();

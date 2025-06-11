@@ -133,6 +133,12 @@ const Ziggy = {
             "parameters": ["officialRating", "userId"],
             "bindings": {"officialRating": "id"}
         },
+        "official-ratings.player-delta": {
+            "uri": "api\/official-ratings\/{officialRating}\/player-delta",
+            "methods": ["GET", "HEAD"],
+            "parameters": ["officialRating"],
+            "bindings": {"officialRating": "id"}
+        },
         "admin.official-ratings.store": {"uri": "api\/admin\/official-ratings", "methods": ["POST"]},
         "admin.official-ratings.update": {
             "uri": "api\/admin\/official-ratings\/{officialRating}",
@@ -176,11 +182,23 @@ const Ziggy = {
             "parameters": ["officialRating"],
             "bindings": {"officialRating": "id"}
         },
+        "admin.official-ratings.recalculate-from-records": {
+            "uri": "api\/admin\/official-ratings\/{officialRating}\/recalculate-from-records",
+            "methods": ["POST"],
+            "parameters": ["officialRating"],
+            "bindings": {"officialRating": "id"}
+        },
         "admin.official-ratings.update-from-tournament": {
             "uri": "api\/admin\/official-ratings\/{officialRating}\/update-from-tournament\/{tournament}",
             "methods": ["POST"],
             "parameters": ["officialRating", "tournament"],
             "bindings": {"officialRating": "id", "tournament": "id"}
+        },
+        "admin.official-ratings.integrity-report": {
+            "uri": "api\/admin\/official-ratings\/{officialRating}\/integrity-report",
+            "methods": ["GET", "HEAD"],
+            "parameters": ["officialRating"],
+            "bindings": {"officialRating": "id"}
         },
         "tournaments.index": {"uri": "api\/tournaments", "methods": ["GET", "HEAD"]},
         "tournaments.upcoming": {"uri": "api\/tournaments\/upcoming", "methods": ["GET", "HEAD"]},
@@ -312,6 +330,18 @@ const Ziggy = {
         "scribe.postman": {"uri": "docs.postman", "methods": ["GET", "HEAD"]},
         "scribe.openapi": {"uri": "docs.openapi", "methods": ["GET", "HEAD"]},
         "sanctum.csrf-cookie": {"uri": "sanctum\/csrf-cookie", "methods": ["GET", "HEAD"]},
+        "widgets.streaming.current-game": {
+            "uri": "api\/widgets\/streaming\/leagues\/{league}\/games\/{game}",
+            "methods": ["GET", "HEAD"],
+            "parameters": ["league", "game"],
+            "bindings": {"league": "id", "game": "id"}
+        },
+        "widgets.streaming.game-status": {
+            "uri": "api\/widgets\/streaming\/leagues\/{league}\/games\/{game}\/status",
+            "methods": ["GET", "HEAD"],
+            "parameters": ["league", "game"],
+            "bindings": {"league": "id", "game": "id"}
+        },
         "leagues.index": {"uri": "api\/leagues", "methods": ["GET", "HEAD"]},
         "leagues.show": {
             "uri": "api\/leagues\/{league}",
@@ -319,8 +349,26 @@ const Ziggy = {
             "parameters": ["league"],
             "bindings": {"league": "id"}
         },
+        "monobank.webhook": {
+            "uri": "api\/monobank\/webhook",
+            "methods": ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+        },
         "cities.index": {"uri": "api\/cities", "methods": ["GET", "HEAD"]},
         "clubs.index": {"uri": "api\/clubs", "methods": ["GET", "HEAD"]},
+        "user.tournaments.recent": {"uri": "api\/user\/tournaments\/recent", "methods": ["GET", "HEAD"]},
+        "user.tournaments.upcoming": {"uri": "api\/user\/tournaments\/upcoming", "methods": ["GET", "HEAD"]},
+        "leagues.players": {
+            "uri": "api\/leagues\/{league}\/players",
+            "methods": ["GET", "HEAD"],
+            "parameters": ["league"],
+            "bindings": {"league": "id"}
+        },
+        "leagues.games": {
+            "uri": "api\/leagues\/{league}\/games",
+            "methods": ["GET", "HEAD"],
+            "parameters": ["league"],
+            "bindings": {"league": "id"}
+        },
         "leagues.store": {"uri": "api\/leagues", "methods": ["POST"]},
         "leagues.update": {
             "uri": "api\/leagues\/{league}",
@@ -376,8 +424,6 @@ const Ziggy = {
             "parameters": ["league"],
             "bindings": {"league": "id"}
         },
-        "user.tournaments.recent": {"uri": "api\/user\/tournaments\/recent", "methods": ["GET", "HEAD"]},
-        "user.tournaments.upcoming": {"uri": "api\/user\/tournaments\/upcoming", "methods": ["GET", "HEAD"]},
         "user.tournaments.my-tournaments-and-applications": {
             "uri": "api\/user\/tournaments\/my-tournaments-and-applications",
             "methods": ["GET", "HEAD"]
@@ -392,18 +438,6 @@ const Ziggy = {
         "user.matches": {"uri": "api\/user\/matches", "methods": ["GET", "HEAD"]},
         "user.stats": {"uri": "api\/user\/stats", "methods": ["GET", "HEAD"]},
         "user.game-type-stats": {"uri": "api\/user\/game-type-stats", "methods": ["GET", "HEAD"]},
-        "leagues.players": {
-            "uri": "api\/leagues\/{league}\/players",
-            "methods": ["GET", "HEAD"],
-            "parameters": ["league"],
-            "bindings": {"league": "id"}
-        },
-        "leagues.games": {
-            "uri": "api\/leagues\/{league}\/games",
-            "methods": ["GET", "HEAD"],
-            "parameters": ["league"],
-            "bindings": {"league": "id"}
-        },
         "leagues.load-user-rating": {
             "uri": "api\/leagues\/{league}\/load-user-rating",
             "methods": ["GET", "HEAD"],
@@ -449,8 +483,7 @@ const Ziggy = {
         "login": {"uri": "login", "methods": ["GET", "HEAD"]},
         "register": {"uri": "register", "methods": ["GET", "HEAD"]},
         "home": {"uri": "\/", "methods": ["GET", "HEAD"]},
-        "profile.edit": {"uri": "profile\/edit", "methods": ["GET", "HEAD"]},
-        "profile.stats": {"uri": "profile\/stats", "methods": ["GET", "HEAD"]},
+        "widgets.streaming": {"uri": "widgets\/streaming", "methods": ["GET", "HEAD"]},
         "dashboard": {"uri": "dashboard", "methods": ["GET", "HEAD"]},
         "leagues.index.page": {"uri": "leagues", "methods": ["GET", "HEAD"]},
         "leagues.show.page": {
@@ -469,6 +502,22 @@ const Ziggy = {
             "methods": ["GET", "HEAD"],
             "parameters": ["leagueId", "gameId"]
         },
+        "tournaments.index.page": {"uri": "tournaments", "methods": ["GET", "HEAD"]},
+        "tournaments.show.page": {
+            "uri": "tournaments\/{tournamentId}",
+            "methods": ["GET", "HEAD"],
+            "wheres": {"tournamentId": "[0-9]+"},
+            "parameters": ["tournamentId"]
+        },
+        "official-ratings.index": {"uri": "official-ratings", "methods": ["GET", "HEAD"]},
+        "official-ratings.show": {
+            "uri": "official-ratings\/{ratingId}",
+            "methods": ["GET", "HEAD"],
+            "wheres": {"ratingId": "[0-9]+"},
+            "parameters": ["ratingId"]
+        },
+        "profile.edit": {"uri": "profile\/edit", "methods": ["GET", "HEAD"]},
+        "profile.stats": {"uri": "profile\/stats", "methods": ["GET", "HEAD"]},
         "admin.leagues.confirmed-players": {
             "uri": "admin\/leagues\/{league}\/confirmed-players",
             "methods": ["GET", "HEAD"],
@@ -485,20 +534,6 @@ const Ziggy = {
             "uri": "admin\/leagues\/{league}\/pending-players",
             "methods": ["GET", "HEAD"],
             "parameters": ["league"]
-        },
-        "tournaments.index.page": {"uri": "tournaments", "methods": ["GET", "HEAD"]},
-        "tournaments.show.page": {
-            "uri": "tournaments\/{tournamentId}",
-            "methods": ["GET", "HEAD"],
-            "wheres": {"tournamentId": "[0-9]+"},
-            "parameters": ["tournamentId"]
-        },
-        "official-ratings.index": {"uri": "official-ratings", "methods": ["GET", "HEAD"]},
-        "official-ratings.show": {
-            "uri": "official-ratings\/{ratingId}",
-            "methods": ["GET", "HEAD"],
-            "wheres": {"ratingId": "[0-9]+"},
-            "parameters": ["ratingId"]
         },
         "admin.tournaments.create": {"uri": "admin\/tournaments\/create", "methods": ["GET", "HEAD"]},
         "admin.tournaments.edit": {
