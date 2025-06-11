@@ -24,6 +24,11 @@ Route::middleware('guest')->group(function () {
     })->name('home');
 });
 
+// Widget route - public access for OBS
+Route::get('/widgets/streaming', static function () {
+    return Inertia::render('Widgets/StreamingWidget');
+})->name('widgets.streaming');
+
 // Dashboard as home for authenticated users
 Route::get('/dashboard', static function () {
     return Inertia::render('Dashboard', [

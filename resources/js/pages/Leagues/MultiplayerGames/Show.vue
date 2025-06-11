@@ -52,7 +52,17 @@ const selectedActingPlayer = ref<MultiplayerGamePlayer | null>(null);
 const showFinishModal = ref(false);
 const showModeratorModal = ref(false);
 const actionFeedback = ref<{ type: 'success' | 'error', message: string } | null>(null);
-const activeTab = ref<'game' | 'prizes' | 'ratings' | 'timefund'>('game');
+const activeTab = ref<'game' | 'prizes' | 'ratings' | 'timefund' | 'widget'>('game');
+
+const widgetLink1 = computed(() => {
+    return `/widgets/streaming?league=${props.leagueId}&game=${props.gameId}&theme=dark&refresh=3000&league_part=yes&next_player_part=yes`;
+})
+const widgetLink2 = computed(() => {
+    return `/widgets/streaming?league=${props.leagueId}&game=${props.gameId}&theme=transparent&refresh=2000&league_part=yes&next_player_part=yes&orientation=vertical`;
+})
+const widgetLink3 = computed(() => {
+    return `/widgets/streaming?league=${props.leagueId}&game=${props.gameId}&theme=light&refresh=5000&league_part=yes&next_player_part=yes`;
+})
 
 // Add to existing refs
 const showAddPlayerModal = ref(false);
@@ -582,6 +592,17 @@ onMounted(() => {
                             >
                                 {{ t('Time Fund') }}
                             </button>
+                            <button
+                                :class="[
+                                    'py-4 px-1 text-sm font-medium border-b-2',
+                                    activeTab === 'widget'
+                                        ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:border-gray-600'
+                                ]"
+                                @click="activeTab = 'widget'"
+                            >
+                                {{ t('Widget') }}
+                            </button>
                         </nav>
                     </div>
 
@@ -766,6 +787,18 @@ onMounted(() => {
                     <!-- Time Fund tab -->
                     <div v-if="activeTab === 'timefund'" class="space-y-6">
                         <TimeFundCard :game="game"/>
+                    </div>
+
+                    <div v-if="activeTab === 'widget'" class="space-y-6">
+                        <div>
+                            <Link :href="widgetLink1">Темна тема, 3 сек</Link>
+                        </div>
+                        <div>
+                            <Link :href="widgetLink2">Прозора тема, 2 сек, вертикальна</Link>
+                        </div>
+                        <div>
+                            <Link :href="widgetLink3">Світла тема, 5 сек</Link>
+                        </div>
                     </div>
                 </div>
             </div>

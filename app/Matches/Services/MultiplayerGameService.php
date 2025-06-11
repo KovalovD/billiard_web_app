@@ -152,10 +152,8 @@ class MultiplayerGameService
             $initialLives = 6;
         } elseif ($playerCount <= 10) {
             $initialLives = 5;
-        } elseif ($playerCount <= 14) {
-            $initialLives = 4;
         } else {
-            $initialLives = 3;
+            $initialLives = 4;
         }
 
         // Update each player
