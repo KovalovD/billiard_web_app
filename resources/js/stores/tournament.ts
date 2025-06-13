@@ -1,53 +1,30 @@
-// resources/js/stores/tournament.ts
 import {defineStore} from 'pinia';
-import {ref, computed} from 'vue';
-import tournamentService from '@/Services/TournamentService';
-import type {
-    Tournament,
-    TournamentPlayer,
-    Match,
-    Group,
-    BracketNode,
-    TournamentSettings,
-} from '@/types/tournament';
+import {computed, ref} from 'vue';
+import tournamentService from '@/services/TournamentService';
+import type {Tournament, TournamentPlayer} from '@/types/api';
 
 export const useTournamentStore = defineStore('tournament', () => {
     // State
     const currentTournament = ref<Tournament | null>(null);
     const tournaments = ref<Tournament[]>([]);
     const players = ref<TournamentPlayer[]>([]);
-    const matches = ref<Match[]>([]);
-    const groups = ref<Group[]>([]);
-    const bracket = ref<BracketNode[]>([]);
-    const settings = ref<TournamentSettings | null>(null);
+    const matches = ref<any[]>([]);
+    const groups = ref<any[]>([]);
+    const bracket = ref<any[]>([]);
 
     // Loading states
     const isLoading = ref(false);
     const isSaving = ref(false);
     const isGenerating = ref(false);
-
-    // Error handling
     const error = ref<string | null>(null);
 
     // Getters
-    const activeTournaments = computed(() =>
-        tournaments.value.filter(t => t.status === 'active')
-    );
-
-    const upcomingTournaments = computed(() =>
-        tournaments.value.filter(t => t.status === 'upcoming')
-    );
-
     const confirmedPlayers = computed(() =>
-        players.value.filter(p => p.is_confirmed)
+        players.value.filter(p => p.status === 'confirmed')
     );
 
     const pendingPlayers = computed(() =>
-        players.value.filter(p => p.is_pending)
-    );
-
-    const currentMatches = computed(() =>
-        matches.value.filter(m => m.status === 'in_progress')
+        players.value.filter(p => p.status === 'applied')
     );
 
     const scheduledMatches = computed(() =>
@@ -61,19 +38,18 @@ export const useTournamentStore = defineStore('tournament', () => {
     const groupStandings = computed(() => {
         return groups.value.map(group => ({
             ...group,
-            standings: group.standings.sort((a, b) => {
-                // Sort by points, then frame difference, then frames won
+            standings: group.standings?.sort((a: any, b: any) => {
                 if (a.points !== b.points) return b.points - a.points;
                 if (a.frame_difference !== b.frame_difference) return b.frame_difference - a.frame_difference;
                 return b.frames_won - a.frames_won;
-            })
+            }) || []
         }));
     });
 
     const bracketRounds = computed(() => {
         if (!bracket.value.length) return [];
 
-        const rounds = new Map<number, BracketNode[]>();
+        const rounds = new Map<number, any[]>();
         bracket.value.forEach(node => {
             if (!rounds.has(node.round)) {
                 rounds.set(node.round, []);
@@ -106,8 +82,7 @@ export const useTournamentStore = defineStore('tournament', () => {
         error.value = null;
 
         try {
-            // currentTournament.value = await tournamentService.fetchTournament(id);
-            // Mock for now
+            // Mock for now - replace with actual API call
             currentTournament.value = tournaments.value.find(t => t.id === id) || null;
         } catch (err: any) {
             error.value = err.message || 'Failed to fetch tournament';
@@ -138,7 +113,6 @@ export const useTournamentStore = defineStore('tournament', () => {
         error.value = null;
 
         try {
-            // const tournament = await tournamentService.updateTournament(id, payload);
             // Mock update
             const index = tournaments.value.findIndex(t => t.id === id);
             if (index !== -1) {
@@ -155,14 +129,12 @@ export const useTournamentStore = defineStore('tournament', () => {
         }
     };
 
-    // Player Management
     const fetchPlayers = async (tournamentId: number) => {
         isLoading.value = true;
         error.value = null;
 
         try {
-            // players.value = await tournamentService.fetchTournamentPlayers(tournamentId);
-            // Mock for now
+            // Mock implementation - replace with actual API call
             players.value = [];
         } catch (err: any) {
             error.value = err.message || 'Failed to fetch players';
@@ -202,7 +174,6 @@ export const useTournamentStore = defineStore('tournament', () => {
         }
     };
 
-    // Bracket Management
     const generateBracket = async (tournamentId: number, format: any, seeding: any) => {
         isGenerating.value = true;
         error.value = null;
@@ -217,7 +188,7 @@ export const useTournamentStore = defineStore('tournament', () => {
         }
     };
 
-    const updateBracketNode = async (tournamentId: number, nodeId: number, update: Partial<BracketNode>) => {
+    const updateBracketNode = async (tournamentId: number, nodeId: number, update: any) => {
         error.value = null;
 
         try {
@@ -232,7 +203,6 @@ export const useTournamentStore = defineStore('tournament', () => {
         }
     };
 
-    // Group Management
     const createGroups = async (tournamentId: number, groupCount: number) => {
         isGenerating.value = true;
         error.value = null;
@@ -262,7 +232,6 @@ export const useTournamentStore = defineStore('tournament', () => {
         }
     };
 
-    // Match Management
     const fetchSchedule = async (tournamentId: number, date?: string) => {
         isLoading.value = true;
         error.value = null;
@@ -326,7 +295,6 @@ export const useTournamentStore = defineStore('tournament', () => {
         }
     };
 
-    // Utility actions
     const clearError = () => {
         error.value = null;
     };
@@ -337,7 +305,6 @@ export const useTournamentStore = defineStore('tournament', () => {
         matches.value = [];
         groups.value = [];
         bracket.value = [];
-        settings.value = null;
         error.value = null;
     };
 
@@ -349,18 +316,14 @@ export const useTournamentStore = defineStore('tournament', () => {
         matches,
         groups,
         bracket,
-        settings,
         isLoading,
         isSaving,
         isGenerating,
         error,
 
         // Getters
-        activeTournaments,
-        upcomingTournaments,
         confirmedPlayers,
         pendingPlayers,
-        currentMatches,
         scheduledMatches,
         completedMatches,
         groupStandings,

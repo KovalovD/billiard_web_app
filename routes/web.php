@@ -64,6 +64,7 @@ Route::prefix('leagues/{leagueId}/multiplayer-games')->group(function () {
     })->name('leagues.multiplayer-games.show');
 });
 
+// --- Tournament Routes ---
 Route::get('/tournaments', static function () {
     return Inertia::render('Tournaments/Index');
 })->name('tournaments.index.page');
@@ -73,6 +74,45 @@ Route::get('/tournaments/{tournamentId}', static function ($tournamentId) {
         'tournamentId' => $tournamentId,
     ]);
 })->name('tournaments.show.page')->where('tournamentId', '[0-9]+');
+
+// Tournament Management Routes (for authenticated users)
+Route::middleware('auth')->prefix('tournaments/{tournamentId}')->group(function () {
+
+    // Player Management
+    Route::get('/players', static function ($tournamentId) {
+        return Inertia::render('Tournaments/Players', [
+            'tournamentId' => (int) $tournamentId,
+        ]);
+    })->name('tournaments.players')->where('tournamentId', '[0-9]+');
+
+    // Bracket Editor
+    Route::get('/bracket', static function ($tournamentId) {
+        return Inertia::render('Tournaments/Bracket', [
+            'tournamentId' => (int) $tournamentId,
+        ]);
+    })->name('tournaments.bracket')->where('tournamentId', '[0-9]+');
+
+    // Group Stage Management
+    Route::get('/groups', static function ($tournamentId) {
+        return Inertia::render('Tournaments/Groups', [
+            'tournamentId' => (int) $tournamentId,
+        ]);
+    })->name('tournaments.groups')->where('tournamentId', '[0-9]+');
+
+    // Match Schedule
+    Route::get('/schedule', static function ($tournamentId) {
+        return Inertia::render('Tournaments/Schedule', [
+            'tournamentId' => (int) $tournamentId,
+        ]);
+    })->name('tournaments.schedule')->where('tournamentId', '[0-9]+');
+
+    // Results & Statistics
+    Route::get('/results', static function ($tournamentId) {
+        return Inertia::render('Tournaments/Results', [
+            'tournamentId' => (int) $tournamentId,
+        ]);
+    })->name('tournaments.results')->where('tournamentId', '[0-9]+');
+});
 
 // Official Ratings routes
 Route::get('/official-ratings', static function () {
@@ -98,6 +138,7 @@ Route::middleware('auth')->group(function () {
             'header' => 'Statistics',
         ]);
     })->name('profile.stats');
+
     // --- Admin routes ---
     Route::middleware(AdminMiddleware::class)->prefix('admin')->group(function () {
         Route::group(['prefix' => 'leagues'], static function () {
@@ -126,6 +167,7 @@ Route::middleware('auth')->group(function () {
                 ]);
             })->name('admin.leagues.pending-players');
         });
+
         // Admin Tournament routes
         Route::get('/tournaments/create', static function () {
             return Inertia::render('Admin/Tournaments/Create');
@@ -154,6 +196,31 @@ Route::middleware('auth')->group(function () {
                 'tournamentId' => $tournamentId,
             ]);
         })->name('admin.tournaments.applications');
+
+        // Additional Admin Tournament Management Routes
+        Route::get('/tournaments/{tournamentId}/bracket', static function ($tournamentId) {
+            return Inertia::render('Admin/Tournaments/Bracket', [
+                'tournamentId' => (int) $tournamentId,
+            ]);
+        })->name('admin.tournaments.bracket')->where('tournamentId', '[0-9]+');
+
+        Route::get('/tournaments/{tournamentId}/groups', static function ($tournamentId) {
+            return Inertia::render('Admin/Tournaments/Groups', [
+                'tournamentId' => (int) $tournamentId,
+            ]);
+        })->name('admin.tournaments.groups')->where('tournamentId', '[0-9]+');
+
+        Route::get('/tournaments/{tournamentId}/schedule', static function ($tournamentId) {
+            return Inertia::render('Admin/Tournaments/Schedule', [
+                'tournamentId' => (int) $tournamentId,
+            ]);
+        })->name('admin.tournaments.schedule')->where('tournamentId', '[0-9]+');
+
+        Route::get('/tournaments/{tournamentId}/settings', static function ($tournamentId) {
+            return Inertia::render('Admin/Tournaments/Settings', [
+                'tournamentId' => (int) $tournamentId,
+            ]);
+        })->name('admin.tournaments.settings')->where('tournamentId', '[0-9]+');
 
         // Admin Official Ratings routes
         Route::get('/official-ratings/create', static function () {
@@ -186,7 +253,6 @@ Route::middleware('auth')->group(function () {
     });
 });
 
-
 // --- Error routes ---
 // These can be used programmatically by redirecting to them by name
 Route::get('/404', [ErrorController::class, 'notFound'])->name('error.404');
@@ -201,32 +267,3 @@ Route::get('/error/{status}', [ErrorController::class, 'show'])
 
 // Fallback route for handling 404s
 Route::fallback([ErrorController::class, 'notFound']);
-
-/*if (app()->environment('production')) {
-    Route::get('/run-seeder-once/{key}/{only_import}', function ($key, $only_import) {
-        set_time_limit(0);
-        // Use a secure key to prevent unauthorized access
-        $expectedKey = env('SEEDER_KEY', 'some-very-secure-random-key');
-
-        if ($key !== $expectedKey) {
-            abort(403, 'Unauthorized');
-        }
-
-        try {
-            if ($only_import == 1) {
-                Artisan::call('db:seed', ['--force' => true]);
-            }
-            Artisan::call('import:tournaments import.xlsx');
-            return response()->json([
-                'status'  => 'success',
-                'message' => 'Database seeded successfully',
-                'output'  => Artisan::output(),
-            ]);
-        } catch (Exception $e) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => $e->getMessage(),
-            ], 500);
-        }
-    });
-}*/

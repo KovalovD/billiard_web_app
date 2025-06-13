@@ -1,32 +1,17 @@
 <!-- resources/js/Pages/Tournaments/Players.vue -->
 <script lang="ts" setup>
-import {ref, computed, onMounted, watch} from 'vue';
+import {computed, onMounted, ref, watch} from 'vue';
 import {Head, router} from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
-import {
-    Button,
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-    Input,
-    Label,
-    Modal
-} from '@/Components/ui';
+import {Button, Card, CardContent, CardHeader, CardTitle, Input,} from '@/Components/ui';
 import {useTournamentStore} from '@/stores/tournament';
 import {useLocale} from '@/composables/useLocale';
-import tournamentService from '@/Services/TournamentService';
+import tournamentService from '@/services/TournamentService';
 import UserSearchCard from '@/Components/Tournament/UserSearchCard.vue';
 import UserRegistrationForm from '@/Components/Tournament/UserRegistrationForm.vue';
 import TeamBuilder from '@/Components/Tournament/TeamBuilder.vue';
 import PlayerList from '@/Components/Tournament/PlayerList.vue';
-import {
-    UserPlusIcon,
-    UsersIcon,
-    SearchIcon,
-    ArrowLeftIcon,
-    ShuffleIcon
-} from 'lucide-vue-next';
+import {ArrowLeftIcon, SearchIcon, ShuffleIcon, UserPlusIcon, UsersIcon} from 'lucide-vue-next';
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -48,7 +33,6 @@ const isLoading = ref(false);
 
 // Modals
 const showRegisterModal = ref(false);
-const showTeamModal = ref(false);
 
 // Computed
 const tournament = computed(() => tournamentStore.currentTournament);

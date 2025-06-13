@@ -2,10 +2,23 @@
 
 // Add these to existing api.ts or import them there
 
-import {TournamentPlayer, Tournament} from "@/types/api";
+import {Tournament, TournamentPlayer} from "@/types/api";
 
 export type {Tournament, TournamentPlayer};
 
+export interface MatchSchedule {
+    id: number;
+    tournamentId: number;
+    round: number;
+    tableNumber?: number;
+    scheduledAt: string;
+    playerA: TournamentPlayer;
+    playerB: TournamentPlayer;
+    status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+    scoreA?: number;
+    scoreB?: number;
+    frames?: Array<{ frameNumber: number; winner: 'A' | 'B' }>;
+}
 export interface Match {
     id: number;
     tournament_id: number;
