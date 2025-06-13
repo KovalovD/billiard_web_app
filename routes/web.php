@@ -197,31 +197,6 @@ Route::middleware('auth')->group(function () {
             ]);
         })->name('admin.tournaments.applications');
 
-        // Additional Admin Tournament Management Routes
-        Route::get('/tournaments/{tournamentId}/bracket', static function ($tournamentId) {
-            return Inertia::render('Admin/Tournaments/Bracket', [
-                'tournamentId' => (int) $tournamentId,
-            ]);
-        })->name('admin.tournaments.bracket')->where('tournamentId', '[0-9]+');
-
-        Route::get('/tournaments/{tournamentId}/groups', static function ($tournamentId) {
-            return Inertia::render('Admin/Tournaments/Groups', [
-                'tournamentId' => (int) $tournamentId,
-            ]);
-        })->name('admin.tournaments.groups')->where('tournamentId', '[0-9]+');
-
-        Route::get('/tournaments/{tournamentId}/schedule', static function ($tournamentId) {
-            return Inertia::render('Admin/Tournaments/Schedule', [
-                'tournamentId' => (int) $tournamentId,
-            ]);
-        })->name('admin.tournaments.schedule')->where('tournamentId', '[0-9]+');
-
-        Route::get('/tournaments/{tournamentId}/settings', static function ($tournamentId) {
-            return Inertia::render('Admin/Tournaments/Settings', [
-                'tournamentId' => (int) $tournamentId,
-            ]);
-        })->name('admin.tournaments.settings')->where('tournamentId', '[0-9]+');
-
         // Admin Official Ratings routes
         Route::get('/official-ratings/create', static function () {
             return Inertia::render('Admin/OfficialRatings/Create');
