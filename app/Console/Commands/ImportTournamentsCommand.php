@@ -135,7 +135,7 @@ class ImportTournamentsCommand extends Command
         $this->rating = OfficialRating::create([
             'name'               => 'Lviv Pool Rating',
             'description' => 'Офіційний рейтинг з пулу м.Львів',
-            'game_id'            => $poolGame->id,
+            'game_type' => $poolGame->type,
             'is_active'          => true,
             'initial_rating'     => 0,
             'calculation_method' => 'tournament_points',
