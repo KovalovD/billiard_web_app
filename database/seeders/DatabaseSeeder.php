@@ -143,5 +143,7 @@ class DatabaseSeeder extends Seeder
             'name'    => 'B2B',
             'city_id' => City::firstWhere('name', 'Львів')->id,
         ]);
+
+        app(OfficialTournamentDemoSeeder::class)->run();
     }
 }
