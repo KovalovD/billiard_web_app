@@ -8,7 +8,7 @@ use App\Tournaments\Http\Controllers\TournamentsController;
 use Illuminate\Support\Facades\Route;
 
 // Public tournament routes
-Route::group(['prefix' => 'tournaments'], static function () {
+Route::group(['prefix' => 'archive-tournaments'], static function () {
     Route::get('/', [TournamentsController::class, 'index'])->name('tournaments.index');
     Route::get('/upcoming', [TournamentsController::class, 'upcoming'])->name('tournaments.upcoming');
     Route::get('/active', [TournamentsController::class, 'active'])->name('tournaments.active');
@@ -30,7 +30,7 @@ Route::group(['prefix' => 'tournaments'], static function () {
 
 // Admin tournament routes
 Route::middleware(['auth:sanctum', AdminMiddleware::class])
-    ->prefix('admin/tournaments')
+    ->prefix('admin/archive-tournaments')
     ->group(function () {
         Route::post('/', [AdminTournamentsController::class, 'store'])->name('admin.tournaments.store');
         Route::put('/{tournament}', [AdminTournamentsController::class, 'update'])->name('admin.tournaments.update');
