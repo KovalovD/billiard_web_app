@@ -198,6 +198,7 @@
 <script lang="ts" setup>
 import {computed, onMounted, ref, watch} from 'vue';
 import {AlertCircleIcon, AlertTriangleIcon, CalendarIcon, ChevronLeftIcon, ChevronRightIcon} from 'lucide-vue-next';
+import type {OfficialMatch} from "@/types/tournament";
 
 // Types
 interface Match {
@@ -234,7 +235,7 @@ interface Participant {
 
 // Props & Emits
 const props = defineProps<{
-    matches: Match[];
+    matches: OfficialMatch[];
     tables: PoolTable[];
     participants: Participant[];
     startTime?: string;
@@ -249,12 +250,12 @@ const emit = defineEmits<{
 
 // State
 const currentDate = ref(new Date());
-const draggedMatch = ref<Match | null>(null);
+const draggedMatch = ref<OfficialMatch | null>(null);
 const isDragOver = ref<string | null>(null);
 const showConflicts = ref(false);
 const showConflictModal = ref(false);
 const conflictMessage = ref('');
-const pendingReschedule = ref<{ match: Match; tableId: number; time: string } | null>(null);
+const pendingReschedule = ref<{ match: OfficialMatch; tableId: number; time: string } | null>(null);
 
 // Constants
 const START_HOUR = 9;

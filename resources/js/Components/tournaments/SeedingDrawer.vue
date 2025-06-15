@@ -225,6 +225,7 @@
 <script lang="ts" setup>
 import {computed, ref, watch} from 'vue';
 import {AlertCircleIcon, GripVerticalIcon, ShuffleIcon, TrophyIcon, UsersIcon, XIcon} from 'lucide-vue-next';
+import type {OfficialParticipant} from "@/types/tournament";
 
 // Types
 interface Participant {
@@ -248,7 +249,7 @@ interface Participant {
 
 // Props & Emits
 const props = defineProps<{
-    participants: Participant[];
+    participants: OfficialParticipant[];
     isOpen: boolean;
 }>();
 

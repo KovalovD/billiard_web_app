@@ -23,6 +23,7 @@ class TournamentController extends Controller
     {
         $query = OfficialTournament::query()
             ->with(['city', 'club'])
+	        ->withCount('participants')
         ;
 
         // Filters

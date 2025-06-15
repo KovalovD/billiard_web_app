@@ -81,12 +81,12 @@ export const useTournamentStore = defineStore('tournament', () => {
         tournaments.value.filter(t => t.status === 'completed')
     );
 
-    const currentStageMatches = computed(() => {
+    const currentStageMatches = computed((): OfficialMatch[] => {
         if (!currentStage.value) return [];
         return matches.value.filter(m => m.stage_id === currentStage.value!.id);
     });
 
-    const currentStageParticipants = computed(() => {
+    const currentStageParticipants = computed((): OfficialParticipant[] => {
         if (!currentStage.value) return [];
         return participants.value.filter(p => p.stage_id === currentStage.value!.id);
     });
@@ -120,9 +120,11 @@ export const useTournamentStore = defineStore('tournament', () => {
             if (filters?.dateFrom) params.append('date_from', filters.dateFrom);
             if (filters?.dateTo) params.append('date_to', filters.dateTo);
 
-            tournaments.value = await apiClient<OfficialTournament[]>(
+            const response = await apiClient<{ data: OfficialTournament[] }>(
                 `/api/tournaments?${params.toString()}`
             );
+
+            tournaments.value = response.data;
         } catch (err: any) {
             error.value = err.message || 'Failed to load tournaments';
             throw err;
