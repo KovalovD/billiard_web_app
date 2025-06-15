@@ -285,9 +285,7 @@ class ParticipantController extends Controller
         $seedService = new SeedService();
         $groups = $seedService->previewGroups($participants, $request->input('group_count'));
 
-        return response()->json([
-            'data' => $groups,
-        ]);
+	    return response()->json($groups);
     }
 
     /**

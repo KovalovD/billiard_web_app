@@ -144,7 +144,7 @@ class TournamentController extends Controller
             'entry_fee'          => $tournament->entry_fee,
         ];
 
-        return response()->json(['data' => $stats]);
+	    return response()->json($stats);
     }
 
     /**

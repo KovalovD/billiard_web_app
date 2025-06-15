@@ -1,773 +1,415 @@
 <script lang="ts" setup>
-import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Spinner} from '@/Components/ui';
-import TournamentApplicationCard from '@/Components/Tournament/TournamentApplicationCard.vue';
-import {useAuth} from '@/composables/useAuth';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
-import {apiClient} from '@/lib/apiClient';
-import type {Tournament, TournamentPlayer} from '@/types/api';
-import {Head, Link} from '@inertiajs/vue3';
+import {Head} from '@inertiajs/vue3';
+import {computed, onMounted, ref} from 'vue';
+import {useTournament} from '@/composables/useTournament';
+import {useAuth} from '@/composables/useAuth';
 import {useLocale} from '@/composables/useLocale';
 import {
-    ArrowLeftIcon,
+    CalendarDaysIcon,
     CalendarIcon,
-    ClipboardListIcon,
-    LogInIcon,
+    Columns3Icon,
     MapPinIcon,
-    PencilIcon,
-    StarIcon,
+    PlusIcon,
+    SettingsIcon,
+    ShuffleIcon,
+    TableIcon,
     TrophyIcon,
-    UserCheckIcon,
     UserPlusIcon,
     UsersIcon
 } from 'lucide-vue-next';
-import {computed, onMounted, ref} from 'vue';
-import DataTable from '@/Components/ui/data-table/DataTable.vue';
+
+// Import tournament components
+import BracketCanvas from '@/Components/tournaments/BracketCanvas.vue';
+import ScheduleGrid from '@/Components/tournaments/ScheduleGrid.vue';
+import MatchCard from '@/Components/tournaments/MatchCard.vue';
+import SeedingDrawer from '@/Components/tournaments/SeedingDrawer.vue';
+import StandingsTable from '@/Components/tournaments/StandingsTable.vue';
+import ParticipantsList from '@/Components/tournaments/ParticipantsList.vue';
+//import TournamentWebSocket from '@/Components/tournaments/TournamentWebSocket.vue';
+import {Modal, Spinner} from '@/Components/ui';
 
 defineOptions({layout: AuthenticatedLayout});
 
+// Route params
 const props = defineProps<{
     tournamentId: number | string;
 }>();
 
-const {isAdmin, isAuthenticated} = useAuth();
+// Composables
 const {t} = useLocale();
+const {isAdmin} = useAuth();
+const isReferee = computed(() => false); // TODO: Implement referee check
 
-const tournament = ref<Tournament | null>(null);
-const players = ref<TournamentPlayer[]>([]);
-const isLoadingTournament = ref(true);
-const isLoadingPlayers = ref(true);
-const error = ref<string | null>(null);
-const activeTab = ref<'info' | 'players' | 'results' | 'applications'>('info');
-
-const sortedPlayers = computed(() => {
-    return [...players.value].sort((a, b) => {
-        const statusOrder = {confirmed: 1, applied: 2, rejected: 3};
-        const aStatus = statusOrder[a.status as keyof typeof statusOrder] || 4;
-        const bStatus = statusOrder[b.status as keyof typeof statusOrder] || 4;
-
-        if (aStatus !== bStatus) {
-            return aStatus - bStatus;
-        }
-
-        if (a.position !== null && b.position !== null && a.position != undefined && b.position !== undefined) {
-            return a.position - b.position;
-        }
-        if (a.position !== null) return -1;
-        if (b.position !== null) return 1;
-
-        return new Date(a.applied_at || a.registered_at).getTime() -
-            new Date(b.applied_at || b.registered_at).getTime();
-    });
+// Tournament composable
+const {
+    currentTournament,
+    currentStage,
+    stages,
+    currentStageMatches,
+    currentStageParticipants,
+    participants,
+    isLoading,
+    error,
+    canEditBracket,
+    loadStage,
+    updateMatchScore,
+    scheduleMatch,
+    applySeeding,
+    setWalkover
+} = useTournament({
+    tournamentId: props.tournamentId,
+    autoLoadTournament: true,
+    autoLoadMatches: true,
+    autoSubscribe: true
 });
 
-const confirmedPlayers = computed(() =>
-    sortedPlayers.value.filter(p => p.is_confirmed)
-);
+// Local state
+const currentView = ref<'bracket' | 'schedule' | 'standings' | 'participants'>('bracket');
+const selectedMatch = ref<any>(null);
+const showSeedingDrawer = ref(false);
+const showSettings = ref(false);
+const showAddStage = ref(false);
+const showAddParticipant = ref(false);
 
-const pendingApplications = computed(() =>
-    sortedPlayers.value.filter(p => p.is_pending)
-);
+// View modes configuration
+const viewModes = [
+    {value: 'bracket', label: t('Bracket'), icon: Columns3Icon},
+    {value: 'schedule', label: t('Schedule'), icon: CalendarDaysIcon},
+    {value: 'standings', label: t('Standings'), icon: TableIcon},
+    {value: 'participants', label: t('Participants'), icon: UsersIcon}
+];
 
-const rejectedApplications = computed(() =>
-    sortedPlayers.value.filter(p => p.is_rejected)
-);
-
-const completedPlayers = computed(() => {
-    return sortedPlayers.value.filter(p => p.position !== null);
+// Computed
+const showStandingsTab = computed(() => {
+    return currentStage.value?.type === 'group' || currentStage.value?.type === 'round_robin';
+});
+// Computed
+const showBracketTab = computed(() => {
+    return currentStage.value?.type !== 'group' && currentStage.value?.type !== 'round_robin';
 });
 
-const getStatusBadgeClass = (status: string): string => {
-    switch (status) {
-        case 'upcoming':
-            return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
-        case 'active':
-            return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
-        case 'completed':
-            return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
-        case 'cancelled':
-            return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
-        default:
-            return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
-    }
-};
+// Methods
+function getStatusClass(status?: string) {
+    const classes: Record<string, string> = {
+        upcoming: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+        ongoing: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+        completed: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+    };
 
-const getPlayerStatusBadgeClass = (status: string): string => {
-    switch (status) {
-        case 'applied':
-            return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
-        case 'confirmed':
-            return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
-        case 'rejected':
-            return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
-        case 'eliminated':
-            return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
-        default:
-            return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
-    }
-};
+    return classes[status || 'upcoming'];
+}
 
-const getPositionBadgeClass = (position: number): string => {
-    switch (position) {
-        case 1:
-            return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
-        case 2:
-            return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
-        case 3:
-            return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300';
-        default:
-            return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
-    }
-};
+function getStageTitle(stage: any) {
+    const titles: Record<string, string> = {
+        single_elim: t('Single Elimination'),
+        double_elim: t('Double Elimination'),
+        group: t('Group Stage'),
+        round_robin: t('Round Robin'),
+        swiss: t('Swiss'),
+        custom: t('Custom')
+    };
 
-const formatDateTime = (dateString: string | undefined): string => {
-    if (!dateString) {
-        return ''
-    }
+    return titles[stage.type] || `${t('Stage')} ${stage.number}`;
+}
 
-    return new Date(dateString).toLocaleString('uk-UK', {
-        year: 'numeric',
-        month: 'long',
+function formatDate(dateStr?: string) {
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleDateString('en-US', {
+        month: 'short',
         day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+        year: 'numeric'
     });
-};
+}
 
-const formatDate = (dateString: string | undefined): string => {
-    if (!dateString) {
-        return ''
+async function selectStage(stage: any) {
+    await loadStage(stage.id);
+
+    // Switch to appropriate view based on stage type
+    if (stage.type === 'group' || stage.type === 'round_robin') {
+        currentView.value = 'standings';
+    } else {
+        currentView.value = 'bracket';
     }
-    return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
-};
+}
 
-const formatCurrency = (amount: number): string => {
-    return amount.toLocaleString('uk-UA', {
-        style: 'currency',
-        currency: 'UAH'
-    }).replace('UAH', '₴').replace('грн', '₴');
-};
+function handleMatchClick(payload: { matchId: number }) {
+    selectedMatch.value = currentStageMatches.value.find(m => m.id === payload.matchId);
+}
 
-const fetchTournament = async () => {
-    isLoadingTournament.value = true;
-    error.value = null;
+async function handleScoreSubmit(payload: any) {
+    await updateMatchScore(payload.matchId, payload.status, payload.sets);
+    selectedMatch.value = null;
+}
 
-    try {
-        tournament.value = await apiClient<Tournament>(`/api/tournaments/${props.tournamentId}`);
-    } catch (err: any) {
-        error.value = err.message || 'Failed to load tournament';
-    } finally {
-        isLoadingTournament.value = false;
-    }
-};
+async function handleWalkover(payload: any) {
+    await setWalkover(props.tournamentId, payload.matchId, payload.winnerId);
+    selectedMatch.value = null;
+}
 
-const fetchPlayers = async () => {
-    isLoadingPlayers.value = true;
+async function handleReschedule(payload: any) {
+    await scheduleMatch(payload.matchId, payload.tableId, payload.newStart);
+}
 
-    try {
-        players.value = await apiClient<TournamentPlayer[]>(`/api/tournaments/${props.tournamentId}/players`);
-    } catch (err: any) {
-        console.error('Failed to load players:', err);
-    } finally {
-        isLoadingPlayers.value = false;
-    }
-};
+function handleAutoSchedule(date: string) {
+    const startTime = new Date(date);
+    startTime.setHours(9, 0, 0, 0);
 
-const handleApplicationUpdated = () => {
-    fetchTournament();
-    fetchPlayers();
-};
+    // TODO: Open modal for auto-schedule options
+    console.log('Auto schedule from:', startTime.toISOString());
+}
 
+function handleSeedChange(payload: any) {
+    console.log('Seed change:', payload);
+    // TODO: Handle individual seed change from bracket
+}
+
+async function handleBulkSeedChange(changes: Array<{ participantId: number; seed: number }>) {
+    // Apply manual seeding
+    const seeds = changes.map(c => c.participantId);
+    await applySeeding('manual', {seeds});
+    showSeedingDrawer.value = false;
+}
+
+function handleRemoveParticipant(participantId: number) {
+    console.log('Remove participant:', participantId);
+    // TODO: Implement remove participant
+}
+
+// Lifecycle
 onMounted(() => {
-    fetchTournament();
-    fetchPlayers();
-});
-
-// Add columns definition before the template
-const columns = computed(() => [
-    {
-        key: 'position',
-        label: t('Position'),
-        align: 'left' as const,
-        render: (player: TournamentPlayer) => ({
-            position: player.position,
-            isWinner: player.is_winner
-        })
-    },
-    {
-        key: 'player',
-        label: t('Player'),
-        align: 'left' as const,
-        render: (player: TournamentPlayer) => ({
-            name: `${player.user?.firstname} ${player.user?.lastname}`,
-            isWinner: player.is_winner
-        })
-    },
-    {
-        key: 'rating',
-        label: t('Rating Points'),
-        align: 'center' as const,
-        render: (player: TournamentPlayer) => ({
-            points: player.rating_points
-        })
-    },
-    {
-        key: 'bonus',
-        label: t('Bonus'),
-        align: 'right' as const,
-        render: (player: TournamentPlayer) => ({
-            amount: player.bonus_amount
-        })
-    },
-    {
-        key: 'prize',
-        label: t('Prize'),
-        align: 'right' as const,
-        render: (player: TournamentPlayer) => ({
-            amount: player.prize_amount
-        })
-    },
-    {
-        key: 'achievement',
-        label: t('Achievement'),
-        align: 'right' as const,
-        render: (player: TournamentPlayer) => ({
-            amount: player.achievement_amount
-        })
-    },
-    {
-        key: 'total',
-        label: t('Total'),
-        align: 'right' as const,
-        render: (player: TournamentPlayer) => ({
-            amount: player.total_amount
-        })
+    // Select first stage when loaded
+    if (stages.value.length > 0 && !currentStage.value) {
+        selectStage(stages.value[0]);
     }
-]);
+});
 </script>
 
 <template>
-    <Head :title="tournament ? t('Tournament: :name', {name: tournament.name}) : t('Tournament')"/>
+    <Head :title="currentTournament?.name || t('Tournament')"/>
 
-    <div class="py-12">
-        <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
-            <!-- Header -->
-            <div class="mb-6 flex items-center justify-between">
-                <Link href="/tournaments">
-                    <Button variant="outline">
-                        <ArrowLeftIcon class="mr-2 h-4 w-4"/>
-                        {{ t('Back to Tournaments') }}
-                    </Button>
-                </Link>
+    <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <!-- Header -->
+        <div class="bg-white dark:bg-gray-800 shadow">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                            {{ currentTournament?.name || t('Loading...') }}
+                        </h1>
+                        <div v-if="currentTournament"
+                             class="mt-1 flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+              <span class="flex items-center gap-1">
+                <CalendarIcon class="w-4 h-4"/>
+                {{ formatDate(currentTournament.start_at) }} - {{ formatDate(currentTournament.end_at) }}
+              </span>
+                            <span v-if="currentTournament.city" class="flex items-center gap-1">
+                <MapPinIcon class="w-4 h-4"/>
+                {{ currentTournament.city.name }}
+              </span>
+                            <span v-if="currentTournament.club" class="flex items-center gap-1">
+                {{ currentTournament.club.name }}
+              </span>
+                            <span class="flex items-center gap-1">
+                <TrophyIcon class="w-4 h-4"/>
+                {{ currentTournament.discipline }}
+              </span>
+                        </div>
+                    </div>
 
-                <!-- Admin controls - only for authenticated admins -->
-                <div v-if="isAuthenticated && isAdmin && tournament" class="flex space-x-2">
-                    <Link :href="`/admin/tournaments/${tournament.id}/edit`">
-                        <Button variant="secondary">
-                            <PencilIcon class="mr-2 h-4 w-4"/>
-                            {{ t('Edit Tournament') }}
-                        </Button>
-                    </Link>
-                    <Link :href="`/admin/tournaments/${tournament.id}/players`">
-                        <Button variant="secondary">
-                            <UserPlusIcon class="mr-2 h-4 w-4"/>
-                            {{ t('Manage Players') }}
-                        </Button>
-                    </Link>
-                    <Link v-if="tournament.pending_applications_count > 0"
-                          :href="`/admin/tournaments/${tournament.id}/applications`">
-                        <Button class="relative" variant="secondary">
-                            <ClipboardListIcon class="mr-2 h-4 w-4"/>
-                            {{ t('Applications') }}
-                            <span
-                                class="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
-                                {{ tournament.pending_applications_count }}
-                            </span>
-                        </Button>
-                    </Link>
-                    <Link v-else-if="tournament.requires_application"
-                          :href="`/admin/tournaments/${tournament.id}/applications`">
-                        <Button variant="secondary">
-                            <ClipboardListIcon class="mr-2 h-4 w-4"/>
-                            {{ t('Applications') }}
-                        </Button>
-                    </Link>
-                    <Link :href="`/admin/tournaments/${tournament.id}/results`">
-                        <Button variant="secondary">
-                            <TrophyIcon class="mr-2 h-4 w-4"/>
-                            {{ t('Manage Results') }}
-                        </Button>
-                    </Link>
-                </div>
+                    <div class="flex items-center gap-2">
+            <span
+                v-if="currentTournament"
+                :class="getStatusClass(currentTournament.status)"
+                class="px-3 py-1 rounded-full text-sm font-medium"
+            >
+              {{ currentTournament.status?.toUpperCase() }}
+            </span>
 
-                <!-- Login prompt for guests -->
-                <div v-else-if="!isAuthenticated && tournament" class="text-center">
-                    <Link :href="route('login')" class="text-sm text-blue-600 hover:underline dark:text-blue-400">
-                        <LogInIcon class="mr-1 inline h-4 w-4"/>
-                        {{ t('Login to participate') }}
-                    </Link>
+                        <button
+                            v-if="isAdmin"
+                            class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                            @click="showSettings = true"
+                        >
+                            <SettingsIcon class="w-5 h-5"/>
+                        </button>
+                    </div>
                 </div>
             </div>
+        </div>
 
+        <!-- Stage Tabs -->
+        <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <nav class="-mb-px flex space-x-8">
+                    <button
+                        v-for="stage in stages"
+                        :key="stage.id"
+                        :class="currentStage?.id === stage.id
+              ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400'"
+                        class="py-4 px-1 text-sm font-medium border-b-2 transition-colors"
+                        @click="selectStage(stage)"
+                    >
+                        {{ getStageTitle(stage) }}
+                        <span
+                            v-if="stage.is_complete"
+                            class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+                        >
+              {{ t('Complete') }}
+            </span>
+                    </button>
+
+                    <button
+                        v-if="isAdmin && stages.length < 5"
+                        class="py-4 px-1 text-sm font-medium text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        @click="showAddStage = true"
+                    >
+                        <PlusIcon class="w-4 h-4"/>
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- View Mode Tabs -->
+        <div class="bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <nav class="flex space-x-4 py-2">
+                    <button
+                        v-for="view in viewModes"
+                        v-show="(view.value !== 'standings' || showStandingsTab) && (view.value !== 'bracket' || showBracketTab)"
+                        :key="view.value"
+                        :class="currentView === view.value
+              ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm'
+              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'"
+                        class="px-3 py-1 text-sm font-medium rounded-md transition-colors"
+                        @click="currentView = view.value"
+                    >
+                        <component :is="view.icon" class="w-4 h-4 inline-block mr-1"/>
+                        {{ view.label }}
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <!-- Loading State -->
-            <div v-if="isLoadingTournament" class="p-10 text-center">
-                <Spinner class="text-primary mx-auto h-8 w-8"/>
-                <p class="mt-2 text-gray-500">{{ t('Loading tournament...') }}</p>
+            <div v-if="isLoading" class="flex items-center justify-center h-64">
+                <div class="text-center">
+                    <Spinner class="w-8 h-8 mx-auto mb-4"/>
+                    <p class="text-gray-500 dark:text-gray-400">{{ t('Loading tournament data...') }}</p>
+                </div>
             </div>
 
             <!-- Error State -->
-            <div v-else-if="error" class="mb-6 rounded bg-red-100 p-4 text-red-500">
-                {{ t('Error loading tournament: :error', { error }) }}
+            <div v-else-if="error"
+                 class="bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-700 rounded-lg p-4">
+                <p class="text-red-700 dark:text-red-300">{{ error }}</p>
             </div>
 
-            <!-- Tournament Content -->
-            <template v-else-if="tournament">
-                <!-- Tournament Header -->
-                <Card class="mb-8">
-                    <CardHeader>
-                        <div class="flex items-start justify-between">
-                            <div>
-                                <CardTitle class="flex items-center gap-3 text-2xl">
-                                    {{ tournament.name }}
-                                    <span
-                                        :class="['rounded-full px-3 py-1 text-sm font-semibold', getStatusBadgeClass(tournament.status)]"
-                                    >
-                                        {{ tournament.status_display }}
-                                    </span>
-                                </CardTitle>
-                                <CardDescription class="mt-2 text-lg">
-                                    <div class="flex flex-wrap gap-4">
-                                        <span class="flex items-center gap-1">
-                                            <TrophyIcon class="h-4 w-4"/>
-                                            {{ tournament.game?.name || 'N/A' }}
-                                        </span>
-                                        <span class="flex items-center gap-1">
-                                            <CalendarIcon class="h-4 w-4"/>
-                                            {{ formatDateTime(tournament.start_date) }}
-                                            <span v-if="tournament.end_date !== tournament.start_date">
-                                                - {{ formatDateTime(tournament.end_date) }}
-                                            </span>
-                                        </span>
-                                        <span v-if="tournament.city" class="flex items-center gap-1">
-                                            <MapPinIcon class="h-4 w-4"/>
-                                            {{ tournament.city.name }}, {{ tournament.city.country?.name }}
-                                        </span>
-                                    </div>
-                                </CardDescription>
-                            </div>
-                        </div>
-                    </CardHeader>
-                </Card>
-
-                <!-- Tournament Application Card - Only show to authenticated users -->
-                <div v-if="isAuthenticated && tournament.requires_application && tournament.status === 'upcoming'"
-                     class="mb-8">
-                    <TournamentApplicationCard
-                        :tournament="tournament"
-                        @application-updated="handleApplicationUpdated"
+            <!-- Content Views -->
+            <template v-else-if="currentStage">
+                <!-- Bracket View -->
+                <div v-if="showBracketTab" v-show="currentView === 'bracket'"
+                     class="bg-white dark:bg-gray-800 rounded-lg shadow h-[600px]">
+                    <BracketCanvas
+                        :bracket-type="currentStage.type === 'double_elim' ? 'double' : 'single'"
+                        :matches="currentStageMatches"
+                        :participants="currentStageParticipants"
+                        :show-seeding="canEditBracket && isAdmin"
+                        @update:match="handleMatchClick"
+                        @seed:change="handleSeedChange"
                     />
                 </div>
 
-                <!-- Guest application prompt -->
-                <div v-else-if="!isAuthenticated && tournament.requires_application && tournament.status === 'upcoming'"
-                     class="mb-8">
-                    <Card class="border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-900/20">
-                        <CardContent class="p-6">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <h3 class="text-lg font-medium text-blue-800 dark:text-blue-300">{{ t('Tournament Registration') }}</h3>
-                                    <p class="text-blue-600 dark:text-blue-400">{{ t('This tournament requires application to participate.') }}</p>
-                                </div>
-                                <Link :href="route('login')">
-                                    <Button>
-                                        <LogInIcon class="mr-2 h-4 w-4"/>
-                                        {{ t('Login to Apply') }}
-                                    </Button>
-                                </Link>
-                            </div>
-                        </CardContent>
-                    </Card>
+                <!-- Schedule View -->
+                <div v-show="currentView === 'schedule'" class="bg-white dark:bg-gray-800 rounded-lg shadow h-[600px]">
+                    <ScheduleGrid
+                        :matches="currentStageMatches"
+                        :participants="participants"
+                        :tables="currentTournament?.pool_tables || []"
+                        @reschedule="handleReschedule"
+                        @auto-schedule="handleAutoSchedule"
+                    />
                 </div>
 
-                <!-- Tab Navigation -->
-                <div class="mb-6 border-b border-gray-200 dark:border-gray-700">
-                    <nav class="-mb-px flex space-x-8">
-                        <button
-                            :class="[
-                                'py-4 px-1 text-sm font-medium border-b-2',
-                                activeTab === 'info'
-                                    ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                            ]"
-                            @click="activeTab = 'info'"
-                        >
-                            {{ t('Information') }}
-                        </button>
-                        <button
-                            :class="[
-                                'py-4 px-1 text-sm font-medium border-b-2',
-                                activeTab === 'players'
-                                    ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                            ]"
-                            @click="activeTab = 'players'"
-                        >
-                            {{ t('Players') }} ({{ tournament.confirmed_players_count }})
-                        </button>
-                        <button
-                            v-if="tournament.requires_application && (isAuthenticated && isAdmin || tournament.pending_applications_count > 0)"
-                            :class="[
-                                'py-4 px-1 text-sm font-medium border-b-2',
-                                activeTab === 'applications'
-                                    ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                            ]"
-                            @click="activeTab = 'applications'"
-                        >
-                            {{ t('Applications') }} ({{ tournament.pending_applications_count }})
-                        </button>
-                        <button
-                            v-if="tournament.is_completed"
-                            :class="[
-                                'py-4 px-1 text-sm font-medium border-b-2',
-                                activeTab === 'results'
-                                    ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                            ]"
-                            @click="activeTab = 'results'"
-                        >
-                            {{ t('Results') }}
-                        </button>
-                    </nav>
+                <!-- Standings View -->
+                <div v-if="showStandingsTab" v-show="currentView === 'standings'"
+                     class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                    <StandingsTable
+                        :show-form-column="true"
+                        :show-qualification-info="true"
+                        :stage-id="currentStage.id"
+                        :tournament-id="tournamentId"
+                    />
                 </div>
 
-                <!-- Tournament Information Tab -->
-                <div v-if="activeTab === 'info'" class="space-y-6">
-                    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                        <!-- Details Card -->
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>{{ t('Tournament Details') }}</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div class="space-y-4">
-                                    <div v-if="tournament.details">
-                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">{{ t('Description') }}</h4>
-                                        <p class="mt-1 text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
-                                            {{ tournament.details }}</p>
-                                    </div>
-
-                                    <div v-if="tournament.regulation">
-                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">{{ t('Regulation') }}</h4>
-                                        <p class="mt-1 text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
-                                            {{ tournament.regulation }}</p>
-                                    </div>
-
-                                    <div v-if="tournament.format">
-                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">{{ t('Format') }}</h4>
-                                        <p class="mt-1 text-gray-600 dark:text-gray-400">{{ tournament.format }}</p>
-                                    </div>
-
-                                    <div v-if="tournament.organizer">
-                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">{{ t('Organizer') }}</h4>
-                                        <p class="mt-1 text-gray-600 dark:text-gray-400">{{ tournament.organizer }}</p>
-                                    </div>
-
-                                    <div v-if="tournament.application_deadline">
-                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">{{ t('Application Deadline') }}</h4>
-                                        <p class="mt-1 text-gray-600 dark:text-gray-400">
-                                            {{ formatDateTime(tournament.application_deadline) }}</p>
-                                    </div>
-
-                                    <div v-if="tournament.official_ratings && tournament.official_ratings.length > 0"
-                                         class="flex justify-between">
-                                        <dt class="text-gray-600 dark:text-gray-400">
-                                            <StarIcon class="h-4 w-4 inline mr-1"/>
-                                            {{ t('Official Rating:') }}
-                                        </dt>
-                                        <dd class="font-medium">
-                                            {{ tournament.official_ratings[0].name }}
-                                            <span class="text-xs text-gray-500">(×{{
-                                                    tournament.official_ratings[0].rating_coefficient
-                                                }})</span>
-                                        </dd>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <!-- Stats Card -->
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>{{ t('Tournament Stats') }}</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div class="text-center p-4 bg-gray-50 rounded-lg dark:bg-gray-800">
-                                        <div class="text-2xl font-bold text-green-600 dark:text-green-400">
-                                            {{ tournament.confirmed_players_count }}
-                                        </div>
-                                        <div class="text-sm text-gray-600 dark:text-gray-400">
-                                            {{ t('Confirmed Players') }}
-                                        </div>
-                                    </div>
-
-                                    <div v-if="tournament.pending_applications_count > 0"
-                                         class="text-center p-4 bg-gray-50 rounded-lg dark:bg-gray-800">
-                                        <div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
-                                            {{ tournament.pending_applications_count }}
-                                        </div>
-                                        <div class="text-sm text-gray-600 dark:text-gray-400">
-                                            {{ t('Pending Applications') }}
-                                        </div>
-                                    </div>
-
-                                    <div class="text-center p-4 bg-gray-50 rounded-lg dark:bg-gray-800">
-                                        <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                                            {{ tournament.max_participants || '∞' }}
-                                        </div>
-                                        <div class="text-sm text-gray-600 dark:text-gray-400">
-                                            {{ t('Max Participants') }}
-                                        </div>
-                                    </div>
-
-                                    <div v-if="tournament.entry_fee > 0"
-                                         class="text-center p-4 bg-gray-50 rounded-lg dark:bg-gray-800">
-                                        <div class="text-2xl font-bold text-green-600 dark:text-green-400">
-                                            {{ formatCurrency(tournament.entry_fee) }}
-                                        </div>
-                                        <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('Entry Fee') }}</div>
-                                    </div>
-
-                                    <div v-if="tournament.prize_pool > 0"
-                                         class="text-center p-4 bg-gray-50 rounded-lg dark:bg-gray-800 col-span-2">
-                                        <div class="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
-                                            {{ formatCurrency(tournament.prize_pool) }}
-                                        </div>
-                                        <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('Total Prize Pool') }}</div>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                <!-- Participants View -->
+                <div v-show="currentView === 'participants'" class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-lg font-semibold">{{ t('Participants') }} ({{
+                                currentStageParticipants.length
+                            }})</h2>
+                        <div class="flex gap-2">
+                            <button
+                                v-if="isAdmin && canEditBracket"
+                                class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600"
+                                @click="showSeedingDrawer = true"
+                            >
+                                <ShuffleIcon class="w-4 h-4 inline-block mr-1"/>
+                                {{ t('Manage Seeding') }}
+                            </button>
+                            <button
+                                v-if="isAdmin"
+                                class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                                @click="showAddParticipant = true"
+                            >
+                                <UserPlusIcon class="w-4 h-4 inline-block mr-1"/>
+                                {{ t('Add Participant') }}
+                            </button>
+                        </div>
                     </div>
-                </div>
 
-                <!-- Players Tab -->
-                <div v-if="activeTab === 'players'">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle class="flex items-center gap-2">
-                                <UsersIcon class="h-5 w-5"/>
-                                {{ t('Confirmed Players') }}
-                            </CardTitle>
-                            <CardDescription>
-                                {{ tournament.confirmed_players_count }} {{ t('confirmed players') }}
-                                <span v-if="tournament.max_participants">
-                                   {{ t('out of') }} {{ tournament.max_participants }} {{ t('maximum') }}
-                               </span>
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div v-if="isLoadingPlayers" class="flex justify-center py-8">
-                                <Spinner class="text-primary h-6 w-6"/>
-                            </div>
-                            <div v-else-if="confirmedPlayers.length === 0" class="py-8 text-center text-gray-500">
-                                {{ t('No confirmed players yet.') }}
-                            </div>
-                            <div v-else class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                                <div
-                                    v-for="player in confirmedPlayers"
-                                    :key="player.id"
-                                    class="flex items-center justify-between p-3 bg-gray-50 rounded-lg dark:bg-gray-800"
-                                >
-                                    <div>
-                                        <p class="font-medium">{{ player.user?.firstname }}
-                                            {{ player.user?.lastname }}</p>
-                                        <p class="text-sm text-gray-600 dark:text-gray-400">
-                                            {{ player.status_display }}
-                                        </p>
-                                        <p v-if="player.confirmed_at" class="text-xs text-gray-500">
-                                            {{ t('Confirmed:') }} {{ formatDate(player.confirmed_at) }}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                <!-- Applications Tab -->
-                <div v-if="activeTab === 'applications'">
-                    <div class="space-y-6">
-                        <!-- Pending Applications -->
-                        <Card v-if="pendingApplications.length > 0">
-                            <CardHeader>
-                                <CardTitle class="flex items-center gap-2">
-                                    <ClipboardListIcon class="h-5 w-5 text-yellow-600"/>
-                                    {{ t('Pending Applications') }} ({{ pendingApplications.length }})
-                                </CardTitle>
-                                <CardDescription>{{ t('Applications waiting for approval') }}</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                                    <div
-                                        v-for="application in pendingApplications"
-                                        :key="application.id"
-                                        class="flex items-center justify-between p-3 bg-yellow-50 rounded-lg dark:bg-yellow-900/20"
-                                    >
-                                        <div>
-                                            <p class="font-medium">{{ application.user?.firstname }}
-                                                {{ application.user?.lastname }}</p>
-                                            <p class="text-sm text-gray-600 dark:text-gray-400">
-                                                {{ t('Applied:') }} {{ formatDate(application.applied_at) }}
-                                            </p>
-                                        </div>
-                                        <span
-                                            :class="['px-2 py-1 text-xs font-semibold rounded-full', getPlayerStatusBadgeClass(application.status)]">
-                                           {{ application.status_display }}
-                                       </span>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <!-- Rejected Applications -->
-                        <Card v-if="rejectedApplications.length > 0">
-                            <CardHeader>
-                                <CardTitle class="flex items-center gap-2">
-                                    <UserCheckIcon class="h-5 w-5 text-red-600"/>
-                                    {{ t('Rejected Applications') }} ({{ rejectedApplications.length }})
-                                </CardTitle>
-                                <CardDescription>{{ t('Applications that were not accepted') }}</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                                    <div
-                                        v-for="application in rejectedApplications"
-                                        :key="application.id"
-                                        class="flex items-center justify-between p-3 bg-red-50 rounded-lg dark:bg-red-900/20"
-                                    >
-                                        <div>
-                                            <p class="font-medium">{{ application.user?.firstname }}
-                                                {{ application.user?.lastname }}</p>
-                                            <p class="text-sm text-gray-600 dark:text-gray-400">
-                                                {{ t('Rejected:') }} {{ formatDate(application.rejected_at) }}
-                                            </p>
-                                        </div>
-                                        <span
-                                            :class="['px-2 py-1 text-xs font-semibold rounded-full', getPlayerStatusBadgeClass(application.status)]">
-                                           {{ application.status_display }}
-                                       </span>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <!-- Empty State -->
-                        <Card v-if="pendingApplications.length === 0 && rejectedApplications.length === 0">
-                            <CardContent class="py-10 text-center">
-                                <ClipboardListIcon class="mx-auto h-12 w-12 text-gray-400"/>
-                                <p class="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">{{ t('No Applications') }}</p>
-                                <p class="mt-2 text-gray-600 dark:text-gray-400">
-                                    {{ t('There are no applications to display.') }}
-                                </p>
-                            </CardContent>
-                        </Card>
-                    </div>
-                </div>
-
-                <!-- Results Tab -->
-                <div v-if="activeTab === 'results' && tournament.is_completed">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle class="flex items-center gap-2">
-                                <TrophyIcon class="h-5 w-5"/>
-                                {{ t('Tournament Results') }}
-                            </CardTitle>
-                            <CardDescription>{{ t('Final standings and prizes') }}</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div v-if="completedPlayers.length === 0" class="py-8 text-center text-gray-500">
-                                {{ t('No results available yet.') }}
-                            </div>
-                            <div v-else class="overflow-auto">
-                                <DataTable
-                                    :columns="columns"
-                                    :compact-mode="true"
-                                    :data="completedPlayers"
-                                    :empty-message="t('No results available yet.')"
-                                >
-                                    <template #cell-position="{ value }">
-                                        <span
-                                            :class="[
-                                                'inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium',
-                                                getPositionBadgeClass(value.position)
-                                            ]"
-                                        >
-                                            {{ value.position }}
-                                        </span>
-                                    </template>
-
-                                    <template #cell-player="{ value }">
-                                        <div>
-                                            <p class="font-medium">{{ value.name }}</p>
-                                            <p v-if="value.isWinner"
-                                               class="text-sm text-yellow-600 dark:text-yellow-400">🏆 {{
-                                                    t('Winner')
-                                                }}</p>
-                                        </div>
-                                    </template>
-
-                                    <template #cell-rating="{ value }">
-                                        <span
-                                            v-if="value.points > 0"
-                                            class="rounded-full bg-blue-100 px-2 py-1 text-sm text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
-                                        >
-                                            +{{ value.points }}
-                                        </span>
-                                        <span v-else class="text-gray-400">—</span>
-                                    </template>
-
-                                    <template #cell-bonus="{ value }">
-                                        <span v-if="value.amount > 0"
-                                              class="font-medium text-orange-600 dark:text-orange-400">
-                                            {{ formatCurrency(value.amount) }}
-                                        </span>
-                                        <span v-else class="text-gray-400">—</span>
-                                    </template>
-
-                                    <template #cell-prize="{ value }">
-                                        <span v-if="value.amount > 0"
-                                              class="font-medium text-green-600 dark:text-green-400">
-                                            {{ formatCurrency(value.amount) }}
-                                        </span>
-                                        <span v-else class="text-gray-400">—</span>
-                                    </template>
-
-                                    <template #cell-achievement="{ value }">
-                                        <span v-if="value.amount > 0"
-                                              class="font-medium text-purple-600 dark:text-purple-400">
-                                            {{ formatCurrency(value.amount) }}
-                                        </span>
-                                        <span v-else class="text-gray-400">—</span>
-                                    </template>
-
-                                    <template #cell-total="{ value }">
-                                        <span v-if="value.amount > 0"
-                                              class="font-bold text-indigo-600 dark:text-indigo-400">
-                                            {{ formatCurrency(value.amount) }}
-                                        </span>
-                                        <span v-else class="text-gray-400">—</span>
-                                    </template>
-                                </DataTable>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <ParticipantsList
+                        :editable="isAdmin && canEditBracket"
+                        :participants="currentStageParticipants"
+                        @remove="handleRemoveParticipant"
+                    />
                 </div>
             </template>
         </div>
+
+        <!-- Match Details Modal -->
+        <Modal
+            :show="!!selectedMatch"
+            :title="`${t('Match')} #${selectedMatch?.metadata?.match_number || selectedMatch?.id}`"
+            @close="selectedMatch = null"
+        >
+            <MatchCard
+                v-if="selectedMatch"
+                :editable="isAdmin || isReferee"
+                :match="selectedMatch"
+                :participants="participants"
+                :show-sets="true"
+                @walkover="handleWalkover(selectedMatch)"
+                @submit-score="handleScoreSubmit"
+            />
+        </Modal>
+
+        <!-- Seeding Drawer -->
+        <SeedingDrawer
+            :is-open="showSeedingDrawer"
+            :participants="currentStageParticipants"
+            @close="showSeedingDrawer = false"
+            @seed-change="handleBulkSeedChange"
+        />
+
+        <!-- WebSocket Integration -->
+        <!--        <TournamentWebSocket
+                    :tournament-id="tournamentId"
+                    :stage-id="currentStage?.id"
+                    :auto-connect="true"
+                />-->
     </div>
 </template>

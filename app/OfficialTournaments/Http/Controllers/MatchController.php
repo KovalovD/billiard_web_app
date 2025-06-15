@@ -80,7 +80,7 @@ class MatchController extends Controller
     public function show(OfficialTournament $tournament, OfficialMatch $match): MatchResource
     {
         // Ensure match belongs to tournament
-        if (!$tournament->matches()->where('id', $match->id)->exists()) {
+	    if (!$tournament->matches()->where('official_matches.id', $match->id)->exists()) {
             abort(404);
         }
 
@@ -107,7 +107,7 @@ class MatchController extends Controller
         OfficialTournament $tournament,
         OfficialMatch $match,
     ): MatchResource|JsonResponse {
-        if (!$tournament->matches()->where('id', $match->id)->exists()) {
+	    if (!$tournament->matches()->where('official_matches.id', $match->id)->exists()) {
             abort(404);
         }
 
@@ -207,7 +207,7 @@ class MatchController extends Controller
         OfficialTournament $tournament,
         OfficialMatch $match,
     ): MatchResource|JsonResponse {
-        if (!$tournament->matches()->where('id', $match->id)->exists()) {
+	    if (!$tournament->matches()->where('official_matches.id', $match->id)->exists()) {
             abort(404);
         }
 
@@ -263,7 +263,7 @@ class MatchController extends Controller
         OfficialTournament $tournament,
         OfficialMatch $match,
     ): MatchResource|JsonResponse {
-        if (!$tournament->matches()->where('id', $match->id)->exists()) {
+	    if (!$tournament->matches()->where('official_matches.id', $match->id)->exists()) {
             abort(404);
         }
 
@@ -364,7 +364,7 @@ class MatchController extends Controller
      */
     public function statistics(OfficialTournament $tournament, OfficialMatch $match): JsonResponse
     {
-        if (!$tournament->matches()->where('id', $match->id)->exists()) {
+	    if (!$tournament->matches()->where('official_matches.id', $match->id)->exists()) {
             abort(404);
         }
 
@@ -392,6 +392,6 @@ class MatchController extends Controller
             ],
         ];
 
-        return response()->json(['data' => $stats]);
+	    return response()->json($stats);
     }
 }

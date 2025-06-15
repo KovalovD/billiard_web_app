@@ -188,7 +188,7 @@
 
         <!-- Participant Drawer (for drag source) -->
         <div
-            v-if="showParticipantDrawer"
+            v-if="showParticipantDrawer && unassignedParticipants.length > 0"
             class="absolute left-0 top-0 h-full w-64 bg-white dark:bg-gray-800 shadow-lg overflow-y-auto"
         >
             <div class="p-4">
@@ -304,7 +304,7 @@ const matchPositions = computed<MatchPosition[]>(() => {
 
     Object.entries(roundGroups).forEach(([roundKey, roundMatches]) => {
         const [bracket, round] = roundKey.split('-');
-        const roundNum = parseInt(round);
+        const roundNum = round ? parseInt(round) : 0;
         const bracketOffset = bracket === 'L' ? BRACKET_SPACING : 0;
 
         roundMatches.forEach((match, index) => {

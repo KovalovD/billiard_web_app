@@ -1,335 +1,104 @@
-<!-- resources/js/pages/Tournaments/Index.vue -->
 <script lang="ts" setup>
-import {Button, Card, CardContent, CardHeader, CardTitle} from '@/Components/ui';
-import DataTable from '@/Components/ui/data-table/DataTable.vue';
-import TableActions, {type ActionItem} from '@/Components/TableActions.vue';
+import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
+import {Head, Link} from '@inertiajs/vue3';
+import {computed, onMounted, ref} from 'vue';
+import {useTournamentStore} from '@/stores/useTournamentStore';
 import {useAuth} from '@/composables/useAuth';
 import {useLocale} from '@/composables/useLocale';
-import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
-import {apiClient} from '@/lib/apiClient';
-import type {Tournament, TournamentPlayer} from '@/types/api';
-import {Head, Link} from '@inertiajs/vue3';
+import {Button, Card, CardContent, CardHeader, CardTitle, Spinner} from '@/Components/ui';
 import {
     CalendarIcon,
-    CrownIcon,
-    EyeIcon,
+    DollarSignIcon,
+    FilterIcon,
     MapPinIcon,
-    PencilIcon,
     PlusIcon,
+    SearchIcon,
     TrophyIcon,
-    UsersIcon,
+    UsersIcon
 } from 'lucide-vue-next';
-import {computed, onMounted, ref} from 'vue';
 
 defineOptions({layout: AuthenticatedLayout});
 
-const {isAdmin, isAuthenticated} = useAuth();
+// Composables
 const {t} = useLocale();
+const {isAdmin} = useAuth();
+const tournamentStore = useTournamentStore();
 
-const tournaments = ref<Tournament[]>([]);
-const userParticipations = ref<TournamentPlayer[]>([]);
-const isLoading = ref(true);
-const error = ref<string | null>(null);
-const selectedStatus = ref<string>('all');
+// Reactive state
+const searchQuery = ref('');
+const selectedStatus = ref<'all' | 'upcoming' | 'ongoing' | 'completed'>('all');
+const selectedDiscipline = ref<string>('all');
+const showFilters = ref(false);
 
-const statusOptions = [
-    {value: 'all', label: t('All Tournaments')},
-    {value: 'upcoming', label: t('Upcoming')},
-    {value: 'active', label: t('Active')},
-    {value: 'completed', label: t('Completed')}
-];
-
+// Computed
 const filteredTournaments = computed(() => {
-    if (selectedStatus.value === 'all') {
-        return tournaments.value;
+    let tournaments = [...tournamentStore.tournaments];
+
+    // Status filter
+    if (selectedStatus.value !== 'all') {
+        tournaments = tournaments.filter(t => t.status === selectedStatus.value);
     }
-    return tournaments.value.filter(t => t.status === selectedStatus.value);
+
+    // Discipline filter
+    if (selectedDiscipline.value !== 'all') {
+        tournaments = tournaments.filter(t => t.discipline === selectedDiscipline.value);
+    }
+
+    // Search filter
+    if (searchQuery.value) {
+        const query = searchQuery.value.toLowerCase();
+        tournaments = tournaments.filter(t =>
+            t.name.toLowerCase().includes(query) ||
+            t.city?.name.toLowerCase().includes(query) ||
+            t.club?.name.toLowerCase().includes(query)
+        );
+    }
+
+    return tournaments;
 });
 
-// Create a map of tournament IDs where user participated
-const userTournamentMap = computed(() => {
-    const map = new Map<number, TournamentPlayer>();
-    userParticipations.value.forEach(participation => {
-        if (participation.tournament) {
-            map.set(participation.tournament.id, participation);
-        }
+const tournamentStats = computed(() => {
+    const total = tournamentStore.tournaments.length;
+    const upcoming = tournamentStore.upcomingTournaments.length;
+    const ongoing = tournamentStore.ongoingTournaments.length;
+    const completed = tournamentStore.completedTournaments.length;
+
+    return {total, upcoming, ongoing, completed};
+});
+
+// Methods
+function getStatusClass(status: string) {
+    const classes: Record<string, string> = {
+        upcoming: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+        ongoing: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 animate-pulse',
+        completed: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+    };
+
+    return classes[status] || classes.upcoming;
+}
+
+function formatDate(dateStr: string) {
+    return new Date(dateStr).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
     });
-    return map;
-});
+}
 
-// Define table columns
-const columns = computed(() => [
-    {
-        key: 'name',
-        label: t('Tournament'),
-        align: 'left' as const,
-        render: (tournament: Tournament) => ({
-            name: tournament.name || t('Unnamed Tournament'),
-            organizer: tournament.organizer || null,
-            participation: getUserParticipation(tournament.id),
-            isParticipant: isUserParticipant(tournament.id)
-        })
-    },
-    {
-        key: 'participation',
-        label: t('Your Status'),
-        align: 'center' as const,
-        render: (tournament: Tournament) => {
-            const participation = getUserParticipation(tournament.id);
-            if (!participation) return null;
-            return {
-                status: participation.status,
-                position: participation.position,
-                badgeClass: getParticipationBadgeClass(participation),
-                badgeText: getParticipationBadgeText(participation)
-            };
-        }
-    },
-    {
-        key: 'game',
-        label: t('Game'),
-        hideOnMobile: true,
-        render: (tournament: Tournament) => {
-            if (!tournament.game) {
-                return null;
-            }
-            return tournament.game.name;
-        }
-    },
-    {
-        key: 'status',
-        label: t('Status'),
-        align: 'center' as const,
-        render: (tournament: Tournament) => ({
-            status: tournament.status,
-            status_display: tournament.status_display
-        })
-    },
-    {
-        key: 'date',
-        label: t('Date'),
-        hideOnMobile: true,
-        render: (tournament: Tournament) => {
-            if (!tournament.start_date || !tournament.end_date) {
-                return null;
-            }
-            return formatDateRange(tournament.start_date, tournament.end_date);
-        }
-    },
-    {
-        key: 'location',
-        label: t('Location'),
-        hideOnTablet: true,
-        render: (tournament: Tournament) => {
-            if (!tournament.city) {
-                return null;
-            }
-            return {
-                city: tournament.city,
-                hasLocation: true
-            };
-        }
-    },
-    {
-        key: 'players',
-        label: t('Players'),
-        align: 'center' as const,
-        hideOnMobile: true,
-        render: (tournament: Tournament) => {
-            const count = tournament.players_count ?? 0;
-            const max = tournament.max_participants ?? null;
-            return {
-                count,
-                max,
-                hasMax: max !== null
-            };
-        }
-    },
-    {
-        key: 'prize',
-        label: t('Prize Pool'),
-        align: 'right' as const,
-        hideOnTablet: true,
-        render: (tournament: Tournament) => {
-            if (!tournament.prize_pool) {
-                return null;
-            }
-            return formatPrizePool(tournament.prize_pool);
-        }
-    },
-    {
-        key: 'actions',
-        label: t('Actions'),
-        align: 'right' as const,
-        sticky: true,
-        width: '80px'
-    }
-]);
+function formatDateRange(startDate: string, endDate: string) {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
 
-const fetchTournaments = async () => {
-    isLoading.value = true;
-    error.value = null;
-
-    try {
-        const [tournamentsData, userTournamentsData] = await Promise.all([
-            apiClient<Tournament[]>('/api/tournaments'),
-            // Only fetch user tournaments if authenticated
-            isAuthenticated.value
-                ? apiClient<{
-                    tournaments: {
-                        upcoming: any[],
-                        active: any[],
-                        completed: any[],
-                        pending_applications: any[],
-                        rejected_applications: any[]
-                    }
-                }>('/api/user/tournaments/my-tournaments-and-applications')
-                : Promise.resolve(null)
-        ]);
-
-        tournaments.value = tournamentsData;
-
-        if (userTournamentsData && isAuthenticated.value) {
-            // Flatten all user participations into a single array
-            userParticipations.value = [
-                ...userTournamentsData.tournaments.upcoming.map(t => t.participation),
-                ...userTournamentsData.tournaments.active.map(t => t.participation),
-                ...userTournamentsData.tournaments.completed.map(t => t.participation),
-                ...userTournamentsData.tournaments.pending_applications.map(t => t.participation),
-                ...userTournamentsData.tournaments.rejected_applications.map(t => t.participation),
-            ].filter(p => p && p.tournament);
-        }
-    } catch (err: any) {
-        error.value = err.message || 'Failed to load tournaments';
-    } finally {
-        isLoading.value = false;
-    }
-};
-
-const getUserParticipation = (tournamentId: number): TournamentPlayer | undefined => {
-    return userTournamentMap.value.get(tournamentId);
-};
-
-const isUserParticipant = (tournamentId: number): boolean => {
-    return userTournamentMap.value.has(tournamentId);
-};
-
-const getParticipationBadgeClass = (participation: TournamentPlayer): string => {
-    switch (participation.status) {
-        case 'confirmed':
-            if (participation.position === 1) {
-                return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
-            } else if (participation.position && participation.position <= 3) {
-                return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300';
-            }
-            return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
-        case 'applied':
-            return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
-        case 'rejected':
-            return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
-        default:
-            return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
-    }
-};
-
-const getParticipationBadgeText = (participation: TournamentPlayer): string => {
-    switch (participation.status) {
-        case 'confirmed':
-            if (participation.position === 1) {
-                return `🏆 ${t('Winner')}`;
-            } else if (participation.position && participation.position <= 3) {
-                return `🥉 ${participation.position}${getOrdinalSuffix(participation.position)} ${t('Place')}`;
-            } else if (participation.position) {
-                return `${participation.position}${getOrdinalSuffix(participation.position)} ${t('Place')}`;
-            }
-            return t('Participated');
-        case 'applied':
-            return t('Applied');
-        case 'rejected':
-            return t('Rejected');
-        default:
-            return t('Registered');
-    }
-};
-
-const getOrdinalSuffix = (num: number): string => {
-    if (num > 3 && num < 21) return 'th';
-    switch (num % 10) {
-        case 1:
-            return 'st';
-        case 2:
-            return 'nd';
-        case 3:
-            return 'rd';
-        default:
-            return 'th';
-    }
-};
-
-const getStatusBadgeClass = (status: string): string => {
-    switch (status) {
-        case 'upcoming':
-            return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
-        case 'active':
-            return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
-        case 'completed':
-            return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
-        case 'cancelled':
-            return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
-        default:
-            return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
-    }
-};
-
-const formatDate = (dateString: string): string => {
-    return new Date(dateString).toLocaleDateString();
-};
-
-const formatDateRange = (startDate: string, endDate: string): string => {
-    const start = formatDate(startDate);
-    const end = formatDate(endDate);
-    return start === end ? start : `${start} - ${end}`;
-};
-
-const formatPrizePool = (amount: number): string => {
-    if (amount <= 0) return t('N/A');
-    return amount.toLocaleString('uk-UA', {
-        style: 'currency',
-        currency: 'UAH'
-    }).replace('UAH', '₴');
-};
-
-const getRowClass = (tournament: Tournament): string => {
-    if (isUserParticipant(tournament.id)) {
-        return 'bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 border-l-4 border-blue-300';
-    }
-    return '';
-};
-
-const getActions = (tournament: Tournament): ActionItem[] => {
-    const actions: ActionItem[] = [
-        {
-            label: t('View'),
-            icon: EyeIcon,
-            href: `/tournaments/${tournament.id}`,
-            show: true
-        }
-    ];
-
-    if (isAuthenticated.value && isAdmin.value) {
-        actions.push({
-            label: t('Edit'),
-            icon: PencilIcon,
-            href: `/admin/tournaments/${tournament.id}/edit`,
-            show: true
-        });
+    if (start.toDateString() === end.toDateString()) {
+        return formatDate(startDate);
     }
 
-    return actions;
-};
+    return `${formatDate(startDate)} - ${formatDate(endDate)}`;
+}
 
-onMounted(() => {
-    fetchTournaments();
+// Lifecycle
+onMounted(async () => {
+    await tournamentStore.fetchTournaments();
 });
 </script>
 
@@ -337,23 +106,19 @@ onMounted(() => {
     <Head :title="t('Tournaments')"/>
 
     <div class="py-12">
-        <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <!-- Header -->
             <div class="mb-6 flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">{{ t('Tournaments') }}</h1>
-                    <p class="text-gray-600 dark:text-gray-400">
-                        {{ t('Discover and follow billiard tournaments') }}
-                        <span v-if="isAuthenticated && userParticipations.length > 0"
-                              class="inline-flex items-center ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full dark:bg-blue-900/30 dark:text-blue-300">
-                            <TrophyIcon class="w-3 h-3 mr-1"/>
-                            {{ userParticipations.length }} {{ t('participations') }}
-                        </span>
+                    <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">
+                        {{ t('Tournaments') }}
+                    </h1>
+                    <p class="mt-1 text-gray-600 dark:text-gray-400">
+                        {{ t('Browse and manage billiard tournaments') }}
                     </p>
                 </div>
 
-                <!-- Only show create button to authenticated admins -->
-                <Link v-if="isAuthenticated && isAdmin" href="/admin/tournaments/create">
+                <Link v-if="isAdmin" href="/tournaments/create">
                     <Button>
                         <PlusIcon class="mr-2 h-4 w-4"/>
                         {{ t('Create Tournament') }}
@@ -361,130 +126,236 @@ onMounted(() => {
                 </Link>
             </div>
 
-            <!-- Filters -->
-            <div class="mb-6 flex flex-wrap gap-2">
-                <button
-                    v-for="option in statusOptions"
-                    :key="option.value"
-                    :class="[
-                        'px-4 py-2 rounded-md text-sm font-medium transition-colors',
-                        selectedStatus === option.value
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-                    ]"
-                    @click="selectedStatus = option.value"
-                >
-                    {{ option.label }}
-                </button>
+            <!-- Statistics Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <Card>
+                    <CardContent class="p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <TrophyIcon class="h-8 w-8 text-blue-500"/>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">
+                                    {{ t('Total Tournaments') }}
+                                </p>
+                                <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                                    {{ tournamentStats.total }}
+                                </p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent class="p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <CalendarIcon class="h-8 w-8 text-yellow-500"/>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">
+                                    {{ t('Upcoming') }}
+                                </p>
+                                <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                                    {{ tournamentStats.upcoming }}
+                                </p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent class="p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="relative">
+                                    <TrophyIcon class="h-8 w-8 text-green-500"/>
+                                    <span
+                                        class="absolute -top-1 -right-1 h-3 w-3 bg-green-500 rounded-full animate-ping"></span>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">
+                                    {{ t('Ongoing') }}
+                                </p>
+                                <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                                    {{ tournamentStats.ongoing }}
+                                </p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent class="p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <TrophyIcon class="h-8 w-8 text-gray-500"/>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">
+                                    {{ t('Completed') }}
+                                </p>
+                                <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                                    {{ tournamentStats.completed }}
+                                </p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle class="flex items-center gap-2">
-                        <TrophyIcon class="h-5 w-5"/>
-                        {{ t('Tournament Directory') }}
-                    </CardTitle>
-                </CardHeader>
-                <CardContent class="p-0">
-                    <DataTable
-                        :columns="columns"
-                        :compact-mode="true"
-                        :data="filteredTournaments"
-                        :empty-message="selectedStatus === 'all' ? t('No tournaments have been created yet.') : t('No :status tournaments.', {status: selectedStatus})"
-                        :loading="isLoading"
-                        :row-class="getRowClass"
-                    >
-                        <!-- Custom cell renderers -->
-                        <template #cell-name="{ value }">
-                            <div class="flex items-center gap-2">
-                                <div>
-                                    <p class="font-medium">{{ value.name }}</p>
-                                    <p v-if="value.organizer" class="text-sm text-gray-600 dark:text-gray-400">
-                                        {{ value.organizer }}
-                                    </p>
-                                </div>
-                                <div v-if="value.isParticipant" class="ml-2">
-                                    <CrownIcon class="h-4 w-4 text-yellow-500"/>
-                                </div>
-                            </div>
-                        </template>
+            <!-- Search and Filters -->
+            <Card class="mb-6">
+                <CardContent class="p-4">
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <!-- Search -->
+                        <div class="flex-1 relative">
+                            <input
+                                v-model="searchQuery"
+                                :placeholder="t('Search tournaments...')"
+                                class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                                type="text"
+                            />
+                            <SearchIcon
+                                class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"/>
+                        </div>
 
-                        <template #cell-participation="{ value }">
-                            <span v-if="value"
-                                  :class="['inline-flex rounded-full px-2 py-1 text-xs font-semibold', value.badgeClass]">
-                                {{ value.badgeText }}
-                            </span>
-                            <span v-else class="text-gray-400">—</span>
-                        </template>
+                        <!-- Status Filter -->
+                        <select
+                            v-model="selectedStatus"
+                            class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100"
+                        >
+                            <option value="all">{{ t('All Status') }}</option>
+                            <option value="upcoming">{{ t('Upcoming') }}</option>
+                            <option value="ongoing">{{ t('Ongoing') }}</option>
+                            <option value="completed">{{ t('Completed') }}</option>
+                        </select>
 
-                        <template #cell-game="{ value }">
-                            <div v-if="value" class="flex items-center text-sm text-gray-900 dark:text-gray-100">
-                                <TrophyIcon class="h-4 w-4 mr-2 text-gray-400"/>
-                                {{ value }}
-                            </div>
-                            <div v-else class="text-sm text-gray-400">{{ t('N/A') }}</div>
-                        </template>
+                        <!-- Discipline Filter -->
+                        <select
+                            v-model="selectedDiscipline"
+                            class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100"
+                        >
+                            <option value="all">{{ t('All Disciplines') }}</option>
+                            <option value="8-ball">8-ball</option>
+                            <option value="9-ball">9-ball</option>
+                            <option value="10-ball">10-ball</option>
+                            <option value="snooker">Snooker</option>
+                            <option value="straight-pool">Straight Pool</option>
+                        </select>
 
-                        <template #cell-status="{ value }">
-                            <span
-                                :class="[
-                                    'inline-flex px-2 py-1 text-xs font-medium rounded-full',
-                                    getStatusBadgeClass(value.status)
-                                ]"
-                            >
-                                {{ value.status_display }}
-                            </span>
-                        </template>
-
-                        <template #cell-date="{ value }">
-                            <div v-if="value" class="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                                <CalendarIcon class="h-4 w-4 mr-2"/>
-                                {{ value }}
-                            </div>
-                            <div v-else class="text-sm text-gray-400">{{ t('N/A') }}</div>
-                        </template>
-
-                        <template #cell-location="{ value }">
-                            <div v-if="value && value.hasLocation"
-                                 class="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                                <MapPinIcon class="h-4 w-4 mr-2"/>
-                                <div>
-                                    <div>{{ value.city.name }}</div>
-                                    <div class="text-xs">{{ value.city.country.name }}</div>
-                                </div>
-                            </div>
-                            <div v-else class="text-sm text-gray-400">{{ t('N/A') }}</div>
-                        </template>
-
-                        <template #cell-players="{ value }">
-                            <div v-if="value" class="flex items-center text-sm text-gray-900 dark:text-gray-100">
-                                <UsersIcon class="h-4 w-4 mr-2 text-gray-400"/>
-                                <div>
-                                    {{ value.count }}
-                                    <span v-if="value.hasMax">
-                                        / {{ value.max }}
-                                    </span>
-                                    <div class="text-xs text-gray-500">
-                                        {{ value.count !== 1 ? t('players') : t('player') }}
-                                    </div>
-                                </div>
-                            </div>
-                            <div v-else class="text-sm text-gray-400">{{ t('N/A') }}</div>
-                        </template>
-
-                        <template #cell-prize="{ value }">
-                            <span v-if="value" class="text-green-600 dark:text-green-400 font-medium">
-                                {{ value }}
-                            </span>
-                            <span v-else class="text-gray-400">{{ t('N/A') }}</span>
-                        </template>
-
-                        <template #cell-actions="{ item }">
-                            <TableActions :actions="getActions(item)"/>
-                        </template>
-                    </DataTable>
+                        <!-- Filter Toggle -->
+                        <button
+                            class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                            @click="showFilters = !showFilters"
+                        >
+                            <FilterIcon class="w-5 h-5"/>
+                        </button>
+                    </div>
                 </CardContent>
             </Card>
+
+            <!-- Tournaments List -->
+            <div v-if="tournamentStore.isLoading" class="flex items-center justify-center h-64">
+                <div class="text-center">
+                    <Spinner class="w-8 h-8 mx-auto mb-4"/>
+                    <p class="text-gray-500 dark:text-gray-400">{{ t('Loading tournaments...') }}</p>
+                </div>
+            </div>
+
+            <div v-else-if="tournamentStore.error"
+                 class="bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-700 rounded-lg p-4">
+                <p class="text-red-700 dark:text-red-300">{{ tournamentStore.error }}</p>
+            </div>
+
+            <div v-else-if="filteredTournaments.length === 0" class="text-center py-12">
+                <TrophyIcon class="mx-auto h-12 w-12 text-gray-400"/>
+                <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {{ t('No tournaments found') }}
+                </h3>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    {{
+                        searchQuery ? t('Try adjusting your search criteria') : t('Create your first tournament to get started')
+                    }}
+                </p>
+                <div v-if="isAdmin && !searchQuery" class="mt-6">
+                    <Link href="/tournaments/create">
+                        <Button>
+                            <PlusIcon class="mr-2 h-4 w-4"/>
+                            {{ t('Create Tournament') }}
+                        </Button>
+                    </Link>
+                </div>
+            </div>
+
+            <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Link
+                    v-for="tournament in filteredTournaments"
+                    :key="tournament.id"
+                    :href="`/tournaments/${tournament.id}`"
+                    class="block"
+                >
+                    <Card class="hover:shadow-lg transition-shadow duration-200">
+                        <CardHeader>
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <CardTitle class="text-lg">{{ tournament.name }}</CardTitle>
+                                    <div
+                                        class="mt-2 flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                    <span class="flex items-center gap-1">
+                      <CalendarIcon class="w-4 h-4"/>
+                      {{ formatDateRange(tournament.start_at, tournament.end_at) }}
+                    </span>
+                                        <span v-if="tournament.city" class="flex items-center gap-1">
+                      <MapPinIcon class="w-4 h-4"/>
+                      {{ tournament.city.name }}
+                    </span>
+                                        <span v-if="tournament.club" class="flex items-center gap-1">
+                      {{ tournament.club.name }}
+                    </span>
+                                    </div>
+                                </div>
+                                <span
+                                    :class="getStatusClass(tournament.status)"
+                                    class="px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                >
+                  {{ tournament.status.toUpperCase() }}
+                </span>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+                                <div>
+                                    <span class="text-gray-500 dark:text-gray-400">{{ t('Discipline') }}</span>
+                                    <p class="font-medium">{{ tournament.discipline }}</p>
+                                </div>
+                                <div>
+                                    <span class="text-gray-500 dark:text-gray-400">{{ t('Participants') }}</span>
+                                    <p class="font-medium flex items-center gap-1">
+                                        <UsersIcon class="w-4 h-4"/>
+                                        {{ tournament.participants_count || 0 }}
+                                    </p>
+                                </div>
+                                <div>
+                                    <span class="text-gray-500 dark:text-gray-400">{{ t('Entry Fee') }}</span>
+                                    <p class="font-medium flex items-center gap-1">
+                                        <DollarSignIcon class="w-4 h-4"/>
+                                        {{ tournament.entry_fee > 0 ? `$${tournament.entry_fee}` : t('Free') }}
+                                    </p>
+                                </div>
+                                <div>
+                                    <span class="text-gray-500 dark:text-gray-400">{{ t('Prize Pool') }}</span>
+                                    <p class="font-medium flex items-center gap-1">
+                                        <TrophyIcon class="w-4 h-4"/>
+                                        {{ tournament.prize_pool > 0 ? `$${tournament.prize_pool}` : '—' }}
+                                    </p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </Link>
+            </div>
         </div>
     </div>
 </template>

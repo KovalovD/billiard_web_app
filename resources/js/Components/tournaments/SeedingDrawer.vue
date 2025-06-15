@@ -18,8 +18,8 @@
                         Tournament Seeding
                     </h2>
                     <button
-                        class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                         @click="$emit('close')"
+                        class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                     >
                         <XIcon class="w-5 h-5"/>
                     </button>
@@ -38,13 +38,13 @@
                     <button
                         v-for="method in seedingMethods"
                         :key="method.value"
+                        class="px-3 py-2 text-sm font-medium rounded-lg transition-colors"
+                        @click="selectedMethod = method.value"
                         :class="[
               selectedMethod === method.value
                 ? 'bg-blue-600 text-white'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             ]"
-                        class="px-3 py-2 text-sm font-medium rounded-lg transition-colors"
-                        @click="selectedMethod = method.value"
                     >
                         <component :is="method.icon" class="w-4 h-4 mx-auto mb-1"/>
                         {{ method.label }}
@@ -56,8 +56,8 @@
                     <label class="flex items-center">
                         <input
                             v-model="avoidSameClub"
-                            class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                             type="checkbox"
+                            class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
                         <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">
               Avoid same club in early rounds
@@ -72,8 +72,8 @@
                     <input
                         v-model.number="groupCount"
                         class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
-                        max="16"
                         min="2"
+                        max="16"
                         type="number"
                     />
                 </div>
@@ -82,56 +82,67 @@
             <!-- Participants List -->
             <div class="flex-1 overflow-y-auto px-6 py-4">
                 <div class="space-y-2">
-                    <draggable
-                        v-model="localParticipants"
-                        class="space-y-2"
-                        handle=".drag-handle"
-                        item-key="id"
-                        @end="handleDragEnd"
+                    <div
+                        v-for="(participant, index) in localParticipants"
+                        :key="participant.id"
+                        :class="{ 'transition-transform': !isDragging }"
+                        :draggable="selectedMethod === 'manual'"
+                        class="relative"
+                        @dragend="handleDragEnd"
+                        @dragstart="handleDragStart($event, index)"
+                        @drop="handleDrop($event, index)"
+                        @dragover.prevent
+                        @dragenter.prevent
                     >
-                        <template #item="{ element: participant, index }">
+                        <div
+                            :class="{
+                'opacity-50': draggedIndex === index,
+                'border-t-2 border-blue-500': dropIndex === index && draggedIndex !== null && draggedIndex < index,
+                'border-b-2 border-blue-500': dropIndex === index && draggedIndex !== null && draggedIndex > index
+              }"
+                            class="flex items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:shadow-md transition-shadow"
+                        >
                             <div
-                                class="flex items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:shadow-md transition-shadow"
+                                v-if="selectedMethod === 'manual'"
+                                class="cursor-move p-1 mr-2"
                             >
-                                <div class="drag-handle cursor-move p-1 mr-2">
-                                    <GripVerticalIcon class="w-4 h-4 text-gray-400"/>
-                                </div>
+                                <GripVerticalIcon class="w-4 h-4 text-gray-400"/>
+                            </div>
 
-                                <div
-                                    class="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mr-3">
-                  <span class="text-sm font-bold text-blue-600 dark:text-blue-400">
-                    {{ index + 1 }}
+                            <div
+                                class="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mr-3">
+                <span class="text-sm font-bold text-blue-600 dark:text-blue-400">
+                  {{ index + 1 }}
+                </span>
+                            </div>
+
+                            <div class="flex-1 min-w-0">
+                                <div class="font-medium text-gray-900 dark:text-gray-100 truncate">
+                                    {{ participant.display_name }}
+                                </div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">
+                  <span v-if="participant.user?.home_club">
+                    {{ participant.user.home_club.name }}
                   </span>
-                                </div>
-
-                                <div class="flex-1 min-w-0">
-                                    <div class="font-medium text-gray-900 dark:text-gray-100 truncate">
-                                        {{ participant.display_name }}
-                                    </div>
-                                    <div class="text-sm text-gray-500 dark:text-gray-400">
-                    <span v-if="participant.user?.home_club">
-                      {{ participant.user.home_club.name }}
-                    </span>
-                                        <span v-else-if="participant.team?.club">
-                      {{ participant.team.club.name }}
-                    </span>
-                                        <span v-if="participant.rating_snapshot" class="ml-2">
-                      Rating: {{ participant.rating_snapshot }}
-                    </span>
-                                    </div>
-                                </div>
-
-                                <div class="flex items-center gap-2">
-                  <span
-                      v-if="participant.seed !== index + 1"
-                      class="text-xs px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded"
-                  >
-                    Changed
+                                    <span v-else-if="participant.team?.club">
+                    {{ participant.team.club.name }}
+                  </span>
+                                    <span v-if="participant.rating_snapshot" class="ml-2">
+                    Rating: {{ participant.rating_snapshot }}
                   </span>
                                 </div>
                             </div>
-                        </template>
-                    </draggable>
+
+                            <div class="flex items-center gap-2">
+                <span
+                    v-if="participant.seed !== index + 1"
+                    class="text-xs px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded"
+                >
+                  Changed
+                </span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -176,15 +187,15 @@
                     </div>
                     <div class="flex gap-2">
                         <button
+                            @click="resetSeeding"
                             :disabled="!hasChanges"
                             class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            @click="resetSeeding"
                         >
                             Reset
                         </button>
                         <button
-                            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
                             @click="applySeeding"
+                            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
                         >
                             Apply Seeding
                         </button>
@@ -205,15 +216,14 @@
     >
         <div
             v-if="isOpen"
-            class="fixed inset-0 bg-black/50 z-40"
             @click="$emit('close')"
+            class="fixed inset-0 bg-black/50 z-40"
         />
     </Transition>
 </template>
 
 <script lang="ts" setup>
 import {computed, ref, watch} from 'vue';
-import {VueDraggableNext as draggable} from 'vue-draggable-next';
 import {AlertCircleIcon, GripVerticalIcon, ShuffleIcon, TrophyIcon, UsersIcon, XIcon} from 'lucide-vue-next';
 
 // Types
@@ -253,6 +263,9 @@ const selectedMethod = ref<'manual' | 'random' | 'rating' | 'snake'>('manual');
 const avoidSameClub = ref(true);
 const groupCount = ref(4);
 const originalOrder = ref<Participant[]>([]);
+const draggedIndex = ref<number | null>(null);
+const dropIndex = ref<number | null>(null);
+const isDragging = ref(false);
 
 // Seeding methods configuration
 const seedingMethods = [
@@ -298,12 +311,47 @@ const groupPreview = computed(() => {
 });
 
 // Methods
+function handleDragStart(event: DragEvent, index: number) {
+    if (selectedMethod.value !== 'manual') return;
+
+    draggedIndex.value = index;
+    isDragging.value = true;
+    event.dataTransfer!.effectAllowed = 'move';
+    event.dataTransfer!.setData('text/plain', index.toString());
+}
+
 function handleDragEnd() {
-    // Update seeds based on new positions
-    localParticipants.value = localParticipants.value.map((p, index) => ({
+    draggedIndex.value = null;
+    dropIndex.value = null;
+    isDragging.value = false;
+}
+
+function handleDrop(event: DragEvent, targetIndex: number) {
+    event.preventDefault();
+
+    if (draggedIndex.value === null || draggedIndex.value === targetIndex) {
+        handleDragEnd();
+        return;
+    }
+
+    // Reorder participants
+    const draggedParticipant = localParticipants.value[draggedIndex.value];
+    const newParticipants = [...localParticipants.value];
+
+    // Remove from old position
+    newParticipants.splice(draggedIndex.value, 1);
+
+    // Insert at new position
+    const insertIndex = draggedIndex.value < targetIndex ? targetIndex - 1 : targetIndex;
+    newParticipants.splice(insertIndex, 0, draggedParticipant);
+
+    // Update participants with new seeds
+    localParticipants.value = newParticipants.map((p, index) => ({
         ...p,
         seed: index + 1
     }));
+
+    handleDragEnd();
 }
 
 function shuffleArray<T>(array: T[]): T[] {
@@ -436,13 +484,13 @@ watch([avoidSameClub, groupCount], () => {
 </script>
 
 <style scoped>
-/* Vue Draggable styles */
-.sortable-ghost {
-    opacity: 0.5;
+/* Smooth transitions for drag and drop */
+.transition-transform {
+    transition: transform 0.2s ease;
 }
 
-.sortable-drag {
-    background: white;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+/* Hide drag ghost image */
+[draggable="true"] {
+    -webkit-user-drag: element;
 }
 </style>

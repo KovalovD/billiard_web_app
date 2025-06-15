@@ -558,21 +558,21 @@ class SchedulerService
      */
     protected function findPlayerConflicts($participant, Carbon $startTime, Carbon $endTime): Collection
     {
-        return OfficialMatch::where(function ($query) use ($participant) {
-            $query
-                ->whereJsonContains('metadata->participant1_id', $participant->id)
-                ->orWhereJsonContains('metadata->participant2_id', $participant->id)
-            ;
-        })
+        return OfficialMatch::query()
+            ->where(static function ($query) use ($participant) {
+                $query
+                    ->whereJsonContains('metadata->participant1_id', $participant->id)
+                    ->orWhereJsonContains('metadata->participant2_id', $participant->id)
+                ;
+            })
             ->whereNotNull('scheduled_at')
             ->where(function ($query) use ($startTime, $endTime) {
                 $query
                     ->whereBetween('scheduled_at', [$startTime, $endTime])
-                    ->orWhere(function ($q) use ($startTime, $endTime) {
+                    ->orWhere(function ($q) use ($startTime) {
                         $q
                             ->where('scheduled_at', '<=', $startTime)
-                            ->whereRaw("scheduled_at + INTERVAL '{$this->defaultMatchDuration} minutes' >= ?",
-                                [$startTime])
+                            ->where('scheduled_at', '>=', $startTime->copy()->addMinutes($this->defaultMatchDuration))
                         ;
                     })
                 ;

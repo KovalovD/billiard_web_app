@@ -20,8 +20,6 @@ class MatchResource extends JsonResource
             'metadata'                => $this->metadata,
             'created_at'              => $this->created_at,
             'updated_at'              => $this->updated_at,
-            'get_score_summary_count' => $this->get_score_summary_count,
-            'match_sets_count'        => $this->match_sets_count,
 
             'stage_id' => $this->stage_id,
             'table_id' => $this->table_id,

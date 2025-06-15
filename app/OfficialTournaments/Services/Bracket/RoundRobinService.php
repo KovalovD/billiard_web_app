@@ -277,7 +277,7 @@ class RoundRobinService
 
         // Process each match
         foreach ($matches as $match) {
-            $this->processMatchForStandings($match, $standings);
+            $standings = $this->processMatchForStandings($match, $standings);
         }
 
         // Calculate additional metrics and sort
@@ -349,13 +349,13 @@ class RoundRobinService
     /**
      * Process match results for standings
      */
-    protected function processMatchForStandings(OfficialMatch $match, Collection $standings): void
+    protected function processMatchForStandings(OfficialMatch $match, Collection $standings): Collection
     {
         $p1Id = $match->metadata['participant1_id'];
         $p2Id = $match->metadata['participant2_id'];
 
         if (!$p1Id || !$p2Id) {
-            return;
+            return collect();
         }
 
         // Count sets won
@@ -373,38 +373,58 @@ class RoundRobinService
 
         // Update standings
         if (isset($standings[$p1Id])) {
-            $standings[$p1Id]['matches_played']++;
-            $standings[$p1Id]['sets_won'] += $p1SetsWon;
-            $standings[$p1Id]['sets_lost'] += $p2SetsWon;
-            $standings[$p1Id]['games_won'] += $p1GamesWon;
-            $standings[$p1Id]['games_lost'] += $p2GamesWon;
+            $array = [
+                'participant'    => $standings[$p1Id]['participant'],
+                'matches_played' => $standings[$p1Id]['matches_played'] + 1,
+                'sets_won'       => $standings[$p1Id]['sets_won'] + $p1SetsWon,
+                'sets_lost'      => $standings[$p1Id]['sets_lost'] + $p2SetsWon,
+                'games_won'      => $standings[$p1Id]['games_won'] + $p1GamesWon,
+                'games_lost'     => $standings[$p1Id]['games_lost'] + $p2GamesWon,
+                'matches_won'    => $standings[$p1Id]['matches_won'],
+                'points'         => $standings[$p1Id]['points'],
+                'matches_lost'   => $standings[$p1Id]['matches_lost'],
+                'h2h'            => $standings[$p1Id]['h2h'],
+            ];
 
             if ($p1SetsWon > $p2SetsWon) {
-                $standings[$p1Id]['matches_won']++;
-                $standings[$p1Id]['points'] += 3; // 3 points for win
-                $standings[$p1Id]['h2h'][$p2Id] = 'W';
+                $array['matches_won'] = $standings[$p1Id]['matches_won'] + 1;
+                $array['points'] = $standings[$p1Id]['points'] + 3;
+                $array['h2h'][$p2Id] = 'W';
             } else {
-                $standings[$p1Id]['matches_lost']++;
-                $standings[$p1Id]['h2h'][$p2Id] = 'L';
+                $array['matches_lost'] = $standings[$p1Id]['matches_lost'] + 1;
+                $array['h2h'][$p2Id] = 'L';
             }
+
+            $standings[$p1Id] = $array;
         }
 
         if (isset($standings[$p2Id])) {
-            $standings[$p2Id]['matches_played']++;
-            $standings[$p2Id]['sets_won'] += $p2SetsWon;
-            $standings[$p2Id]['sets_lost'] += $p1SetsWon;
-            $standings[$p2Id]['games_won'] += $p2GamesWon;
-            $standings[$p2Id]['games_lost'] += $p1GamesWon;
+            $array = [
+                'participant'    => $standings[$p2Id]['participant'],
+                'matches_played' => $standings[$p2Id]['matches_played'] + 1,
+                'sets_won'       => $standings[$p2Id]['sets_won'] + $p2SetsWon,
+                'sets_lost'      => $standings[$p2Id]['sets_lost'] + $p1SetsWon,
+                'games_won'      => $standings[$p2Id]['games_won'] + $p2GamesWon,
+                'games_lost'     => $standings[$p2Id]['games_lost'] + $p1GamesWon,
+                'matches_won'    => $standings[$p2Id]['matches_won'],
+                'points'         => $standings[$p2Id]['points'],
+                'matches_lost'   => $standings[$p2Id]['matches_lost'],
+                'h2h'            => $standings[$p2Id]['h2h'],
+            ];
 
             if ($p2SetsWon > $p1SetsWon) {
-                $standings[$p2Id]['matches_won']++;
-                $standings[$p2Id]['points'] += 3;
-                $standings[$p2Id]['h2h'][$p1Id] = 'W';
+                $array['matches_won'] = $standings[$p2Id]['matches_won'] + 1;
+                $array['points'] = $standings[$p2Id]['points'] + 3;
+                $array['h2h'][$p1Id] = 'W';
             } else {
-                $standings[$p2Id]['matches_lost']++;
-                $standings[$p2Id]['h2h'][$p1Id] = 'L';
+                $array['matches_lost'] = $standings[$p2Id]['matches_lost'] + 1;
+                $array['h2h'][$p1Id] = 'L';
             }
+
+            $standings[$p2Id] = $array;
         }
+
+        return $standings;
     }
 
     /**

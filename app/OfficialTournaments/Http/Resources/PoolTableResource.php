@@ -17,8 +17,6 @@ class PoolTableResource extends JsonResource
             'cloth_speed'          => $this->cloth_speed,
             'created_at'           => $this->created_at,
             'updated_at'           => $this->updated_at,
-            'matches_count'        => $this->matches_count,
-            'schedule_slots_count' => $this->schedule_slots_count,
 
             'tournament_id' => $this->tournament_id,
 

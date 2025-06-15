@@ -28,9 +28,9 @@ class SeedService
     public function applySeedingManual(Collection $participants): void
     {
         DB::transaction(static function () use ($participants) {
-            foreach ($participants as $participantId => $seed) {
+            foreach ($participants as $seed => $participantId) {
                 OfficialParticipant::where('id', $participantId)
-                    ->update(['seed' => $seed])
+                    ->update(['seed' => $seed + 1])
                 ;
             }
         });

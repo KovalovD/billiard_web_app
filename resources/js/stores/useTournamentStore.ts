@@ -120,11 +120,9 @@ export const useTournamentStore = defineStore('tournament', () => {
             if (filters?.dateFrom) params.append('date_from', filters.dateFrom);
             if (filters?.dateTo) params.append('date_to', filters.dateTo);
 
-            const response = await apiClient<{ data: OfficialTournament[] }>(
+            tournaments.value = await apiClient<OfficialTournament[]>(
                 `/api/tournaments?${params.toString()}`
             );
-
-            tournaments.value = response.data;
         } catch (err: any) {
             error.value = err.message || 'Failed to load tournaments';
             throw err;
@@ -138,21 +136,21 @@ export const useTournamentStore = defineStore('tournament', () => {
         error.value = null;
 
         try {
-            const response = await apiClient<{ data: OfficialTournament }>(
+            const response = await apiClient<OfficialTournament>(
                 `/api/tournaments/${id}`
             );
 
-            currentTournament.value = response.data;
+            currentTournament.value = response;
 
             // Update related data if included
-            if (response.data.stages) {
-                stages.value = response.data.stages;
+            if (response.stages) {
+                stages.value = response.stages;
             }
-            if (response.data.pool_tables) {
-                tables.value = response.data.pool_tables;
+            if (response.pool_tables) {
+                tables.value = response.pool_tables;
             }
 
-            return response.data;
+            return response;
         } catch (err: any) {
             error.value = err.message || 'Failed to load tournament';
             throw err;
@@ -166,7 +164,7 @@ export const useTournamentStore = defineStore('tournament', () => {
         error.value = null;
 
         try {
-            const response = await apiClient<{ data: OfficialTournament }>(
+            const response = await apiClient<OfficialTournament>(
                 '/api/tournaments',
                 {
                     method: 'POST',
@@ -174,8 +172,8 @@ export const useTournamentStore = defineStore('tournament', () => {
                 }
             );
 
-            tournaments.value.push(response.data);
-            return response.data;
+            tournaments.value.push(response);
+            return response;
         } catch (err: any) {
             error.value = err.message || 'Failed to create tournament';
             throw err;
@@ -189,7 +187,7 @@ export const useTournamentStore = defineStore('tournament', () => {
         error.value = null;
 
         try {
-            const response = await apiClient<{ data: OfficialTournament }>(
+            const response = await apiClient<OfficialTournament>(
                 `/api/tournaments/${id}`,
                 {
                     method: 'PUT',
@@ -198,17 +196,17 @@ export const useTournamentStore = defineStore('tournament', () => {
             );
 
             // Update in list
-            const index = tournaments.value.findIndex(t => t.id === response.data.id);
+            const index = tournaments.value.findIndex(t => t.id === response.id);
             if (index !== -1) {
-                tournaments.value[index] = response.data;
+                tournaments.value[index] = response;
             }
 
             // Update current if same
-            if (currentTournament.value?.id === response.data.id) {
-                currentTournament.value = response.data;
+            if (currentTournament.value?.id === response.id) {
+                currentTournament.value = response;
             }
 
-            return response.data;
+            return response;
         } catch (err: any) {
             error.value = err.message || 'Failed to update tournament';
             throw err;
@@ -244,13 +242,13 @@ export const useTournamentStore = defineStore('tournament', () => {
         error.value = null;
 
         try {
-            const response = await apiClient<{ data: OfficialTournament }>(
+            const response = await apiClient<OfficialTournament>(
                 `/api/tournaments/${id}/duplicate`,
                 {method: 'POST'}
             );
 
-            tournaments.value.push(response.data);
-            return response.data;
+            tournaments.value.push(response);
+            return response;
         } catch (err: any) {
             error.value = err.message || 'Failed to duplicate tournament';
             throw err;
@@ -265,12 +263,12 @@ export const useTournamentStore = defineStore('tournament', () => {
         error.value = null;
 
         try {
-            const response = await apiClient<{ data: OfficialStage[] }>(
+            const response = await apiClient<OfficialStage[]>(
                 `/api/tournaments/${tournamentId}/stages`
             );
 
-            stages.value = response.data;
-            return response.data;
+            stages.value = response;
+            return response;
         } catch (err: any) {
             error.value = err.message || 'Failed to load stages';
             throw err;
@@ -284,21 +282,21 @@ export const useTournamentStore = defineStore('tournament', () => {
         error.value = null;
 
         try {
-            const response = await apiClient<{ data: OfficialStage }>(
+            const response = await apiClient<OfficialStage>(
                 `/api/tournaments/${tournamentId}/stages/${stageId}`
             );
 
-            currentStage.value = response.data;
+            currentStage.value = response;
 
             // Update related data if included
-            if (response.data.participants) {
-                participants.value = response.data.participants;
+            if (response.participants) {
+                participants.value = response.participants;
             }
-            if (response.data.matches) {
-                matches.value = response.data.matches;
+            if (response.matches) {
+                matches.value = response.matches;
             }
 
-            return response.data;
+            return response;
         } catch (err: any) {
             error.value = err.message || 'Failed to load stage';
             throw err;
@@ -312,7 +310,7 @@ export const useTournamentStore = defineStore('tournament', () => {
         error.value = null;
 
         try {
-            const response = await apiClient<{ data: OfficialStage }>(
+            const response = await apiClient<OfficialStage>(
                 `/api/tournaments/${tournamentId}/stages`,
                 {
                     method: 'POST',
@@ -320,8 +318,8 @@ export const useTournamentStore = defineStore('tournament', () => {
                 }
             );
 
-            stages.value.push(response.data);
-            return response.data;
+            stages.value.push(response);
+            return response;
         } catch (err: any) {
             error.value = err.message || 'Failed to create stage';
             throw err;
@@ -338,6 +336,7 @@ export const useTournamentStore = defineStore('tournament', () => {
         isLoading.value = true;
         error.value = null;
 
+        //data used
         try {
             const response = await apiClient<{
                 message: string;
@@ -408,12 +407,12 @@ export const useTournamentStore = defineStore('tournament', () => {
         error.value = null;
 
         try {
-            const response = await apiClient<{ data: OfficialParticipant[] }>(
+            const response = await apiClient<OfficialParticipant[]>(
                 `/api/tournaments/${tournamentId}/stages/${stageId}/participants`
             );
 
-            participants.value = response.data;
-            return response.data;
+            participants.value = response;
+            return response;
         } catch (err: any) {
             error.value = err.message || 'Failed to load participants';
             throw err;
@@ -431,7 +430,7 @@ export const useTournamentStore = defineStore('tournament', () => {
         error.value = null;
 
         try {
-            const response = await apiClient<{ data: OfficialParticipant }>(
+            const response = await apiClient<OfficialParticipant>(
                 `/api/tournaments/${tournamentId}/stages/${stageId}/participants`,
                 {
                     method: 'POST',
@@ -439,8 +438,8 @@ export const useTournamentStore = defineStore('tournament', () => {
                 }
             );
 
-            participants.value.push(response.data);
-            return response.data;
+            participants.value.push(response);
+            return response;
         } catch (err: any) {
             error.value = err.message || 'Failed to add participant';
             throw err;
@@ -480,6 +479,7 @@ export const useTournamentStore = defineStore('tournament', () => {
         isLoading.value = true;
         error.value = null;
 
+        //data used
         try {
             const response = await apiClient<{
                 message: string;
@@ -512,6 +512,7 @@ export const useTournamentStore = defineStore('tournament', () => {
         isLoading.value = true;
         error.value = null;
 
+        //data used
         try {
             const response = await apiClient<{
                 message: string;
@@ -549,12 +550,12 @@ export const useTournamentStore = defineStore('tournament', () => {
             if (filters?.bracket) params.append('bracket', filters.bracket);
             if (filters?.date) params.append('date', filters.date);
 
-            const response = await apiClient<{ data: OfficialMatch[] }>(
+            const response = await apiClient<OfficialMatch[]>(
                 `/api/tournaments/${tournamentId}/matches?${params.toString()}`
             );
 
-            matches.value = response.data;
-            return response.data;
+            matches.value = response;
+            return response;
         } catch (err: any) {
             error.value = err.message || 'Failed to load matches';
             throw err;
@@ -568,19 +569,19 @@ export const useTournamentStore = defineStore('tournament', () => {
         error.value = null;
 
         try {
-            const response = await apiClient<{ data: OfficialMatch }>(
+            const response = await apiClient<OfficialMatch>(
                 `/api/tournaments/${tournamentId}/matches/${matchId}`
             );
 
             // Update match in list
-            const index = matches.value.findIndex(m => m.id === response.data.id);
+            const index = matches.value.findIndex(m => m.id === response.id);
             if (index !== -1) {
-                matches.value[index] = response.data;
+                matches.value[index] = response;
             } else {
-                matches.value.push(response.data);
+                matches.value.push(response);
             }
 
-            return response.data;
+            return response;
         } catch (err: any) {
             error.value = err.message || 'Failed to load match';
             throw err;
@@ -598,7 +599,7 @@ export const useTournamentStore = defineStore('tournament', () => {
         error.value = null;
 
         try {
-            const response = await apiClient<{ data: OfficialMatch }>(
+            const response = await apiClient<OfficialMatch>(
                 `/api/tournaments/${tournamentId}/matches/${matchId}/score`,
                 {
                     method: 'PUT',
@@ -607,12 +608,12 @@ export const useTournamentStore = defineStore('tournament', () => {
             );
 
             // Update match in list
-            const index = matches.value.findIndex(m => m.id === response.data.id);
+            const index = matches.value.findIndex(m => m.id === response.id);
             if (index !== -1) {
-                matches.value[index] = response.data;
+                matches.value[index] = response;
             }
 
-            return response.data;
+            return response;
         } catch (err: any) {
             error.value = err.message || 'Failed to update match score';
             throw err;
@@ -630,7 +631,7 @@ export const useTournamentStore = defineStore('tournament', () => {
         error.value = null;
 
         try {
-            const response = await apiClient<{ data: OfficialMatch }>(
+            const response = await apiClient<OfficialMatch>(
                 `/api/tournaments/${tournamentId}/matches/${matchId}/schedule`,
                 {
                     method: 'POST',
@@ -639,12 +640,12 @@ export const useTournamentStore = defineStore('tournament', () => {
             );
 
             // Update match in list
-            const index = matches.value.findIndex(m => m.id === response.data.id);
+            const index = matches.value.findIndex(m => m.id === response.id);
             if (index !== -1) {
-                matches.value[index] = response.data;
+                matches.value[index] = response;
             }
 
-            return response.data;
+            return response;
         } catch (err: any) {
             error.value = err.message || 'Failed to schedule match';
             throw err;
@@ -662,7 +663,7 @@ export const useTournamentStore = defineStore('tournament', () => {
         error.value = null;
 
         try {
-            const response = await apiClient<{ data: OfficialMatch }>(
+            const response = await apiClient<OfficialMatch>(
                 `/api/tournaments/${tournamentId}/matches/${matchId}/walkover`,
                 {
                     method: 'POST',
@@ -671,12 +672,12 @@ export const useTournamentStore = defineStore('tournament', () => {
             );
 
             // Update match in list
-            const index = matches.value.findIndex(m => m.id === response.data.id);
+            const index = matches.value.findIndex(m => m.id === response.id);
             if (index !== -1) {
-                matches.value[index] = response.data;
+                matches.value[index] = response;
             }
 
-            return response.data;
+            return response;
         } catch (err: any) {
             error.value = err.message || 'Failed to set walkover';
             throw err;
@@ -697,6 +698,7 @@ export const useTournamentStore = defineStore('tournament', () => {
         isLoading.value = true;
         error.value = null;
 
+        //data used
         try {
             const response = await apiClient<{
                 message: string;
