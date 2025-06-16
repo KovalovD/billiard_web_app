@@ -19,6 +19,7 @@ return new class extends Migration {
             $table->json('place_bonuses')->nullable()->after('place_prizes');
             $table->json('place_rating_points')->nullable()->after('place_bonuses');
             $table->string('stage')->default('registration')->after('status');
+            $table->timestamp('completed_at')->nullable();
             $table->timestamp('seeding_completed_at')->nullable()->after('completed_at');
             $table->timestamp('groups_completed_at')->nullable()->after('seeding_completed_at');
         });

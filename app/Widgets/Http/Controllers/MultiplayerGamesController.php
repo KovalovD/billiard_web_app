@@ -7,7 +7,7 @@ use App\Matches\Models\MultiplayerGame;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class StreamingWidgetController
+class MultiplayerGamesController
 {
     /**
      * Get current game data for streaming widget

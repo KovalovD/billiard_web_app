@@ -11,6 +11,11 @@ import SelectTrigger from './form/SelectTrigger.vue';
 import SelectValue from './form/SelectValue.vue';
 import Textarea from './form/Textarea.vue';
 
+import Accordion from './accordion/Accordion.vue';
+import AccordionItem from './accordion/AccordionItem.vue';
+import AccordionTrigger from './accordion/AccordionTrigger.vue';
+import AccordionContent from './accordion/AccordionContent.vue';
+
 // Layout components
 import Card from './layout/Card.vue';
 import CardHeader from './layout/CardHeader.vue';
@@ -51,7 +56,11 @@ export {
     // Feedback components
     Modal,
     Toast,
-    Spinner
+    Spinner,
+    Accordion,
+    AccordionItem,
+    AccordionTrigger,
+    AccordionContent
 };
 
 // Also provide default export for flexibility
@@ -78,5 +87,10 @@ export default {
     // Feedback components
     Modal,
     Toast,
-    Spinner
+    Spinner,
+
+    Accordion,
+    AccordionItem,
+    AccordionTrigger,
+    AccordionContent
 };

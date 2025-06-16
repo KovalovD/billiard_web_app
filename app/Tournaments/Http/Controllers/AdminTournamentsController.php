@@ -8,12 +8,16 @@ use App\Auth\DataTransferObjects\RegisterDTO;
 use App\Core\Http\Resources\UserResource;
 use App\OfficialRatings\Services\OfficialRatingService;
 use App\Tournaments\Http\Requests\AddTournamentPlayerRequest;
+use App\Tournaments\Http\Requests\AssignTournamentGroupRequest;
 use App\Tournaments\Http\Requests\CreateTournamentRequest;
+use App\Tournaments\Http\Requests\UpdateTournamentPlayerSeedingRequest;
 use App\Tournaments\Http\Requests\UpdateTournamentRequest;
+use App\Tournaments\Http\Resources\TournamentMatchResource;
 use App\Tournaments\Http\Resources\TournamentPlayerResource;
 use App\Tournaments\Http\Resources\TournamentResource;
 use App\Tournaments\Models\Tournament;
 use App\Tournaments\Models\TournamentPlayer;
+use App\Tournaments\Services\TournamentBracketService;
 use App\Tournaments\Services\TournamentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -28,6 +32,7 @@ readonly class AdminTournamentsController
 {
     public function __construct(
         private TournamentService $tournamentService,
+        private TournamentBracketService $bracketService,
         private OfficialRatingService $officialRatingService,
     ) {
     }
@@ -72,7 +77,6 @@ readonly class AdminTournamentsController
                             $rating,
                             $tournament->id,
                             $data['rating_coefficient'] ?? 1.0,
-
                         );
                     }
                 }
@@ -112,7 +116,7 @@ readonly class AdminTournamentsController
 
             return response()->json([
                 'success' => true,
-                'player'  => new TournamentPlayerResource($player),
+                'player' => new TournamentPlayerResource($player),
                 'message' => 'Player added to tournament successfully',
             ]);
         } catch (Throwable $e) {
@@ -137,8 +141,8 @@ readonly class AdminTournamentsController
 
         return response()->json([
             'success' => $result['success'],
-            'user'    => new UserResource($result['user']),
-            'player'  => $result['player'] ? new TournamentPlayerResource($result['player']) : null,
+            'user'   => new UserResource($result['user']),
+            'player' => $result['player'] ? new TournamentPlayerResource($result['player']) : null,
             'message' => $result['message'],
         ]);
     }
@@ -173,19 +177,68 @@ readonly class AdminTournamentsController
         }
 
         $validated = $request->validate([
-            'position'           => 'nullable|integer|min:1',
-            'rating_points'      => 'integer|min:0',
-            'prize_amount'       => 'numeric|min:0',
-            'bonus_amount'       => 'numeric|min:0',
+            'position'          => 'nullable|integer|min:1',
+            'rating_points'     => 'integer|min:0',
+            'prize_amount'      => 'numeric|min:0',
+            'bonus_amount'      => 'numeric|min:0',
             'achievement_amount' => 'numeric|min:0',
-            'status'             => 'string|in:registered,confirmed,eliminated,dnf',
+            'status'            => 'string|in:applied,confirmed,rejected,eliminated,dnf',
+            'seed_number'       => 'nullable|integer|min:1',
+            'group_code'        => 'nullable|string|max:10',
+            'elimination_round' => 'nullable|string',
         ]);
 
         $player = $this->tournamentService->updateTournamentPlayer($player, $validated);
 
         return response()->json([
-            'player'  => new TournamentPlayerResource($player),
+            'player' => new TournamentPlayerResource($player),
             'message' => 'Player updated successfully',
+        ]);
+    }
+
+    /**
+     * Update player seeding
+     * @admin
+     */
+    public function updatePlayerSeeding(
+        UpdateTournamentPlayerSeedingRequest $request,
+        Tournament $tournament,
+        TournamentPlayer $player,
+    ): JsonResponse {
+        if ($player->tournament_id !== $tournament->id) {
+            return response()->json([
+                'message' => 'Player does not belong to this tournament',
+            ], 400);
+        }
+
+        $player = $this->tournamentService->updatePlayerSeeding($player, $request->validated('seed_number'));
+
+        return response()->json([
+            'player'  => new TournamentPlayerResource($player),
+            'message' => 'Player seeding updated successfully',
+        ]);
+    }
+
+    /**
+     * Assign player to group
+     * @admin
+     */
+    public function assignPlayerToGroup(
+        AssignTournamentGroupRequest $request,
+        Tournament $tournament,
+        TournamentPlayer $player,
+    ): JsonResponse {
+        if ($player->tournament_id !== $tournament->id) {
+            return response()->json([
+                'message' => 'Player does not belong to this tournament',
+            ], 400);
+        }
+
+        $player = $this->tournamentService->assignPlayerToGroup($player, $request->validated('group_code'));
+
+        return response()->json([
+            'player'  => new TournamentPlayerResource($player),
+            'message' => 'Player assigned to group successfully',
         ]);
     }
 
@@ -196,12 +249,12 @@ readonly class AdminTournamentsController
     public function setResults(Request $request, Tournament $tournament): JsonResponse
     {
         $validated = $request->validate([
-            'results'                      => 'required|array',
-            'results.*.player_id'          => 'required|integer|exists:tournament_players,id',
-            'results.*.position'           => 'required|integer|min:1',
-            'results.*.rating_points'      => 'integer|min:0',
-            'results.*.prize_amount'       => 'numeric|min:0',
-            'results.*.bonus_amount'       => 'numeric|min:0',
+            'results'                 => 'required|array',
+            'results.*.player_id'     => 'required|integer|exists:tournament_players,id',
+            'results.*.position'      => 'required|integer|min:1',
+            'results.*.rating_points' => 'integer|min:0',
+            'results.*.prize_amount'  => 'numeric|min:0',
+            'results.*.bonus_amount'  => 'numeric|min:0',
             'results.*.achievement_amount' => 'numeric|min:0',
         ]);
 
@@ -230,8 +283,103 @@ readonly class AdminTournamentsController
 
         return response()->json([
             'tournament' => new TournamentResource($tournament),
-            'message'    => 'Tournament status updated successfully',
+            'message' => 'Tournament status updated successfully',
         ]);
+    }
+
+    /**
+     * Change tournament stage
+     * @admin
+     */
+    public function changeStage(Request $request, Tournament $tournament): JsonResponse
+    {
+        $validated = $request->validate([
+            'stage' => 'required|string|in:registration,seeding,group,bracket,completed',
+        ]);
+
+        $tournament = $this->tournamentService->changeTournamentStage($tournament, $validated['stage']);
+
+        return response()->json([
+            'tournament' => new TournamentResource($tournament),
+            'message'    => 'Tournament stage updated successfully',
+        ]);
+    }
+
+    /**
+     * Generate tournament bracket
+     * @admin
+     */
+    public function generateBracket(Tournament $tournament): JsonResponse
+    {
+        try {
+            $bracket = $this->bracketService->generateBracket($tournament);
+
+            return response()->json([
+                'message' => 'Tournament bracket generated successfully',
+                'bracket' => $bracket,
+            ]);
+        } catch (Throwable $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    /**
+     * Generate tournament groups
+     * @admin
+     */
+    public function generateGroups(Tournament $tournament): JsonResponse
+    {
+        try {
+            $groups = $this->bracketService->generateGroups($tournament);
+
+            return response()->json([
+                'message' => 'Tournament groups generated successfully',
+                'groups'  => $groups,
+            ]);
+        } catch (Throwable $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    /**
+     * Complete seeding phase
+     * @admin
+     */
+    public function completeSeeding(Tournament $tournament): JsonResponse
+    {
+        try {
+            $this->tournamentService->completeSeedingPhase($tournament);
+
+            return response()->json([
+                'tournament' => new TournamentResource($tournament),
+                'message'    => 'Seeding phase completed successfully',
+            ]);
+        } catch (Throwable $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    /**
+     * Get tournament matches
+     * @admin
+     */
+    public function getMatches(Tournament $tournament): AnonymousResourceCollection
+    {
+        $matches = $tournament
+            ->matches()
+            ->with(['player1', 'player2', 'winner', 'clubTable'])
+            ->orderBy('round')
+            ->orderBy('bracket_position')
+            ->get()
+        ;
+
+        return TournamentMatchResource::collection($matches);
     }
 
     /**
@@ -261,10 +409,10 @@ readonly class AdminTournamentsController
         return response()->json([
             'ratings' => $ratings->map(function ($rating) {
                 return [
-                    'id'          => $rating->id,
-                    'name'        => $rating->name,
+                    'id'        => $rating->id,
+                    'name'      => $rating->name,
                     'description' => $rating->description,
-                    'game_type'   => $rating->game_type->value,
+                    'game_type' => $rating->game_type->value,
                 ];
             }),
         ]);

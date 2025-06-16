@@ -1,4 +1,5 @@
 <?php
+// app/Tournaments/Services/TournamentService.php
 
 namespace App\Tournaments\Services;
 
@@ -6,6 +7,8 @@ use App\Auth\DataTransferObjects\RegisterDTO;
 use App\Auth\Services\AuthService;
 use App\Core\Models\User;
 use App\OfficialRatings\Services\OfficialRatingService;
+use App\Tournaments\Enums\TournamentStage;
+use App\Tournaments\Enums\TournamentStatus;
 use App\Tournaments\Models\Tournament;
 use App\Tournaments\Models\TournamentPlayer;
 use Illuminate\Database\Eloquent\Collection;
@@ -32,6 +35,10 @@ class TournamentService
             $query->where('status', $filters['status']);
         }
 
+        if (isset($filters['stage'])) {
+            $query->where('stage', $filters['stage']);
+        }
+
         if (isset($filters['game_id'])) {
             $query->where('game_id', $filters['game_id']);
         }
@@ -44,6 +51,10 @@ class TournamentService
             $query->whereYear('start_date', $filters['year']);
         }
 
+        if (isset($filters['tournament_type'])) {
+            $query->where('tournament_type', $filters['tournament_type']);
+        }
+
         return $query->orderBy('end_date', 'desc')->get();
     }
 
@@ -53,7 +64,7 @@ class TournamentService
     public function getUpcomingTournaments(): Collection
     {
         return Tournament::with(['game', 'city.country', 'club'])
-            ->where('status', 'upcoming')
+            ->where('status', TournamentStatus::UPCOMING)
             ->orderBy('start_date')
             ->get()
         ;
@@ -65,7 +76,7 @@ class TournamentService
     public function getActiveTournaments(): Collection
     {
         return Tournament::with(['game', 'city.country', 'club'])
-            ->where('status', 'active')
+            ->where('status', TournamentStatus::ACTIVE)
             ->orderBy('start_date')
             ->get()
         ;
@@ -77,7 +88,7 @@ class TournamentService
     public function getCompletedTournaments(): Collection
     {
         return Tournament::with(['game', 'city.country', 'club'])
-            ->where('status', 'completed')
+            ->where('status', TournamentStatus::COMPLETED)
             ->orderBy('start_date', 'desc')
             ->get()
         ;
@@ -90,24 +101,46 @@ class TournamentService
     public function createTournament(array $data): Tournament
     {
         return DB::transaction(function () use ($data) {
+            // Set default values for optional fields
+            $data['status'] = $data['status'] ?? TournamentStatus::UPCOMING;
+            $data['stage'] = $data['stage'] ?? TournamentStage::REGISTRATION;
+            $data['seeding_method'] = $data['seeding_method'] ?? 'random';
+            $data['races_to'] = $data['races_to'] ?? 7;
+            $data['requires_application'] = $data['requires_application'] ?? true;
+            $data['auto_approve_applications'] = $data['auto_approve_applications'] ?? false;
+            $data['has_third_place_match'] = $data['has_third_place_match'] ?? false;
+
             // Create tournament
             $tournament = Tournament::create([
-                'name'                 => $data['name'],
-                'status' => $data['status'] ?? 'upcoming',
-                'regulation'           => $data['regulation'] ?? null,
-                'details'              => $data['details'] ?? null,
-                'game_id'              => $data['game_id'],
-                'city_id'              => $data['city_id'] ?? null,
-                'club_id'              => $data['club_id'] ?? null,
-                'start_date'           => $data['start_date'],
-                'end_date'             => $data['end_date'],
+                'name'                      => $data['name'],
+                'status'                    => $data['status'],
+                'stage'                     => $data['stage'],
+                'regulation'                => $data['regulation'] ?? null,
+                'details'                   => $data['details'] ?? null,
+                'game_id'                   => $data['game_id'],
+                'city_id'                   => $data['city_id'] ?? null,
+                'club_id'                   => $data['club_id'] ?? null,
+                'start_date'                => $data['start_date'],
+                'end_date'                  => $data['end_date'],
                 'application_deadline' => $data['application_deadline'] ?? null,
-                'max_participants'     => $data['max_participants'] ?? null,
-                'entry_fee'            => $data['entry_fee'] ?? 0,
-                'prize_pool'           => $data['prize_pool'] ?? 0,
-                'prize_distribution'   => $data['prize_distribution'] ?? null,
-                'organizer'            => $data['organizer'] ?? null,
-                'format'               => $data['format'] ?? null,
+                'max_participants'          => $data['max_participants'] ?? null,
+                'entry_fee'                 => $data['entry_fee'] ?? 0,
+                'prize_pool'                => $data['prize_pool'] ?? 0,
+                'prize_distribution'        => $data['prize_distribution'] ?? null,
+                'place_prizes'              => $data['place_prizes'] ?? null,
+                'place_bonuses'             => $data['place_bonuses'] ?? null,
+                'place_rating_points'       => $data['place_rating_points'] ?? null,
+                'organizer'                 => $data['organizer'] ?? null,
+                'format'                    => $data['format'] ?? null,
+                'tournament_type'           => $data['tournament_type'],
+                'group_size_min'            => $data['group_size_min'] ?? null,
+                'group_size_max'            => $data['group_size_max'] ?? null,
+                'playoff_players_per_group' => $data['playoff_players_per_group'] ?? null,
+                'races_to'                  => $data['races_to'],
+                'has_third_place_match'     => $data['has_third_place_match'],
+                'seeding_method'            => $data['seeding_method'],
+                'requires_application'      => $data['requires_application'],
+                'auto_approve_applications' => $data['auto_approve_applications'],
             ]);
 
             // If official rating is selected, associate it with the tournament
@@ -165,6 +198,7 @@ class TournamentService
                ELSE 5
            END")
             ->orderBy('position')
+            ->orderBy('seed_number')
             ->orderBy('applied_at')
             ->get()
         ;
@@ -187,22 +221,23 @@ class TournamentService
             'tournament' => [
                 'id'         => $tournament->id,
                 'name'       => $tournament->name,
-                'start_date' => $tournament->start_date?->format('Y-m-d'),
-                'end_date'   => $tournament->end_date?->format('Y-m-d'),
+                'start_date' => $tournament->start_date?->format('Y-m-d H:i:s'),
+                'end_date'   => $tournament->end_date?->format('Y-m-d H:i:s'),
                 'prize_pool' => $tournament->prize_pool,
+                'type'       => $tournament->tournament_type,
             ],
             'results'    => $players->map(function ($player) {
                 return [
-                    'position'           => $player->position,
-                    'player'             => [
+                    'position'      => $player->position,
+                    'player'        => [
                         'id'   => $player->user->id,
                         'name' => $player->user->firstname.' '.$player->user->lastname,
                     ],
-                    'rating_points'      => $player->rating_points,
-                    'prize_amount'       => $player->prize_amount,
-                    'bonus_amount'       => $player->bonus_amount,
+                    'rating_points' => $player->rating_points,
+                    'prize_amount'  => $player->prize_amount,
+                    'bonus_amount'  => $player->bonus_amount,
                     'achievement_amount' => $player->achievement_amount,
-                    'total_amount'       => $player->total_amount,
+                    'total_amount'  => $player->prize_amount + $player->bonus_amount + $player->achievement_amount,
                 ];
             }),
         ];
@@ -224,15 +259,15 @@ class TournamentService
 
                 return [
                     'success' => true,
-                    'user'    => $user,
-                    'player'  => $player,
+                    'user'   => $user,
+                    'player' => $player,
                     'message' => 'Player added to tournament successfully',
                 ];
             } catch (Throwable $e) {
                 return [
                     'success' => false,
-                    'user'    => $user,
-                    'player'  => null,
+                    'user'   => $user,
+                    'player' => null,
                     'message' => $e->getMessage(),
                 ];
             }
@@ -272,8 +307,8 @@ class TournamentService
         }
 
         // Check if tournament accepts applications
-        if (!$tournament->canAcceptApplications()) {
-            throw new RuntimeException('Tournament is not accepting applications at this time');
+        if ($tournament->stage !== TournamentStage::REGISTRATION) {
+            throw new RuntimeException('Tournament is not in registration phase');
         }
 
         // Determine initial status based on tournament settings
@@ -281,15 +316,16 @@ class TournamentService
         $confirmedAt = $tournament->auto_approve_applications ? now() : null;
 
         return TournamentPlayer::create([
-            'tournament_id'      => $tournament->id,
-            'user_id'            => $userId,
-            'status'             => $status,
-            'registered_at'      => now(),
-            'applied_at'         => now(),
-            'confirmed_at'       => $confirmedAt,
-            'prize_amount'       => 0,
-            'bonus_amount'       => 0,
+            'tournament_id' => $tournament->id,
+            'user_id'       => $userId,
+            'status'        => $status,
+            'registered_at' => now(),
+            'applied_at'    => now(),
+            'confirmed_at'  => $confirmedAt,
+            'prize_amount'  => 0,
+            'bonus_amount'  => 0,
             'achievement_amount' => 0,
+            'rating_points' => 0,
         ]);
     }
 
@@ -302,7 +338,7 @@ class TournamentService
     }
 
     /**
-     * Update tournament player with bonus and achievement amounts
+     * Update tournament player
      */
     public function updateTournamentPlayer(TournamentPlayer $player, array $data): TournamentPlayer
     {
@@ -311,7 +347,25 @@ class TournamentService
     }
 
     /**
-     * Set tournament results with bonus and achievement amounts
+     * Update player seeding
+     */
+    public function updatePlayerSeeding(TournamentPlayer $player, int $seedNumber): TournamentPlayer
+    {
+        $player->update(['seed_number' => $seedNumber]);
+        return $player->fresh();
+    }
+
+    /**
+     * Assign player to group
+     */
+    public function assignPlayerToGroup(TournamentPlayer $player, string $groupCode): TournamentPlayer
+    {
+        $player->update(['group_code' => $groupCode]);
+        return $player->fresh();
+    }
+
+    /**
+     * Set tournament results
      * @throws Throwable
      */
     public function setTournamentResults(Tournament $tournament, array $results): void
@@ -325,18 +379,21 @@ class TournamentService
                 }
 
                 $player->update([
-                    'position'           => $result['position'],
-                    'rating_points'      => $result['rating_points'] ?? 0,
-                    'prize_amount'       => $result['prize_amount'] ?? 0,
-                    'bonus_amount'       => $result['bonus_amount'] ?? 0,
+                    'position'      => $result['position'],
+                    'rating_points' => $result['rating_points'] ?? 0,
+                    'prize_amount'  => $result['prize_amount'] ?? 0,
+                    'bonus_amount'  => $result['bonus_amount'] ?? 0,
                     'achievement_amount' => $result['achievement_amount'] ?? 0,
-                    'status'             => 'confirmed',
+                    'status'        => 'confirmed',
                 ]);
             }
 
             // Update tournament status if not already completed
-            if ($tournament->status !== 'completed') {
-                $tournament->update(['status' => 'completed']);
+            if ($tournament->status !== TournamentStatus::COMPLETED) {
+                $tournament->update([
+                    'status' => TournamentStatus::COMPLETED,
+                    'stage'  => TournamentStage::COMPLETED,
+                ]);
             }
 
             // Update official ratings if tournament is associated with any
@@ -370,11 +427,64 @@ class TournamentService
         $tournament->update(['status' => $status]);
 
         // If status is being changed to completed, update official ratings
-        if ($status === 'completed') {
+        if ($status === TournamentStatus::COMPLETED->value) {
+            $tournament->update(['stage' => TournamentStage::COMPLETED]);
             $this->updateOfficialRatingsFromTournament($tournament);
         }
 
         return $tournament->fresh();
+    }
+
+    /**
+     * Change tournament stage
+     */
+    public function changeTournamentStage(Tournament $tournament, string $stage): Tournament
+    {
+        $tournament->update(['stage' => $stage]);
+
+        // Update timestamps based on stage
+        if ($stage === TournamentStage::GROUP->value || $stage === TournamentStage::BRACKET->value) {
+            $tournament->update(['seeding_completed_at' => now()]);
+        }
+
+        if ($stage === TournamentStage::BRACKET->value && $tournament->tournament_type === 'groups_playoff') {
+            $tournament->update(['groups_completed_at' => now()]);
+        }
+
+        return $tournament->fresh();
+    }
+
+    /**
+     * Complete seeding phase
+     * @throws Throwable
+     */
+    public function completeSeedingPhase(Tournament $tournament): void
+    {
+        if ($tournament->stage !== TournamentStage::SEEDING) {
+            throw new RuntimeException('Tournament is not in seeding phase');
+        }
+
+        // Verify all confirmed players have seed numbers
+        $unseededPlayers = $tournament
+            ->players()
+            ->where('status', 'confirmed')
+            ->whereNull('seed_number')
+            ->count()
+        ;
+
+        if ($unseededPlayers > 0) {
+            throw new RuntimeException("There are {$unseededPlayers} confirmed players without seed numbers");
+        }
+
+        // Move to next stage based on tournament type
+        $nextStage = in_array($tournament->tournament_type->value, ['groups', 'groups_playoff', 'team_groups_playoff'])
+            ? TournamentStage::GROUP
+            : TournamentStage::BRACKET;
+
+        $tournament->update([
+            'stage'                => $nextStage,
+            'seeding_completed_at' => now(),
+        ]);
     }
 
     /**

@@ -136,12 +136,12 @@ class Tournament extends Model
 
     public function isActive(): bool
     {
-        return $this->status === 'active';
+        return $this->status === TournamentStatus::ACTIVE;
     }
 
     public function isCompleted(): bool
     {
-        return $this->status === 'completed';
+        return $this->status === TournamentStatus::COMPLETED;
     }
 
     public function getTopPlayers(int $limit = 3): Collection
