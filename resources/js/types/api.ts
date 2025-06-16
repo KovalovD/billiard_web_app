@@ -30,6 +30,22 @@ export interface Club {
     name: string;
     city?: string;
     country?: string;
+    tables?: ClubTable[];
+}
+
+export interface ClubTable {
+    id: number;
+    club_id: number;
+    name: string;
+    stream_url?: string | null;
+    is_active: boolean;
+    sort_order: number;
+    created_at: string;
+    updated_at: string;
+    club?: {
+        id: number;
+        name: string;
+    };
 }
 
 export interface Game {
@@ -384,34 +400,75 @@ export interface UpdateGameRuleData {
     rules: string;
 }
 
+// Tournament types
+export type TournamentStatus = 'upcoming' | 'active' | 'completed' | 'cancelled';
+export type TournamentStage = 'registration' | 'seeding' | 'group' | 'bracket' | 'completed';
+export type TournamentType =
+    'single_elimination'
+    | 'double_elimination'
+    | 'double_elimination_full'
+    | 'round_robin'
+    | 'groups'
+    | 'groups_playoff'
+    | 'team_groups_playoff';
+export type SeedingMethod = 'random' | 'rating' | 'manual';
+export type TournamentPlayerStatus = 'applied' | 'confirmed' | 'rejected' | 'eliminated' | 'dnf';
+export type EliminationRound =
+    'groups'
+    | 'round_128'
+    | 'round_64'
+    | 'round_32'
+    | 'round_16'
+    | 'quarterfinals'
+    | 'semifinals'
+    | 'finals'
+    | 'third_place';
+export type MatchStage = 'bracket' | 'group' | 'third_place';
+export type MatchStatus = 'pending' | 'ready' | 'in_progress' | 'verification' | 'completed' | 'cancelled';
+export type BracketSide = 'upper' | 'lower';
+export type BracketType = 'single' | 'double_upper' | 'double_lower';
+
 export interface Tournament {
     id: number;
     name: string;
     regulation?: string;
     details?: string;
-    status: 'upcoming' | 'active' | 'completed' | 'cancelled';
+    status: TournamentStatus;
+    stage: TournamentStage;
     status_display: string;
+    stage_display: string;
     game_id: number;
     city_id?: number;
     club_id?: number;
-    start_date: string; // Now datetime string
-    end_date: string;   // Now datetime strin
-    application_deadline?: string; // datetime string
+    start_date: string;
+    end_date: string;
+    application_deadline?: string;
     max_participants?: number;
     entry_fee: number;
     prize_pool: number;
     prize_distribution?: number[];
+    place_prizes?: number[];
+    place_bonuses?: number[];
+    place_rating_points?: number[];
     organizer?: string;
     format?: string;
+    tournament_type: TournamentType;
+    tournament_type_display: string;
+    group_size_min?: number;
+    group_size_max?: number;
+    playoff_players_per_group?: number;
+    races_to: number;
+    has_third_place_match: boolean;
+    seeding_method: SeedingMethod;
+    seeding_method_display: string;
     players_count: number;
     confirmed_players_count: number;
     pending_applications_count: number;
     requires_application: boolean;
     auto_approve_applications: boolean;
-    is_registration_open: boolean;
-    can_accept_applications: boolean;
-    is_active: boolean;
-    is_completed: boolean;
+    is_old: boolean;
+    seeding_completed_at?: string;
+    groups_completed_at?: string;
     created_at: string;
     updated_at: string;
 
@@ -419,8 +476,11 @@ export interface Tournament {
     game?: Game;
     city?: City;
     club?: Club;
-    winner?: TournamentPlayer;
-    top_players?: TournamentPlayer[];
+    players?: TournamentPlayer[];
+    matches?: TournamentMatch[];
+    groups?: TournamentGroup[];
+    brackets?: TournamentBracket[];
+    table_widgets?: TournamentTableWidget[];
     official_ratings?: Array<{
         id: number;
         name: string;
@@ -434,19 +494,22 @@ export interface TournamentPlayer {
     tournament_id: number;
     user_id: number;
     position?: number;
+    seed_number?: number;
+    group_code?: string;
+    group_position?: number;
+    group_wins: number;
+    group_losses: number;
+    group_games_diff: number;
+    elimination_round?: EliminationRound;
+    elimination_round_display?: string;
     rating_points: number;
     prize_amount: number;
     bonus_amount: number;
     achievement_amount: number;
     total_amount: number;
-    status: 'applied' | 'confirmed' | 'rejected' | 'eliminated' | 'dnf';
+    status: TournamentPlayerStatus;
     status_display: string;
-    is_confirmed: boolean;
-    is_pending: boolean;
-    is_rejected: boolean;
-    is_winner: boolean;
-    is_in_top_three: boolean;
-    registered_at: string;
+    registered_at?: string;
     applied_at?: string;
     confirmed_at?: string;
     rejected_at?: string;
@@ -456,6 +519,111 @@ export interface TournamentPlayer {
     // Relations
     user?: User;
     tournament?: Tournament;
+}
+
+export interface TournamentMatch {
+    id: number;
+    tournament_id: number;
+    match_code?: string;
+    stage: MatchStage;
+    stage_display: string;
+    round?: EliminationRound;
+    round_display?: string;
+    bracket_position?: number;
+    bracket_side?: BracketSide;
+    bracket_side_display?: string;
+    player1_id?: number;
+    player2_id?: number;
+    winner_id?: number;
+    player1_score: number;
+    player2_score: number;
+    races_to?: number;
+    previous_match1_id?: number;
+    previous_match2_id?: number;
+    next_match_id?: number;
+    loser_next_match_id?: number;
+    club_table_id?: number;
+    stream_url?: string;
+    status: MatchStatus;
+    status_display: string;
+    scheduled_at?: string;
+    started_at?: string;
+    completed_at?: string;
+    admin_notes?: string;
+    created_at: string;
+    updated_at: string;
+
+    // Relations
+    player1?: User;
+    player2?: User;
+    winner?: User;
+    club_table?: ClubTable;
+    previous_match1?: TournamentMatch;
+    previous_match2?: TournamentMatch;
+    tournament?: {
+        id: number;
+        name: string;
+        races_to: number;
+    };
+}
+
+export interface TournamentGroup {
+    id: number;
+    tournament_id: number;
+    group_code: string;
+    group_size: number;
+    advance_count: number;
+    is_completed: boolean;
+    created_at: string;
+    updated_at: string;
+
+    // Relations
+    players?: TournamentPlayer[];
+    matches?: TournamentMatch[];
+    tournament?: {
+        id: number;
+        name: string;
+    };
+}
+
+export interface TournamentBracket {
+    id: number;
+    tournament_id: number;
+    bracket_type: BracketType;
+    bracket_type_display: string;
+    total_rounds: number;
+    players_count: number;
+    bracket_structure?: any;
+    created_at: string;
+    updated_at: string;
+
+    // Relations
+    matches?: TournamentMatch[];
+    tournament?: {
+        id: number;
+        name: string;
+        tournament_type: TournamentType;
+    };
+}
+
+export interface TournamentTableWidget {
+    id: number;
+    tournament_id: number;
+    club_table_id: number;
+    current_match_id?: number;
+    widget_url?: string;
+    player_widget_url?: string;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+
+    // Relations
+    club_table?: ClubTable;
+    current_match?: TournamentMatch;
+    tournament?: {
+        id: number;
+        name: string;
+    };
 }
 
 export interface CreateTournamentPayload {
@@ -472,8 +640,48 @@ export interface CreateTournamentPayload {
     entry_fee?: number;
     prize_pool?: number;
     prize_distribution?: number[];
+    place_prizes?: number[];
+    place_bonuses?: number[];
+    place_rating_points?: number[];
     organizer?: string;
     format?: string;
+    tournament_type: TournamentType;
+    group_size_min?: number;
+    group_size_max?: number;
+    playoff_players_per_group?: number;
+    races_to?: number;
+    has_third_place_match?: boolean;
+    seeding_method?: SeedingMethod;
+    requires_application?: boolean;
+    auto_approve_applications?: boolean;
     official_rating_id?: number;
     rating_coefficient?: number;
+}
+
+export interface UpdateTournamentMatchPayload {
+    player1_score?: number;
+    player2_score?: number;
+    club_table_id?: number;
+    stream_url?: string;
+    status?: MatchStatus;
+    scheduled_at?: string;
+    admin_notes?: string;
+}
+
+export interface StartTournamentMatchPayload {
+    club_table_id: number;
+    stream_url?: string;
+}
+
+export interface FinishTournamentMatchPayload {
+    player1_score: number;
+    player2_score: number;
+}
+
+export interface UpdateTournamentPlayerSeedingPayload {
+    seed_number: number;
+}
+
+export interface AssignTournamentGroupPayload {
+    group_code: string;
 }
