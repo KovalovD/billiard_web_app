@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import LivesTracker from '@/Components/LivesTracker.vue';
 import type {MultiplayerGamePlayer} from '@/types/api';
-import {ArrowDownIcon, ArrowRightIcon, CheckIcon, HandIcon} from 'lucide-vue-next';
+import {ArrowDownIcon, ArrowRightIcon, CheckIcon, HandHelpingIcon, HandIcon} from 'lucide-vue-next';
 import {computed} from 'vue';
 import {useLocale} from '@/composables/useLocale';
 
@@ -37,11 +37,12 @@ const getAvailableCardsCount = (player: MultiplayerGamePlayer): number => {
     if (player.cards.skip_turn) count++;
     if (player.cards.pass_turn) count++;
     if (player.cards.hand_shot) count++;
+    if (player.cards.handicap) count++;
     return count;
 };
 
 // Check if player has specific card
-const hasCard = (player: MultiplayerGamePlayer, cardType: 'skip_turn' | 'pass_turn' | 'hand_shot'): boolean => {
+const hasCard = (player: MultiplayerGamePlayer, cardType: 'skip_turn' | 'pass_turn' | 'hand_shot' | 'handicap'): boolean => {
     return player.cards && player.cards[cardType] === true;
 };
 </script>
@@ -77,7 +78,8 @@ const hasCard = (player: MultiplayerGamePlayer, cardType: 'skip_turn' | 'pass_tu
                         {{ player.turn_order || '-' }}
                     </div>
                     <div>
-                        <p class="font-medium">{{ player.user.firstname }} {{ player.user.lastname }}</p>
+                        <p class="font-medium">{{ player.user.firstname }} {{ player.user.lastname }}
+                            ({{ player.division }})</p>
 
                         <!-- Card indicators -->
                         <div v-if="getAvailableCardsCount(player) > 0" class="mt-1 flex items-center gap-1">
@@ -108,6 +110,15 @@ const hasCard = (player: MultiplayerGamePlayer, cardType: 'skip_turn' | 'pass_tu
                                 :title="t('Hand Shot')"
                             >
                                 <HandIcon class="h-3 w-3 text-purple-600 dark:text-purple-400"/>
+                            </div>
+
+                            <!-- Hand Shot card -->
+                            <div
+                                v-if="hasCard(player, 'handicap')"
+                                :title="t('Handicap')"
+                                class="flex h-5 w-5 items-center justify-center rounded bg-green-100 dark:bg-green-900/30"
+                            >
+                                <HandHelpingIcon class="h-3 w-3 text-green-600 dark:text-green-400"/>
                             </div>
                         </div>
                     </div>

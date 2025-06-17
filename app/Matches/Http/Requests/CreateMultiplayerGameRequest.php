@@ -10,6 +10,7 @@ class CreateMultiplayerGameRequest extends BaseFormRequest
     {
         return [
             'name'                 => ['required', 'string', 'max:255'],
+            'official_rating_id' => ['nullable', 'integer', 'exists:official_ratings,id'],
             'max_players'          => ['nullable', 'integer', 'min:2', 'max:24'],
             'registration_ends_at' => ['nullable', 'date', 'after:now'],
             'allow_player_targeting' => ['nullable', 'boolean'],
@@ -24,6 +25,7 @@ class CreateMultiplayerGameRequest extends BaseFormRequest
     public function messages(): array
     {
         return [
+            'official_rating_id.exists' => 'The selected official rating does not exist.',
             'first_place_percent.max'  => 'The first place percentage cannot exceed 100%.',
             'second_place_percent.max' => 'The second place percentage cannot exceed 100%.',
             'grand_final_percent.max'  => 'The grand final percentage cannot exceed 100%.',

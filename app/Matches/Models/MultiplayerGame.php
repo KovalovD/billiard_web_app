@@ -5,6 +5,8 @@ namespace App\Matches\Models;
 use App\Core\Models\Game;
 use App\Core\Models\User;
 use App\Leagues\Models\League;
+use App\OfficialRatings\Models\OfficialRating;
+use App\OfficialRatings\Models\OfficialRatingPlayer;
 use Database\Factories\MultiplayerGameFactory;
 use Faker\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -19,6 +21,7 @@ class MultiplayerGame extends Model
     protected $fillable = [
         'league_id',
         'game_id',
+        'official_rating_id',
         'name',
         'status',
         'initial_lives',
@@ -45,9 +48,35 @@ class MultiplayerGame extends Model
         'prize_pool'           => 'array',
     ];
 
+    protected $with = ['officialRating'];
+
     protected static function newFactory(): MultiplayerGameFactory|Factory
     {
         return MultiplayerGameFactory::new();
+    }
+
+    public function officialRating(): BelongsTo
+    {
+        return $this->belongsTo(OfficialRating::class);
+    }
+
+    public function getDivisionForUser(?MultiplayerGamePlayer $player): string
+    {
+        $this->loadMissing('officialRating.players');
+
+        $ratingPlayers = $this->officialRating?->players;
+
+        if (!$player || !$ratingPlayers) {
+            return '';
+        }
+
+        /** @var OfficialRatingPlayer $ratingPlayer */
+        $ratingPlayer = $ratingPlayers->firstWhere('user_id', $player->user_id);
+        if (!$ratingPlayer) {
+            return '';
+        }
+
+        return $ratingPlayer->getDivision();
     }
 
     public function league(): BelongsTo
@@ -69,6 +98,21 @@ class MultiplayerGame extends Model
     {
         if (!$this->isRegistrationOpen()) {
             return false;
+        }
+
+        // Check if player has rating requirements if official rating is set
+        if ($this->official_rating_id) {
+            $userRating = OfficialRatingPlayer::query()
+                ->where('user_id', $user->id)
+                ->where('official_rating_id', $this->official_rating_id)
+                ->where('is_active', true)
+                ->first()
+            ;
+
+            // Player must be in rating and in B or C division
+            if (!$userRating) {
+                return false;
+            }
         }
 
         $existingPlayer = $this->players()->where('user_id', $user->id)->exists();

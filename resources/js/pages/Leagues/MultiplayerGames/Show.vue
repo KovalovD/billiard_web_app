@@ -303,7 +303,8 @@ const handleAction = async (
     }
 };
 
-const handleUseCard = async (cardType: 'skip_turn' | 'pass_turn' | 'hand_shot', targetPlayerId?: number, actingUserId?: number) => {
+// Updated handleUseCard method in Show.vue
+const handleUseCard = async (cardType: 'skip_turn' | 'pass_turn' | 'hand_shot' | 'handicap', targetPlayerId?: number, actingUserId?: number, handicapAction?: string) => {
     if (!game.value || !isAuthenticated.value) return;
 
     actionFeedback.value = null;
@@ -315,7 +316,8 @@ const handleUseCard = async (cardType: 'skip_turn' | 'pass_turn' | 'hand_shot', 
             'use_card',
             targetPlayerId,
             cardType,
-            actingUserId
+            actingUserId,
+            handicapAction
         );
 
         // Show success feedback
@@ -329,6 +331,22 @@ const handleUseCard = async (cardType: 'skip_turn' | 'pass_turn' | 'hand_shot', 
             message = t('Pass Turn card used - turn passed to :player. After they play, the turn will return to you', {player: `${targetPlayer?.user.firstname} ${targetPlayer?.user.lastname}`});
         } else if (cardType === 'hand_shot') {
             message = t('Hand Shot card used - you can place the cue ball anywhere on the table');
+        } else if (cardType === 'handicap') {
+            switch (handicapAction) {
+                case 'skip_turn':
+                    message = t('Handicap card used - Skip Turn: your turn is skipped, game moves to the next player');
+                    break;
+                case 'pass_turn':
+                    const targetPlayer = game.value.active_players.find(p => p.user.id === targetPlayerId);
+                    message = t('Handicap card used - Pass Turn: turn passed to :player', {player: `${targetPlayer?.user.firstname} ${targetPlayer?.user.lastname}`});
+                    break;
+                case 'take_life':
+                    const targetPlayerLife = game.value.active_players.find(p => p.user.id === targetPlayerId);
+                    message = t('Handicap card used - Take Life: removed a life from :player', {player: `${targetPlayerLife?.user.firstname} ${targetPlayerLife?.user.lastname}`});
+                    break;
+                default:
+                    message = t('Handicap card used successfully');
+            }
         }
 
         actionFeedback.value = {
@@ -351,6 +369,18 @@ const handleUseCard = async (cardType: 'skip_turn' | 'pass_turn' | 'hand_shot', 
     }
 };
 
+const handlePlayerAction = (actionData: any) => {
+    if (!isAuthenticated.value) return;
+
+    if (actionData.cardType) {
+        handleUseCard(
+            actionData.cardType,
+            actionData.targetPlayerId,
+            selectedActingPlayer.value?.user.id,
+            actionData.handicapAction
+        );
+    }
+};
 const handleSetModerator = async (userId: number) => {
     if (!game.value || !isAuthenticated.value || !isAdmin.value) return;
 
@@ -384,18 +414,6 @@ const selectPlayer = (player: MultiplayerGamePlayer) => {
         selectedTargetPlayer.value = null;
     }
     selectedActingPlayer.value = selectedActingPlayer.value?.id === player.id ? null : player;
-};
-
-const handlePlayerAction = (actionData: any) => {
-    if (!isAuthenticated.value) return;
-
-    if (actionData.cardType) {
-        handleUseCard(
-            actionData.cardType,
-            actionData.targetPlayerId,
-            selectedActingPlayer.value?.user.id
-        );
-    }
 };
 
 const handleStart = async () => {
@@ -649,9 +667,10 @@ onMounted(() => {
                                                         {{ player.finish_position }}
                                                     </div>
                                                     <div>
-                                                        <p class="font-medium">{{ player.user.firstname }} {{
-                                                                player.user.lastname
-                                                            }}</p>
+                                                        <p class="font-medium">
+                                                            {{ player.user.firstname }} {{ player.user.lastname }}
+                                                            ({{ player.division }})
+                                                        </p>
                                                         <p v-if="isAuthenticated && player.user.id === user?.id"
                                                            class="text-xs text-blue-600">{{ t('(You)') }}</p>
                                                     </div>

@@ -8,6 +8,7 @@ use App\Leagues\Services\RatingService;
 use App\Matches\Models\MultiplayerGame;
 use App\Matches\Models\MultiplayerGameLog;
 use App\Matches\Models\MultiplayerGamePlayer;
+use App\OfficialRatings\Models\OfficialRating;
 use App\Tournaments\Models\TournamentPlayer;
 use App\Tournaments\Services\TournamentService;
 use Exception;
@@ -64,6 +65,7 @@ class MultiplayerGameService
         return $game;
     }
 
+
     /**
      * Create a new multiplayer game
      */
@@ -75,9 +77,23 @@ class MultiplayerGameService
             throw new RuntimeException('This league does not support multiplayer games');
         }
 
+        // Validate official rating if provided
+        if (!empty($data['official_rating_id'])) {
+            $officialRating = OfficialRating::find($data['official_rating_id']);
+            if (!$officialRating || !$officialRating->is_active) {
+                throw new RuntimeException('Selected official rating is not available');
+            }
+
+            // Check if rating matches the game type
+            if ($officialRating->game_type !== $game->type) {
+                throw new RuntimeException('Official rating does not match the game type');
+            }
+        }
+
         return MultiplayerGame::create([
             'league_id'              => $league->id,
             'game_id'                => $game->id,
+            'official_rating_id' => $data['official_rating_id'] ?? null,
             'name'                   => $data['name'],
             'max_players'            => $data['max_players'] ?? null,
             'registration_ends_at'   => $data['registration_ends_at'] ?? null,
@@ -158,10 +174,16 @@ class MultiplayerGameService
 
         // Update each player
         foreach ($players as $index => $player) {
+            $division = $game->getDivisionForUser($player);
+            $cards = ['skip_turn' => true, 'pass_turn' => true, 'hand_shot' => true];
+            if (in_array($division, ['B', 'C'])) {
+                $cards['handicap'] = true;
+            }
+
             $player->update([
                 'turn_order' => $turnOrders[$index],
                 'lives'      => $initialLives,
-                'cards'      => ['skip_turn' => true, 'pass_turn' => true, 'hand_shot' => true],
+                'cards' => $cards,
             ]);
         }
 
@@ -235,6 +257,7 @@ class MultiplayerGameService
         ?int $targetUserId = null,
         ?string $cardType = null,
         ?int $actingUserId = null,
+        ?string $handicapAction = null,
     ): MultiplayerGame {
         // Only active games can have actions
         if ($game->status !== 'in_progress') {
@@ -269,7 +292,7 @@ class MultiplayerGameService
                     if (!$cardType) {
                         throw new RuntimeException('Card type is required.');
                     }
-                    $this->handleUseCard($game, $actingPlayer, $cardType, $targetUserId);
+                    $this->handleUseCard($game, $actingPlayer, $cardType, $targetUserId, $handicapAction);
                     break;
                 case 'record_turn':
                     $this->handleRecordTurn($game, $actingPlayer);
@@ -581,6 +604,7 @@ class MultiplayerGameService
         MultiplayerGamePlayer $actingPlayer,
         string $cardType,
         ?int $targetUserId,
+        ?string $handicapAction = null,
     ): void {
         // Verify this is the current player's turn (unless admin/moderator)
         if ($game->current_player_id !== $actingPlayer->user_id &&
@@ -589,7 +613,7 @@ class MultiplayerGameService
             throw new RuntimeException('It is not your turn.');
         }
 
-        if (!in_array($cardType, ['skip_turn', 'pass_turn', 'hand_shot'])) {
+        if (!in_array($cardType, ['skip_turn', 'pass_turn', 'hand_shot', 'handicap'])) {
             throw new RuntimeException('Invalid card type.');
         }
 
@@ -597,7 +621,21 @@ class MultiplayerGameService
             throw new RuntimeException('Player does not have this card.');
         }
 
-        // Handle card-specific requirements
+        // Handle handicap card special logic
+        if ($cardType === 'handicap') {
+            if (!$handicapAction) {
+                throw new RuntimeException('Handicap action is required for handicap card.');
+            }
+
+            if (!in_array($handicapAction, ['skip_turn', 'pass_turn', 'take_life'])) {
+                throw new RuntimeException('Invalid handicap action.');
+            }
+
+            $this->handleHandicapCard($game, $actingPlayer, $handicapAction, $targetUserId);
+            return;
+        }
+
+        // Handle card-specific requirements for non-handicap cards
         $targetPlayer = null;
         $currentPlayerTurnOrder = $game->players()->where('user_id', $actingPlayer->user_id)->first()?->turn_order;
 
@@ -657,6 +695,120 @@ class MultiplayerGameService
         // Move to next player unless we're using pass_turn (which already handles this)
         if ($cardType === 'skip_turn') {
             $this->moveToNextPlayer($game);
+        }
+    }
+
+    /**
+     * Handle handicap card actions
+     */
+    private function handleHandicapCard(
+        MultiplayerGame $game,
+        MultiplayerGamePlayer $actingPlayer,
+        string $handicapAction,
+        ?int $targetUserId,
+    ): void {
+        $targetPlayer = null;
+        $currentPlayerTurnOrder = $game->players()->where('user_id', $actingPlayer->user_id)->first()?->turn_order;
+
+        switch ($handicapAction) {
+            case 'skip_turn':
+                // Just skip turn, no target needed
+                break;
+
+            case 'pass_turn':
+                if (!$targetUserId) {
+                    throw new RuntimeException('Target player is required for pass turn action.');
+                }
+
+                $targetPlayer = $game->players()->where('user_id', $targetUserId)->first();
+                if (!$targetPlayer || $targetPlayer->eliminated_at) {
+                    throw new RuntimeException('Target player not found or eliminated.');
+                }
+                break;
+
+            case 'take_life':
+                if (!$targetUserId) {
+                    throw new RuntimeException('Target player is required for take life action.');
+                }
+
+                $targetPlayer = $game->players()->where('user_id', $targetUserId)->first();
+                if (!$targetPlayer || $targetPlayer->eliminated_at) {
+                    throw new RuntimeException('Target player not found or eliminated.');
+                }
+
+                // Check if target player is in Elite, S, or A division and has 3+ lives
+                $targetDivision = $game->getDivisionForUser($targetPlayer);
+                if (!in_array($targetDivision, ['Elite', 'S', 'A'])) {
+                    throw new RuntimeException('Can only take life from Elite, S, or A division players.');
+                }
+
+                if ($targetPlayer->lives < 3) {
+                    throw new RuntimeException('Target player must have at least 3 lives to take a life.');
+                }
+
+                // Take a life from target player
+                $this->decrementPlayerLives($targetPlayer);
+
+                // Log the life taking action
+                MultiplayerGameLog::create([
+                    'multiplayer_game_id' => $game->id,
+                    'user_id'             => $actingPlayer->user_id,
+                    'action_type'         => 'take_life',
+                    'action_data'         => [
+                        'target_user_id'  => $targetPlayer->user_id,
+                        'target_division' => $targetDivision,
+                        'new_lives'       => $targetPlayer->lives,
+                    ],
+                    'created_at'          => now(),
+                ]);
+                break;
+        }
+
+        // Use the handicap card
+        $this->usePlayerCard($actingPlayer, 'handicap');
+
+        // Log the handicap card usage
+        MultiplayerGameLog::create([
+            'multiplayer_game_id' => $game->id,
+            'user_id'             => $actingPlayer->user_id,
+            'action_type'         => 'use_card',
+            'action_data'         => [
+                'card_type'       => 'handicap',
+                'handicap_action' => $handicapAction,
+                'target_user_id'  => $targetUserId,
+            ],
+            'created_at'          => now(),
+        ]);
+
+        // Handle turn progression based on handicap action
+        switch ($handicapAction) {
+            case 'skip_turn':
+                // Log a turn and move to next player
+                MultiplayerGameLog::create([
+                    'multiplayer_game_id' => $game->id,
+                    'user_id'             => $actingPlayer->user_id,
+                    'action_type'         => 'turn',
+                    'action_data'         => ['handicap_skip_turn' => true],
+                    'created_at'          => now(),
+                ]);
+                $this->moveToNextPlayer($game);
+                break;
+
+            case 'pass_turn':
+                // Pass turn to target player
+                $this->passTurnToPlayer($game, $targetPlayer, $currentPlayerTurnOrder);
+                break;
+
+            case 'take_life':
+                // Just log a turn, don't change turn order
+                MultiplayerGameLog::create([
+                    'multiplayer_game_id' => $game->id,
+                    'user_id'             => $actingPlayer->user_id,
+                    'action_type'         => 'turn',
+                    'action_data'         => ['handicap_take_life' => true],
+                    'created_at'          => now(),
+                ]);
+                break;
         }
     }
 

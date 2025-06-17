@@ -29,6 +29,12 @@ import Modal from './feedback/Modal.vue';
 import Toast from './feedback/Toast.vue';
 import Spinner from './feedback/Spinner.vue';
 
+export {default as Dialog} from './dialog/Dialog.vue';
+export {default as DialogContent} from './dialog/DialogContent.vue';
+export {default as DialogHeader} from './dialog/DialogHeader.vue';
+export {default as DialogTitle} from './dialog/DialogTitle.vue';
+export {default as DialogDescription} from './dialog/DialogDescription.vue';
+
 // Data components
 export {default as DataTable} from './data-table/DataTable.vue';
 

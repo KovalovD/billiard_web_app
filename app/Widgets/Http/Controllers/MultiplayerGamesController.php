@@ -4,8 +4,10 @@ namespace App\Widgets\Http\Controllers;
 
 use App\Leagues\Models\League;
 use App\Matches\Models\MultiplayerGame;
+use App\Matches\Models\MultiplayerGamePlayer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 
 class MultiplayerGamesController
 {
@@ -15,7 +17,7 @@ class MultiplayerGamesController
     public function getCurrentGame(Request $request, League $league, MultiplayerGame $game): JsonResponse
     {
         // Load the game with all necessary relationships
-        $game->load(['players.user', 'game']);
+        $game->load(['players.user', 'game', 'officialRating']);
 
         // Get active players
         $activePlayers = $game
@@ -50,6 +52,7 @@ class MultiplayerGamesController
             ],
             'current_player'     => $currentTurnPlayer ? [
                 'id'                    => $currentTurnPlayer->id,
+                'division' => $game->getDivisionForUser($currentTurnPlayer),
                 'user'                  => [
                     'id'        => $currentTurnPlayer->user->id,
                     'firstname' => $currentTurnPlayer->user->firstname,
@@ -77,7 +80,7 @@ class MultiplayerGamesController
                     'eliminated_at'   => $player->eliminated_at?->format('Y-m-d H:i:s'),
                 ];
             })->take(5), // Last 5 eliminated players
-            'next_players'       => $this->getNextPlayers($activePlayers, $game->current_player_id),
+            'next_players'       => $this->getNextPlayers($activePlayers, $game->current_player_id, $game),
             'timestamp'          => now()->timestamp,
         ];
 
@@ -95,14 +98,14 @@ class MultiplayerGamesController
     /**
      * Get next 2-3 players in turn order
      */
-    private function getNextPlayers($activePlayers, $currentPlayerId): array
+    private function getNextPlayers(Collection $activePlayers, int $currentPlayerId, $game): array
     {
         if ($activePlayers->isEmpty()) {
             return [];
         }
 
         // Find current player index
-        $currentIndex = $activePlayers->search(function ($player) use ($currentPlayerId) {
+        $currentIndex = $activePlayers->search(function (MultiplayerGamePlayer $player) use ($currentPlayerId) {
             return $player->user_id === $currentPlayerId;
         });
 
@@ -116,9 +119,11 @@ class MultiplayerGamesController
         // Get next 2-3 players
         for ($i = 1; $i <= min(3, $totalPlayers - 1); $i++) {
             $nextIndex = ($currentIndex + $i) % $totalPlayers;
+            /** @var MultiplayerGamePlayer $nextPlayer */
             $nextPlayer = $activePlayers[$nextIndex];
 
             $nextPlayers[] = [
+                'division' => $game->getDivisionForUser($nextPlayer),
                 'user'       => [
                     'firstname' => $nextPlayer->user->firstname,
                     'lastname'  => $nextPlayer->user->lastname,

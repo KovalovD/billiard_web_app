@@ -199,6 +199,7 @@ export interface CreateMultiplayerGamePayload {
 
 export interface MultiplayerGamePlayer {
     id: number;
+    division: 'Elite' | 'S' | 'A' | 'B' | 'C' | '';
     user: User;
     lives: number;
     turn_order: number | null;
@@ -206,6 +207,7 @@ export interface MultiplayerGamePlayer {
         skip_turn?: boolean;
         pass_turn?: boolean;
         hand_shot?: boolean;
+        handicap?: boolean;
     };
     finish_position?: number | null;
     eliminated_at?: string | null;
@@ -219,6 +221,7 @@ export interface MultiplayerGamePlayer {
 
 export interface MultiplayerGame {
     id: number;
+    official_rating_id: number;
     league_id: number;
     game_id: number;
     game_type: string;
