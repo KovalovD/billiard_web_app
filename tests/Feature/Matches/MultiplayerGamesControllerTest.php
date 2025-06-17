@@ -477,9 +477,15 @@ class MultiplayerGamesControllerTest extends TestCase
             ->andReturns(null)
         ;
 
+        $request
+            ->expects('validated')
+            ->with('handicap_action')
+            ->andReturns(null)
+        ;
+
         $this->mockMultiplayerGameService
             ->expects('performAction')
-            ->with($user, $multiplayerGame, 'decrement_lives', 2, null, null)
+            ->with($user, $multiplayerGame, 'decrement_lives', 2, null, null, null)
             ->andReturns($multiplayerGame)
         ;
 
