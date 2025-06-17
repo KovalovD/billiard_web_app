@@ -3,10 +3,12 @@
 namespace App\Tournaments\Models;
 
 use App\Core\Models\User;
+use App\OfficialRatings\Models\OfficialRatingPlayer;
 use App\Tournaments\Enums\EliminationRound;
 use App\Tournaments\Enums\TournamentPlayerStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Collection;
 
 class TournamentPlayer extends Model
 {
@@ -51,6 +53,8 @@ class TournamentPlayer extends Model
         'elimination_round' => EliminationRound::class,
     ];
 
+    protected $with = ['tournament.officialRatings.players', 'user'];
+
     public function tournament(): BelongsTo
     {
         return $this->belongsTo(Tournament::class);
@@ -73,21 +77,33 @@ class TournamentPlayer extends Model
 
     public function isConfirmed(): bool
     {
-        return $this->status === 'confirmed';
+        return $this->status->value === 'confirmed';
     }
 
     public function isPending(): bool
     {
-        return $this->status === 'applied';
+        return $this->status->value === 'applied';
     }
 
     public function isRejected(): bool
     {
-        return $this->status === 'rejected';
+        return $this->status->value === 'rejected';
     }
 
     public function getTotalAmountAttribute(): float
     {
         return (float) ($this->prize_amount + $this->achievement_amount);
+    }
+
+    public function getRating(?Collection $ratingPlayers): string
+    {
+        if (!$ratingPlayers) {
+            return 0;
+        }
+
+        /** @var OfficialRatingPlayer $ratingPlayer */
+        $ratingPlayer = $ratingPlayers->firstWhere('user_id', $this->user_id);
+
+        return $ratingPlayer->rating_points ?? 0;
     }
 }

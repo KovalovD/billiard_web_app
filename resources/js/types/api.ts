@@ -468,6 +468,8 @@ export interface Tournament {
     confirmed_players_count: number;
     pending_applications_count: number;
     requires_application: boolean;
+    seeding_completed: boolean;
+    brackets_generated: boolean;
     auto_approve_applications: boolean;
     is_old: boolean;
     seeding_completed_at?: string;
@@ -500,6 +502,10 @@ export interface TournamentPlayer {
     seed_number?: number;
     group_code?: string;
     group_position?: number;
+    rating?: number;
+    is_confirmed: boolean;
+    is_pending: boolean;
+    is_rejected: boolean;
     group_wins: number;
     group_losses: number;
     group_games_diff: number;

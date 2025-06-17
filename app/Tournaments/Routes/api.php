@@ -2,13 +2,18 @@
 
 use App\Core\Http\Middleware\AdminMiddleware;
 use App\Tournaments\Http\Controllers\AdminTournamentApplicationsController;
+use App\Tournaments\Http\Controllers\AdminTournamentMatchesController;
 use App\Tournaments\Http\Controllers\AdminTournamentsController;
+use App\Tournaments\Http\Controllers\AdminTournamentSeedingController;
 use App\Tournaments\Http\Controllers\TournamentApplicationController;
 use App\Tournaments\Http\Controllers\TournamentsController;
 use Illuminate\Support\Facades\Route;
 
 // Public tournament routes
 Route::group(['prefix' => 'tournaments'], static function () {
+    Route::get('/{tournament}/brackets', [TournamentsController::class, 'brackets'])->name('tournaments.brackets');
+    Route::get('/{tournament}/groups', [TournamentsController::class, 'groups'])->name('tournaments.groups');
+
     Route::get('/', [TournamentsController::class, 'index'])->name('tournaments.index');
     Route::get('/upcoming', [TournamentsController::class, 'upcoming'])->name('tournaments.upcoming');
     Route::get('/active', [TournamentsController::class, 'active'])->name('tournaments.active');
@@ -82,5 +87,38 @@ Route::middleware(['auth:sanctum', AdminMiddleware::class])
         // Utilities
         Route::get('/search-users',
             [AdminTournamentsController::class, 'searchUsers'])->name('admin.tournaments.search-users');
+
+        // Add to app/Tournaments/Routes/api.php in the admin section
+
+// Seeding management
+        Route::post('/{tournament}/seeding/generate',
+            [AdminTournamentSeedingController::class, 'generateSeeds'])->name('admin.tournaments.seeding.generate');
+        Route::post('/{tournament}/seeding/update',
+            [AdminTournamentSeedingController::class, 'updateSeeds'])->name('admin.tournaments.seeding.update');
+        Route::post('/{tournament}/seeding/complete',
+            [AdminTournamentSeedingController::class, 'completeSeeding'])->name('admin.tournaments.seeding.complete');
+
+// Stage management
+        Route::post('/{tournament}/stage',
+            [AdminTournamentsController::class, 'changeStage'])->name('admin.tournaments.change-stage');
+
+// Bracket and group generation
+        Route::post('/{tournament}/bracket/generate',
+            [AdminTournamentsController::class, 'generateBracket'])->name('admin.tournaments.generate-bracket');
+        Route::post('/{tournament}/groups/generate',
+            [AdminTournamentsController::class, 'generateGroups'])->name('admin.tournaments.generate-groups');
+
+        Route::get('/{tournament}/stage-transitions',
+            [AdminTournamentsController::class, 'getStageTransitions'])->name('admin.tournaments.stage-transitions');
+
+        Route::get('/{tournament}/matches',
+            [AdminTournamentsController::class, 'getMatches'])->name('admin.tournaments.matches');
+        Route::post('/{tournament}/matches/{match}/start',
+            [AdminTournamentMatchesController::class, 'startMatch'])->name('admin.tournaments.start-match');
+        Route::post('/{tournament}/matches/{match}/finish',
+            [AdminTournamentMatchesController::class, 'finishMatch'])->name('admin.tournaments.finish-match');
+        Route::put('/{tournament}/matches/{match}',
+            [AdminTournamentMatchesController::class, 'updateMatch'])->name('admin.tournaments.update-match');
+
     })
 ;

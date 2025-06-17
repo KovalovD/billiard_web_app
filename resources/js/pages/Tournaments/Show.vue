@@ -1,3 +1,4 @@
+<!-- resources/js/pages/Tournaments/Show.vue -->
 <script lang="ts" setup>
 import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Spinner} from '@/Components/ui';
 import TournamentApplicationCard from '@/Components/Tournament/TournamentApplicationCard.vue';
@@ -11,9 +12,12 @@ import {
     ArrowLeftIcon,
     CalendarIcon,
     ClipboardListIcon,
+    GitBranchIcon,
+    LayersIcon,
     LogInIcon,
     MapPinIcon,
     PencilIcon,
+    PlayIcon,
     StarIcon,
     TrophyIcon,
     UserCheckIcon,
@@ -22,6 +26,7 @@ import {
 } from 'lucide-vue-next';
 import {computed, onMounted, ref} from 'vue';
 import DataTable from '@/Components/ui/data-table/DataTable.vue';
+import StageTransition from "@/Components/Tournament/StageTransition.vue";
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -74,6 +79,39 @@ const rejectedApplications = computed(() =>
 
 const completedPlayers = computed(() => {
     return sortedPlayers.value.filter(p => p.position !== null);
+});
+
+// Computed properties for stage-based navigation
+const showSeedingButton = computed(() => {
+    return isAuthenticated.value &&
+        isAdmin.value &&
+        tournament.value?.stage === 'seeding' &&
+        tournament.value?.status !== 'completed';
+});
+
+const showBracketButton = computed(() => {
+    return isAuthenticated.value &&
+        isAdmin.value &&
+        tournament.value &&
+        ['single_elimination', 'double_elimination', 'double_elimination_full', 'groups_playoff', 'team_groups_playoff'].includes(tournament.value.tournament_type) &&
+        (tournament.value.stage === 'bracket' || tournament.value.brackets_generated) &&
+        tournament.value.status !== 'completed';
+});
+
+const showGroupsButton = computed(() => {
+    return isAuthenticated.value &&
+        isAdmin.value &&
+        tournament.value &&
+        ['groups', 'groups_playoff', 'team_groups_playoff'].includes(tournament.value.tournament_type) &&
+        tournament.value.stage === 'group' &&
+        tournament.value.status !== 'completed';
+});
+
+const showMatchesButton = computed(() => {
+    return isAuthenticated.value &&
+        isAdmin.value &&
+        tournament.value &&
+        tournament.value.status === 'active';
 });
 
 const getStatusBadgeClass = (status: string): string => {
@@ -264,22 +302,53 @@ const columns = computed(() => [
                 </Link>
 
                 <!-- Admin controls - only for authenticated admins -->
-                <div v-if="isAuthenticated && isAdmin && tournament" class="flex space-x-2">
+                <div v-if="isAuthenticated && isAdmin && tournament" class="flex flex-wrap gap-2">
                     <Link :href="`/admin/tournaments/${tournament.id}/edit`">
-                        <Button variant="secondary">
+                        <Button size="sm" variant="secondary">
                             <PencilIcon class="mr-2 h-4 w-4"/>
-                            {{ t('Edit Tournament') }}
+                            {{ t('Edit') }}
                         </Button>
                     </Link>
+
                     <Link :href="`/admin/tournaments/${tournament.id}/players`">
-                        <Button variant="secondary">
+                        <Button size="sm" variant="secondary">
                             <UserPlusIcon class="mr-2 h-4 w-4"/>
-                            {{ t('Manage Players') }}
+                            {{ t('Players') }}
                         </Button>
                     </Link>
+
+                    <!-- Stage-based buttons -->
+                    <Link v-if="showSeedingButton" :href="`/admin/tournaments/${tournament.id}/seeding`">
+                        <Button size="sm" variant="secondary">
+                            <StarIcon class="mr-2 h-4 w-4"/>
+                            {{ t('Seeding') }}
+                        </Button>
+                    </Link>
+
+                    <Link v-if="showGroupsButton" :href="`/admin/tournaments/${tournament.id}/groups`">
+                        <Button size="sm" variant="secondary">
+                            <LayersIcon class="mr-2 h-4 w-4"/>
+                            {{ t('Groups') }}
+                        </Button>
+                    </Link>
+
+                    <Link v-if="showBracketButton" :href="`/admin/tournaments/${tournament.id}/bracket`">
+                        <Button size="sm" variant="secondary">
+                            <GitBranchIcon class="mr-2 h-4 w-4"/>
+                            {{ t('Bracket') }}
+                        </Button>
+                    </Link>
+
+                    <Link v-if="showMatchesButton" :href="`/admin/tournaments/${tournament.id}/matches`">
+                        <Button size="sm" variant="secondary">
+                            <PlayIcon class="mr-2 h-4 w-4"/>
+                            {{ t('Matches') }}
+                        </Button>
+                    </Link>
+
                     <Link v-if="tournament.pending_applications_count > 0"
                           :href="`/admin/tournaments/${tournament.id}/applications`">
-                        <Button class="relative" variant="secondary">
+                        <Button class="relative" size="sm" variant="secondary">
                             <ClipboardListIcon class="mr-2 h-4 w-4"/>
                             {{ t('Applications') }}
                             <span
@@ -290,15 +359,16 @@ const columns = computed(() => [
                     </Link>
                     <Link v-else-if="tournament.requires_application"
                           :href="`/admin/tournaments/${tournament.id}/applications`">
-                        <Button variant="secondary">
+                        <Button size="sm" variant="secondary">
                             <ClipboardListIcon class="mr-2 h-4 w-4"/>
                             {{ t('Applications') }}
                         </Button>
                     </Link>
+
                     <Link :href="`/admin/tournaments/${tournament.id}/results`">
-                        <Button variant="secondary">
+                        <Button size="sm" variant="secondary">
                             <TrophyIcon class="mr-2 h-4 w-4"/>
-                            {{ t('Manage Results') }}
+                            {{ t('Results') }}
                         </Button>
                     </Link>
                 </div>
@@ -356,11 +426,22 @@ const columns = computed(() => [
                                             {{ tournament.city.name }}, {{ tournament.city.country?.name }}
                                         </span>
                                     </div>
+                                    <div v-if="tournament.stage" class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                                        {{ t('Stage') }}: <span class="font-medium">{{
+                                            tournament.stage_display
+                                        }}</span>
+                                    </div>
                                 </CardDescription>
                             </div>
                         </div>
                     </CardHeader>
                 </Card>
+
+                <StageTransition
+                    v-if="isAuthenticated && isAdmin && tournament && tournament.status !== 'completed'"
+                    :tournament="tournament"
+                    @updated="fetchTournament"
+                />
 
                 <!-- Tournament Application Card - Only show to authenticated users -->
                 <div v-if="isAuthenticated && tournament.requires_application && tournament.status === 'upcoming'"

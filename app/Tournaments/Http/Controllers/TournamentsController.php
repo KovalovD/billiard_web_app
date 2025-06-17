@@ -2,6 +2,8 @@
 
 namespace App\Tournaments\Http\Controllers;
 
+use App\Tournaments\Http\Resources\TournamentBracketResource;
+use App\Tournaments\Http\Resources\TournamentGroupResource;
 use App\Tournaments\Http\Resources\TournamentPlayerResource;
 use App\Tournaments\Http\Resources\TournamentResource;
 use App\Tournaments\Models\Tournament;
@@ -94,5 +96,54 @@ readonly class TournamentsController
         $tournaments = $this->tournamentService->getCompletedTournaments();
 
         return TournamentResource::collection($tournaments);
+    }
+
+    /**
+     * Get tournament brackets
+     */
+    public function brackets(Tournament $tournament): AnonymousResourceCollection
+    {
+        // Check if tournament has bracket stage
+        if (!in_array($tournament->tournament_type->value, [
+            'single_elimination',
+            'double_elimination',
+            'double_elimination_full',
+            'groups_playoff',
+            'team_groups_playoff',
+        ])) {
+            return TournamentBracketResource::collection([]);
+        }
+
+        $brackets = $tournament
+            ->brackets()
+            ->with(['matches.player1', 'matches.player2', 'matches.winner'])
+            ->get()
+        ;
+
+        return TournamentBracketResource::collection($brackets);
+    }
+
+    /**
+     * Get tournament groups
+     */
+    public function groups(Tournament $tournament): AnonymousResourceCollection
+    {
+        // Check if tournament has group stage
+        if (!in_array($tournament->tournament_type->value, [
+            'groups',
+            'groups_playoff',
+            'team_groups_playoff',
+        ])) {
+            return TournamentGroupResource::collection([]);
+        }
+
+        $groups = $tournament
+            ->groups()
+            ->with(['players.user', 'matches.player1', 'matches.player2'])
+            ->orderBy('group_code')
+            ->get()
+        ;
+
+        return TournamentGroupResource::collection($groups);
     }
 }

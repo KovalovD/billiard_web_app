@@ -51,6 +51,8 @@ class Tournament extends Model
         'auto_approve_applications',
         'seeding_completed_at',
         'groups_completed_at',
+        'seeding_completed',
+        'brackets_generated',
     ];
 
     protected $casts = [
@@ -68,6 +70,8 @@ class Tournament extends Model
         'requires_application'      => 'boolean',
         'auto_approve_applications' => 'boolean',
         'has_third_place_match'     => 'boolean',
+        'seeding_completed'  => 'boolean',
+        'brackets_generated' => 'boolean',
         'is_old'                    => 'boolean',
         'races_to'                  => 'integer',
         'group_size_min'            => 'integer',

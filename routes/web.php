@@ -4,6 +4,10 @@ use App\Core\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Core\Http\Controllers\Auth\RegisteredUserController;
 use App\Core\Http\Controllers\ErrorController;
 use App\Core\Http\Middleware\AdminMiddleware;
+use App\Tournaments\Http\Controllers\AdminTournamentBracketController;
+use App\Tournaments\Http\Controllers\AdminTournamentGroupsController;
+use App\Tournaments\Http\Controllers\AdminTournamentMatchesController;
+use App\Tournaments\Http\Controllers\AdminTournamentSeedingController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -126,63 +130,81 @@ Route::middleware('auth')->group(function () {
                 ]);
             })->name('admin.leagues.pending-players');
         });
-        // Admin Tournament routes
-        Route::get('/tournaments/create', static function () {
-            return Inertia::render('Admin/Tournaments/Create');
-        })->name('admin.tournaments.create');
 
-        Route::get('/tournaments/{tournamentId}/edit', static function ($tournamentId) {
-            return Inertia::render('Admin/Tournaments/Edit', [
-                'tournamentId' => $tournamentId,
-            ]);
-        })->name('admin.tournaments.edit')->where('tournamentId', '[0-9]+');
+        Route::group(['prefix' => 'tournaments'], static function () {
+            Route::get('/{tournament}/seeding', [AdminTournamentSeedingController::class, 'index'])
+                ->name('admin.tournaments.seeding')
+            ;
+            Route::get('/{tournament}/groups', [AdminTournamentGroupsController::class, 'index'])
+                ->name('admin.tournaments.groups')
+            ;
+            Route::get('/{tournament}/bracket', [AdminTournamentBracketController::class, 'index'])
+                ->name('admin.tournaments.bracket')
+            ;
+            Route::get('/{tournament}/matches', [AdminTournamentMatchesController::class, 'index'])
+                ->name('admin.tournaments.matches')
+            ;
 
-        Route::get('/tournaments/{tournamentId}/players', static function ($tournamentId) {
-            return Inertia::render('Admin/Tournaments/Players', [
-                'tournamentId' => $tournamentId,
-            ]);
-        })->name('admin.tournaments.players')->where('tournamentId', '[0-9]+');
+            // Admin Tournament routes
+            Route::get('/create', static function () {
+                return Inertia::render('Admin/Tournaments/Create');
+            })->name('admin.tournaments.create');
 
-        Route::get('/tournaments/{tournamentId}/results', static function ($tournamentId) {
-            return Inertia::render('Admin/Tournaments/Results', [
-                'tournamentId' => $tournamentId,
-            ]);
-        })->name('admin.tournaments.results')->where('tournamentId', '[0-9]+');
+            Route::get('/{tournamentId}/edit', static function ($tournamentId) {
+                return Inertia::render('Admin/Tournaments/Edit', [
+                    'tournamentId' => $tournamentId,
+                ]);
+            })->name('admin.tournaments.edit')->where('tournamentId', '[0-9]+');
 
-        Route::get('/tournaments/{tournamentId}/applications', static function ($tournamentId) {
-            return Inertia::render('Admin/Tournaments/Applications', [
-                'tournamentId' => $tournamentId,
-            ]);
-        })->name('admin.tournaments.applications');
+            Route::get('/{tournamentId}/players', static function ($tournamentId) {
+                return Inertia::render('Admin/Tournaments/Players', [
+                    'tournamentId' => $tournamentId,
+                ]);
+            })->name('admin.tournaments.players')->where('tournamentId', '[0-9]+');
 
-        // Admin Official Ratings routes
-        Route::get('/official-ratings/create', static function () {
-            return Inertia::render('Admin/OfficialRatings/Create');
-        })->name('admin.official-ratings.create');
+            Route::get('/{tournamentId}/results', static function ($tournamentId) {
+                return Inertia::render('Admin/Tournaments/Results', [
+                    'tournamentId' => $tournamentId,
+                ]);
+            })->name('admin.tournaments.results')->where('tournamentId', '[0-9]+');
 
-        Route::get('/official-ratings/{ratingId}/edit', static function ($ratingId) {
-            return Inertia::render('Admin/OfficialRatings/Edit', [
-                'ratingId' => $ratingId,
-            ]);
-        })->name('admin.official-ratings.edit')->where('ratingId', '[0-9]+');
+            Route::get('/{tournamentId}/applications', static function ($tournamentId) {
+                return Inertia::render('Admin/Tournaments/Applications', [
+                    'tournamentId' => $tournamentId,
+                ]);
+            })->name('admin.tournaments.applications');
+        });
 
-        Route::get('/official-ratings/{ratingId}/manage', static function ($ratingId) {
-            return Inertia::render('Admin/OfficialRatings/Manage', [
-                'ratingId' => $ratingId,
-            ]);
-        })->name('admin.official-ratings.manage')->where('ratingId', '[0-9]+');
+        Route::group(['prefix' => 'official-ratings'], static function () {
+            // Admin Official Ratings routes
+            Route::get('/create', static function () {
+                return Inertia::render('Admin/OfficialRatings/Create');
+            })->name('admin.official-ratings.create');
 
-        Route::get('/official-ratings/{ratingId}/tournaments', static function ($ratingId) {
-            return Inertia::render('Admin/OfficialRatings/Tournaments', [
-                'ratingId' => $ratingId,
-            ]);
-        })->name('admin.official-ratings.tournaments')->where('ratingId', '[0-9]+');
+            Route::get('/{ratingId}/edit', static function ($ratingId) {
+                return Inertia::render('Admin/OfficialRatings/Edit', [
+                    'ratingId' => $ratingId,
+                ]);
+            })->name('admin.official-ratings.edit')->where('ratingId', '[0-9]+');
 
-        Route::get('/official-ratings/{ratingId}/players', static function ($ratingId) {
-            return Inertia::render('Admin/OfficialRatings/Players', [
-                'ratingId' => $ratingId,
-            ]);
-        })->name('admin.official-ratings.players')->where('ratingId', '[0-9]+');
+            Route::get('/{ratingId}/manage', static function ($ratingId) {
+                return Inertia::render('Admin/OfficialRatings/Manage', [
+                    'ratingId' => $ratingId,
+                ]);
+            })->name('admin.official-ratings.manage')->where('ratingId', '[0-9]+');
+
+            Route::get('/{ratingId}/tournaments', static function ($ratingId) {
+                return Inertia::render('Admin/OfficialRatings/Tournaments', [
+                    'ratingId' => $ratingId,
+                ]);
+            })->name('admin.official-ratings.tournaments')->where('ratingId', '[0-9]+');
+
+            Route::get('/{ratingId}/players', static function ($ratingId) {
+                return Inertia::render('Admin/OfficialRatings/Players', [
+                    'ratingId' => $ratingId,
+                ]);
+            })->name('admin.official-ratings.players')->where('ratingId', '[0-9]+');
+        });
     });
 });
 
@@ -201,32 +223,3 @@ Route::get('/error/{status}', [ErrorController::class, 'show'])
 
 // Fallback route for handling 404s
 Route::fallback([ErrorController::class, 'notFound']);
-
-/*if (app()->environment('production')) {
-    Route::get('/run-seeder-once/{key}/{only_import}', function ($key, $only_import) {
-        set_time_limit(0);
-        // Use a secure key to prevent unauthorized access
-        $expectedKey = env('SEEDER_KEY', 'some-very-secure-random-key');
-
-        if ($key !== $expectedKey) {
-            abort(403, 'Unauthorized');
-        }
-
-        try {
-            if ($only_import == 1) {
-                Artisan::call('db:seed', ['--force' => true]);
-            }
-            Artisan::call('import:tournaments import.xlsx');
-            return response()->json([
-                'status'  => 'success',
-                'message' => 'Database seeded successfully',
-                'output'  => Artisan::output(),
-            ]);
-        } catch (Exception $e) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => $e->getMessage(),
-            ], 500);
-        }
-    });
-}*/

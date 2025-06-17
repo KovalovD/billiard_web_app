@@ -374,8 +374,7 @@ readonly class AdminTournamentsController
         $matches = $tournament
             ->matches()
             ->with(['player1', 'player2', 'winner', 'clubTable'])
-            ->orderBy('round')
-            ->orderBy('bracket_position')
+            ->orderBy('match_code')
             ->get()
         ;
 
@@ -416,5 +415,16 @@ readonly class AdminTournamentsController
                 ];
             }),
         ]);
+    }
+
+    /**
+     * Get available stage transitions for tournament
+     * @admin
+     */
+    public function getStageTransitions(Tournament $tournament): JsonResponse
+    {
+        $transitions = $this->tournamentService->getStageTransitions($tournament);
+
+        return response()->json($transitions);
     }
 }
