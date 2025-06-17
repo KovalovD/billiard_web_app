@@ -132,9 +132,9 @@ export function useMultiplayerGames() {
         gameId: number | string,
         action: 'increment_lives' | 'decrement_lives' | 'use_card' | 'record_turn' | 'set_turn',
         targetUserId?: number,
-        cardType?: 'skip_turn' | 'pass_turn' | 'hand_shot',
+        cardType?: 'skip_turn' | 'pass_turn' | 'hand_shot' | 'handicap',
         actingUserId?: number,
-        handicapAction?: 'skip_turn' | 'pass_turn' | 'take_life'
+        handicapAction?: 'skip_turn' | 'pass_turn' | 'take_life' | string | undefined
     ): Promise<MultiplayerGame> => {
         isLoading.value = true;
         error.value = null;
