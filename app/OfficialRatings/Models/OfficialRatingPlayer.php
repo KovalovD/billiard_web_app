@@ -306,4 +306,15 @@ class OfficialRatingPlayer extends Model
 
         return collect($records)->sum('achievement_amount');
     }
+
+    public function getDivision(): string
+    {
+        return match (true) {
+            $this->position <= 8 => 'Elite',
+            $this->position > 8 && $this->position <= 16 => 'S',
+            $this->position > 16 && $this->position <= 24 => 'A',
+            $this->position > 24 && $this->position <= 64 => 'B',
+            $this->position > 64 => 'C',
+        };
+    }
 }

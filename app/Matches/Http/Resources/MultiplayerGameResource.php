@@ -74,6 +74,7 @@ class MultiplayerGameResource extends JsonResource
         return [
             'id'                        => $this->resource->id ?? null,
             'league_id'                 => $this->resource->league_id ?? null,
+            'official_rating_id'        => $this->resource->league_id ?? null,
             'game_id'                   => $this->resource->game_id ?? null,
             'game_type'                 => $this->game->type->value,
             'name'                      => $this->resource->name ?? '',
@@ -100,6 +101,7 @@ class MultiplayerGameResource extends JsonResource
             'financial_data'            => $financialData,
             'current_user_player'       => $currentUserPlayer ? [
                 'id'              => $currentUserPlayer->id,
+                'division'      => $this->getDivisionForUser($currentUserPlayer),
                 'user'          => new UserResource($currentUserPlayer->user),
                 'lives'           => $currentUserPlayer->lives,
                 'turn_order'      => $currentUserPlayer->turn_order,
@@ -112,36 +114,36 @@ class MultiplayerGameResource extends JsonResource
                 'prize_amount'  => $currentUserPlayer->prize_amount,
                 'penalty_paid'  => $currentUserPlayer->penalty_paid,
             ] : null,
-            'active_players'            => $activePlayers->map(function (
-                MultiplayerGamePlayer $player,
-            ) use ($currentTurnPlayerId) {
-                return [
-                    'id'              => $player->id,
-                    'user'            => new UserResource($player->user),
-                    'lives'           => $player->lives,
-                    'turn_order'      => $player->turn_order,
-                    'cards'           => $player->cards,
-                    'joined_at'       => $player->joined_at,
-                    'is_current_turn' => $player->user_id === $currentTurnPlayerId,
-                ];
-            }),
-            'eliminated_players'        => $eliminatedPlayers->map(function (
-                MultiplayerGamePlayer $player,
-            ) {
-                return [
-                    'id'              => $player->id,
-                    'user'            => new UserResource($player->user),
-                    'lives'           => $player->lives,
-                    'turn_order'      => $player->turn_order,
-                    'finish_position' => $player->finish_position,
-                    'eliminated_at'   => $player->eliminated_at,
-                    'rating_points'          => $player->rating_points,
-                    'prize_amount'           => $player->prize_amount,
-                    'penalty_paid'           => $player->penalty_paid,
-                    'time_fund_contribution' => method_exists($player,
-                        'getTimeFundContribution') ? $player->getTimeFundContribution() : 0,
-                ];
-            }),
+            'active_players'            => $activePlayers->map(
+                function (MultiplayerGamePlayer $player) use ($currentTurnPlayerId) {
+                    return [
+                        'id'              => $player->id,
+                        'division'        => $this->getDivisionForUser($player),
+                        'user'            => new UserResource($player->user),
+                        'lives'           => $player->lives,
+                        'turn_order'      => $player->turn_order,
+                        'cards'           => $player->cards,
+                        'joined_at'       => $player->joined_at,
+                        'is_current_turn' => $player->user_id === $currentTurnPlayerId,
+                    ];
+                }),
+            'eliminated_players'        => $eliminatedPlayers->map(
+                function (MultiplayerGamePlayer $player) {
+                    return [
+                        'id'                     => $player->id,
+                        'division'               => $this->getDivisionForUser($player),
+                        'user'                   => new UserResource($player->user),
+                        'lives'                  => $player->lives,
+                        'turn_order'             => $player->turn_order,
+                        'finish_position'        => $player->finish_position,
+                        'eliminated_at'          => $player->eliminated_at,
+                        'rating_points'          => $player->rating_points,
+                        'prize_amount'           => $player->prize_amount,
+                        'penalty_paid'           => $player->penalty_paid,
+                        'time_fund_contribution' => method_exists($player,
+                            'getTimeFundContribution') ? $player->getTimeFundContribution() : 0,
+                    ];
+                }),
         ];
     }
 }

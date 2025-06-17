@@ -2,7 +2,7 @@
 import {Button} from '@/Components/ui';
 import type {MultiplayerGamePlayer} from '@/types/api';
 import {computed} from 'vue';
-import {ArrowDownIcon, ArrowRightIcon, HandIcon} from "lucide-vue-next";
+import {ArrowDownIcon, ArrowRightIcon, HandHelpingIcon, HandIcon} from "lucide-vue-next";
 import {useLocale} from '@/composables/useLocale';
 
 interface Props {
@@ -16,17 +16,17 @@ const emit = defineEmits(['select-card']);
 const { t } = useLocale();
 
 // Check if a card is available
-const hasCard = (cardType: 'skip_turn' | 'pass_turn' | 'hand_shot'): boolean => {
+const hasCard = (cardType: 'skip_turn' | 'pass_turn' | 'hand_shot' | 'handicap'): boolean => {
     return Boolean(props.player.cards && props.player.cards[cardType]);
 };
 
 // Check if player has any cards
 const hasAnyCards = computed(() => {
-    return hasCard('skip_turn') || hasCard('pass_turn') || hasCard('hand_shot');
+    return hasCard('skip_turn') || hasCard('pass_turn') || hasCard('hand_shot') || hasCard('handicap');
 });
 
 // Handle card selection
-const selectCard = (cardType: 'skip_turn' | 'pass_turn' | 'hand_shot') => {
+const selectCard = (cardType: 'skip_turn' | 'pass_turn' | 'hand_shot' | 'handicap') => {
     if (props.disabled || !hasCard(cardType)) return;
     emit('select-card', cardType);
 };
@@ -40,6 +40,8 @@ const getCardDisplayText = (cardType: string): string => {
           return t('Select Player');
         case 'hand_shot':
           return t('Ball in Hand');
+        case 'handicap':
+            return t('Handicap');
         default:
             return cardType;
     }
@@ -54,6 +56,8 @@ const getCardDescription = (cardType: string): string => {
             return t('Pass your turn to another player. After they play, the turn will return to you');
         case 'hand_shot':
             return t('Place the cue ball anywhere on the table and play any ball');
+        case 'handicap':
+            return t('FLEX');
         default:
             return '';
     }
@@ -103,6 +107,18 @@ const getCardDescription = (cardType: string): string => {
             >
                 <HandIcon class="h-3 w-3 text-purple-600 dark:text-purple-400"/>
                 <span class="pl-2">{{ getCardDisplayText('hand_shot') }}</span>
+            </Button>
+
+            <Button
+                v-if="hasCard('handicap')"
+                :disabled="disabled"
+                :variant="selectedCard === 'handicap' ? 'default' : 'outline'"
+                class="w-full sm:w-auto"
+                size="sm"
+                @click="selectCard('handicap')"
+            >
+                <HandHelpingIcon class="h-3 w-3 text-green-600 dark:text-green-400"/>
+                <span class="pl-2">{{ getCardDisplayText('handicap') }}</span>
             </Button>
         </div>
 

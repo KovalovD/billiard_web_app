@@ -5,7 +5,7 @@ import {cn} from '@/lib/utils';
 import {CheckIcon} from 'lucide-vue-next';
 
 interface Props {
-    value: string | number;
+    value: string | number | null;
     disabled?: boolean;
     class?: string;
 }

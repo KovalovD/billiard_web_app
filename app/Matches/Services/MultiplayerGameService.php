@@ -8,6 +8,7 @@ use App\Leagues\Services\RatingService;
 use App\Matches\Models\MultiplayerGame;
 use App\Matches\Models\MultiplayerGameLog;
 use App\Matches\Models\MultiplayerGamePlayer;
+use App\OfficialRatings\Models\OfficialRating;
 use App\Tournaments\Models\TournamentPlayer;
 use App\Tournaments\Services\TournamentService;
 use Exception;
@@ -64,6 +65,7 @@ class MultiplayerGameService
         return $game;
     }
 
+
     /**
      * Create a new multiplayer game
      */
@@ -75,9 +77,23 @@ class MultiplayerGameService
             throw new RuntimeException('This league does not support multiplayer games');
         }
 
+        // Validate official rating if provided
+        if (!empty($data['official_rating_id'])) {
+            $officialRating = OfficialRating::find($data['official_rating_id']);
+            if (!$officialRating || !$officialRating->is_active) {
+                throw new RuntimeException('Selected official rating is not available');
+            }
+
+            // Check if rating matches the game type
+            if ($officialRating->game_type !== $game->type) {
+                throw new RuntimeException('Official rating does not match the game type');
+            }
+        }
+
         return MultiplayerGame::create([
             'league_id'              => $league->id,
             'game_id'                => $game->id,
+            'official_rating_id' => $data['official_rating_id'] ?? null,
             'name'                   => $data['name'],
             'max_players'            => $data['max_players'] ?? null,
             'registration_ends_at'   => $data['registration_ends_at'] ?? null,
@@ -158,10 +174,16 @@ class MultiplayerGameService
 
         // Update each player
         foreach ($players as $index => $player) {
+            $division = $game->getDivisionForUser($player);
+            $cards = ['skip_turn' => true, 'pass_turn' => true, 'hand_shot' => true];
+            if (in_array($division, ['B', 'C'])) {
+                $cards['handicap'] = true;
+            }
+
             $player->update([
                 'turn_order' => $turnOrders[$index],
                 'lives'      => $initialLives,
-                'cards'      => ['skip_turn' => true, 'pass_turn' => true, 'hand_shot' => true],
+                'cards' => $cards,
             ]);
         }
 

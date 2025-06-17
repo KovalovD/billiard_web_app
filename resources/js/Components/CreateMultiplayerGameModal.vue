@@ -1,8 +1,20 @@
-// resources/js/Components/CreateMultiplayerGameModal.vue
 <script lang="ts" setup>
 import InputError from '@/Components/InputError.vue';
-import {Button, Input, Label, Modal, Spinner} from '@/Components/ui';
+import {
+    Button,
+    Input,
+    Label,
+    Modal,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+    Spinner
+} from '@/Components/ui';
 import {useMultiplayerGames} from '@/composables/useMultiplayerGames';
+import type {CreateMultiplayerGamePayload, OfficialRating} from '@/types/api';
+import {apiClient} from '@/lib/apiClient';
 import {computed, ref, watch} from 'vue';
 import {useLocale} from '@/composables/useLocale';
 
@@ -13,13 +25,14 @@ interface Props {
 
 const props = defineProps<Props>();
 const emit = defineEmits(['close', 'created']);
-
-const {createMultiplayerGame, isLoading, error} = useMultiplayerGames();
 const { t } = useLocale();
 
-const form = ref({
+const {createMultiplayerGame, error, isLoading} = useMultiplayerGames();
+
+const form = ref<CreateMultiplayerGamePayload & { official_rating_id?: number | null }>({
     name: '',
     max_players: null as number | null,
+    official_rating_id: null,
     registration_ends_at: '' as string | null,
     allow_player_targeting: false,
     entrance_fee: 300,
@@ -30,36 +43,45 @@ const form = ref({
 });
 
 const validationErrors = ref<Record<string, string[]>>({});
+const availableRatings = ref<OfficialRating[]>([]);
+const isLoadingRatings = ref(false);
+
+// Computed properties
+const percentageSum = computed(() => {
+    return form.value.first_place_percent + form.value.second_place_percent + form.value.grand_final_percent;
+});
 
 const formattedError = computed(() => {
     if (!error.value) return null;
-    return t('An error occurred while creating the game');
+    return error.value.message || t('An error occurred while creating the game');
 });
 
-// Check if percentages add up to 100%
-const percentageSum = computed(() => {
-    return (form.value.first_place_percent || 0) +
-        (form.value.second_place_percent || 0) +
-        (form.value.grand_final_percent || 0);
-});
-
-const percentageError = computed(() => {
-    if (percentageSum.value !== 100) {
-        return t('Prize percentages must add up to 100%');
+// Load available ratings when modal opens
+const loadRatings = async () => {
+    isLoadingRatings.value = true;
+    try {
+        availableRatings.value = await apiClient<OfficialRating[]>(`/api/official-ratings`);
+    } catch (err) {
+        console.error('Failed to load ratings:', err);
+        availableRatings.value = [];
+    } finally {
+        isLoadingRatings.value = false;
     }
-    return null;
-});
+};
 
 // Reset form when modal opens/closes
 watch(() => props.show, (newVal) => {
     if (newVal) {
+        console.log(newVal)
         resetForm();
+        loadRatings();
     }
 });
 
 const resetForm = () => {
     form.value = {
         name: '',
+        official_rating_id: null,
         max_players: null,
         registration_ends_at: null,
         allow_player_targeting: false,
@@ -86,6 +108,7 @@ const handleSubmit = async () => {
         validationErrors.value = {};
         const gameData = {
             name: form.value.name,
+            official_rating_id: form.value.official_rating_id,
             max_players: form.value.max_players,
             registration_ends_at: form.value.registration_ends_at,
             allow_player_targeting: form.value.allow_player_targeting,
@@ -129,6 +152,31 @@ const handleSubmit = async () => {
                     type="text"
                 />
                 <InputError :message="validationErrors.name?.join(', ')"/>
+            </div>
+
+            <!-- Official Rating Selection -->
+            <div class="space-y-2">
+                <Label for="official_rating">{{ t('Official Rating (Optional)') }}</Label>
+                <Select v-model="form.official_rating_id" :disabled="isLoading || isLoadingRatings">
+                    <SelectTrigger>
+                        <SelectValue
+                            :placeholder="isLoadingRatings ? t('Loading ratings...') : t('Select rating or leave empty')"/>
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem :value="null"></SelectItem>
+                        <SelectItem
+                            v-for="rating in availableRatings"
+                            :key="rating.id"
+                            :value="rating.id"
+                        >
+                            {{ rating.name }}
+                        </SelectItem>
+                    </SelectContent>
+                </Select>
+                <p class="text-xs text-gray-500">
+                    {{ t('If selected, only players in B or C divisions can join this game') }}
+                </p>
+                <InputError :message="validationErrors.official_rating_id?.join(', ')"/>
             </div>
 
             <div class="space-y-2">
@@ -203,6 +251,7 @@ const handleSubmit = async () => {
                         min="0"
                         type="number"
                     />
+                    <InputError :message="validationErrors.first_place_percent?.join(', ')"/>
                 </div>
 
                 <div class="space-y-2">
@@ -216,6 +265,7 @@ const handleSubmit = async () => {
                         min="0"
                         type="number"
                     />
+                    <InputError :message="validationErrors.second_place_percent?.join(', ')"/>
                 </div>
 
                 <div class="space-y-2">
@@ -229,13 +279,13 @@ const handleSubmit = async () => {
                         min="0"
                         type="number"
                     />
+                    <InputError :message="validationErrors.grand_final_percent?.join(', ')"/>
                 </div>
             </div>
 
-            <div v-if="percentageError" class="mt-1 text-sm text-red-600">
-                {{ percentageError }}
+            <div v-if="percentageSum !== 100" class="text-sm text-red-600">
+                {{ t('Total percentage:') }} {{ percentageSum }}% - {{ t('must equal 100%') }}
             </div>
-            <InputError :message="validationErrors.prize_distribution?.join(', ')"/>
 
             <div class="space-y-2">
                 <Label for="penalty_fee">{{ t('Penalty Fee') }}</Label>
@@ -247,15 +297,14 @@ const handleSubmit = async () => {
                     min="0"
                     type="number"
                 />
-                <p class="text-xs text-gray-500">
-                    {{ t('First half of eliminated players pay this fee, which goes to the time fund.') }}
-                </p>
                 <InputError :message="validationErrors.penalty_fee?.join(', ')"/>
             </div>
 
-            <div class="flex justify-end space-x-3 pt-4">
-                <Button :disabled="isLoading" type="button" variant="outline" @click="emit('close')"> {{ t('Cancel') }}</Button>
-                <Button :disabled="isLoading || percentageError !== null" type="submit">
+            <div class="flex justify-end space-x-2 pt-4">
+                <Button type="button" variant="outline" @click="emit('close')">
+                    {{ t('Cancel') }}
+                </Button>
+                <Button :disabled="isLoading || percentageSum !== 100" type="submit">
                     <Spinner v-if="isLoading" class="mr-2 h-4 w-4"/>
                     {{ t('Create Game') }}
                 </Button>

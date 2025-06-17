@@ -25,7 +25,7 @@ const emit = defineEmits([
 const { t } = useLocale();
 
 // Local state
-const selectedCardType = ref<'skip_turn' | 'pass_turn' | 'hand_shot' | null>(null);
+const selectedCardType = ref<'skip_turn' | 'pass_turn' | 'hand_shot' | 'handicap' | null>(null);
 const selectedTargetPlayer = ref<MultiplayerGamePlayer | null>(null);
 
 // Reset selections when player changes
@@ -45,7 +45,7 @@ const canPerformAction = computed(() => {
 });
 
 // Methods
-const handleSelectCard = (cardType: 'skip_turn' | 'pass_turn' | 'hand_shot') => {
+const handleSelectCard = (cardType: 'skip_turn' | 'pass_turn' | 'hand_shot' | 'handicap') => {
     if (props.isLoading) return;
 
     // Toggle the card if it's already selected
@@ -83,6 +83,21 @@ const handleDecrementLives = () => {
     emit('decrement-lives');
 };
 
+const getButtonText = computed(() => {
+    switch (selectedCardType.value) {
+        case 'skip_turn':
+            return t('Skip Turn');
+        case 'pass_turn':
+            return t('Pass Turn');
+        case 'hand_shot':
+            return t('Hand Shot');
+        case 'handicap':
+            return t('Handicap');
+    }
+
+    return '';
+});
+
 const handleUseCard = () => {
     if (!selectedCardType.value) return;
 
@@ -106,7 +121,7 @@ const handleRecordTurn = () => {
         <div class="flex items-center justify-between">
             <div>
                 <h3 class="font-medium flex items-center">
-                    {{ player.user.firstname }} {{ player.user.lastname }}
+                    {{ player.user.firstname }} {{ player.user.lastname }} ({{ player.division }})
                     <span v-if="isCurrentTurn"
                           class="ml-2 px-2 py-0.5 text-xs text-white bg-green-600 rounded-full font-semibold dark:bg-green-700">{{ t('Current Turn') }}</span>
                 </h3>
@@ -179,9 +194,7 @@ const handleRecordTurn = () => {
                 :variant="selectedCardType === 'skip_turn' ? 'destructive' : 'default'"
             >
                 <Spinner v-if="isLoading" class="mr-2 h-4 w-4"/>
-                {{ t('Use') }} {{
-                    selectedCardType === 'skip_turn' ? t('Skip Turn') : selectedCardType === 'pass_turn' ? t('Pass Turn') : t('Hand Shot')
-                }} {{ t('Card') }}
+                {{ t('Use') }} {{ getButtonText }} {{ t('Card') }}
             </Button>
         </div>
     </div>

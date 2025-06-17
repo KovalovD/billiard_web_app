@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import LivesTracker from '@/Components/LivesTracker.vue'
 import {computed, onMounted, onUnmounted, ref} from 'vue'
-import {ArrowDownIcon, ArrowRightIcon, HandIcon} from 'lucide-vue-next'
+import {ArrowDownIcon, ArrowRightIcon, HandHelpingIcon, HandIcon} from 'lucide-vue-next'
 
 interface GameData {
     game: {
@@ -14,6 +14,7 @@ interface GameData {
     }
     current_player: {
         id: number
+        division: string
         user: {
             id: number
             firstname: string
@@ -40,6 +41,7 @@ interface GameData {
         eliminated_at: string
     }>
     next_players: Array<{
+        division: string
         user: {
             firstname: string
             lastname: string
@@ -49,13 +51,6 @@ interface GameData {
         turn_order: number
     }>
     timestamp: number
-}
-
-interface GameStatus {
-    status: string
-    current_player_id: number | null
-    updated_at: number
-    active_players_count: number
 }
 
 const urlParams = new URLSearchParams(window.location.search)
@@ -74,7 +69,6 @@ const lastUpdate = ref<Date | null>(null)
 const connectionStatus = ref<'connected' | 'disconnected' | 'error'>('disconnected')
 
 let dataPollingInterval: number | null = null
-let statusPollingInterval: number | null = null
 
 const isGameActive = computed(() => gameData.value?.game?.status === 'in_progress')
 
@@ -127,24 +121,6 @@ const fetchGameData = async (): Promise<void> => {
     }
 }
 
-const fetchGameStatus = async (): Promise<void> => {
-    if (!leagueId || !gameId || !gameData.value) return
-    try {
-        const response = await fetch(`/api/widgets/streaming/leagues/${leagueId}/games/${gameId}/status`)
-        if (!response.ok) throw new Error(`HTTP ${response.status}`)
-        const status: GameStatus = await response.json()
-        const needsRefresh =
-            status.status !== gameData.value.game.status ||
-            status.current_player_id !== gameData.value.current_player?.user.id ||
-            status.active_players_count !== gameData.value.stats.active_players
-        if (needsRefresh) await fetchGameData()
-        connectionStatus.value = 'connected'
-    } catch (err: any) {
-        connectionStatus.value = 'error'
-        console.error('Failed to fetch game status:', err)
-    }
-}
-
 const getCardIcon = (cardType: string) => {
     switch (cardType) {
         case 'skip_turn':
@@ -153,6 +129,8 @@ const getCardIcon = (cardType: string) => {
             return ArrowRightIcon
         case 'hand_shot':
             return HandIcon
+        case 'handicap':
+            return HandHelpingIcon
         default:
             return null
     }
@@ -166,6 +144,8 @@ const getCardColor = (cardType: string): string => {
             return 'text-blue-400'
         case 'hand_shot':
             return 'text-purple-400'
+        case 'handicap':
+            return 'text-green-400'
         default:
             return 'text-gray-400'
     }
@@ -174,17 +154,12 @@ const getCardColor = (cardType: string): string => {
 const startPolling = (): void => {
     fetchGameData()
     dataPollingInterval = setInterval(fetchGameData, refreshInterval * 2) as unknown as number
-    statusPollingInterval = setInterval(fetchGameStatus, refreshInterval) as unknown as number
 }
 
 const stopPolling = (): void => {
     if (dataPollingInterval) {
         clearInterval(dataPollingInterval)
         dataPollingInterval = null
-    }
-    if (statusPollingInterval) {
-        clearInterval(statusPollingInterval)
-        statusPollingInterval = null
     }
 }
 
@@ -247,7 +222,7 @@ onUnmounted(stopPolling)
                             Current
                         </div>
                         <h2 class="text-base font-bold">
-                            {{ gameData.current_player.user.full_name }}
+                            {{ gameData.current_player.user.full_name }} ({{ gameData.current_player.division }})
                         </h2>
                     </div>
 
@@ -277,7 +252,8 @@ onUnmounted(stopPolling)
                         class="inline-flex items-center px-3 py-1 rounded-full bg-green-600 text-white text-sm font-semibold mb-3">
                         🎯 Current Turn
                     </div>
-                    <h2 class="text-2xl font-bold mb-2">{{ gameData.current_player.user.full_name }}</h2>
+                    <h2 class="text-2xl font-bold mb-2">{{ gameData.current_player.user.full_name }}
+                        ({{ gameData.current_player.division }})</h2>
                     <div class="flex justify-center items-center mb-3">
                         <LivesTracker :lives="gameData.current_player.lives" :max-lives="gameData.game.initial_lives"
                                       size="lg"/>
@@ -315,10 +291,10 @@ onUnmounted(stopPolling)
                     <div class="flex items-center gap-3">
                         <div
                             v-for="(player, index) in gameData.next_players.slice(0, 2)"
-                            :key="player.user.id"
+                            :key="player.user.full_name"
                             :class="['flex items-center justify-between gap-2 text-xs', index === 0 ? 'font-semibold' : 'opacity-75']"
                         >
-                            <div>{{ index + 2 }}. {{ player.user.full_name }}</div>
+                            <div>{{ index + 2 }}. {{ player.user.full_name }} ({{ player.division }})</div>
                             <LivesTracker :lives="player.lives" :max-lives="gameData.game.initial_lives" size="sm"/>
                         </div>
                     </div>
@@ -330,27 +306,16 @@ onUnmounted(stopPolling)
                     <div class="space-y-2">
                         <div
                             v-for="(player, index) in gameData.next_players"
-                            :key="player.user.id"
+                            :key="player.user.full_name"
                             :class="index === 0 ? 'bg-yellow-600/20' : 'opacity-75'"
                             class="flex items-center justify-between p-2 rounded"
                         >
-                            <div class="text-sm">{{ index + 2 }}. {{ player.user.full_name }}</div>
+                            <div class="text-sm">{{ index + 2 }}. {{ player.user.full_name }} ({{
+                                    player.division
+                                }})
+                            </div>
                             <LivesTracker :lives="player.lives" :max-lives="gameData.game.initial_lives" size="sm"/>
                         </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Eliminated Players (Vertical only) -->
-            <div v-if="gameData.eliminated_players.length > 0 && orientation === 'vertical'"
-                 :class="[cardClasses, 'border p-4 flex-1 min-w-[16rem]']">
-                <div class="text-sm font-semibold mb-3 text-center opacity-75">Recent Eliminations</div>
-                <div class="space-y-2">
-                    <div v-for="player in gameData.eliminated_players"
-                         :key="player.user.full_name"
-                         class="flex items-center justify-between p-2 rounded opacity-75">
-                        <div class="text-sm">{{ player.finish_position }}. {{ player.user.full_name }}</div>
-                        <div class="text-xs">💀</div>
                     </div>
                 </div>
             </div>

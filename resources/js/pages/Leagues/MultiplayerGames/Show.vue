@@ -649,9 +649,10 @@ onMounted(() => {
                                                         {{ player.finish_position }}
                                                     </div>
                                                     <div>
-                                                        <p class="font-medium">{{ player.user.firstname }} {{
-                                                                player.user.lastname
-                                                            }}</p>
+                                                        <p class="font-medium">
+                                                            {{ player.user.firstname }} {{ player.user.lastname }}
+                                                            ({{ player.division }})
+                                                        </p>
                                                         <p v-if="isAuthenticated && player.user.id === user?.id"
                                                            class="text-xs text-blue-600">{{ t('(You)') }}</p>
                                                     </div>
