@@ -37,9 +37,9 @@ const getCardDisplayText = (cardType: string): string => {
         case 'skip_turn':
             return t('Skip Turn');
         case 'pass_turn':
-          return t('Select Player');
+            return t('Select Player');
         case 'hand_shot':
-          return t('Ball in Hand');
+            return t('Ball in Hand');
         case 'handicap':
             return t('Handicap');
         default:
@@ -57,7 +57,7 @@ const getCardDescription = (cardType: string): string => {
         case 'hand_shot':
             return t('Place the cue ball anywhere on the table and play any ball');
         case 'handicap':
-            return t('FLEX');
+            return t('Choose one of three actions: skip turn, pass turn, or take a life from Elite/S/A players with 3+ lives');
         default:
             return '';
     }

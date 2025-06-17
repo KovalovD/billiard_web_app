@@ -114,6 +114,7 @@ readonly class MultiplayerGamesController
                 $request->validated('target_user_id'),
                 $request->validated('card_type'),
                 $request->validated('acting_user_id'),
+                $request->validated('handicap_action'),
             ),
         ));
     }

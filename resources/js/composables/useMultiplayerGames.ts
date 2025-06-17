@@ -133,7 +133,8 @@ export function useMultiplayerGames() {
         action: 'increment_lives' | 'decrement_lives' | 'use_card' | 'record_turn' | 'set_turn',
         targetUserId?: number,
         cardType?: 'skip_turn' | 'pass_turn' | 'hand_shot',
-        actingUserId?: number
+        actingUserId?: number,
+        handicapAction?: 'skip_turn' | 'pass_turn' | 'take_life'
     ): Promise<MultiplayerGame> => {
         isLoading.value = true;
         error.value = null;
@@ -144,6 +145,7 @@ export function useMultiplayerGames() {
             if (targetUserId) payload.target_user_id = targetUserId;
             if (cardType) payload.card_type = cardType;
             if (actingUserId) payload.acting_user_id = actingUserId;
+            if (handicapAction) payload.handicap_action = handicapAction;
 
             return await apiClient<MultiplayerGame>(`/api/leagues/${leagueId}/multiplayer-games/${gameId}/action`, {
                 method: 'post',
