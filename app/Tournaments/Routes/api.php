@@ -112,7 +112,7 @@ Route::middleware(['auth:sanctum', AdminMiddleware::class])
             [AdminTournamentsController::class, 'getStageTransitions'])->name('admin.tournaments.stage-transitions');
 
         Route::get('/{tournament}/matches',
-            [AdminTournamentsController::class, 'getMatches'])->name('admin.tournaments.matches');
+            [AdminTournamentsController::class, 'getMatches'])->name('admin.tournaments.matches.api');
         Route::post('/{tournament}/matches/{match}/start',
             [AdminTournamentMatchesController::class, 'startMatch'])->name('admin.tournaments.start-match');
         Route::post('/{tournament}/matches/{match}/finish',
