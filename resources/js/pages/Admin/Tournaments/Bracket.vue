@@ -30,42 +30,129 @@ const isGenerating = ref(false);
 const error = ref<string | null>(null);
 const successMessage = ref<string | null>(null);
 
-// Computed bracket structure
-const bracketData = computed(() => {
-    if (!matches.value.length) return [];
+// Bracket visualization settings
+const nodeWidth = 200;
+const nodeHeight = 80;
+const hGap = 120;
+const vGap = 40;
 
-    // Group matches by round
-    const rounds = new Map<string, TournamentMatch[]>();
+// Transform matches to bracket format
+interface BracketMatch {
+    id: number;
+    round: number;
+    slot: number;
+    player1: { id: number; name: string } | null;
+    player2: { id: number; name: string } | null;
+    player1_score: number;
+    player2_score: number;
+    winner_id: number | null;
+    status: string;
+}
 
-    matches.value.forEach(match => {
-        const roundKey = match.round || 'unknown';
-        if (!rounds.has(roundKey)) {
-            rounds.set(roundKey, []);
-        }
-        rounds.get(roundKey)!.push(match);
+const bracketMatches = computed<BracketMatch[]>(() => {
+    const roundMap: Record<string, number> = {
+        'round_128': 0,
+        'round_64': 1,
+        'round_32': 2,
+        'round_16': 3,
+        'quarterfinals': 4,
+        'semifinals': 5,
+        'finals': 6
+    };
+
+    return matches.value
+        .filter(m => m.round && roundMap[m.round] !== undefined)
+        .map(m => ({
+            id: m.id,
+            round: roundMap[m.round!],
+            slot: m.bracket_position || 0,
+            player1: m.player1 ? {
+                id: m.player1_id!,
+                name: `${m.player1.firstname} ${m.player1.lastname}`
+            } : null,
+            player2: m.player2 ? {
+                id: m.player2_id!,
+                name: `${m.player2.firstname} ${m.player2.lastname}`
+            } : null,
+            player1_score: m.player1_score,
+            player2_score: m.player2_score,
+            winner_id: m.winner_id,
+            status: m.status
+        }))
+        .sort((a, b) => a.round - b.round || a.slot - b.slot);
+});
+
+// Group matches by round
+const rounds = computed(() => {
+    const map = new Map<number, BracketMatch[]>();
+    bracketMatches.value.forEach(m => {
+        (map.get(m.round) || map.set(m.round, []).get(m.round)!).push(m);
+    });
+    return [...map.entries()]
+        .sort(([a], [b]) => a - b)
+        .map(([, ms]) => ms.sort((a, b) => a.slot - b.slot));
+});
+
+// Calculate match positions
+interface PositionedMatch extends BracketMatch {
+    x: number;
+    y: number;
+}
+
+const positionedMatches = computed<PositionedMatch[]>(() => {
+    const list: PositionedMatch[] = [];
+
+    rounds.value.forEach((roundMatches, roundIndex) => {
+        const spacing = Math.pow(2, roundIndex);
+
+        roundMatches.forEach((match, matchIndex) => {
+            const x = roundIndex * (nodeWidth + hGap);
+            const y = matchIndex * spacing * (nodeHeight + vGap) + (spacing - 1) * (nodeHeight + vGap) / 2;
+            list.push({...match, x, y});
+        });
     });
 
-    // Define round order
-    const roundOrder = [
-        'round_128', 'round_64', 'round_32', 'round_16',
-        'quarterfinals', 'semifinals', 'finals'
-    ];
+    return list;
+});
 
-    // Build ordered rounds array
-    const orderedRounds = [];
-    for (const roundName of roundOrder) {
-        if (rounds.has(roundName)) {
-            const roundMatches = rounds.get(roundName)!;
-            // Sort by bracket position
-            roundMatches.sort((a, b) => (a.bracket_position || 0) - (b.bracket_position || 0));
-            orderedRounds.push({
-                name: roundName,
-                matches: roundMatches
-            });
-        }
-    }
+// Find next match
+function nextOf(match: BracketMatch): PositionedMatch | undefined {
+    return positionedMatches.value.find(
+        m => m.round === match.round + 1 && m.slot === Math.floor(match.slot / 2)
+    );
+}
 
-    return orderedRounds;
+// Calculate connector lines
+interface Segment {
+    id: string;
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+}
+
+const segments = computed<Segment[]>(() => {
+    const segs: Segment[] = [];
+    positionedMatches.value.forEach(m => {
+        const n = nextOf(m);
+        if (!n) return;
+
+        const midX = n.x - hGap / 2;
+        const yFrom = m.y + nodeHeight / 2;
+        const yTo = n.y + nodeHeight / 2;
+
+        segs.push({id: `${m.id}-h1`, x1: m.x + nodeWidth, y1: yFrom, x2: midX, y2: yFrom});
+        segs.push({id: `${m.id}-v`, x1: midX, y1: yFrom, x2: midX, y2: yTo});
+        segs.push({id: `${m.id}-h2`, x1: midX, y1: yTo, x2: n.x, y2: yTo});
+    });
+    return segs;
+});
+
+// Calculate SVG dimensions
+const svgWidth = computed(() => rounds.value.length * (nodeWidth + hGap) + 40);
+const svgHeight = computed(() => {
+    const maxY = Math.max(...positionedMatches.value.map(m => m.y), 0);
+    return maxY + nodeHeight + 40;
 });
 
 const hasGeneratedBracket = computed(() => matches.value.length > 0);
@@ -76,14 +163,11 @@ const loadData = async () => {
     error.value = null;
 
     try {
-        // Load tournament
         tournament.value = await apiClient<Tournament>(`/api/tournaments/${props.tournamentId}`);
 
-        // Load matches
         const matchesResponse = await apiClient<TournamentMatch[]>(`/api/admin/tournaments/${props.tournamentId}/matches`);
         matches.value = matchesResponse || [];
 
-        // Try to load brackets
         try {
             const bracketsResponse = await apiClient<TournamentBracket[]>(`/api/tournaments/${props.tournamentId}/brackets`);
             brackets.value = bracketsResponse || [];
@@ -137,21 +221,25 @@ const startTournament = async () => {
     }
 };
 
-const getRoundDisplayName = (round: string): string => {
-    const names: Record<string, string> = {
-        'finals': t('Finals'),
-        'semifinals': t('Semifinals'),
-        'quarterfinals': t('Quarterfinals'),
-        'round_16': t('Round of 16'),
-        'round_32': t('Round of 32'),
-        'round_64': t('Round of 64'),
-        'round_128': t('Round of 128')
-    };
-    return names[round] || round;
-};
-
 const goToMatch = (matchId: number) => {
     router.visit(`/admin/tournaments/${props.tournamentId}/matches/${matchId}`);
+};
+
+const getStatusColor = (status: string) => {
+    switch (status) {
+        case 'completed':
+            return '#16a34a';
+        case 'in_progress':
+            return '#eab308';
+        default:
+            return '#6b7280';
+    }
+};
+
+const getMatchClass = (match: PositionedMatch) => {
+    if (match.status === 'completed') return 'match-completed';
+    if (match.status === 'in_progress') return 'match-active';
+    return 'match-pending';
 };
 
 onMounted(() => {
@@ -241,7 +329,7 @@ onMounted(() => {
                                 <div class="text-sm text-gray-600">{{ t('Players') }}</div>
                             </div>
                             <div>
-                                <div class="text-2xl font-bold text-green-600">{{ bracketData.length }}</div>
+                                <div class="text-2xl font-bold text-green-600">{{ rounds.length }}</div>
                                 <div class="text-sm text-gray-600">{{ t('Rounds') }}</div>
                             </div>
                             <div>
@@ -256,87 +344,91 @@ onMounted(() => {
                     </CardContent>
                 </Card>
 
-                <!-- Bracket Structure -->
-                <Card>
+                <!-- SVG Bracket Structure -->
+                <Card class="overflow-hidden">
                     <CardHeader>
                         <CardTitle>{{ t('Tournament Bracket') }}</CardTitle>
-                        <CardDescription>{{ t('Tournament progression from first round to finals') }}</CardDescription>
+                        <CardDescription>{{ t('Click on a match to view details') }}</CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        <div class="overflow-x-auto">
-                            <div class="bracket-wrapper flex gap-8 min-w-max pb-4">
-                                <!-- Each Round -->
-                                <div v-for="(round, roundIndex) in bracketData" :key="round.name" class="bracket-round">
-                                    <!-- Round Header -->
-                                    <h3 class="text-center font-semibold text-gray-700 dark:text-gray-300 mb-4">
-                                        {{ getRoundDisplayName(round.name) }}
-                                    </h3>
+                    <CardContent class="p-0">
+                        <div class="bracket-container overflow-auto bg-gray-50 dark:bg-gray-900/50">
+                            <div class="p-6">
+                                <svg
+                                    :height="svgHeight"
+                                    :width="svgWidth"
+                                    class="bracket-svg"
+                                    style="min-width: 100%;"
+                                >
+                                    <!-- Connector lines -->
+                                    <g class="connectors">
+                                        <line
+                                            v-for="seg in segments"
+                                            :key="seg.id"
+                                            :x1="seg.x1" :x2="seg.x2" :y1="seg.y1" :y2="seg.y2"
+                                            class="connector-line"
+                                        />
+                                    </g>
 
-                                    <!-- Round Matches -->
-                                    <div class="space-y-4">
-                                        <div v-for="(match) in round.matches" :key="match.id"
-                                             class="match-wrapper">
-                                            <!-- Match Card -->
-                                            <div
-                                                :class="{
-                                                     'border-green-500': match.status === 'completed',
-                                                     'border-yellow-500': match.status === 'in_progress',
-                                                     'border-gray-300 dark:border-gray-600': match.status === 'pending'
-                                                 }"
-                                                class="match-card bg-white dark:bg-gray-800 border rounded-lg p-3 cursor-pointer hover:shadow-lg transition-shadow"
-                                                @click="goToMatch(match.id)">
-                                                <!-- Match Number -->
-                                                <div class="text-xs text-gray-500 mb-2">
-                                                    {{ t('Match') }} #{{ match.id }}
-                                                </div>
+                                    <!-- Matches -->
+                                    <g class="matches">
+                                        <g v-for="m in positionedMatches" :key="m.id"
+                                           class="match-group cursor-pointer"
+                                           @click="goToMatch(m.id)">
+                                            <!-- Match background -->
+                                            <rect
+                                                :class="getMatchClass(m)" :height="nodeHeight"
+                                                :width="nodeWidth" :x="m.x"
+                                                :y="m.y"
+                                                rx="8"
+                                            />
 
-                                                <!-- Players -->
-                                                <div class="space-y-2">
-                                                    <!-- Player 1 -->
-                                                    <div :class="{'font-bold text-green-600': match.winner_id === match.player1_id}"
-                                                         class="flex justify-between items-center py-1">
-                                                        <span class="text-sm truncate max-w-[140px]">
-                                                            {{
-                                                                match.player1 ? `${match.player1.firstname} ${match.player1.lastname}` : t('TBD')
-                                                            }}
-                                                        </span>
-                                                        <span class="text-sm font-mono ml-2">
-                                                            {{ match.player1_score ?? '-' }}
-                                                        </span>
-                                                    </div>
+                                            <!-- Match number -->
+                                            <text :x="m.x + 8" :y="m.y + 14" class="match-number">
+                                                {{ t('Match') }} #{{ m.id }}
+                                            </text>
 
-                                                    <div class="border-t dark:border-gray-700"></div>
+                                            <!-- Player 1 -->
+                                            <g>
+                                                <rect
+                                                    :class="m.winner_id === m.player1?.id ? 'player-winner' : 'player-bg'" :height="30"
+                                                    :width="nodeWidth" :x="m.x"
+                                                    :y="m.y + 20"
+                                                    rx="4"
+                                                />
+                                                <text :x="m.x + 8" :y="m.y + 38" class="player-name">
+                                                    {{ m.player1?.name ?? t('TBD') }}
+                                                </text>
+                                                <text :x="m.x + nodeWidth - 25" :y="m.y + 38" class="player-score">
+                                                    {{ m.player1_score ?? '-' }}
+                                                </text>
+                                            </g>
 
-                                                    <!-- Player 2 -->
-                                                    <div :class="{'font-bold text-green-600': match.winner_id === match.player2_id}"
-                                                         class="flex justify-between items-center py-1">
-                                                        <span class="text-sm truncate max-w-[140px]">
-                                                            {{
-                                                                match.player2 ? `${match.player2.firstname} ${match.player2.lastname}` : t('TBD')
-                                                            }}
-                                                        </span>
-                                                        <span class="text-sm font-mono ml-2">
-                                                            {{ match.player2_score ?? '-' }}
-                                                        </span>
-                                                    </div>
-                                                </div>
+                                            <!-- Player 2 -->
+                                            <g>
+                                                <rect
+                                                    :class="m.winner_id === m.player2?.id ? 'player-winner' : 'player-bg'" :height="30"
+                                                    :width="nodeWidth" :x="m.x"
+                                                    :y="m.y + 50"
+                                                    rx="4"
+                                                />
+                                                <text :x="m.x + 8" :y="m.y + 68" class="player-name">
+                                                    {{ m.player2?.name ?? t('TBD') }}
+                                                </text>
+                                                <text :x="m.x + nodeWidth - 25" :y="m.y + 68" class="player-score">
+                                                    {{ m.player2_score ?? '-' }}
+                                                </text>
+                                            </g>
 
-                                                <!-- Match Status -->
-                                                <div class="mt-2 text-xs text-center">
-                                                    <span v-if="match.status === 'completed'"
-                                                          class="text-green-600">{{ t('Completed') }}</span>
-                                                    <span v-else-if="match.status === 'in_progress'"
-                                                          class="text-yellow-600">{{ t('In Progress') }}</span>
-                                                    <span v-else class="text-gray-500">{{ t('Pending') }}</span>
-                                                </div>
-                                            </div>
-
-                                            <!-- Connection Line -->
-                                            <div v-if="roundIndex < bracketData.length - 1"
-                                                 class="bracket-connector hidden lg:block"></div>
-                                        </div>
-                                    </div>
-                                </div>
+                                            <!-- Status indicator -->
+                                            <circle
+                                                :cx="m.x + nodeWidth - 10"
+                                                :cy="m.y + 10"
+                                                :fill="getStatusColor(m.status)"
+                                                r="4"
+                                            />
+                                        </g>
+                                    </g>
+                                </svg>
                             </div>
                         </div>
                     </CardContent>
@@ -362,48 +454,133 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.bracket-wrapper {
-    padding: 20px;
+.bracket-container {
+    max-height: calc(100vh - 400px);
+    min-height: 500px;
 }
 
-.bracket-round {
-    min-width: 200px;
+.bracket-svg {
+    font-family: system-ui, -apple-system, sans-serif;
 }
 
-.match-card {
-    width: 200px;
-    position: relative;
+/* Match styles */
+.match-pending {
+    fill: #ffffff;
+    stroke: #d1d5db;
+    stroke-width: 1;
 }
 
-.match-wrapper {
-    position: relative;
-    margin-bottom: 20px;
+.match-active {
+    fill: #fef3c7;
+    stroke: #f59e0b;
+    stroke-width: 2;
 }
 
-/* Simple connector lines */
-.bracket-connector {
-    position: absolute;
-    top: 50%;
-    left: 100%;
-    width: 40px;
-    height: 2px;
-    background-color: #e5e7eb;
+.match-completed {
+    fill: #e6ffed;
+    stroke: #10b981;
+    stroke-width: 1;
 }
 
-.dark .bracket-connector {
-    background-color: #374151;
+.match-group:hover .match-pending,
+.match-group:hover .match-active,
+.match-group:hover .match-completed {
+    filter: brightness(0.95);
 }
 
-/* Spacing for bracket alignment */
-.bracket-round:nth-child(2) .match-wrapper {
-    margin-bottom: 60px;
+/* Player backgrounds */
+.player-bg {
+    fill: transparent;
 }
 
-.bracket-round:nth-child(3) .match-wrapper {
-    margin-bottom: 140px;
+.player-winner {
+    fill: #16a34a;
+    fill-opacity: 0.1;
 }
 
-.bracket-round:nth-child(4) .match-wrapper {
-    margin-bottom: 300px;
+/* Text styles */
+.match-number {
+    font-size: 11px;
+    fill: #6b7280;
+}
+
+.player-name {
+    font-size: 13px;
+    font-weight: 500;
+    fill: #111827;
+}
+
+.player-score {
+    font-size: 14px;
+    font-weight: 600;
+    fill: #111827;
+    text-anchor: end;
+}
+
+/* Connector lines */
+.connector-line {
+    stroke: #9ca3af;
+    stroke-width: 2;
+}
+
+/* Dark mode adjustments */
+.dark .match-pending {
+    fill: #374151;
+    stroke: #4b5563;
+}
+
+.dark .match-active {
+    fill: #451a03;
+    stroke: #f59e0b;
+}
+
+.dark .match-completed {
+    fill: #064e3b;
+    stroke: #10b981;
+}
+
+.dark .player-name,
+.dark .player-score {
+    fill: #f3f4f6;
+}
+
+.dark .match-number {
+    fill: #9ca3af;
+}
+
+.dark .connector-line {
+    stroke: #4b5563;
+}
+
+/* Scrollbar styling */
+.bracket-container::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.bracket-container::-webkit-scrollbar-track {
+    background: #f3f4f6;
+    border-radius: 4px;
+}
+
+.dark .bracket-container::-webkit-scrollbar-track {
+    background: #1f2937;
+}
+
+.bracket-container::-webkit-scrollbar-thumb {
+    background: #9ca3af;
+    border-radius: 4px;
+}
+
+.bracket-container::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+}
+
+.dark .bracket-container::-webkit-scrollbar-thumb {
+    background: #4b5563;
+}
+
+.dark .bracket-container::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
 }
 </style>
