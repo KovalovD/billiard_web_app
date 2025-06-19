@@ -274,7 +274,7 @@ onMounted(() => {
 
                                     <!-- Round Matches -->
                                     <div class="space-y-4">
-                                        <div v-for="(match, matchIndex) in round.matches" :key="match.id"
+                                        <div v-for="(match) in round.matches" :key="match.id"
                                              class="match-wrapper">
                                             <!-- Match Card -->
                                             <div
