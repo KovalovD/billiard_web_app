@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Route;
 Route::group(['prefix' => 'tournaments'], static function () {
     Route::get('/{tournament}/brackets', [TournamentsController::class, 'brackets'])->name('tournaments.brackets');
     Route::get('/{tournament}/groups', [TournamentsController::class, 'groups'])->name('tournaments.groups');
+    Route::get('/{tournament}/tables', [TournamentsController::class, 'tables'])->name('tournaments.tables');
 
     Route::get('/', [TournamentsController::class, 'index'])->name('tournaments.index');
     Route::get('/upcoming', [TournamentsController::class, 'upcoming'])->name('tournaments.upcoming');

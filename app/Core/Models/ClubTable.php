@@ -29,9 +29,9 @@ class ClubTable extends Model
         return $this->belongsTo(Club::class);
     }
 
-    public function tournamentMatches(): HasMany
+    public function activeMatch(): HasMany
     {
-        return $this->hasMany(TournamentMatch::class);
+        return $this->hasMany(TournamentMatch::class)->where('status', 'in_progress');
     }
 
     public function tournamentTableWidgets(): HasMany

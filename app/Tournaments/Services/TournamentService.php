@@ -13,7 +13,7 @@ use App\Tournaments\Enums\TournamentStage;
 use App\Tournaments\Enums\TournamentStatus;
 use App\Tournaments\Models\Tournament;
 use App\Tournaments\Models\TournamentPlayer;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Throwable;
@@ -24,6 +24,17 @@ class TournamentService
         private readonly AuthService $authService,
         private readonly OfficialRatingService $officialRatingService,
     ) {
+    }
+
+    public function getTables(Tournament $tournament): Collection
+    {
+        $tournament->load('club');
+
+        if (!$tournament->club) {
+            return collect();
+        }
+
+        return $tournament->club->tables()->doesntHave('activeMatch')->orderBy('sort_order')->get();
     }
 
     /**

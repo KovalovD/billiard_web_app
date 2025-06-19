@@ -175,71 +175,20 @@ class TournamentBracketService
 
 			for ($matchNum = 0; $matchNum < $matchesInRound; $matchNum++) {
 				$match = TournamentMatch::create([
-					'tournament_id'    => $tournament->id,
-					'match_code'       => "R{$round}M{$matchNum}",
-					'stage'            => MatchStage::BRACKET,
-					'round'            => $roundEnum,
-					'bracket_position' => $matchNum,
-					'bracket_side'     => 'upper',
-					'races_to'         => $tournament->races_to,
-					'status'           => MatchStatus::PENDING,
+                    'tournament_id'    => $tournament->id,
+                    'match_code'       => sprintf("R%sM%s", $round, $matchNum + 1),
+                    'stage'            => MatchStage::BRACKET,
+                    'round'            => $roundEnum,
+                    'bracket_position' => $matchNum,
+                    'bracket_side'     => 'upper',
+                    'races_to'         => $tournament->races_to,
+                    'status'           => MatchStatus::PENDING,
 				]);
 
 				// For first round, assign players with proper seeding
-				if ($round === 1) {
-					$matchup = $this->getFirstRoundMatchup($matchNum, $bracketSize);
-					$player1 = $seededBracket[$matchup[0]] ?? null;
-					$player2 = $seededBracket[$matchup[1]] ?? null;
-
-					if ($player1) {
-						$match->player1_id = $player1->user_id;
-					}
-					if ($player2) {
-						$match->player2_id = $player2->user_id;
-					}
-
-					// Handle walkover if one player is bye
-					if ($player1 && !$player2) {
-						$match->winner_id = $player1->user_id;
-						$match->status = MatchStatus::COMPLETED;
-						$match->player1_score = $tournament->races_to;
-						$match->player2_score = 0;
-						$match->completed_at = now();
-						$match->admin_notes = 'Walkover - No opponent';
-					} elseif (!$player1 && $player2) {
-						$match->winner_id = $player2->user_id;
-						$match->status = MatchStatus::COMPLETED;
-						$match->player1_score = 0;
-						$match->player2_score = $tournament->races_to;
-						$match->completed_at = now();
-						$match->admin_notes = 'Walkover - No opponent';
-					} elseif ($player1 && $player2) {
-						$match->status = MatchStatus::READY;
-					}
-
-					$match->save();
-				} else {
-					// Set up progression from previous round
-					$prevMatch1Index = $matchNum * 2;
-					$prevMatch2Index = $matchNum * 2 + 1;
-
-					if (isset($previousRoundMatches[$prevMatch1Index])) {
-						$match->previous_match1_id = $previousRoundMatches[$prevMatch1Index]->id;
-						$previousRoundMatches[$prevMatch1Index]->next_match_id = $match->id;
-						$previousRoundMatches[$prevMatch1Index]->save();
-					}
-
-					if (isset($previousRoundMatches[$prevMatch2Index])) {
-						$match->previous_match2_id = $previousRoundMatches[$prevMatch2Index]->id;
-						$previousRoundMatches[$prevMatch2Index]->next_match_id = $match->id;
-						$previousRoundMatches[$prevMatch2Index]->save();
-					}
-
-					$match->save();
-				}
-
-				$currentRoundMatches[] = $match;
-			}
+                $currentRoundMatches = $this->getCurrentRoundMatches($round, $matchNum, $bracketSize, $seededBracket,
+                    $match, $tournament, $previousRoundMatches, $currentRoundMatches);
+            }
 
 			$previousRoundMatches = $currentRoundMatches;
 		}
@@ -270,7 +219,7 @@ class TournamentBracketService
 	        for ($matchNum = 0; $matchNum < $matchesInRound; $matchNum++) {
 		        $match = TournamentMatch::create([
                     'tournament_id'    => $tournament->id,
-                    'match_code'       => "UB_R{$round}M{$matchNum}",
+                    'match_code' => sprintf("UB_R%sM%s", $round, $matchNum + 1),
                     'stage'            => MatchStage::BRACKET,
                     'round'            => $roundEnum,
                     'bracket_position' => $matchNum,
@@ -280,60 +229,9 @@ class TournamentBracketService
                 ]);
 
 		        // Same logic as single elimination for first round
-                if ($round === 1) {
-	                $matchup = $this->getFirstRoundMatchup($matchNum, $bracketSize);
-	                $player1 = $seededBracket[$matchup[0]] ?? null;
-	                $player2 = $seededBracket[$matchup[1]] ?? null;
-
-	                if ($player1) {
-		                $match->player1_id = $player1->user_id;
-	                }
-	                if ($player2) {
-		                $match->player2_id = $player2->user_id;
-	                }
-
-	                // Handle walkover
-	                if ($player1 && !$player2) {
-		                $match->winner_id = $player1->user_id;
-		                $match->status = MatchStatus::COMPLETED;
-		                $match->player1_score = $tournament->races_to;
-		                $match->player2_score = 0;
-		                $match->completed_at = now();
-		                $match->admin_notes = 'Walkover - No opponent';
-	                } elseif (!$player1 && $player2) {
-		                $match->winner_id = $player2->user_id;
-		                $match->status = MatchStatus::COMPLETED;
-		                $match->player1_score = 0;
-		                $match->player2_score = $tournament->races_to;
-		                $match->completed_at = now();
-		                $match->admin_notes = 'Walkover - No opponent';
-	                } elseif ($player1 && $player2) {
-		                $match->status = MatchStatus::READY;
-	                }
-
-	                $match->save();
-                } else {
-	                // Set up progression from previous round
-	                $prevMatch1Index = $matchNum * 2;
-	                $prevMatch2Index = $matchNum * 2 + 1;
-
-	                if (isset($previousRoundMatches[$prevMatch1Index])) {
-		                $match->previous_match1_id = $previousRoundMatches[$prevMatch1Index]->id;
-		                $previousRoundMatches[$prevMatch1Index]->next_match_id = $match->id;
-		                $previousRoundMatches[$prevMatch1Index]->save();
-	                }
-
-	                if (isset($previousRoundMatches[$prevMatch2Index])) {
-		                $match->previous_match2_id = $previousRoundMatches[$prevMatch2Index]->id;
-		                $previousRoundMatches[$prevMatch2Index]->next_match_id = $match->id;
-		                $previousRoundMatches[$prevMatch2Index]->save();
-	                }
-
-	                $match->save();
-                }
-
-		        $currentRoundMatches[] = $match;
-	        }
+                $currentRoundMatches = $this->getCurrentRoundMatches($round, $matchNum, $bracketSize, $seededBracket,
+                    $match, $tournament, $previousRoundMatches, $currentRoundMatches);
+            }
 
 	        $previousRoundMatches = $currentRoundMatches;
         }
@@ -364,14 +262,14 @@ class TournamentBracketService
 
 			for ($matchNum = 0; $matchNum < $matchesInRound; $matchNum++) {
 				$match = TournamentMatch::create([
-					'tournament_id'    => $tournament->id,
-					'match_code'       => "LB_R{$round}M{$matchNum}",
-					'stage'            => MatchStage::BRACKET,
-					'round'            => $this->getLowerRoundEnum($round, $upperRounds),
-					'bracket_position' => $matchNum,
-					'bracket_side'     => 'lower',
-					'races_to'         => $tournament->races_to,
-					'status'           => MatchStatus::PENDING,
+                    'tournament_id'    => $tournament->id,
+                    'match_code'       => sprintf("LB_R%sM%s", $round, $matchNum + 1),
+                    'stage'            => MatchStage::BRACKET,
+                    'round'            => $this->getLowerRoundEnum($round, $upperRounds),
+                    'bracket_position' => $matchNum,
+                    'bracket_side'     => 'lower',
+                    'races_to'         => $tournament->races_to,
+                    'status'           => MatchStatus::PENDING,
 				]);
 
 				// Connect to upper bracket losers
@@ -385,21 +283,8 @@ class TournamentBracketService
 				if (!$isOddRound && $round > 1) {
 					// Connect previous lower bracket matches
 					$prevRoundMatches = $currentLowerMatches[$round - 1] ?? [];
-					$prevMatch1Index = $matchNum * 2;
-					$prevMatch2Index = $matchNum * 2 + 1;
-
-					if (isset($prevRoundMatches[$prevMatch1Index])) {
-						$match->previous_match1_id = $prevRoundMatches[$prevMatch1Index]->id;
-						$prevRoundMatches[$prevMatch1Index]->next_match_id = $match->id;
-						$prevRoundMatches[$prevMatch1Index]->save();
-					}
-
-					if (isset($prevRoundMatches[$prevMatch2Index])) {
-						$match->previous_match2_id = $prevRoundMatches[$prevMatch2Index]->id;
-						$prevRoundMatches[$prevMatch2Index]->next_match_id = $match->id;
-						$prevRoundMatches[$prevMatch2Index]->save();
-                    }
-				}
+                    $this->setUpProgressionFromPreviousRound($matchNum, $prevRoundMatches, $match);
+                }
 
 				$match->save();
 				$newMatches[] = $match;
@@ -472,7 +357,7 @@ class TournamentBracketService
 	private function createGrandFinals(Tournament $tournament): void
 	{
 		// Main grand final
-		$grandFinal = TournamentMatch::create([
+        TournamentMatch::create([
 			'tournament_id'    => $tournament->id,
 			'match_code'       => 'GF',
 			'stage'            => MatchStage::BRACKET,
@@ -484,7 +369,7 @@ class TournamentBracketService
 
 		// Reset grand final (if needed)
 		if ($tournament->tournament_type === TournamentType::DOUBLE_ELIMINATION_FULL) {
-			$resetFinal = TournamentMatch::create([
+            TournamentMatch::create([
 				'tournament_id'    => $tournament->id,
 				'match_code'       => 'GF_RESET',
 				'stage'            => MatchStage::BRACKET,
@@ -600,7 +485,7 @@ class TournamentBracketService
 			if ($match->next_match_id && $match->winner_id) {
 				$nextMatch = TournamentMatch::find($match->next_match_id);
 				if ($nextMatch) {
-					if ($match->previous_match1_id === $match->id) {
+                    if ($nextMatch->previous_match1_id === $match->id) {
 						$nextMatch->player1_id = $match->winner_id;
 					} else {
 						$nextMatch->player2_id = $match->winner_id;
@@ -682,7 +567,7 @@ class TournamentBracketService
     /**
      * Create third place match
      */
-    private function createThirdPlaceMatch(Tournament $tournament): TournamentMatch
+    private function createThirdPlaceMatch(Tournament $tournament): void
     {
 	    $thirdPlace = TournamentMatch::create([
             'tournament_id' => $tournament->id,
@@ -705,7 +590,6 @@ class TournamentBracketService
 		    $semi->save();
 	    }
 
-	    return $thirdPlace;
     }
 
     /**
@@ -725,7 +609,7 @@ class TournamentBracketService
             foreach ($confirmedPlayers->slice($i + 1) as $player2) {
                 TournamentMatch::create([
                     'tournament_id' => $tournament->id,
-                    'match_code' => "RR_{$player1->seed_number}v{$player2->seed_number}",
+                    'match_code' => sprintf("RR_%sv%s", $player1->seed_number, $player2->seed_number),
                     'stage'         => MatchStage::BRACKET,
                     'round'      => EliminationRound::ROUND_128,
                     'player1_id'    => $player1->user_id,
@@ -739,5 +623,75 @@ class TournamentBracketService
         return $bracket;
     }
 
-	// ... rest of the methods (generateGroups, createGroupMatches) remain the same
+    private function getCurrentRoundMatches(
+        mixed $round,
+        int $matchNum,
+        mixed $bracketSize,
+        array $seededBracket,
+        TournamentMatch $match,
+        Tournament $tournament,
+        array $previousRoundMatches,
+        array $currentRoundMatches,
+    ): array {
+        if ($round === 1) {
+            $matchup = $this->getFirstRoundMatchup($matchNum, $bracketSize);
+            $player1 = $seededBracket[$matchup[0]] ?? null;
+            $player2 = $seededBracket[$matchup[1]] ?? null;
+
+            if ($player1) {
+                $match->player1_id = $player1->user_id;
+            }
+            if ($player2) {
+                $match->player2_id = $player2->user_id;
+            }
+
+            if ($player1 && !$player2) {
+                $match->winner_id = $player1->user_id;
+                $match->status = MatchStatus::COMPLETED;
+                $match->player1_score = $tournament->races_to;
+                $match->player2_score = 0;
+                $match->completed_at = now();
+                $match->admin_notes = 'Walkover - No opponent';
+            } elseif (!$player1 && $player2) {
+                $match->winner_id = $player2->user_id;
+                $match->status = MatchStatus::COMPLETED;
+                $match->player1_score = 0;
+                $match->player2_score = $tournament->races_to;
+                $match->completed_at = now();
+                $match->admin_notes = 'Walkover - No opponent';
+            } elseif ($player1 && $player2) {
+                $match->status = MatchStatus::READY;
+            }
+
+        } else {
+            // Set up progression from previous round
+            $this->setUpProgressionFromPreviousRound($matchNum, $previousRoundMatches, $match);
+
+        }
+        $match->save();
+
+        $currentRoundMatches[] = $match;
+        return $currentRoundMatches;
+    }
+
+    private function setUpProgressionFromPreviousRound(
+        int $matchNum,
+        array $previousRoundMatches,
+        TournamentMatch $match,
+    ): void {
+        $prevMatch1Index = $matchNum * 2;
+        $prevMatch2Index = $matchNum * 2 + 1;
+
+        if (isset($previousRoundMatches[$prevMatch1Index])) {
+            $match->previous_match1_id = $previousRoundMatches[$prevMatch1Index]->id;
+            $previousRoundMatches[$prevMatch1Index]->next_match_id = $match->id;
+            $previousRoundMatches[$prevMatch1Index]->save();
+        }
+
+        if (isset($previousRoundMatches[$prevMatch2Index])) {
+            $match->previous_match2_id = $previousRoundMatches[$prevMatch2Index]->id;
+            $previousRoundMatches[$prevMatch2Index]->next_match_id = $match->id;
+            $previousRoundMatches[$prevMatch2Index]->save();
+        }
+    }
 }

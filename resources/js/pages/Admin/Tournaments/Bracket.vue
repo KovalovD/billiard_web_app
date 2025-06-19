@@ -1,23 +1,45 @@
 <!-- resources/js/pages/Admin/Tournaments/Bracket.vue -->
 <script lang="ts" setup>
-import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Spinner} from '@/Components/ui';
+import {
+    Button,
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+    Input,
+    Label,
+    Modal,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+    Spinner,
+    Textarea
+} from '@/Components/ui';
 import {useLocale} from '@/composables/useLocale';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
-import type {Tournament, TournamentBracket, TournamentMatch} from '@/types/api';
+import type {ClubTable, Tournament, TournamentBracket, TournamentMatch} from '@/types/api';
 import {Head, router} from '@inertiajs/vue3';
 import {
+    AlertCircleIcon,
     ArrowLeftIcon,
+    CalendarIcon,
+    CheckCircleIcon,
     ExpandIcon,
     MinusIcon,
     PlayIcon,
     PlusIcon,
     RefreshCwIcon,
     RotateCcwIcon,
+    SaveIcon,
     ShrinkIcon,
-    TrophyIcon
+    TrophyIcon,
+    UserXIcon
 } from 'lucide-vue-next';
-import {computed, onMounted, onUnmounted, ref} from 'vue';
+import {computed, onMounted, onUnmounted, ref, watch} from 'vue';
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -31,14 +53,18 @@ const {t} = useLocale();
 const tournament = ref<Tournament | null>(null);
 const brackets = ref<TournamentBracket[]>([]);
 const matches = ref<TournamentMatch[]>([]);
+const availableTables = ref<ClubTable[]>([]);
 
 // Loading states
 const isLoading = ref(true);
 const isGenerating = ref(false);
+const isUpdatingMatch = ref(false);
+const isLoadingTables = ref(false);
 
 // Error handling
 const error = ref<string | null>(null);
 const successMessage = ref<string | null>(null);
+const matchError = ref<string | null>(null);
 
 // Zoom and fullscreen states
 const zoomLevel = ref(1);
@@ -50,11 +76,29 @@ const touchStartDistance = ref(0);
 const touchStartZoom = ref(1);
 const isTouching = ref(false);
 
+// Match modal state
+const showMatchModal = ref(false);
+const selectedMatch = ref<TournamentMatch | null>(null);
+const matchForm = ref({
+    player1_score: 0,
+    player2_score: 0,
+    club_table_id: null as number | null,
+    stream_url: '',
+    status: 'pending' as string,
+    scheduled_at: '',
+    admin_notes: ''
+});
+
 // Bracket visualization settings
 const nodeWidth = 200;
 const nodeHeight = 80;
 const hGap = 120;
 const vGap = 40;
+
+// Check if tournament can be edited
+const canEditTournament = computed(() => {
+    return tournament.value?.status === 'active' && tournament.value?.stage === 'bracket';
+});
 
 // Transform matches to bracket format
 interface BracketMatch {
@@ -67,6 +111,10 @@ interface BracketMatch {
     player2_score: number;
     winner_id: number | null;
     status: string;
+    match_code: string;
+    isWalkover: boolean;
+    isReadyToStart: boolean;
+    canBeStarted: boolean;
 }
 
 const bracketMatches = computed<BracketMatch[]>(() => {
@@ -82,23 +130,36 @@ const bracketMatches = computed<BracketMatch[]>(() => {
 
     return matches.value
         .filter(m => m.round && roundMap[m.round] !== undefined)
-        .map(m => ({
-            id: m.id,
-            round: roundMap[m.round!],
-            slot: m.bracket_position || 0,
-            player1: m.player1 ? {
-                id: m.player1_id!,
-                name: `${m.player1.firstname} ${m.player1.lastname}`
-            } : null,
-            player2: m.player2 ? {
-                id: m.player2_id!,
-                name: `${m.player2.firstname} ${m.player2.lastname}`
-            } : null,
-            player1_score: m.player1_score,
-            player2_score: m.player2_score,
-            winner_id: m.winner_id,
-            status: m.status
-        }))
+        .map(m => {
+            const hasPlayer1 = !!m.player1_id;
+            const hasPlayer2 = !!m.player2_id;
+            // Only mark as walkover if match is completed and only one player was present
+            const isWalkover = m.status === 'completed' && ((hasPlayer1 && !hasPlayer2) || (!hasPlayer1 && hasPlayer2));
+            const isReadyToStart = hasPlayer1 && hasPlayer2 && (m.status === 'pending' || m.status === 'ready');
+            const canBeStarted = m.status === 'ready';
+
+            return {
+                id: m.id,
+                round: roundMap[m.round!],
+                slot: m.bracket_position || 0,
+                player1: m.player1 ? {
+                    id: m.player1_id!,
+                    name: `${m.player1.firstname} ${m.player1.lastname}`
+                } : null,
+                player2: m.player2 ? {
+                    id: m.player2_id!,
+                    name: `${m.player2.firstname} ${m.player2.lastname}`
+                } : null,
+                player1_score: m.player1_score,
+                player2_score: m.player2_score,
+                winner_id: m.winner_id,
+                match_code: m.match_code,
+                status: m.status,
+                isWalkover,
+                isReadyToStart,
+                canBeStarted
+            };
+        })
         .sort((a, b) => a.round - b.round || a.slot - b.slot);
 });
 
@@ -176,6 +237,34 @@ const svgHeight = computed(() => {
 });
 
 const hasGeneratedBracket = computed(() => matches.value.length > 0);
+
+// Match modal computed
+const canStartMatch = computed(() => {
+    if (!selectedMatch.value || !canEditTournament.value) return false;
+    const match = bracketMatches.value.find(m => m.id === selectedMatch.value!.id);
+    return match?.canBeStarted && matchForm.value.club_table_id !== null;
+});
+
+const canFinishMatch = computed(() => {
+    if (!selectedMatch.value || !canEditTournament.value) return false;
+    if (selectedMatch.value.status !== 'in_progress' && selectedMatch.value.status !== 'verification') return false;
+    const racesTo = tournament.value?.races_to || 7;
+    return matchForm.value.player1_score >= racesTo || matchForm.value.player2_score >= racesTo;
+});
+
+const matchWinner = computed(() => {
+    if (!canFinishMatch.value) return null;
+    const racesTo = tournament.value?.races_to || 7;
+    if (matchForm.value.player1_score >= racesTo) return selectedMatch.value?.player1_id;
+    if (matchForm.value.player2_score >= racesTo) return selectedMatch.value?.player2_id;
+    return null;
+});
+
+const isWalkoverMatch = computed(() => {
+    if (!selectedMatch.value) return false;
+    const match = bracketMatches.value.find(m => m.id === selectedMatch.value!.id);
+    return match?.isWalkover || false;
+});
 
 // Zoom functions
 const setZoom = (newZoom: number) => {
@@ -309,6 +398,19 @@ const loadData = async () => {
     }
 };
 
+const loadAvailableTables = async () => {
+    isLoadingTables.value = true;
+    try {
+        const tables = await apiClient<ClubTable[]>(`/api/tournaments/${props.tournamentId}/tables`);
+        availableTables.value = tables.filter(table => table.is_active);
+    } catch (err) {
+        console.error('Failed to load tables:', err);
+        availableTables.value = [];
+    } finally {
+        isLoadingTables.value = false;
+    }
+};
+
 const generateBracket = async () => {
     if (!confirm(t('Are you sure you want to generate the bracket? This will create all matches based on current seeding.'))) {
         return;
@@ -343,14 +445,152 @@ const startTournament = async () => {
         });
 
         successMessage.value = t('Tournament started successfully');
-        router.visit(`/admin/tournaments/${props.tournamentId}/matches`);
+        await loadData();
     } catch (err: any) {
         error.value = err.message || t('Failed to start tournament');
     }
 };
 
-const goToMatch = (matchId: number) => {
-    router.visit(`/admin/tournaments/${props.tournamentId}/matches/${matchId}`);
+const openMatchModal = async (matchId: number) => {
+    if (!canEditTournament.value) {
+        error.value = t('Tournament must be active and in bracket stage to edit matches');
+        return;
+    }
+
+    const match = matches.value.find(m => m.id === matchId);
+    if (!match) return;
+
+    selectedMatch.value = match;
+    matchForm.value = {
+        player1_score: match.player1_score || 0,
+        player2_score: match.player2_score || 0,
+        club_table_id: match.club_table_id || null,
+        stream_url: match.stream_url || '',
+        status: match.status,
+        scheduled_at: match.scheduled_at ? new Date(match.scheduled_at).toISOString().slice(0, 16) : '',
+        admin_notes: match.admin_notes || ''
+    };
+
+    showMatchModal.value = true;
+    await loadAvailableTables();
+};
+
+const closeMatchModal = () => {
+    showMatchModal.value = false;
+    selectedMatch.value = null;
+    matchError.value = null;
+};
+
+const startMatch = async () => {
+    if (!canStartMatch.value || !selectedMatch.value) return;
+
+    isUpdatingMatch.value = true;
+    matchError.value = null;
+
+    try {
+        await apiClient(`/api/admin/tournaments/${props.tournamentId}/matches/${selectedMatch.value.id}/start`, {
+            method: 'POST',
+            data: {
+                club_table_id: matchForm.value.club_table_id,
+                stream_url: matchForm.value.stream_url
+            }
+        });
+
+        await loadData();
+        closeMatchModal();
+        successMessage.value = t('Match started successfully');
+    } catch (err: any) {
+        matchError.value = err.message || t('Failed to start match');
+    } finally {
+        isUpdatingMatch.value = false;
+    }
+};
+
+const updateMatch = async () => {
+    if (!selectedMatch.value || !canEditTournament.value) return;
+
+    isUpdatingMatch.value = true;
+    matchError.value = null;
+
+    try {
+        await apiClient(`/api/admin/tournaments/${props.tournamentId}/matches/${selectedMatch.value.id}`, {
+            method: 'PUT',
+            data: matchForm.value
+        });
+
+        await loadData();
+        closeMatchModal();
+        successMessage.value = t('Match updated successfully');
+    } catch (err: any) {
+        matchError.value = err.message || t('Failed to update match');
+    } finally {
+        isUpdatingMatch.value = false;
+    }
+};
+
+const finishMatch = async () => {
+    if (!canFinishMatch.value || !selectedMatch.value) return;
+
+    isUpdatingMatch.value = true;
+    matchError.value = null;
+
+    try {
+        await apiClient(`/api/admin/tournaments/${props.tournamentId}/matches/${selectedMatch.value.id}/finish`, {
+            method: 'POST',
+            data: {
+                player1_score: matchForm.value.player1_score,
+                player2_score: matchForm.value.player2_score
+            }
+        });
+
+        await loadData();
+        closeMatchModal();
+        successMessage.value = t('Match finished successfully');
+    } catch (err: any) {
+        matchError.value = err.message || t('Failed to finish match');
+    } finally {
+        isUpdatingMatch.value = false;
+    }
+};
+
+const processWalkover = async () => {
+    if (!selectedMatch.value || !isWalkoverMatch.value) return;
+
+    isUpdatingMatch.value = true;
+    matchError.value = null;
+
+    try {
+        // Determine winner (the player who is present)
+        const racesTo = tournament.value?.races_to || 7;
+
+        await apiClient(`/api/admin/tournaments/${props.tournamentId}/matches/${selectedMatch.value.id}/finish`, {
+            method: 'POST',
+            data: {
+                player1_score: selectedMatch.value.player1_id ? racesTo : 0,
+                player2_score: selectedMatch.value.player2_id ? racesTo : 0,
+                admin_notes: 'Walkover'
+            }
+        });
+
+        await loadData();
+        closeMatchModal();
+        successMessage.value = t('Walkover processed successfully');
+    } catch (err: any) {
+        matchError.value = err.message || t('Failed to process walkover');
+    } finally {
+        isUpdatingMatch.value = false;
+    }
+};
+
+const formatDateTime = (dateString: string | undefined): string => {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleString('uk-UK', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
 };
 
 const getStatusColor = (status: string) => {
@@ -359,6 +599,10 @@ const getStatusColor = (status: string) => {
             return '#16a34a';
         case 'in_progress':
             return '#eab308';
+        case 'verification':
+            return '#9333ea';
+        case 'ready':
+            return '#3b82f6';
         default:
             return '#6b7280';
     }
@@ -367,8 +611,26 @@ const getStatusColor = (status: string) => {
 const getMatchClass = (match: PositionedMatch) => {
     if (match.status === 'completed') return 'match-completed';
     if (match.status === 'in_progress') return 'match-active';
+    if (match.status === 'verification') return 'match-verification';
+    if (match.status === 'ready') return 'match-ready';
     return 'match-pending';
 };
+
+const getPlayerDisplay = (player: { id: number; name: string } | null, isWalkover: boolean, hasOpponent: boolean) => {
+    if (player) return player.name;
+    if (isWalkover && !hasOpponent) return t('Walkover');
+    return t('TBD');
+};
+
+// Watch for club table selection to update stream URL
+watch(() => matchForm.value.club_table_id, (newTableId) => {
+    if (newTableId) {
+        const table = availableTables.value.find(t => t.id === newTableId);
+        if (table?.stream_url) {
+            matchForm.value.stream_url = table.stream_url;
+        }
+    }
+});
 
 onMounted(() => {
     loadData();
@@ -416,6 +678,20 @@ onUnmounted(() => {
             <div v-if="successMessage"
                  class="mb-6 rounded bg-green-100 p-4 text-green-600 dark:bg-green-900/30 dark:text-green-400">
                 {{ successMessage }}
+            </div>
+
+            <!-- Tournament Status Warning -->
+            <div v-if="tournament && !canEditTournament" class="mb-6 rounded bg-yellow-100 p-4 dark:bg-yellow-900/30">
+                <div class="flex items-center gap-2">
+                    <AlertCircleIcon class="h-5 w-5 text-yellow-600"/>
+                    <p class="font-medium text-yellow-800 dark:text-yellow-300">
+                        {{ t('Tournament must be active and in bracket stage to edit matches') }}
+                    </p>
+                </div>
+                <p class="mt-2 text-sm text-yellow-700 dark:text-yellow-400">
+                    {{ t('Current status') }}: {{ tournament.status_display }} • {{ t('Current stage') }}:
+                    {{ tournament.stage_display }}
+                </p>
             </div>
 
             <!-- Loading -->
@@ -486,7 +762,11 @@ onUnmounted(() => {
                             <div class="flex items-center justify-between">
                                 <div>
                                     <CardTitle>{{ t('Tournament Bracket') }}</CardTitle>
-                                    <CardDescription>{{ t('Click on a match to view details') }}</CardDescription>
+                                    <CardDescription>
+                                        {{
+                                            canEditTournament ? t('Click on a match to view details') : t('View only mode - tournament not active')
+                                        }}
+                                    </CardDescription>
                                 </div>
 
                                 <!-- Zoom and Fullscreen Controls -->
@@ -495,10 +775,10 @@ onUnmounted(() => {
                                     <div
                                         class="flex items-center gap-1 rounded-lg border border-gray-200 dark:border-gray-700 p-1">
                                         <Button
-                                            :title="t('Zoom Out')"
                                             size="sm"
                                             variant="ghost"
                                             @click="zoomOut"
+                                            :title="t('Zoom Out')"
                                         >
                                             <MinusIcon class="h-4 w-4"/>
                                         </Button>
@@ -506,18 +786,18 @@ onUnmounted(() => {
                                             {{ Math.round(zoomLevel * 100) }}%
                                         </span>
                                         <Button
-                                            :title="t('Zoom In')"
                                             size="sm"
                                             variant="ghost"
                                             @click="zoomIn"
+                                            :title="t('Zoom In')"
                                         >
                                             <PlusIcon class="h-4 w-4"/>
                                         </Button>
                                         <Button
-                                            :title="t('Reset Zoom')"
                                             size="sm"
                                             variant="ghost"
                                             @click="resetZoom"
+                                            :title="t('Reset Zoom')"
                                         >
                                             <RotateCcwIcon class="h-4 w-4"/>
                                         </Button>
@@ -525,10 +805,10 @@ onUnmounted(() => {
 
                                     <!-- Fullscreen Button -->
                                     <Button
-                                        :title="isFullscreen ? t('Exit Fullscreen') : t('Enter Fullscreen')"
                                         size="sm"
                                         variant="outline"
                                         @click="toggleFullscreen"
+                                        :title="isFullscreen ? t('Exit Fullscreen') : t('Enter Fullscreen')"
                                     >
                                         <ExpandIcon v-if="!isFullscreen" class="h-4 w-4"/>
                                         <ShrinkIcon v-else class="h-4 w-4"/>
@@ -540,15 +820,15 @@ onUnmounted(() => {
                             <div
                                 class="bracket-container overflow-auto bg-gray-50 dark:bg-gray-900/50 touch-none"
                                 @touchend="handleTouchEnd"
-                                @touchmove="handleTouchMove"
                                 @touchstart="handleTouchStart"
+                                @touchmove="handleTouchMove"
                                 @wheel="handleWheel"
                             >
                                 <div :style="{ transform: `scale(${zoomLevel})` }" class="bracket-zoom-wrapper">
                                     <div class="p-6">
                                         <svg
-                                            :height="svgHeight"
                                             :width="svgWidth"
+                                            :height="svgHeight"
                                             class="bracket-svg"
                                             style="min-width: 100%;"
                                         >
@@ -565,19 +845,36 @@ onUnmounted(() => {
                                             <!-- Matches -->
                                             <g class="matches">
                                                 <g v-for="m in positionedMatches" :key="m.id"
-                                                   class="match-group cursor-pointer"
-                                                   @click="goToMatch(m.id)">
+                                                   :class="[canEditTournament ? 'cursor-pointer' : 'cursor-not-allowed']"
+                                                   class="match-group"
+                                                   @click="openMatchModal(m.id)">
                                                     <!-- Match background -->
                                                     <rect
                                                         :class="getMatchClass(m)" :height="nodeHeight"
                                                         :width="nodeWidth" :x="m.x"
-                                                        :y="m.y"
                                                         rx="8"
+                                                        :y="m.y"
                                                     />
 
+                                                    <!-- Walkover indicator - more visible -->
+                                                    <g v-if="m.isWalkover">
+                                                        <rect
+                                                            :x="m.x + 2"
+                                                            :y="m.y + 2"
+                                                            fill="#fbbf24"
+                                                            height="16"
+                                                            rx="2"
+                                                            width="24"
+                                                        />
+                                                        <text :x="m.x + 14" :y="m.y + 13" class="walkover-text"
+                                                              text-anchor="middle">
+                                                            W/O
+                                                        </text>
+                                                    </g>
+
                                                     <!-- Match number -->
-                                                    <text :x="m.x + 8" :y="m.y + 14" class="match-number">
-                                                        {{ t('Match') }} #{{ m.id }}
+                                                    <text :x="m.x + 30" :y="m.y + 14" class="match-number">
+                                                        {{ t('Match') }} #{{ m.match_code }}
                                                     </text>
 
                                                     <!-- Player 1 -->
@@ -585,11 +882,11 @@ onUnmounted(() => {
                                                         <rect
                                                             :class="m.winner_id === m.player1?.id ? 'player-winner' : 'player-bg'" :height="30"
                                                             :width="nodeWidth" :x="m.x"
-                                                            :y="m.y + 20"
                                                             rx="4"
+                                                            :y="m.y + 20"
                                                         />
                                                         <text :x="m.x + 8" :y="m.y + 38" class="player-name">
-                                                            {{ m.player1?.name ?? t('TBD') }}
+                                                            {{ getPlayerDisplay(m.player1, m.isWalkover, !!m.player2) }}
                                                         </text>
                                                         <text :x="m.x + nodeWidth - 25" :y="m.y + 38"
                                                               class="player-score">
@@ -602,11 +899,11 @@ onUnmounted(() => {
                                                         <rect
                                                             :class="m.winner_id === m.player2?.id ? 'player-winner' : 'player-bg'" :height="30"
                                                             :width="nodeWidth" :x="m.x"
-                                                            :y="m.y + 50"
                                                             rx="4"
+                                                            :y="m.y + 50"
                                                         />
                                                         <text :x="m.x + 8" :y="m.y + 68" class="player-name">
-                                                            {{ m.player2?.name ?? t('TBD') }}
+                                                            {{ getPlayerDisplay(m.player2, m.isWalkover, !!m.player1) }}
                                                         </text>
                                                         <text :x="m.x + nodeWidth - 25" :y="m.y + 68"
                                                               class="player-score">
@@ -618,8 +915,8 @@ onUnmounted(() => {
                                                     <circle
                                                         :cx="m.x + nodeWidth - 10"
                                                         :cy="m.y + 10"
-                                                        :fill="getStatusColor(m.status)"
                                                         r="4"
+                                                        :fill="getStatusColor(m.status)"
                                                     />
                                                 </g>
                                             </g>
@@ -661,6 +958,240 @@ onUnmounted(() => {
             </template>
         </div>
     </div>
+
+    <!-- Match Management Modal -->
+    <Modal :show="showMatchModal" :title="selectedMatch ? `${t('Match')} #${selectedMatch.id}` : ''"
+           max-width="2xl" @close="closeMatchModal">
+        <div v-if="selectedMatch" class="space-y-6">
+            <!-- Match Header -->
+            <div class="border-b pb-4">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-lg font-semibold">
+                        {{ selectedMatch.round_display }}
+                        <span v-if="selectedMatch.match_code" class="text-gray-500">({{
+                                selectedMatch.match_code
+                            }})</span>
+                    </h3>
+                    <div class="flex items-center gap-2">
+                        <span v-if="isWalkoverMatch"
+                              class="px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">
+                            <UserXIcon class="inline h-4 w-4 mr-1"/>
+                            {{ t('Walkover') }}
+                        </span>
+                        <span :class="[
+                            'px-3 py-1 rounded-full text-sm font-medium',
+                            selectedMatch.status === 'completed' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
+                            selectedMatch.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' :
+                            selectedMatch.status === 'verification' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' :
+                            selectedMatch.status === 'ready' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' :
+                            'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                        ]">
+                            {{ selectedMatch.status_display }}
+                        </span>
+                    </div>
+                </div>
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                    {{ t('Race to') }} {{ tournament?.races_to || 7 }}
+                </p>
+            </div>
+
+            <!-- Walkover Notice -->
+            <div v-if="isWalkoverMatch && selectedMatch.status === 'pending'"
+                 class="rounded bg-yellow-100 p-4 dark:bg-yellow-900/30">
+                <div class="flex items-center gap-2">
+                    <UserXIcon class="h-5 w-5 text-yellow-600"/>
+                    <p class="font-medium text-yellow-800 dark:text-yellow-300">{{ t('This is a walkover match') }}</p>
+                </div>
+                <p class="mt-2 text-sm text-yellow-700 dark:text-yellow-400">
+                    {{ t('One player is missing. Click "Process Walkover" to advance the present player.') }}
+                </p>
+            </div>
+
+            <!-- Players and Scores -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-2">
+                    <Label>
+                        {{ selectedMatch.player1?.firstname }} {{ selectedMatch.player1?.lastname }}
+                        <span v-if="!selectedMatch.player1" class="text-gray-500">{{ t('TBD') }}</span>
+                    </Label>
+                    <Input
+                        v-model.number="matchForm.player1_score"
+                        :disabled="selectedMatch.status === 'completed' || isWalkoverMatch"
+                        :max="tournament?.races_to || 7"
+                        min="0"
+                        type="number"
+                    />
+                </div>
+                <div class="space-y-2">
+                    <Label>
+                        {{ selectedMatch.player2?.firstname }} {{ selectedMatch.player2?.lastname }}
+                        <span v-if="!selectedMatch.player2" class="text-gray-500">{{ t('TBD') }}</span>
+                    </Label>
+                    <Input
+                        v-model.number="matchForm.player2_score"
+                        :disabled="selectedMatch.status === 'completed' || isWalkoverMatch"
+                        :max="tournament?.races_to || 7"
+                        min="0"
+                        type="number"
+                    />
+                </div>
+            </div>
+
+            <!-- Table Assignment -->
+            <div v-if="!isWalkoverMatch" class="space-y-2">
+                <Label for="table">{{ t('Table Assignment') }} *</Label>
+                <Select v-model="matchForm.club_table_id" :disabled="selectedMatch.status !== 'ready'">
+                    <SelectTrigger>
+                        <SelectValue :placeholder="t('Select a table')"/>
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem v-if="isLoadingTables" :value="0">
+                            {{ t('Loading tables...') }}
+                        </SelectItem>
+                        <SelectItem
+                            v-for="table in availableTables"
+                            v-else
+                            :key="table.id"
+                            :value="table.id"
+                        >
+                            {{ table.name }}
+                        </SelectItem>
+                    </SelectContent>
+                </Select>
+                <p v-if="selectedMatch.status === 'ready'" class="text-sm text-gray-500">
+                    {{ t('Table assignment is required to start the match') }}
+                </p>
+            </div>
+
+            <!-- Stream URL -->
+            <div v-if="!isWalkoverMatch" class="space-y-2">
+                <Label for="stream">{{ t('Stream URL') }}</Label>
+                <Input
+                    v-model="matchForm.stream_url"
+                    :placeholder="t('https://youtube.com/watch?v=...')"
+                    type="url"
+                />
+            </div>
+
+            <!-- Scheduled Time -->
+            <div class="space-y-2">
+                <Label for="scheduled">{{ t('Scheduled At') }}</Label>
+                <Input
+                    v-model="matchForm.scheduled_at"
+                    type="datetime-local"
+                />
+            </div>
+
+            <!-- Admin Notes -->
+            <div class="space-y-2">
+                <Label for="notes">{{ t('Admin Notes') }}</Label>
+                <Textarea
+                    v-model="matchForm.admin_notes"
+                    :placeholder="t('Internal notes about this match...')"
+                    rows="3"
+                />
+            </div>
+
+            <!-- Match Timeline -->
+            <div v-if="selectedMatch.started_at || selectedMatch.completed_at" class="border-t pt-4">
+                <h4 class="font-medium mb-2">{{ t('Timeline') }}</h4>
+                <div class="space-y-1 text-sm text-gray-600 dark:text-gray-400">
+                    <div v-if="selectedMatch.scheduled_at" class="flex items-center gap-2">
+                        <CalendarIcon class="h-4 w-4"/>
+                        {{ t('Scheduled') }}: {{ formatDateTime(selectedMatch.scheduled_at) }}
+                    </div>
+                    <div v-if="selectedMatch.started_at" class="flex items-center gap-2">
+                        <PlayIcon class="h-4 w-4"/>
+                        {{ t('Started') }}: {{ formatDateTime(selectedMatch.started_at) }}
+                    </div>
+                    <div v-if="selectedMatch.completed_at" class="flex items-center gap-2">
+                        <CheckCircleIcon class="h-4 w-4"/>
+                        {{ t('Completed') }}: {{ formatDateTime(selectedMatch.completed_at) }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Note for Verification -->
+            <div v-if="selectedMatch.status === 'verification'" class="rounded bg-purple-100 p-3 dark:bg-purple-900/30">
+                <div class="flex items-center gap-2">
+                    <AlertCircleIcon class="h-5 w-5 text-purple-600"/>
+                    <p class="font-medium text-purple-800 dark:text-purple-300">{{ t('Match needs verification') }}</p>
+                </div>
+                <p class="mt-2 text-sm text-purple-700 dark:text-purple-400">
+                    {{ t('Players have submitted the result. Please verify and finish the match.') }}
+                </p>
+            </div>
+
+            <!-- Error Display -->
+            <div v-if="matchError" class="rounded bg-red-100 p-3 text-red-600 dark:bg-red-900/30 dark:text-red-400">
+                {{ matchError }}
+            </div>
+
+            <!-- Winner Display -->
+            <div v-if="canFinishMatch && !isWalkoverMatch" class="rounded bg-blue-100 p-3 dark:bg-blue-900/30">
+                <p class="text-sm">
+                    <span class="font-medium">{{ t('Winner') }}:</span>
+                    <span v-if="matchWinner === selectedMatch.player1_id" class="ml-2">
+                        {{ selectedMatch.player1?.firstname }} {{ selectedMatch.player1?.lastname }}
+                    </span>
+                    <span v-else-if="matchWinner === selectedMatch.player2_id" class="ml-2">
+                        {{ selectedMatch.player2?.firstname }} {{ selectedMatch.player2?.lastname }}
+                    </span>
+                </p>
+            </div>
+        </div>
+
+        <template #footer>
+            <div class="flex justify-between">
+                <Button variant="outline" @click="closeMatchModal">
+                    {{ t('Cancel') }}
+                </Button>
+
+                <div class="flex gap-2">
+                    <!-- Process Walkover Button -->
+                    <Button
+                        v-if="isWalkoverMatch && selectedMatch?.status === 'pending'"
+                        :disabled="isUpdatingMatch"
+                        @click="processWalkover"
+                    >
+                        <UserXIcon class="mr-2 h-4 w-4"/>
+                        {{ t('Process Walkover') }}
+                    </Button>
+
+                    <!-- Start Match Button -->
+                    <Button
+                        v-if="selectedMatch?.status === 'ready' && !isWalkoverMatch"
+                        :disabled="!canStartMatch || isUpdatingMatch"
+                        @click="startMatch"
+                    >
+                        <PlayIcon class="mr-2 h-4 w-4"/>
+                        {{ t('Start Match') }}
+                    </Button>
+
+                    <!-- Update Match Button -->
+                    <Button
+                        v-if="selectedMatch?.status === 'in_progress'"
+                        :disabled="isUpdatingMatch"
+                        variant="outline"
+                        @click="updateMatch"
+                    >
+                        <SaveIcon class="mr-2 h-4 w-4"/>
+                        {{ t('Save Changes') }}
+                    </Button>
+
+                    <!-- Finish Match Button -->
+                    <Button
+                        v-if="selectedMatch?.status === 'in_progress' || selectedMatch?.status === 'verification'"
+                        :disabled="!canFinishMatch || isUpdatingMatch"
+                        @click="finishMatch"
+                    >
+                        <CheckCircleIcon class="mr-2 h-4 w-4"/>
+                        {{ t('Finish Match') }}
+                    </Button>
+                </div>
+            </div>
+        </template>
+    </Modal>
 </template>
 
 <style scoped>
@@ -706,20 +1237,34 @@ onUnmounted(() => {
     stroke-width: 1;
 }
 
+.match-ready {
+    fill: #dbeafe;
+    stroke: #3b82f6;
+    stroke-width: 1.5;
+}
+
 .match-active {
-    fill: #fef3c7;
-    stroke: #f59e0b;
+    fill: #fee2e2;
+    stroke: #ef4444;
     stroke-width: 2;
 }
 
+.match-verification {
+    fill: #f3e8ff;
+    stroke: #9333ea;
+    stroke-width: 1.5;
+}
+
 .match-completed {
-    fill: #e6ffed;
+    fill: rgba(230, 255, 237, 0.1);
     stroke: #10b981;
     stroke-width: 1;
 }
 
 .match-group:hover .match-pending,
+.match-group:hover .match-ready,
 .match-group:hover .match-active,
+.match-group:hover .match-verification,
 .match-group:hover .match-completed {
     filter: brightness(0.95);
 }
@@ -753,6 +1298,12 @@ onUnmounted(() => {
     text-anchor: end;
 }
 
+.walkover-text {
+    font-size: 10px;
+    font-weight: bold;
+    fill: #78350f;
+}
+
 /* Connector lines */
 .connector-line {
     stroke: #9ca3af;
@@ -765,9 +1316,19 @@ onUnmounted(() => {
     stroke: #4b5563;
 }
 
+.dark .match-ready {
+    fill: #1e3a8a;
+    stroke: #3b82f6;
+}
+
 .dark .match-active {
-    fill: #451a03;
-    stroke: #f59e0b;
+    fill: #7f1d1d;
+    stroke: #ef4444;
+}
+
+.dark .match-verification {
+    fill: #581c87;
+    stroke: #9333ea;
 }
 
 .dark .match-completed {
@@ -786,6 +1347,10 @@ onUnmounted(() => {
 
 .dark .connector-line {
     stroke: #4b5563;
+}
+
+.dark .walkover-text {
+    fill: #fbbf24;
 }
 
 /* Scrollbar styling */

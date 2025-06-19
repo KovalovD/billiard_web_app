@@ -2,6 +2,7 @@
 
 namespace App\Tournaments\Http\Controllers;
 
+use App\Core\Http\Resources\ClubTableResource;
 use App\Tournaments\Http\Resources\TournamentBracketResource;
 use App\Tournaments\Http\Resources\TournamentGroupResource;
 use App\Tournaments\Http\Resources\TournamentPlayerResource;
@@ -20,6 +21,11 @@ readonly class TournamentsController
     public function __construct(
         private TournamentService $tournamentService,
     ) {
+    }
+
+    public function tables(Tournament $tournament): AnonymousResourceCollection
+    {
+        return ClubTableResource::collection($this->tournamentService->getTables($tournament));
     }
 
     /**

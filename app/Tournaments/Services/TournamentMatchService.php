@@ -2,8 +2,11 @@
 
 namespace App\Tournaments\Services;
 
+use App\Tournaments\Enums\EliminationRound;
 use App\Tournaments\Enums\MatchStatus;
+use App\Tournaments\Enums\TournamentType;
 use App\Tournaments\Models\TournamentMatch;
+use App\Tournaments\Models\TournamentPlayer;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Throwable;
@@ -16,7 +19,7 @@ class TournamentMatchService
      */
     public function startMatch(TournamentMatch $match, array $data): TournamentMatch
     {
-        return DB::transaction(function () use ($match, $data) {
+        return DB::transaction(static function () use ($match, $data) {
             if ($match->status !== MatchStatus::PENDING && $match->status !== MatchStatus::READY) {
                 throw new RuntimeException('Match cannot be started in current status');
             }
@@ -51,17 +54,21 @@ class TournamentMatchService
 
             // Validate scores
             if ($data['player1_score'] < $racesTo && $data['player2_score'] < $racesTo) {
-                throw new RuntimeException("At least one player must reach {$racesTo} races to win");
+                throw new RuntimeException("At least one player must reach $racesTo races to win");
             }
 
             if ($data['player1_score'] === $data['player2_score']) {
                 throw new RuntimeException('Match cannot end in a tie');
             }
 
-            // Determine winner
+            // Determine winner and loser
             $winnerId = $data['player1_score'] > $data['player2_score']
                 ? $match->player1_id
                 : $match->player2_id;
+
+            $loserId = $winnerId === $match->player1_id
+                ? $match->player2_id
+                : $match->player1_id;
 
             $match->update([
                 'player1_score' => $data['player1_score'],
@@ -70,6 +77,9 @@ class TournamentMatchService
                 'status'        => MatchStatus::COMPLETED,
                 'completed_at'  => now(),
             ]);
+
+            // Calculate and update player positions
+            $this->updatePlayerPositions($match, $winnerId, $loserId);
 
             // Progress winner to next match if applicable
             $this->progressWinnerToNextMatch($match);
@@ -81,6 +91,87 @@ class TournamentMatchService
 
             return $match->fresh(['player1', 'player2', 'winner', 'nextMatch']);
         });
+    }
+
+    /**
+     * Calculate and update player positions based on match result
+     */
+    private function updatePlayerPositions(TournamentMatch $match, int $winnerId, int $loserId): void
+    {
+        $tournament = $match->tournament;
+        $tournamentType = $tournament->tournament_type;
+
+        // Update loser's position based on round
+        $loserPosition = $this->calculatePositionByRound($match->round, $tournamentType);
+
+        if ($loserPosition !== null) {
+            TournamentPlayer::where('tournament_id', $tournament->id)
+                ->where('user_id', $loserId)
+                ->update([
+                    'position'          => $loserPosition,
+                    'elimination_round' => $match->round,
+                ])
+            ;
+        }
+
+        // If this is the finals, also set winner's position
+        if ($match->round === EliminationRound::FINALS) {
+            TournamentPlayer::where('tournament_id', $tournament->id)
+                ->where('user_id', $winnerId)
+                ->update([
+                    'position'          => 1,
+                    'elimination_round' => EliminationRound::FINALS,
+                ])
+            ;
+        }
+
+        // Handle third place match
+        if ($match->round === EliminationRound::THIRD_PLACE) {
+            // Winner gets 3rd place
+            TournamentPlayer::where('tournament_id', $tournament->id)
+                ->where('user_id', $winnerId)
+                ->update([
+                    'position'          => 3,
+                    'elimination_round' => EliminationRound::THIRD_PLACE,
+                ])
+            ;
+
+            // Loser gets 4th place
+            TournamentPlayer::where('tournament_id', $tournament->id)
+                ->where('user_id', $loserId)
+                ->update([
+                    'position'          => 4,
+                    'elimination_round' => EliminationRound::THIRD_PLACE,
+                ])
+            ;
+        }
+    }
+
+    /**
+     * Calculate position based on elimination round
+     */
+    private function calculatePositionByRound(?EliminationRound $round, TournamentType $tournamentType): ?int
+    {
+        if (!$round) {
+            return null;
+        }
+
+        // For single elimination
+        if (in_array($tournamentType->value, TournamentType::eliminationTypes(), true)) {
+            return match ($round) {
+                EliminationRound::FINALS => false ? 1 : 2,
+                EliminationRound::SEMIFINALS => false ? null : 3,
+                EliminationRound::QUARTERFINALS => false ? null : 5,
+                EliminationRound::ROUND_16 => false ? null : 9,
+                EliminationRound::ROUND_32 => false ? null : 17,
+                EliminationRound::ROUND_64 => false ? null : 33,
+                EliminationRound::ROUND_128 => false ? null : 65,
+                default => null,
+            };
+        }
+
+        // For group stage matches, positions are calculated differently
+        return null;
     }
 
     /**
@@ -155,7 +246,7 @@ class TournamentMatchService
     {
         return DB::transaction(function () use ($match, $data) {
             // If updating scores and match is completed, recalculate winner
-            if (isset($data['player1_score']) && isset($data['player2_score']) && $match->status === MatchStatus::COMPLETED) {
+            if (isset($data['player1_score'], $data['player2_score']) && $match->status === MatchStatus::COMPLETED) {
                 if ($data['player1_score'] === $data['player2_score']) {
                     throw new RuntimeException('Match cannot end in a tie');
                 }
@@ -167,6 +258,7 @@ class TournamentMatchService
                 // If winner changed, need to update bracket progression
                 if ($data['winner_id'] !== $match->winner_id) {
                     $this->revertMatchProgression($match);
+                    $this->revertPlayerPositions($match);
                 }
             }
 
@@ -174,6 +266,13 @@ class TournamentMatchService
 
             // Re-progress if winner changed
             if (isset($data['winner_id']) && $match->status === MatchStatus::COMPLETED) {
+                $loserId = $data['winner_id'] === $match->player1_id
+                    ? $match->player2_id
+                    : $match->player1_id;
+
+                // Recalculate positions
+                $this->updatePlayerPositions($match, $data['winner_id'], $loserId);
+
                 $this->progressWinnerToNextMatch($match);
                 if ($match->loser_next_match_id) {
                     $this->progressLoserToNextMatch($match);
@@ -228,23 +327,26 @@ class TournamentMatchService
     }
 
     /**
-     * Verify match can be modified
+     * Revert player positions when match result changes
      */
-    public function canModifyMatch(TournamentMatch $match): bool
+    private function revertPlayerPositions(TournamentMatch $match): void
     {
-        // Can't modify if tournament is completed
-        if ($match->tournament->status === 'completed') {
-            return false;
+        if (!$match->winner_id) {
+            return;
         }
 
-        // Can't modify if there are dependent matches that have started
-        if ($match->next_match_id) {
-            $nextMatch = TournamentMatch::find($match->next_match_id);
-            if ($nextMatch && in_array($nextMatch->status, [MatchStatus::IN_PROGRESS, MatchStatus::COMPLETED], true)) {
-                return false;
-            }
-        }
+        $loserId = $match->winner_id === $match->player1_id
+            ? $match->player2_id
+            : $match->player1_id;
 
-        return true;
+        // Clear positions for both players from this match
+        TournamentPlayer::where('tournament_id', $match->tournament_id)
+            ->whereIn('user_id', [$match->winner_id, $loserId])
+            ->where('elimination_round', $match->round)
+            ->update([
+                'position'          => null,
+                'elimination_round' => null,
+            ])
+        ;
     }
 }
