@@ -1,4 +1,3 @@
-<!-- resources/js/pages/Admin/Tournaments/Bracket.vue -->
 <script lang="ts" setup>
 import {
     Button,
@@ -39,7 +38,7 @@ import {
     TrophyIcon,
     UserXIcon
 } from 'lucide-vue-next';
-import {computed, onMounted, onUnmounted, ref, watch} from 'vue';
+import {computed, nextTick, onMounted, onUnmounted, ref, watch} from 'vue';
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -70,6 +69,7 @@ const matchError = ref<string | null>(null);
 const zoomLevel = ref(1);
 const isFullscreen = ref(false);
 const bracketContainerRef = ref<HTMLDivElement | null>(null);
+const bracketScrollContainerRef = ref<HTMLDivElement | null>(null);
 
 // Touch gesture states
 const touchStartDistance = ref(0);
@@ -374,6 +374,16 @@ const handleFullscreenChange = () => {
     isFullscreen.value = !!document.fullscreenElement;
 };
 
+// Scroll to the bottom of the bracket
+const scrollToBottom = () => {
+    nextTick(() => {
+        if (bracketScrollContainerRef.value) {
+            const container = bracketScrollContainerRef.value;
+            container.scrollTop = container.scrollHeight - container.clientHeight;
+        }
+    });
+};
+
 // Methods
 const loadData = async () => {
     isLoading.value = true;
@@ -391,10 +401,48 @@ const loadData = async () => {
         } catch {
             brackets.value = [];
         }
+
+        // Scroll to bottom after data is loaded and rendered
+        await nextTick();
+        scrollToBottom();
     } catch (err: any) {
         error.value = err.message || t('Failed to load tournament data');
     } finally {
         isLoading.value = false;
+    }
+};
+
+// Update specific matches in the bracket
+const updateMatchesInBracket = (updatedMatches: TournamentMatch[]) => {
+    updatedMatches.forEach(updatedMatch => {
+        const index = matches.value.findIndex(m => m.id === updatedMatch.id);
+        if (index !== -1) {
+            matches.value[index] = updatedMatch;
+        } else {
+            // If it's a new match (shouldn't happen in this context), add it
+            matches.value.push(updatedMatch);
+        }
+    });
+    // Trigger reactivity
+    matches.value = [...matches.value];
+};
+
+// Load specific matches after an update
+const loadSpecificMatches = async (matchIds: number[]) => {
+    try {
+        // Load each match individually
+        const updatedMatches = await Promise.all(
+            matchIds.map(id =>
+                apiClient<TournamentMatch>(`/api/admin/tournaments/${props.tournamentId}/matches/${id}`)
+            )
+        );
+
+        // Update the matches in our local state
+        updateMatchesInBracket(updatedMatches);
+    } catch (err: any) {
+        console.error('Failed to load specific matches:', err);
+        // Fallback to full reload if partial update fails
+        await loadData();
     }
 };
 
@@ -488,7 +536,7 @@ const startMatch = async () => {
     matchError.value = null;
 
     try {
-        await apiClient(`/api/admin/tournaments/${props.tournamentId}/matches/${selectedMatch.value.id}/start`, {
+        const response = await apiClient<TournamentMatch>(`/api/admin/tournaments/${props.tournamentId}/matches/${selectedMatch.value.id}/start`, {
             method: 'POST',
             data: {
                 club_table_id: matchForm.value.club_table_id,
@@ -496,7 +544,8 @@ const startMatch = async () => {
             }
         });
 
-        await loadData();
+        // Update only this match
+        updateMatchesInBracket([response]);
         closeMatchModal();
         successMessage.value = t('Match started successfully');
     } catch (err: any) {
@@ -513,12 +562,13 @@ const updateMatch = async () => {
     matchError.value = null;
 
     try {
-        await apiClient(`/api/admin/tournaments/${props.tournamentId}/matches/${selectedMatch.value.id}`, {
+        const response = await apiClient<TournamentMatch>(`/api/admin/tournaments/${props.tournamentId}/matches/${selectedMatch.value.id}`, {
             method: 'PUT',
             data: matchForm.value
         });
 
-        await loadData();
+        // Update only this match
+        updateMatchesInBracket([response]);
         closeMatchModal();
         successMessage.value = t('Match updated successfully');
     } catch (err: any) {
@@ -535,7 +585,10 @@ const finishMatch = async () => {
     matchError.value = null;
 
     try {
-        await apiClient(`/api/admin/tournaments/${props.tournamentId}/matches/${selectedMatch.value.id}/finish`, {
+        const response = await apiClient<{
+            match: TournamentMatch;
+            affected_matches: number[];
+        }>(`/api/admin/tournaments/${props.tournamentId}/matches/${selectedMatch.value.id}/finish`, {
             method: 'POST',
             data: {
                 player1_score: matchForm.value.player1_score,
@@ -543,7 +596,14 @@ const finishMatch = async () => {
             }
         });
 
-        await loadData();
+        // Update the finished match
+        updateMatchesInBracket([response.match]);
+
+        // If there are affected matches (next matches), load them
+        if (response.affected_matches && response.affected_matches.length > 0) {
+            await loadSpecificMatches(response.affected_matches);
+        }
+
         closeMatchModal();
         successMessage.value = t('Match finished successfully');
     } catch (err: any) {
@@ -563,7 +623,10 @@ const processWalkover = async () => {
         // Determine winner (the player who is present)
         const racesTo = tournament.value?.races_to || 7;
 
-        await apiClient(`/api/admin/tournaments/${props.tournamentId}/matches/${selectedMatch.value.id}/finish`, {
+        const response = await apiClient<{
+            match: TournamentMatch;
+            affected_matches: number[];
+        }>(`/api/admin/tournaments/${props.tournamentId}/matches/${selectedMatch.value.id}/finish`, {
             method: 'POST',
             data: {
                 player1_score: selectedMatch.value.player1_id ? racesTo : 0,
@@ -572,7 +635,14 @@ const processWalkover = async () => {
             }
         });
 
-        await loadData();
+        // Update the finished match
+        updateMatchesInBracket([response.match]);
+
+        // If there are affected matches (next matches), load them
+        if (response.affected_matches && response.affected_matches.length > 0) {
+            await loadSpecificMatches(response.affected_matches);
+        }
+
         closeMatchModal();
         successMessage.value = t('Walkover processed successfully');
     } catch (err: any) {
@@ -629,6 +699,13 @@ watch(() => matchForm.value.club_table_id, (newTableId) => {
         if (table?.stream_url) {
             matchForm.value.stream_url = table.stream_url;
         }
+    }
+});
+
+// Watch for bracket data changes to scroll to bottom
+watch(() => positionedMatches.value.length, () => {
+    if (positionedMatches.value.length > 0) {
+        scrollToBottom();
     }
 });
 
@@ -817,7 +894,21 @@ onUnmounted(() => {
                             </div>
                         </CardHeader>
                         <CardContent class="p-0">
+                            <!-- Keyboard shortcuts hint - moved to top -->
                             <div
+                                class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-2 text-xs text-gray-500 dark:text-gray-400">
+                                {{ t('Keyboard shortcuts') }}:
+                                <kbd class="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">Ctrl</kbd> +
+                                <kbd class="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">+/-</kbd> {{ t('zoom') }},
+                                <kbd class="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">Ctrl</kbd> +
+                                <kbd class="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">0</kbd> {{ t('reset') }},
+                                <kbd class="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">F11</kbd>
+                                {{ t('fullscreen') }}
+                                <span class="ml-2">• {{ t('Pinch to zoom on touch devices') }}</span>
+                            </div>
+
+                            <div
+                                ref="bracketScrollContainerRef"
                                 class="bracket-container overflow-auto bg-gray-50 dark:bg-gray-900/50 touch-none"
                                 @touchend="handleTouchEnd"
                                 @touchstart="handleTouchStart"
@@ -923,19 +1014,6 @@ onUnmounted(() => {
                                         </svg>
                                     </div>
                                 </div>
-                            </div>
-
-                            <!-- Keyboard shortcuts hint -->
-                            <div
-                                class="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-2 text-xs text-gray-500 dark:text-gray-400">
-                                {{ t('Keyboard shortcuts') }}:
-                                <kbd class="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">Ctrl</kbd> +
-                                <kbd class="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">+/-</kbd> {{ t('zoom') }},
-                                <kbd class="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">Ctrl</kbd> +
-                                <kbd class="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">0</kbd> {{ t('reset') }},
-                                <kbd class="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">F11</kbd>
-                                {{ t('fullscreen') }}
-                                <span class="ml-2">• {{ t('Pinch to zoom on touch devices') }}</span>
                             </div>
                         </CardContent>
                     </Card>

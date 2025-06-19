@@ -34,6 +34,21 @@ readonly class AdminTournamentMatchesController
     }
 
     /**
+     * Get single match details
+     * @admin
+     */
+    public function show(Tournament $tournament, TournamentMatch $match): JsonResponse
+    {
+        if ($match->tournament_id !== $tournament->id) {
+            return response()->json([
+                'message' => 'Match does not belong to this tournament',
+            ], 400);
+        }
+
+        return response()->json(new TournamentMatchResource($match->load(['player1', 'player2', 'clubTable'])));
+    }
+
+    /**
      * Start a match
      * @admin
      */
@@ -53,11 +68,7 @@ readonly class AdminTournamentMatchesController
         try {
             $match = $this->matchService->startMatch($match, $validated);
 
-            return response()->json([
-                'success' => true,
-                'match'   => new TournamentMatchResource($match),
-                'message' => 'Match started successfully',
-            ]);
+            return response()->json(new TournamentMatchResource($match->load(['player1', 'player2', 'clubTable'])));
         } catch (RuntimeException $e) {
             return response()->json([
                 'success' => false,
@@ -81,15 +92,30 @@ readonly class AdminTournamentMatchesController
         $validated = $request->validate([
             'player1_score' => ['required', 'integer', 'min:0'],
             'player2_score' => ['required', 'integer', 'min:0'],
+            'admin_notes' => ['nullable', 'string'],
         ]);
 
         try {
-            $match = $this->matchService->finishMatch($match, $validated);
+            $result['match'] = $this->matchService->finishMatch($match, $validated);
+
+            // Get affected matches (next matches in bracket)
+            $affectedMatchIds = [];
+
+            // If the match had a next_match_id, it will be affected
+            if ($match->next_match_id) {
+                $affectedMatchIds[] = $match->next_match_id;
+            }
+
+            // If this is a double elimination match with loser_next_match_id
+            if ($match->loser_next_match_id) {
+                $affectedMatchIds[] = $match->loser_next_match_id;
+            }
 
             return response()->json([
-                'success' => true,
-                'match'   => new TournamentMatchResource($match),
-                'message' => 'Match completed successfully',
+                'match' => new TournamentMatchResource($result['match']->load([
+                    'player1', 'player2', 'clubTable',
+                ])),
+                'affected_matches' => $affectedMatchIds,
             ]);
         } catch (RuntimeException $e) {
             return response()->json([
@@ -124,11 +150,7 @@ readonly class AdminTournamentMatchesController
         try {
             $match = $this->matchService->updateMatch($match, $validated);
 
-            return response()->json([
-                'success' => true,
-                'match'   => new TournamentMatchResource($match),
-                'message' => 'Match updated successfully',
-            ]);
+            return response()->json(new TournamentMatchResource($match->load(['player1', 'player2', 'clubTable'])));
         } catch (RuntimeException $e) {
             return response()->json([
                 'success' => false,
