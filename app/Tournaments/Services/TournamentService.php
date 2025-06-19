@@ -199,8 +199,8 @@ class TournamentService
                WHEN status = 'rejected' THEN 4
                ELSE 5
            END")
-            ->orderBy('position')
             ->orderBy('seed_number')
+            ->orderBy('position')
             ->orderBy('applied_at')
             ->get()
         ;
