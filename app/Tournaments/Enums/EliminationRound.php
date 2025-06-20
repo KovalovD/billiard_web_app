@@ -13,4 +13,5 @@ enum EliminationRound: string
     case SEMIFINALS = 'semifinals';
     case FINALS = 'finals';
     case THIRD_PLACE = 'third_place';
+    case GRAND_FINALS = 'grand_finals';
 }

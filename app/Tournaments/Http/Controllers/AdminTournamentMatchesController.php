@@ -96,26 +96,13 @@ readonly class AdminTournamentMatchesController
         ]);
 
         try {
-            $result['match'] = $this->matchService->finishMatch($match, $validated);
-
-            // Get affected matches (next matches in bracket)
-            $affectedMatchIds = [];
-
-            // If the match had a next_match_id, it will be affected
-            if ($match->next_match_id) {
-                $affectedMatchIds[] = $match->next_match_id;
-            }
-
-            // If this is a double elimination match with loser_next_match_id
-            if ($match->loser_next_match_id) {
-                $affectedMatchIds[] = $match->loser_next_match_id;
-            }
+            $result = $this->matchService->finishMatch($match, $validated);
 
             return response()->json([
                 'match' => new TournamentMatchResource($result['match']->load([
                     'player1', 'player2', 'clubTable',
                 ])),
-                'affected_matches' => $affectedMatchIds,
+                'affected_matches' => $result['affected_matches'],
             ]);
         } catch (RuntimeException $e) {
             return response()->json([

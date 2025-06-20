@@ -3,8 +3,10 @@
 namespace App\Tournaments\Services;
 
 use App\Tournaments\Enums\EliminationRound;
+use App\Tournaments\Enums\MatchStage;
 use App\Tournaments\Enums\MatchStatus;
 use App\Tournaments\Enums\TournamentType;
+use App\Tournaments\Models\Tournament;
 use App\Tournaments\Models\TournamentMatch;
 use App\Tournaments\Models\TournamentPlayer;
 use Illuminate\Support\Facades\DB;
@@ -43,7 +45,7 @@ class TournamentMatchService
      * Finish a match
      * @throws Throwable
      */
-    public function finishMatch(TournamentMatch $match, array $data): TournamentMatch
+    public function finishMatch(TournamentMatch $match, array $data): array
     {
         return DB::transaction(function () use ($match, $data) {
             if ($match->status !== MatchStatus::IN_PROGRESS && $match->status !== MatchStatus::VERIFICATION) {
@@ -76,20 +78,31 @@ class TournamentMatchService
                 'winner_id'     => $winnerId,
                 'status'        => MatchStatus::COMPLETED,
                 'completed_at'  => now(),
+                'admin_notes' => $data['admin_notes'] ?? $match->admin_notes,
             ]);
+
+            // Track affected matches
+            $affectedMatchIds = [];
 
             // Calculate and update player positions
             $this->updatePlayerPositions($match, $winnerId, $loserId);
 
             // Progress winner to next match if applicable
-            $this->progressWinnerToNextMatch($match);
+            if ($match->next_match_id) {
+                $this->progressWinnerToNextMatch($match);
+                $affectedMatchIds[] = $match->next_match_id;
+            }
 
             // Handle loser progression for double elimination
             if ($match->loser_next_match_id) {
                 $this->progressLoserToNextMatch($match);
+                $affectedMatchIds[] = $match->loser_next_match_id;
             }
 
-            return $match->fresh(['player1', 'player2', 'winner', 'nextMatch']);
+            return [
+                'match'            => $match->fresh(['player1', 'player2', 'winner', 'nextMatch']),
+                'affected_matches' => array_unique($affectedMatchIds),
+            ];
         });
     }
 
@@ -99,10 +112,14 @@ class TournamentMatchService
     private function updatePlayerPositions(TournamentMatch $match, int $winnerId, int $loserId): void
     {
         $tournament = $match->tournament;
-        $tournamentType = $tournament->tournament_type;
 
-        // Update loser's position based on round
-        $loserPosition = $this->calculatePositionByRound($match->round, $tournamentType);
+        // Handle special matches first
+        if ($this->handleSpecialMatchPositions($match, $winnerId, $loserId)) {
+            return;
+        }
+
+        // Calculate loser's position based on tournament type
+        $loserPosition = $this->calculateLoserPosition($match, $tournament);
 
         if ($loserPosition !== null) {
             TournamentPlayer::where('tournament_id', $tournament->id)
@@ -113,65 +130,236 @@ class TournamentMatchService
                 ])
             ;
         }
-
-        // If this is the finals, also set winner's position
-        if ($match->round === EliminationRound::FINALS) {
-            TournamentPlayer::where('tournament_id', $tournament->id)
-                ->where('user_id', $winnerId)
-                ->update([
-                    'position'          => 1,
-                    'elimination_round' => EliminationRound::FINALS,
-                ])
-            ;
-        }
-
-        // Handle third place match
-        if ($match->round === EliminationRound::THIRD_PLACE) {
-            // Winner gets 3rd place
-            TournamentPlayer::where('tournament_id', $tournament->id)
-                ->where('user_id', $winnerId)
-                ->update([
-                    'position'          => 3,
-                    'elimination_round' => EliminationRound::THIRD_PLACE,
-                ])
-            ;
-
-            // Loser gets 4th place
-            TournamentPlayer::where('tournament_id', $tournament->id)
-                ->where('user_id', $loserId)
-                ->update([
-                    'position'          => 4,
-                    'elimination_round' => EliminationRound::THIRD_PLACE,
-                ])
-            ;
-        }
     }
 
     /**
-     * Calculate position based on elimination round
+     * Handle positions for special matches (finals, third place, grand finals)
      */
-    private function calculatePositionByRound(?EliminationRound $round, TournamentType $tournamentType): ?int
+    private function handleSpecialMatchPositions(TournamentMatch $match, int $winnerId, int $loserId): bool
     {
-        if (!$round) {
-            return null;
+        $tournament = $match->tournament;
+
+        // Grand Finals
+        if ($match->match_code === 'GF' || $match->round === EliminationRound::GRAND_FINALS) {
+            TournamentPlayer::where('tournament_id', $tournament->id)
+                ->where('user_id', $winnerId)
+                ->update(['position' => 1])
+            ;
+
+            TournamentPlayer::where('tournament_id', $tournament->id)
+                ->where('user_id', $loserId)
+                ->update(['position' => 2])
+            ;
+
+            return true;
         }
 
-        // For single elimination
-        if (in_array($tournamentType->value, TournamentType::eliminationTypes(), true)) {
-            return match ($round) {
-                EliminationRound::FINALS => false ? 1 : 2,
-                EliminationRound::SEMIFINALS => false ? null : 3,
-                EliminationRound::QUARTERFINALS => false ? null : 5,
-                EliminationRound::ROUND_16 => false ? null : 9,
-                EliminationRound::ROUND_32 => false ? null : 17,
-                EliminationRound::ROUND_64 => false ? null : 33,
-                EliminationRound::ROUND_128 => false ? null : 65,
-                default => null,
-            };
+        // Grand Finals Reset
+        if ($match->match_code === 'GF_RESET') {
+            // Winner is champion, loser is 2nd
+            TournamentPlayer::where('tournament_id', $tournament->id)
+                ->where('user_id', $winnerId)
+                ->update(['position' => 1])
+            ;
+
+            TournamentPlayer::where('tournament_id', $tournament->id)
+                ->where('user_id', $loserId)
+                ->update(['position' => 2])
+            ;
+
+            return true;
         }
 
-        // For group stage matches, positions are calculated differently
+        // Third Place Match
+        if ($match->round === EliminationRound::THIRD_PLACE || $match->stage === MatchStage::THIRD_PLACE) {
+            TournamentPlayer::where('tournament_id', $tournament->id)
+                ->where('user_id', $winnerId)
+                ->update(['position' => 3])
+            ;
+
+            TournamentPlayer::where('tournament_id', $tournament->id)
+                ->where('user_id', $loserId)
+                ->update(['position' => 4])
+            ;
+
+            return true;
+        }
+
+        // Single Elimination Finals
+        if ($match->round === EliminationRound::FINALS && $match->stage === MatchStage::BRACKET) {
+            $isDoubleElim = in_array($tournament->tournament_type->value, [
+                TournamentType::DOUBLE_ELIMINATION->value,
+                TournamentType::DOUBLE_ELIMINATION_FULL->value,
+            ], true);
+
+            if (!$isDoubleElim) {
+                TournamentPlayer::where('tournament_id', $tournament->id)
+                    ->where('user_id', $winnerId)
+                    ->update(['position' => 1])
+                ;
+
+                TournamentPlayer::where('tournament_id', $tournament->id)
+                    ->where('user_id', $loserId)
+                    ->update(['position' => 2])
+                ;
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Calculate loser's position based on match and tournament type
+     */
+    private function calculateLoserPosition(TournamentMatch $match, Tournament $tournament): ?int
+    {
+        $tournamentType = $tournament->tournament_type;
+
+        // Single Elimination
+        if ($tournamentType === TournamentType::SINGLE_ELIMINATION) {
+            return $this->calculateSingleEliminationPosition($match->round);
+        }
+
+        // Double Elimination
+        if (in_array($tournamentType->value, [
+            TournamentType::DOUBLE_ELIMINATION->value,
+            TournamentType::DOUBLE_ELIMINATION_FULL->value,
+        ], true)) {
+            return $this->calculateDoubleEliminationPosition($match, $tournament);
+        }
+
         return null;
+    }
+
+    /**
+     * Calculate position for single elimination
+     */
+    private function calculateSingleEliminationPosition(?EliminationRound $round): ?int
+    {
+        return match ($round) {
+            EliminationRound::FINALS => 2,
+            EliminationRound::SEMIFINALS => 3, // 3-4
+            EliminationRound::QUARTERFINALS => 5, // 5-8
+            EliminationRound::ROUND_16 => 9, // 9-16
+            EliminationRound::ROUND_32 => 17, // 17-32
+            EliminationRound::ROUND_64 => 33, // 33-64
+            EliminationRound::ROUND_128 => 65, // 65-128
+            default => null,
+        };
+    }
+
+    /**
+     * Calculate position for double elimination
+     */
+    private function calculateDoubleEliminationPosition(TournamentMatch $match, Tournament $tournament): ?int
+    {
+        // Lower bracket eliminations
+        if ($match->stage === MatchStage::LOWER_BRACKET || $match->bracket_side === 'lower') {
+            return $this->calculateLowerBracketPosition($match, $tournament);
+        }
+
+        // Upper bracket eliminations (players drop to lower bracket, not eliminated)
+        // In double elimination, losing in upper bracket doesn't give you a final position yet
+        return null;
+    }
+
+    /**
+     * Calculate position when eliminated from lower bracket
+     */
+    private function calculateLowerBracketPosition(TournamentMatch $match, Tournament $tournament): ?int
+    {
+        // Extract the round number from match_code (e.g., "LB_R1M1" -> 1)
+        preg_match('/LB_R(\d+)M/', $match->match_code, $matches);
+        $lowerRoundNumber = isset($matches[1]) ? (int) $matches[1] : 0;
+
+        if ($lowerRoundNumber === 0) {
+            // Fallback to round enum if can't parse
+            return $match->round === EliminationRound::FINALS ? 3 : null;
+        }
+
+        // Get total confirmed players to determine bracket size
+        $totalPlayers = $tournament->players()->where('status', 'confirmed')->count();
+        $bracketSize = 2 ** ceil(log($totalPlayers, 2));
+        $upperRounds = (int) log($bracketSize, 2);
+        $totalLowerRounds = ($upperRounds - 1) * 2;
+
+        // Position mapping based on elimination round in lower bracket
+        // The later you're eliminated in lower bracket, the higher your position
+        $positionMap = $this->getLowerBracketPositionMap($bracketSize, $totalLowerRounds);
+
+        return $positionMap[$lowerRoundNumber] ?? null;
+    }
+
+    /**
+     * Get position mapping for lower bracket rounds
+     */
+    private function getLowerBracketPositionMap(int $bracketSize, int $totalLowerRounds): array
+    {
+        $map = [];
+        $currentPosition = 3; // Start at 3rd place (lower bracket final loser)
+
+        // Map positions from last round to first round
+        for ($round = $totalLowerRounds; $round >= 1; $round--) {
+            if ($round === $totalLowerRounds) {
+                // Lower bracket finals - loser gets 3rd
+                $map[$round] = 3;
+            } elseif ($round === $totalLowerRounds - 1) {
+                // Lower bracket semifinals - loser gets 4th
+                $map[$round] = 4;
+            } else {
+                // Calculate positions for earlier rounds
+                // Positions increase as we go back in rounds
+                $isDropRound = $round % 2 === 1;
+
+                if ($bracketSize <= 4) {
+                    // For 4-player bracket
+                    $map[1] = 4; // LB_R1 loser gets 4th
+                    $map[2] = 3; // LB_R2 loser gets 3rd
+                } elseif ($bracketSize <= 8) {
+                    // For 8-player bracket
+                    $positionsByRound = [
+                        1 => 5, // LB_R1 losers get 5-6
+                        2 => 5, // LB_R2 losers get 5-6
+                        3 => 4, // LB_R3 loser gets 4th
+                        4 => 3, // LB_R4 loser gets 3rd
+                    ];
+                    $map[$round] = $positionsByRound[$round] ?? 7;
+                } elseif ($bracketSize <= 16) {
+                    // For 16-player bracket
+                    $positionsByRound = [
+                        1 => 7, // LB_R1 losers get 7-8
+                        2 => 7, // LB_R2 losers get 7-8
+                        3 => 5, // LB_R3 losers get 5-6
+                        4 => 5, // LB_R4 losers get 5-6
+                        5 => 4, // LB_R5 loser gets 4th
+                        6 => 3, // LB_R6 loser gets 3rd
+                    ];
+                    $map[$round] = $positionsByRound[$round] ?? 9;
+                } else {
+                    // For larger brackets, use a formula
+                    $roundsFromEnd = $totalLowerRounds - $round;
+                    if ($roundsFromEnd === 0) {
+                        $map[$round] = 3;
+                    } elseif ($roundsFromEnd === 1) {
+                        $map[$round] = 4;
+                    } elseif ($roundsFromEnd <= 3) {
+                        $map[$round] = 5;
+                    } elseif ($roundsFromEnd <= 5) {
+                        $map[$round] = 7;
+                    } elseif ($roundsFromEnd <= 7) {
+                        $map[$round] = 9;
+                    } elseif ($roundsFromEnd <= 9) {
+                        $map[$round] = 13;
+                    } else {
+                        $map[$round] = 17;
+                    }
+                }
+            }
+        }
+
+        return $map;
     }
 
     /**
@@ -189,8 +377,13 @@ class TournamentMatchService
             return;
         }
 
-        // Determine which player slot to fill
-        if ($nextMatch->previous_match1_id === $match->id) {
+        if ($match->stage === MatchStage::LOWER_BRACKET) {
+            if ($nextMatch->player1_id) {
+                $nextMatch->player2_id = $match->winner_id;
+            } else {
+                $nextMatch->player1_id = $match->winner_id;
+            }
+        } elseif ($nextMatch->previous_match1_id === $match->id) {
             $nextMatch->player1_id = $match->winner_id;
         } elseif ($nextMatch->previous_match2_id === $match->id) {
             $nextMatch->player2_id = $match->winner_id;
@@ -223,7 +416,8 @@ class TournamentMatchService
             return;
         }
 
-        // Determine which player slot to fill
+        // For lower bracket matches, fill the appropriate slot
+        // Losers from upper bracket typically go to player2 slot in drop rounds
         if (!$loserMatch->player1_id) {
             $loserMatch->player1_id = $loserId;
         } else {
