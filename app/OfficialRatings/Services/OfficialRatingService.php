@@ -502,4 +502,33 @@ class OfficialRatingService
             'achievement_amount_delta'   => (float) $player->total_achievement_amount - $playerStat['achievement_amount'],
         ];
     }
+
+    public function getOneYearRating(): \Illuminate\Support\Collection
+    {
+        $tournaments = Tournament::query()
+            ->with('players.user')
+            ->where('is_old', false)
+            ->get()
+        ;
+
+        $players = [];
+        foreach ($tournaments as $tournament) {
+            foreach ($tournament->players as $player) {
+                $players[$player->user_id] = [
+                    'user'               => $player->user,
+                    'rating'             => ($players[$player->user_id]['rating'] ?? 0) + $player->rating_points,
+                    'prize_amount'       => ($players[$player->user_id]['prize_amount'] ?? 0) + $player->prize_amount,
+                    'bonus_amount'       => ($players[$player->user_id]['bonus_amount'] ?? 0) + $player->bonus_amount,
+                    'achievement_amount' => ($players[$player->user_id]['achievement_amount'] ?? 0) + $player->achievement_amount,
+                ];
+            }
+        }
+
+        $i = 1;
+        return collect($players)->sortByDesc('rating')->map(function ($player) use (&$i) {
+            $player['position'] = $i;
+            $i++;
+            return $player;
+        })->values();
+    }
 }

@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\Route;
 Route::group(['prefix' => 'official-ratings'], static function () {
     Route::get('/', [OfficialRatingsController::class, 'index'])->name('official-ratings.index.api');
     Route::get('/active', [OfficialRatingsController::class, 'active'])->name('official-ratings.active');
+    Route::get('/one-year-rating',
+        [OfficialRatingsController::class, 'getOneYearRating'])->name('official-ratings.one-year-rating');
+
     Route::get('/{officialRating}', [OfficialRatingsController::class, 'show'])->name('official-ratings.show.api');
     Route::get('/{officialRating}/players',
         [OfficialRatingsController::class, 'players'])->name('official-ratings.players');
@@ -18,6 +21,7 @@ Route::group(['prefix' => 'official-ratings'], static function () {
         [OfficialRatingsController::class, 'topPlayers'])->name('official-ratings.top-players');
     Route::get('/{officialRating}/players/{userId}',
         [OfficialRatingsController::class, 'playerRating'])->name('official-ratings.player-rating');
+
 
     Route::middleware('auth:sanctum')->get('/{officialRating}/player-delta',
         [OfficialRatingsController::class, 'playerDelta'])->name('official-ratings.player-delta');

@@ -123,4 +123,9 @@ readonly class OfficialRatingsController
 
         return response()->json($delta);
     }
+
+    public function getOneYearRating(): JsonResponse
+    {
+        return response()->json($this->officialRatingService->getOneYearRating());
+    }
 }
