@@ -317,7 +317,7 @@ const columns = computed(() => [
     },
     {
         key: 'killerPoolPrize',
-        label: t('Killer Pool Prize'),
+        label: t('Killer Pool'),
         align: 'center' as const,
         render: (player: OfficialRatingPlayer) => ({
             amount: player.total_killer_pool_prize_amount,

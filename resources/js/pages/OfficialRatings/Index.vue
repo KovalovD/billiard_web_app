@@ -163,11 +163,11 @@ const oneYearColumns = computed(() => [
         })
     },
     {
-        key: 'achievement',
-        label: t('Achievement'),
+        key: 'killer_pool_amount',
+        label: t('Killer Pool'),
         align: 'center' as const,
         render: (player: any) => ({
-            amount: player.achievement_amount || 0,
+            amount: player.killer_pool_amount || 0,
             isCurrentUser: isCurrentUserInOneYear(player)
         })
     },
@@ -176,7 +176,7 @@ const oneYearColumns = computed(() => [
         label: t('Total'),
         align: 'center' as const,
         render: (player: any) => ({
-            amount: (player.prize_amount || 0) + (player.achievement_amount || 0),
+            amount: (player.prize_amount || 0) + (player.achievement_amount || 0) + (player.killer_pool_amount || 0),
             isCurrentUser: isCurrentUserInOneYear(player)
         })
     }
@@ -555,7 +555,7 @@ onMounted(() => {
                                 <span v-else class="text-gray-400">—</span>
                             </template>
 
-                            <template #cell-achievement="{ value }">
+                            <template #cell-killer_pool_amount="{ value }">
                                 <span v-if="value.amount > 0" :class="[
                                     'font-medium text-purple-600 dark:text-purple-400',
                                     value.isCurrentUser ? 'font-bold' : ''

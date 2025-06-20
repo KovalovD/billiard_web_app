@@ -514,10 +514,23 @@ class OfficialRatingService
         $players = [];
         foreach ($tournaments as $tournament) {
             foreach ($tournament->players as $player) {
+                if ($tournament->game->is_multiplayer) {
+                    $prize = ($players[$player->user_id]['killer_pool_amount'] ?? 0) + $player->prize_amount;
+                    $oppositePrize = $players[$player->user_id]['prize_amount'] ?? 0;
+                    $index = 'killer_pool_amount';
+                    $oppositeIndex = 'prize_amount';
+                } else {
+                    $prize = ($players[$player->user_id]['prize_amount'] ?? 0) + $player->prize_amount;
+                    $oppositePrize = $players[$player->user_id]['killer_pool_amount'] ?? 0;
+                    $index = 'prize_amount';
+                    $oppositeIndex = 'killer_pool_amount';
+                }
+
                 $players[$player->user_id] = [
                     'user'               => $player->user,
                     'rating'             => ($players[$player->user_id]['rating'] ?? 0) + $player->rating_points,
-                    'prize_amount'       => ($players[$player->user_id]['prize_amount'] ?? 0) + $player->prize_amount,
+                    $index         => $prize,
+                    $oppositeIndex => $oppositePrize,
                     'bonus_amount'       => ($players[$player->user_id]['bonus_amount'] ?? 0) + $player->bonus_amount,
                     'achievement_amount' => ($players[$player->user_id]['achievement_amount'] ?? 0) + $player->achievement_amount,
                 ];
