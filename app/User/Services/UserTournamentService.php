@@ -3,6 +3,8 @@
 namespace App\User\Services;
 
 use App\Core\Models\User;
+use App\Tournaments\Enums\TournamentPlayerStatus;
+use App\Tournaments\Enums\TournamentStatus;
 use App\Tournaments\Http\Resources\TournamentPlayerResource;
 use App\Tournaments\Http\Resources\TournamentResource;
 use App\Tournaments\Models\Tournament;
@@ -75,19 +77,19 @@ class UserTournamentService
             ];
 
             // Categorize based on tournament status and user's participation status
-            if ($participation->status === 'applied') {
+            if ($participation->status === TournamentPlayerStatus::APPLIED) {
                 $result['pending_applications'][] = $tournamentData;
-            } elseif ($participation->status === 'rejected') {
+            } elseif ($participation->status === TournamentPlayerStatus::REJECTED) {
                 $result['rejected_applications'][] = $tournamentData;
-            } elseif ($participation->status === 'confirmed') {
+            } elseif ($participation->status === TournamentPlayerStatus::CONFIRMED) {
                 switch ($tournament->status) {
-                    case 'upcoming':
+                    case TournamentStatus::UPCOMING:
                         $result['upcoming'][] = $tournamentData;
                         break;
-                    case 'active':
+                    case TournamentStatus::ACTIVE:
                         $result['active'][] = $tournamentData;
                         break;
-                    case 'completed':
+                    case TournamentStatus::COMPLETED:
                         $result['completed'][] = $tournamentData;
                         break;
                 }
