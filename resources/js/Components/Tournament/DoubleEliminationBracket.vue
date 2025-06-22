@@ -1,3 +1,4 @@
+<!-- resources/js/Components/tournaments/DoubleEliminationBracket.vue -->
 <script lang="ts" setup>
 import {Button} from '@/Components/ui';
 import {useLocale} from '@/composables/useLocale';
@@ -31,7 +32,7 @@ const isTouching = ref(false);
 // Bracket visualization settings
 const nodeWidth = 200;
 const nodeHeight = 80;
-const hGap = 120;
+const hGap = 140;
 const vGap = 40;
 
 // Transform matches to bracket format
@@ -49,7 +50,38 @@ interface BracketMatch {
     isWalkover: boolean;
     bracketSide: 'upper' | 'lower' | null;
     stage: string;
+    next_match_id?: number;
+    previous_match1_id?: number;
+    previous_match2_id?: number;
 }
+
+// Transform match data with all relationships
+const transformMatch = (m: TournamentMatch, bracketSide: 'upper' | 'lower' | null, round: number): BracketMatch => ({
+    id: m.id,
+    round,
+    slot: m.bracket_position || 0,
+    player1: m.player1 ? {
+        id: m.player1_id!,
+        name: `${m.player1.firstname} ${m.player1.lastname}`
+    } : null,
+    player2: m.player2 ? {
+        id: m.player2_id!,
+        name: `${m.player2.firstname} ${m.player2.lastname}`
+    } : null,
+    player1_score: m.player1_score,
+    player2_score: m.player2_score,
+    winner_id: m.winner_id,
+    match_code: m.match_code,
+    status: m.status,
+    isWalkover: m.status === 'completed' && (
+        (!!m.player1_id && !m.player2_id) || (!m.player1_id && !!m.player2_id)
+    ),
+    bracketSide,
+    stage: m.stage,
+    next_match_id: m.next_match_id,
+    previous_match1_id: m.previous_match1_id,
+    previous_match2_id: m.previous_match2_id
+});
 
 // Separate upper and lower bracket matches
 const upperBracketMatches = computed<BracketMatch[]>(() => {
@@ -65,85 +97,22 @@ const upperBracketMatches = computed<BracketMatch[]>(() => {
 
     return props.matches
         .filter(m => m.bracket_side === 'upper' && m.round && roundMap[m.round] !== undefined)
-        .map(m => ({
-            id: m.id,
-            round: roundMap[m.round!],
-            slot: m.bracket_position || 0,
-            player1: m.player1 ? {
-                id: m.player1_id!,
-                name: `${m.player1.firstname} ${m.player1.lastname}`
-            } : null,
-            player2: m.player2 ? {
-                id: m.player2_id!,
-                name: `${m.player2.firstname} ${m.player2.lastname}`
-            } : null,
-            player1_score: m.player1_score,
-            player2_score: m.player2_score,
-            winner_id: m.winner_id,
-            match_code: m.match_code,
-            status: m.status,
-            isWalkover: m.status === 'completed' && (
-                (!!m.player1_id && !m.player2_id) || (!m.player1_id && !!m.player2_id)
-            ),
-            bracketSide: 'upper',
-            stage: m.stage
-        }))
+        .map(m => transformMatch(m, 'upper', roundMap[m.round!]))
         .sort((a, b) => a.round - b.round || a.slot - b.slot);
 });
 
 const lowerBracketMatches = computed<BracketMatch[]>(() => {
     return props.matches
         .filter(m => m.bracket_side === 'lower')
-        .map(m => ({
-            id: m.id,
-            round: parseInt(m.match_code.split('_R')[1]?.split('M')[0] || '0') - 1,
-            slot: m.bracket_position || 0,
-            player1: m.player1 ? {
-                id: m.player1_id!,
-                name: `${m.player1.firstname} ${m.player1.lastname}`
-            } : null,
-            player2: m.player2 ? {
-                id: m.player2_id!,
-                name: `${m.player2.firstname} ${m.player2.lastname}`
-            } : null,
-            player1_score: m.player1_score,
-            player2_score: m.player2_score,
-            winner_id: m.winner_id,
-            match_code: m.match_code,
-            status: m.status,
-            isWalkover: m.status === 'completed' && (
-                (!!m.player1_id && !m.player2_id) || (!m.player1_id && !!m.player2_id)
-            ),
-            bracketSide: 'lower',
-            stage: m.stage
-        }))
+        .map(m => transformMatch(m, 'lower', parseInt(m.match_code.split('_R')[1]?.split('M')[0] || '0') - 1))
         .sort((a, b) => a.round - b.round || a.slot - b.slot);
 });
 
 const grandFinals = computed<BracketMatch[]>(() => {
     return props.matches
-        .filter(m => m.round === 'grand_finals')
-        .map(m => ({
-            id: m.id,
-            round: 0,
-            slot: m.match_code === 'GF_RESET' ? 1 : 0,
-            player1: m.player1 ? {
-                id: m.player1_id!,
-                name: `${m.player1.firstname} ${m.player1.lastname}`
-            } : null,
-            player2: m.player2 ? {
-                id: m.player2_id!,
-                name: `${m.player2.firstname} ${m.player2.lastname}`
-            } : null,
-            player1_score: m.player1_score,
-            player2_score: m.player2_score,
-            winner_id: m.winner_id,
-            match_code: m.match_code,
-            status: m.status,
-            isWalkover: false,
-            bracketSide: null,
-            stage: m.stage
-        }));
+        .filter(m => m.match_code === 'GF' || m.match_code === 'GF_RESET')
+        .map(m => transformMatch(m, null, 0))
+        .sort((a, b) => a.slot - b.slot);
 });
 
 // Group matches by round
@@ -171,7 +140,7 @@ const lowerRounds = computed(() => {
 const upperBracketHeight = computed(() => {
     if (upperRounds.value.length === 0) return 0;
     const firstRoundMatches = upperRounds.value[0]?.length || 0;
-    return firstRoundMatches * (nodeHeight + vGap) - vGap + 60; // Extra space for label
+    return firstRoundMatches * (nodeHeight + vGap) - vGap + 60;
 });
 
 // Calculate positions for upper bracket
@@ -191,67 +160,73 @@ const positionedUpperMatches = computed(() => {
     return list;
 });
 
-// Calculate positions for lower bracket with proper spacing
+// Calculate positions for lower bracket with proper alignment
 const positionedLowerMatches = computed(() => {
     const list: Array<BracketMatch & { x: number; y: number }> = [];
     const baseY = upperBracketHeight.value + 100;
+    const totalLowerRounds = lowerRounds.value.length;
 
-    // Track positions for connection drawing
-    const roundPositions = new Map<number, { matches: any[], spacing: number }>();
+    // Calculate the target Y position for grand finals
+    const upperFinal = positionedUpperMatches.value.find(m => m.round === upperRounds.value.length - 1);
+    const targetY = upperFinal ? upperFinal.y : 200;
+
+    // Create a map to track positioned matches
+    const positionedMatchesMap = new Map<number, { x: number; y: number }>();
+
+    // Create a map of all lower matches by ID for quick lookup
+    const lowerMatchesById = new Map<number, BracketMatch>();
+    lowerBracketMatches.value.forEach(match => {
+        lowerMatchesById.set(match.id, match);
+    });
 
     lowerRounds.value.forEach((roundMatches, roundIndex) => {
-        const lowerRoundNumber = roundIndex + 1;
-        const isDropRound = lowerRoundNumber % 2 === 1;
-
-        let spacing: number;
-        let yOffset: number;
-
-        if (lowerRoundNumber === 1) {
-            // First round: matches from upper R1 losers
-            spacing = (nodeHeight + vGap) * 2; // Space for pairing upper R1 losers
-            yOffset = 0;
-        } else if (isDropRound) {
-            // Drop rounds: spacing based on corresponding upper round
-            const upperRoundIndex = Math.floor(lowerRoundNumber / 2);
-            spacing = Math.pow(2, upperRoundIndex) * (nodeHeight + vGap);
-
-            // Align with previous round winners
-            const prevRound = roundPositions.get(roundIndex - 1);
-            if (prevRound && prevRound.matches.length > 0) {
-                // Center align with previous round
-                const prevFirstY = prevRound.matches[0].y;
-                const prevLastY = prevRound.matches[prevRound.matches.length - 1].y;
-                const prevCenter = (prevFirstY + prevLastY) / 2;
-                const thisHeight = (roundMatches.length - 1) * spacing;
-                yOffset = prevCenter - thisHeight / 2 - baseY - 40;
-            } else {
-                yOffset = 0;
-            }
-        } else {
-            // Regular rounds: half the matches of previous round
-            const prevRound = roundPositions.get(roundIndex - 1);
-            if (prevRound) {
-                spacing = prevRound.spacing * 2;
-                // Align with previous round pairs
-                yOffset = prevRound.matches[0].y - baseY - 40;
-            } else {
-                spacing = (nodeHeight + vGap) * 2;
-                yOffset = 0;
-            }
-        }
-
-        const roundMatchPositions: any[] = [];
+        const remainingRounds = totalLowerRounds - roundIndex;
+        const stepUpFactor = remainingRounds <= 4 ? (4 - remainingRounds) * 0.15 : 0;
 
         roundMatches.forEach((match, matchIndex) => {
             const x = roundIndex * (nodeWidth + hGap);
-            const y = baseY + 40 + yOffset + matchIndex * spacing;
+            let y = baseY + 40;
+
+            // Check if this match has previous matches in the same bracket
+            const hasPrevMatch1 = match.previous_match1_id && lowerMatchesById.has(match.previous_match1_id);
+            const hasPrevMatch2 = match.previous_match2_id && lowerMatchesById.has(match.previous_match2_id);
+
+            if (hasPrevMatch1 && hasPrevMatch2) {
+                // Position between two previous matches
+                const prev1Pos = positionedMatchesMap.get(match.previous_match1_id!);
+                const prev2Pos = positionedMatchesMap.get(match.previous_match2_id!);
+
+                if (prev1Pos && prev2Pos) {
+                    // Calculate middle position
+                    y = (prev1Pos.y + prev2Pos.y) / 2;
+
+                    // Apply step-up factor towards grand finals
+                    const stepUp = (targetY - y) * stepUpFactor;
+                    y += stepUp;
+                }
+            } else if (hasPrevMatch1 || hasPrevMatch2) {
+                // Position next to single previous match
+                const prevMatchId = hasPrevMatch1 ? match.previous_match1_id : match.previous_match2_id;
+                const prevPos = positionedMatchesMap.get(prevMatchId!);
+
+                if (prevPos) {
+                    y = prevPos.y;
+
+                    // Apply step-up factor
+                    const stepUp = (targetY - y) * stepUpFactor;
+                    y += stepUp;
+                }
+            } else {
+                // No previous matches in same bracket (first round or receiving from upper bracket)
+                // Use default spacing based on round
+                const spacing = Math.pow(2, Math.floor((roundIndex + 1) / 2)) * (nodeHeight + vGap);
+                y = baseY + 40 + matchIndex * spacing;
+            }
 
             const positionedMatch = {...match, x, y};
             list.push(positionedMatch);
-            roundMatchPositions.push(positionedMatch);
+            positionedMatchesMap.set(match.id, {x, y});
         });
-
-        roundPositions.set(roundIndex, {matches: roundMatchPositions, spacing});
     });
 
     return list;
@@ -259,9 +234,12 @@ const positionedLowerMatches = computed(() => {
 
 // Calculate grand finals position
 const positionedGrandFinals = computed(() => {
-    const upperFinalX = Math.max(...positionedUpperMatches.value.map(m => m.x), 0) + nodeWidth + hGap;
+    const maxUpperX = Math.max(...positionedUpperMatches.value.map(m => m.x), 0);
+    const maxLowerX = Math.max(...positionedLowerMatches.value.map(m => m.x), 0);
+    const grandFinalX = Math.max(maxUpperX, maxLowerX) + nodeWidth + hGap * 1.5;
+
     const upperFinal = positionedUpperMatches.value.find(m => m.round === upperRounds.value.length - 1);
-    const lowerFinal = positionedLowerMatches.value.find(m => m.round === lowerRounds.value.length - 1);
+    const lowerFinal = positionedLowerMatches.value[positionedLowerMatches.value.length - 1];
 
     let centerY = 40;
     if (upperFinal && lowerFinal) {
@@ -272,121 +250,72 @@ const positionedGrandFinals = computed(() => {
 
     return grandFinals.value.map((match, index) => ({
         ...match,
-        x: upperFinalX,
+        x: grandFinalX,
         y: centerY + index * (nodeHeight + vGap * 2) - (grandFinals.value.length - 1) * (nodeHeight + vGap) / 2
     }));
 });
 
-// Find next match in upper bracket
-function nextOfUpper(match: BracketMatch): any {
-    return positionedUpperMatches.value.find(
-        m => m.round === match.round + 1 && m.slot === Math.floor(match.slot / 2)
-    );
-}
+// All positioned matches
+const allPositionedMatches = computed(() => [
+    ...positionedUpperMatches.value,
+    ...positionedLowerMatches.value,
+    ...positionedGrandFinals.value
+]);
 
-// Calculate connector lines for upper bracket
-const upperSegments = computed(() => {
-    const segs: any[] = [];
-    positionedUpperMatches.value.forEach(m => {
-        const n = nextOfUpper(m);
-        if (!n) return;
-
-        const midX = n.x - hGap / 2;
-        const yFrom = m.y + nodeHeight / 2;
-        const yTo = n.y + nodeHeight / 2;
-
-        segs.push({id: `${m.id}-h1`, x1: m.x + nodeWidth, y1: yFrom, x2: midX, y2: yFrom});
-        segs.push({id: `${m.id}-v`, x1: midX, y1: yFrom, x2: midX, y2: yTo});
-        segs.push({id: `${m.id}-h2`, x1: midX, y1: yTo, x2: n.x, y2: yTo});
+// Create a map for quick position lookup by match ID
+const matchPositionMap = computed(() => {
+    const map = new Map<number, { x: number; y: number }>();
+    allPositionedMatches.value.forEach(match => {
+        map.set(match.id, {x: match.x, y: match.y});
     });
-
-    // Connect upper final to grand final
-    const upperFinal = positionedUpperMatches.value.find(m => m.round === upperRounds.value.length - 1);
-    const gf = positionedGrandFinals.value[0];
-    if (upperFinal && gf) {
-        const midX = gf.x - hGap / 2;
-        const yFrom = upperFinal.y + nodeHeight / 2;
-        const yTo = gf.y + nodeHeight / 2;
-
-        segs.push({id: 'uf-gf-h1', x1: upperFinal.x + nodeWidth, y1: yFrom, x2: midX, y2: yFrom});
-        segs.push({id: 'uf-gf-v', x1: midX, y1: yFrom, x2: midX, y2: yTo});
-        segs.push({id: 'uf-gf-h2', x1: midX, y1: yTo, x2: gf.x, y2: yTo});
-    }
-
-    return segs;
+    return map;
 });
 
-// Calculate connector lines for lower bracket
-const lowerSegments = computed(() => {
+// Calculate connector lines for progression paths
+const connectorSegments = computed(() => {
     const segs: any[] = [];
 
-    positionedLowerMatches.value.forEach((m) => {
-        if (m.round === 0) return; // First round has no previous matches in lower bracket
+    allPositionedMatches.value.forEach(match => {
+        // Winner progression only
+        if (match.next_match_id) {
+            const nextPos = matchPositionMap.value.get(match.next_match_id);
+            if (nextPos) {
+                const fromX = match.x + nodeWidth;
+                const fromY = match.y + nodeHeight / 2;
+                const toX = nextPos.x;
+                const toY = nextPos.y + nodeHeight / 2;
 
-        const prevRoundMatches = positionedLowerMatches.value.filter(pm => pm.round === m.round - 1);
-        const lowerRoundNumber = m.round + 1;
-        const isDropRound = lowerRoundNumber % 2 === 1;
+                const midX = fromX + (toX - fromX) / 2;
 
-        if (!isDropRound) {
-            // Regular rounds: connect from two previous lower bracket matches
-            const prevMatch1 = prevRoundMatches.find(pm => pm.slot === m.slot * 2);
-            const prevMatch2 = prevRoundMatches.find(pm => pm.slot === m.slot * 2 + 1);
-
-            if (prevMatch1) {
-                const midX = m.x - hGap / 2;
-                const yFrom = prevMatch1.y + nodeHeight / 2;
-                const yTo = m.y + nodeHeight / 2;
-
-                segs.push({id: `${prevMatch1.id}-h1`, x1: prevMatch1.x + nodeWidth, y1: yFrom, x2: midX, y2: yFrom});
-                segs.push({id: `${prevMatch1.id}-v`, x1: midX, y1: yFrom, x2: midX, y2: yTo});
-            }
-
-            if (prevMatch2) {
-                const midX = m.x - hGap / 2;
-                const yFrom = prevMatch2.y + nodeHeight / 2;
-                const yTo = m.y + nodeHeight / 2;
-
-                segs.push({id: `${prevMatch2.id}-h1`, x1: prevMatch2.x + nodeWidth, y1: yFrom, x2: midX, y2: yFrom});
-                segs.push({id: `${prevMatch2.id}-v`, x1: midX, y1: yFrom, x2: midX, y2: yTo});
-            }
-
-            if (prevMatch1 || prevMatch2) {
                 segs.push({
-                    id: `${m.id}-h2`,
-                    x1: m.x - hGap / 2,
-                    y1: m.y + nodeHeight / 2,
-                    x2: m.x,
-                    y2: m.y + nodeHeight / 2
+                    id: `${match.id}-h1`,
+                    x1: fromX,
+                    y1: fromY,
+                    x2: midX,
+                    y2: fromY,
+                    type: match.bracketSide === 'lower' ? 'lower' : 'upper'
                 });
-            }
-        } else if (lowerRoundNumber > 1) {
-            // Drop rounds (except first): connect from previous lower bracket match
-            const prevMatch = prevRoundMatches.find(pm => pm.slot === m.slot);
 
-            if (prevMatch) {
-                const midX = m.x - hGap / 2;
-                const yFrom = prevMatch.y + nodeHeight / 2;
-                const yTo = m.y + nodeHeight / 2;
+                segs.push({
+                    id: `${match.id}-v`,
+                    x1: midX,
+                    y1: fromY,
+                    x2: midX,
+                    y2: toY,
+                    type: match.bracketSide === 'lower' ? 'lower' : 'upper'
+                });
 
-                segs.push({id: `${prevMatch.id}-h1`, x1: prevMatch.x + nodeWidth, y1: yFrom, x2: midX, y2: yFrom});
-                segs.push({id: `${prevMatch.id}-v`, x1: midX, y1: yFrom, x2: midX, y2: yTo});
-                segs.push({id: `${prevMatch.id}-h2`, x1: midX, y1: yTo, x2: m.x, y2: yTo});
+                segs.push({
+                    id: `${match.id}-h2`,
+                    x1: midX,
+                    y1: toY,
+                    x2: toX,
+                    y2: toY,
+                    type: match.bracketSide === 'lower' ? 'lower' : 'upper'
+                });
             }
         }
     });
-
-    // Connect lower final to grand final
-    const lowerFinal = positionedLowerMatches.value.find(m => m.round === lowerRounds.value.length - 1);
-    const gf = positionedGrandFinals.value[0];
-    if (lowerFinal && gf) {
-        const midX = gf.x - hGap / 2;
-        const yFrom = lowerFinal.y + nodeHeight / 2;
-        const yTo = gf.y + nodeHeight / 2;
-
-        segs.push({id: 'lf-gf-h1', x1: lowerFinal.x + nodeWidth, y1: yFrom, x2: midX, y2: yFrom});
-        segs.push({id: 'lf-gf-v', x1: midX, y1: yFrom, x2: midX, y2: yTo});
-        segs.push({id: 'lf-gf-h2', x1: midX, y1: yTo, x2: gf.x, y2: yTo});
-    }
 
     return segs;
 });
@@ -411,13 +340,6 @@ const svgHeight = computed(() => {
     );
     return maxY + nodeHeight + 80;
 });
-
-// All positioned matches
-const allPositionedMatches = computed(() => [
-    ...positionedUpperMatches.value,
-    ...positionedLowerMatches.value,
-    ...positionedGrandFinals.value
-]);
 
 // Zoom functions
 const setZoom = (newZoom: number) => {
@@ -524,8 +446,8 @@ const scrollToCenter = () => {
     nextTick(() => {
         if (bracketScrollContainerRef.value) {
             const container = bracketScrollContainerRef.value;
-            container.scrollLeft = (container.scrollWidth - container.clientWidth) / 2;
-            container.scrollTop = 100; // Start near top
+            container.scrollLeft = 100;
+            container.scrollTop = 100;
         }
     });
 };
@@ -606,10 +528,10 @@ onUnmounted(() => {
                         <!-- Zoom Controls -->
                         <div class="flex items-center gap-1 rounded-lg border border-gray-200 dark:border-gray-700 p-1">
                             <Button
-                                :title="t('Zoom Out')"
                                 size="sm"
                                 variant="ghost"
                                 @click="zoomOut"
+                                :title="t('Zoom Out')"
                             >
                                 <MinusIcon class="h-4 w-4"/>
                             </Button>
@@ -617,18 +539,18 @@ onUnmounted(() => {
                                 {{ Math.round(zoomLevel * 100) }}%
                             </span>
                             <Button
-                                :title="t('Zoom In')"
                                 size="sm"
                                 variant="ghost"
                                 @click="zoomIn"
+                                :title="t('Zoom In')"
                             >
                                 <PlusIcon class="h-4 w-4"/>
                             </Button>
                             <Button
-                                :title="t('Reset Zoom')"
                                 size="sm"
                                 variant="ghost"
                                 @click="resetZoom"
+                                :title="t('Reset Zoom')"
                             >
                                 <RotateCcwIcon class="h-4 w-4"/>
                             </Button>
@@ -636,10 +558,10 @@ onUnmounted(() => {
 
                         <!-- Fullscreen Button -->
                         <Button
-                            :title="isFullscreen ? t('Exit Fullscreen') : t('Enter Fullscreen')"
                             size="sm"
                             variant="outline"
                             @click="toggleFullscreen"
+                            :title="isFullscreen ? t('Exit Fullscreen') : t('Enter Fullscreen')"
                         >
                             <ExpandIcon v-if="!isFullscreen" class="h-4 w-4"/>
                             <ShrinkIcon v-else class="h-4 w-4"/>
@@ -664,16 +586,16 @@ onUnmounted(() => {
             <div
                 ref="bracketScrollContainerRef"
                 class="bracket-container overflow-auto bg-gray-50 dark:bg-gray-900/50 touch-none"
+                @touchstart="handleTouchStart"
                 @touchend="handleTouchEnd"
                 @touchmove="handleTouchMove"
-                @touchstart="handleTouchStart"
                 @wheel="handleWheel"
             >
                 <div :style="{ transform: `scale(${zoomLevel})` }" class="bracket-zoom-wrapper">
                     <div class="p-6">
                         <svg
-                            :height="svgHeight"
                             :width="svgWidth"
+                            :height="svgHeight"
                             class="bracket-svg"
                             style="min-width: 100%;"
                         >
@@ -693,40 +615,33 @@ onUnmounted(() => {
                                   class="bracket-label text-center">{{ t('Grand Finals') }}
                             </text>
 
-                            <!-- Upper bracket connectors -->
+                            <!-- Connector lines -->
                             <g class="connectors">
                                 <line
-                                    v-for="seg in upperSegments"
+                                    v-for="seg in connectorSegments"
                                     :key="seg.id"
-                                    :x1="seg.x1" :x2="seg.x2" :y1="seg.y1" :y2="seg.y2"
-                                    class="connector-line"
-                                />
-                            </g>
-
-                            <!-- Lower bracket connectors -->
-                            <g class="connectors">
-                                <line
-                                    v-for="seg in lowerSegments"
-                                    :key="seg.id"
-                                    :x1="seg.x1" :x2="seg.x2" :y1="seg.y1" :y2="seg.y2"
-                                    class="connector-line connector-line-lower"
+                                    :class="[
+                                        'connector-line',
+                                        seg.type === 'lower' ? 'connector-line-lower' : ''
+                                    ]" :x1="seg.x1" :x2="seg.x2" :y1="seg.y1"
+                                    :y2="seg.y2"
                                 />
                             </g>
 
                             <!-- All Matches -->
                             <g class="matches">
                                 <g v-for="m in allPositionedMatches" :key="m.id"
-                                   :class="[canEdit ? 'cursor-pointer' : 'cursor-not-allowed']"
                                    class="match-group"
+                                   :class="[canEdit ? 'cursor-pointer' : 'cursor-not-allowed']"
                                    @click="handleMatchClick(m.id)">
                                     <!-- Match background -->
                                     <rect
-                                        :class="[getMatchClass(m), m.bracketSide === 'lower' ? 'lower-bracket-match' : '']"
-                                        :height="nodeHeight"
-                                        :width="nodeWidth"
                                         :x="m.x"
                                         :y="m.y"
+                                        :class="[getMatchClass(m), m.bracketSide === 'lower' ? 'lower-bracket-match' : '']"
+                                        :height="nodeHeight"
                                         rx="8"
+                                        :width="nodeWidth"
                                     />
 
                                     <!-- Walkover indicator -->
@@ -739,8 +654,7 @@ onUnmounted(() => {
                                             rx="2"
                                             width="24"
                                         />
-                                        <text :x="m.x + 14" :y="m.y + 13" class="walkover-text"
-                                              text-anchor="middle">
+                                        <text :x="m.x + 14" :y="m.y + 13" class="walkover-text" text-anchor="middle">
                                             W/O
                                         </text>
                                     </g>
@@ -754,16 +668,16 @@ onUnmounted(() => {
                                     <g>
                                         <rect
                                             :class="m.winner_id === m.player1?.id ? 'player-winner' : 'player-bg'"
-                                            :height="30"
-                                            :width="nodeWidth" :x="m.x"
                                             :y="m.y + 20"
+                                            :height="30"
+                                            :width="nodeWidth"
                                             rx="4"
+                                            :x="m.x"
                                         />
                                         <text :x="m.x + 8" :y="m.y + 38" class="player-name">
                                             {{ getPlayerDisplay(m.player1, m.isWalkover, !!m.player2) }}
                                         </text>
-                                        <text :x="m.x + nodeWidth - 25" :y="m.y + 38"
-                                              class="player-score">
+                                        <text :x="m.x + nodeWidth - 25" :y="m.y + 38" class="player-score">
                                             {{ m.player1_score ?? '-' }}
                                         </text>
                                     </g>
@@ -772,16 +686,16 @@ onUnmounted(() => {
                                     <g>
                                         <rect
                                             :class="m.winner_id === m.player2?.id ? 'player-winner' : 'player-bg'"
-                                            :height="30"
-                                            :width="nodeWidth" :x="m.x"
                                             :y="m.y + 50"
+                                            :height="30"
+                                            :width="nodeWidth"
                                             rx="4"
+                                            :x="m.x"
                                         />
                                         <text :x="m.x + 8" :y="m.y + 68" class="player-name">
                                             {{ getPlayerDisplay(m.player2, m.isWalkover, !!m.player1) }}
                                         </text>
-                                        <text :x="m.x + nodeWidth - 25" :y="m.y + 68"
-                                              class="player-score">
+                                        <text :x="m.x + nodeWidth - 25" :y="m.y + 68" class="player-score">
                                             {{ m.player2_score ?? '-' }}
                                         </text>
                                     </g>
@@ -790,8 +704,8 @@ onUnmounted(() => {
                                     <circle
                                         :cx="m.x + nodeWidth - 10"
                                         :cy="m.y + 10"
-                                        :fill="getStatusColor(m.status)"
                                         r="4"
+                                        :fill="getStatusColor(m.status)"
                                     />
                                 </g>
                             </g>

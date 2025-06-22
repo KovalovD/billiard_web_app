@@ -377,16 +377,18 @@ class TournamentMatchService
             return;
         }
 
-        if ($match->stage === MatchStage::LOWER_BRACKET) {
-            if ($nextMatch->player1_id) {
-                $nextMatch->player2_id = $match->winner_id;
-            } else {
-                $nextMatch->player1_id = $match->winner_id;
-            }
-        } elseif ($nextMatch->previous_match1_id === $match->id) {
+        // Determine which slot the winner should go to
+        if ($nextMatch->previous_match1_id === $match->id) {
             $nextMatch->player1_id = $match->winner_id;
         } elseif ($nextMatch->previous_match2_id === $match->id) {
             $nextMatch->player2_id = $match->winner_id;
+        } else {
+            // Fallback: fill empty slot
+            if (!$nextMatch->player1_id) {
+                $nextMatch->player1_id = $match->winner_id;
+            } else {
+                $nextMatch->player2_id = $match->winner_id;
+            }
         }
 
         // Update status to ready if both players are set
@@ -416,12 +418,20 @@ class TournamentMatchService
             return;
         }
 
-        // For lower bracket matches, fill the appropriate slot
-        // Losers from upper bracket typically go to player2 slot in drop rounds
-        if (!$loserMatch->player1_id) {
+        // Use position hint if available
+        $position = $match->loser_next_match_position ?? null;
+
+        if ($position === 1) {
             $loserMatch->player1_id = $loserId;
-        } else {
+        } elseif ($position === 2) {
             $loserMatch->player2_id = $loserId;
+        } else {
+            // Default behavior: fill empty slot
+            if (!$loserMatch->player1_id) {
+                $loserMatch->player1_id = $loserId;
+            } else {
+                $loserMatch->player2_id = $loserId;
+            }
         }
 
         // Update status to ready if both players are set
@@ -516,6 +526,11 @@ class TournamentMatchService
                 }
                 $loserMatch->status = MatchStatus::PENDING;
                 $loserMatch->save();
+
+                // Recursively revert if loser match was completed
+                if ($loserMatch->winner_id) {
+                    $this->revertMatchProgression($loserMatch);
+                }
             }
         }
     }
