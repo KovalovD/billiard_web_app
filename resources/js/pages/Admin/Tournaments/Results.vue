@@ -41,10 +41,8 @@ const isFormValid = computed(() => {
     if (resultForm.value.length === 0) return false;
 
     const positions = resultForm.value.map(r => r.position);
-    const uniquePositions = new Set(positions);
 
-    return uniquePositions.size === positions.length &&
-        positions.every(p => p > 0) &&
+    return positions.every(p => p > 0) &&
         resultForm.value.every(r =>
             r.rating_points >= 0 &&
             r.prize_amount >= 0 &&
@@ -85,7 +83,7 @@ const fetchData = async () => {
 
             initializeForm();
         } else {
-            throw new Error('Данных нет');
+            throw new Error('No data');
         }
     } catch (err: any) {
         error.value = err.message ?? 'Failed to load tournament data';

@@ -1,14 +1,16 @@
+<!-- resources/js/Components/TournamentBrackets/SingleEliminationBracketViewer.vue -->
 <script lang="ts" setup>
 import {Button} from '@/Components/ui';
 import {useLocale} from '@/composables/useLocale';
 import type {Tournament, TournamentMatch} from '@/types/api';
-import {ExpandIcon, MinusIcon, PlusIcon, RotateCcwIcon, ShrinkIcon} from 'lucide-vue-next';
+import {ExpandIcon, MinusIcon, PlusIcon, RotateCcwIcon, ShrinkIcon, UserIcon} from 'lucide-vue-next';
 import {computed, nextTick, onMounted, onUnmounted, ref, watch} from 'vue';
 
 const props = defineProps<{
     matches: TournamentMatch[];
     tournament: Tournament;
     canEdit: boolean;
+    currentUserId?: number;
 }>();
 
 const emit = defineEmits<{
@@ -129,6 +131,50 @@ const positionedMatches = computed<PositionedMatch[]>(() => {
 
     return list;
 });
+
+// Find current user's non-completed matches
+const currentUserActiveMatches = computed(() => {
+    if (!props.currentUserId) return [];
+
+    return positionedMatches.value.filter(match =>
+        (match.player1?.id === props.currentUserId || match.player2?.id === props.currentUserId) &&
+        match.status !== 'completed'
+    );
+});
+
+const hasCurrentUserActiveMatch = computed(() => currentUserActiveMatches.value.length > 0);
+
+// Find and focus on user's match
+const findMyMatch = () => {
+    if (currentUserActiveMatches.value.length === 0) return;
+
+    // Find the most relevant match (active > ready > pending)
+    const priorityOrder = ['in_progress', 'verification', 'ready', 'pending'];
+    const sortedMatches = [...currentUserActiveMatches.value].sort((a, b) => {
+        const aIndex = priorityOrder.indexOf(a.status);
+        const bIndex = priorityOrder.indexOf(b.status);
+        return aIndex - bIndex;
+    });
+
+    const targetMatch = sortedMatches[0];
+    if (!targetMatch) return;
+
+    // Set zoom to comfortable level
+    setZoom(1.2);
+
+    // Scroll to match position
+    nextTick(() => {
+        if (bracketScrollContainerRef.value) {
+            const container = bracketScrollContainerRef.value;
+            const matchX = targetMatch.x * zoomLevel.value;
+            const matchY = targetMatch.y * zoomLevel.value;
+
+            // Center the match in viewport
+            container.scrollLeft = matchX - container.clientWidth / 2 + (nodeWidth * zoomLevel.value) / 2;
+            container.scrollTop = matchY - container.clientHeight / 2 + (nodeHeight * zoomLevel.value) / 2;
+        }
+    });
+};
 
 // Find next match
 function nextOf(match: BracketMatch): PositionedMatch | undefined {
@@ -303,6 +349,11 @@ const getMatchClass = (match: PositionedMatch) => {
     return 'match-pending';
 };
 
+const isCurrentUserMatch = (match: any) => {
+    return props.currentUserId &&
+        (match.player1?.id === props.currentUserId || match.player2?.id === props.currentUserId);
+};
+
 const getPlayerDisplay = (player: { id: number; name: string } | null, isWalkover: boolean, hasOpponent: boolean) => {
     if (player) return player.name;
     if (isWalkover && !hasOpponent) return t('Walkover');
@@ -353,6 +404,17 @@ onUnmounted(() => {
 
                     <!-- Zoom and Fullscreen Controls -->
                     <div class="flex items-center gap-2">
+                        <!-- Find Me Button -->
+                        <Button
+                            v-if="hasCurrentUserActiveMatch"
+                            :title="t('Find my match')"
+                            size="sm"
+                            @click="findMyMatch"
+                        >
+                            <UserIcon class="h-4 w-4 mr-1"/>
+                            {{ t('Find Me') }}
+                        </Button>
+
                         <!-- Zoom Controls -->
                         <div class="flex items-center gap-1 rounded-lg border border-gray-200 dark:border-gray-700 p-1">
                             <Button
@@ -445,8 +507,13 @@ onUnmounted(() => {
                                    @click="handleMatchClick(m.id)">
                                     <!-- Match background -->
                                     <rect
-                                        :class="getMatchClass(m)" :height="nodeHeight"
-                                        :width="nodeWidth" :x="m.x"
+                                        :class="[
+                                            getMatchClass(m),
+                                            isCurrentUserMatch(m) ? 'user-match' : ''
+                                        ]"
+                                        :height="nodeHeight"
+                                        :width="nodeWidth"
+                                        :x="m.x"
                                         :y="m.y"
                                         rx="8"
                                     />
@@ -590,6 +657,12 @@ onUnmounted(() => {
     fill: rgba(230, 255, 237, 0.1);
     stroke: #10b981;
     stroke-width: 1;
+}
+
+/* Current user match highlight */
+.user-match {
+    stroke-width: 2 !important;
+    stroke: #399b2a !important;
 }
 
 .match-group:hover .match-pending,

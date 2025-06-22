@@ -22,6 +22,8 @@ import DoubleEliminationBracket from '@/Components/Tournament/DoubleEliminationB
 import {useLocale} from '@/composables/useLocale';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
+import {useAuth} from "@/composables/useAuth";
+
 import type {ClubTable, Tournament, TournamentBracket, TournamentMatch} from '@/types/api';
 import {Head, router} from '@inertiajs/vue3';
 import {
@@ -37,6 +39,7 @@ import {
 } from 'lucide-vue-next';
 import {computed, onMounted, ref, watch} from 'vue';
 
+
 defineOptions({layout: AuthenticatedLayout});
 
 const props = defineProps<{
@@ -44,6 +47,11 @@ const props = defineProps<{
 }>();
 
 const {t} = useLocale();
+
+const {user} = useAuth();
+
+// Get current user from page props
+const currentUserId = user.value?.id;
 
 // Data
 const tournament = ref<Tournament | null>(null);
@@ -512,6 +520,7 @@ onMounted(() => {
                 <SingleEliminationBracket
                     v-if="!isDoubleElimination"
                     :can-edit="canEditTournament"
+                    :current-user-id="currentUserId"
                     :matches="matches"
                     :tournament="tournament!"
                     @open-match="openMatchModal"
@@ -520,6 +529,7 @@ onMounted(() => {
                 <DoubleEliminationBracket
                     v-else
                     :can-edit="canEditTournament"
+                    :current-user-id="currentUserId"
                     :matches="matches"
                     :tournament="tournament!"
                     @open-match="openMatchModal"
