@@ -35,6 +35,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
                 [MultiplayerGamesController::class, 'start'])->name('multiplayer-games.start');
             Route::post('/{multiplayerGame}/cancel',
                 [MultiplayerGamesController::class, 'cancel'])->name('multiplayer-games.cancel');
+            Route::delete('/{multiplayerGame}/players/{user}',
+                [MultiplayerGamesController::class, 'removePlayer'])->name('multiplayer-games.remove-player');
         });
     });
 });

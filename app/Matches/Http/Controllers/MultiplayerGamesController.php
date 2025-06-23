@@ -157,4 +157,12 @@ readonly class MultiplayerGamesController
             $this->service->getRatingSummary($multiplayerGame),
         );
     }
+
+    // Remove a player from game (admin only, if it's in registration status)
+    public function removePlayer(League $league, MultiplayerGame $multiplayerGame, User $user): JsonResponse
+    {
+        return response()->json(new MultiplayerGameResource(
+            $this->service->removePlayer($multiplayerGame, $user),
+        ));
+    }
 }

@@ -33,6 +33,27 @@ class MultiplayerGameService
     }
 
     /**
+     * Remove a player from a multiplayer game (admin only)
+     */
+    public function removePlayer(MultiplayerGame $game, User $user): MultiplayerGame
+    {
+        if ($game->status !== 'registration') {
+            throw new RuntimeException('Cannot remove players from a game that has already started.');
+        }
+
+        $player = $game->players()->where('user_id', $user->id)->first();
+
+        if (!$player) {
+            throw new RuntimeException('Player is not in this game.');
+        }
+
+        $player->delete();
+
+        $game->load(['players.user']);
+        return $game;
+    }
+
+    /**
      * Join a multiplayer game
      */
     public function join(League $league, MultiplayerGame $game, User $user): MultiplayerGame

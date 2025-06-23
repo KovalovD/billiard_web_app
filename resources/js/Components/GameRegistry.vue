@@ -5,8 +5,8 @@ import {useAuth} from '@/composables/useAuth';
 import {useMultiplayerGames} from '@/composables/useMultiplayerGames';
 import type {MultiplayerGame} from '@/types/api';
 import {Link} from '@inertiajs/vue3';
-import {LogInIcon, UserPlusIcon, UsersIcon} from 'lucide-vue-next';
-import {computed} from 'vue';
+import {LogInIcon, TrashIcon, UserPlusIcon, UsersIcon} from 'lucide-vue-next';
+import {computed, ref} from 'vue';
 import {useLocale} from '@/composables/useLocale';
 
 interface Props {
@@ -18,13 +18,22 @@ const props = defineProps<Props>();
 const emit = defineEmits(['updated']);
 const { t } = useLocale();
 
-const {user, isAuthenticated} = useAuth();
-const {joinMultiplayerGame, leaveMultiplayerGame, isLoading} = useMultiplayerGames();
+const {user, isAuthenticated, isAdmin} = useAuth();
+const {joinMultiplayerGame, leaveMultiplayerGame, removePlayerFromGame, isLoading} = useMultiplayerGames();
+
+// Track which player is being deleted
+const deletingPlayerId = ref<number | null>(null);
 
 // Check if current user is registered (authenticated users only)
 const isUserRegistered = computed(() => {
     if (!isAuthenticated.value || !user.value) return false;
     return props.game.active_players.some(player => player.user.id === user.value!.id);
+});
+
+// Check if user is moderator
+const isModerator = computed(() => {
+    if (!isAuthenticated.value || !user.value) return false;
+    return props.game.is_current_user_moderator;
 });
 
 // Format currency
@@ -81,6 +90,26 @@ const handleLeave = async () => {
 // eslint-disable-next-line
     } catch (err) {
         // Error is handled by the composable
+    }
+};
+
+// Handle remove player (admin/moderator only)
+const handleRemovePlayer = async (playerId: number) => {
+    if (!isAuthenticated.value || (!isAdmin.value && !isModerator.value)) return;
+
+    if (!confirm(t('Are you sure you want to remove this player from the game?'))) {
+        return;
+    }
+
+    deletingPlayerId.value = playerId;
+    try {
+        await removePlayerFromGame(props.leagueId, props.game.id, playerId);
+        emit('updated');
+// eslint-disable-next-line
+    } catch (err) {
+        // Error is handled by the composable
+    } finally {
+        deletingPlayerId.value = null;
     }
 };
 </script>
@@ -249,8 +278,20 @@ const handleLeave = async () => {
                                 {{ t('(You)') }}
                             </p>
                         </div>
-                        <div class="text-sm text-gray-500 dark:text-gray-400">
-                            {{ t('Joined:') }} {{ new Date(player.joined_at).toLocaleDateString() }}
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm text-gray-500 dark:text-gray-400">
+                                {{ t('Joined:') }} {{ new Date(player.joined_at).toLocaleDateString() }}
+                            </span>
+                            <!-- Delete button for admin/moderator -->
+                            <Button
+                                v-if="isAuthenticated && (isAdmin || isModerator) && player.user.id !== user?.id"
+                                :disabled="deletingPlayerId === player.user.id"
+                                size="sm"
+                                variant="destructive"
+                                @click="handleRemovePlayer(player.user.id)"
+                            >
+                                <TrashIcon class="h-4 w-4"/>
+                            </Button>
                         </div>
                     </div>
                 </div>

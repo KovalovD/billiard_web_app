@@ -92,6 +92,23 @@ export function useMultiplayerGames() {
         }
     };
 
+    // Видалити гравця з мультиплеєрної гри (лише адміністратор)
+    const removePlayerFromGame = async (leagueId: number | string, gameId: number | string, userId: number): Promise<MultiplayerGame> => {
+        isLoading.value = true;
+        error.value = null;
+
+        try {
+            return await apiClient<MultiplayerGame>(`/api/leagues/${leagueId}/multiplayer-games/${gameId}/players/${userId}`, {
+                method: 'delete'
+            });
+        } catch (err: any) {
+            error.value = err.message || 'Не вдалося видалити гравця з гри';
+            throw err;
+        } finally {
+            isLoading.value = false;
+        }
+    };
+
     // Почати мультиплеєрну гру (лише адміністратор)
     const startMultiplayerGame = async (leagueId: number | string, gameId: number | string): Promise<MultiplayerGame> => {
         isLoading.value = true;
@@ -247,6 +264,7 @@ export function useMultiplayerGames() {
         createMultiplayerGame,
         joinMultiplayerGame,
         leaveMultiplayerGame,
+        removePlayerFromGame,
         startMultiplayerGame,
         cancelMultiplayerGame,
         performGameAction,
