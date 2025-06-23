@@ -16,6 +16,7 @@ class TournamentPlayerResource extends JsonResource
         return [
             'id'                        => $this->id,
             'tournament_id'             => $this->tournament_id,
+            'is_winner'          => $this->isWinner(),
             'user_id'                   => $this->user_id,
             'position'                  => $this->position,
             'seed_number'               => $this->seed_number,

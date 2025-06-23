@@ -33,6 +33,9 @@ Route::group(['prefix' => 'tournaments'], static function () {
         Route::get('/{tournament}/application-status',
             [TournamentApplicationController::class, 'status'])->name('tournaments.application-status');
     });
+
+    Route::get('/{tournament}/matches',
+        [AdminTournamentsController::class, 'getMatches'])->name('admin.tournaments.matches.api');
 });
 
 // Admin tournament routes

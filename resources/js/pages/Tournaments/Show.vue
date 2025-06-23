@@ -2,21 +2,24 @@
 <script lang="ts" setup>
 import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Spinner} from '@/Components/ui';
 import TournamentApplicationCard from '@/Components/Tournament/TournamentApplicationCard.vue';
+import SingleEliminationBracket from '@/Components/Tournament/SingleEliminationBracket.vue';
+import DoubleEliminationBracket from '@/Components/Tournament/DoubleEliminationBracket.vue';
 import {useAuth} from '@/composables/useAuth';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
-import type {Tournament, TournamentPlayer} from '@/types/api';
+import type {Tournament, TournamentGroup, TournamentMatch, TournamentPlayer} from '@/types/api';
 import {Head, Link} from '@inertiajs/vue3';
 import {useLocale} from '@/composables/useLocale';
 import {
     ArrowLeftIcon,
     CalendarIcon,
+    CheckCircleIcon,
     ClipboardListIcon,
+    ClockIcon,
     GitBranchIcon,
     LayersIcon,
     LogInIcon,
     MapPinIcon,
-    MonitorIcon,
     PencilIcon,
     PlayIcon,
     StarIcon,
@@ -28,7 +31,6 @@ import {
 import {computed, onMounted, ref} from 'vue';
 import DataTable from '@/Components/ui/data-table/DataTable.vue';
 import StageTransition from "@/Components/Tournament/StageTransition.vue";
-import TablesManager from '@/Components/Tournament/TablesManager.vue';
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -36,15 +38,22 @@ const props = defineProps<{
     tournamentId: number | string;
 }>();
 
-const {isAdmin, isAuthenticated} = useAuth();
+const {isAdmin, isAuthenticated, user} = useAuth();
 const {t} = useLocale();
-const showTablesModal = ref(false);
+
 const tournament = ref<Tournament | null>(null);
 const players = ref<TournamentPlayer[]>([]);
+const matches = ref<TournamentMatch[]>([]);
+const groups = ref<TournamentGroup[]>([]);
 const isLoadingTournament = ref(true);
 const isLoadingPlayers = ref(true);
+const isLoadingMatches = ref(false);
+const isLoadingGroups = ref(false);
 const error = ref<string | null>(null);
-const activeTab = ref<'info' | 'players' | 'results' | 'applications'>('info');
+const activeTab = ref<'info' | 'players' | 'bracket' | 'matches' | 'groups' | 'results' | 'applications'>('info');
+
+// Get current user ID
+const currentUserId = user.value?.id;
 
 const sortedPlayers = computed(() => {
     return [...players.value].sort((a, b) => {
@@ -116,6 +125,74 @@ const showMatchesButton = computed(() => {
         tournament.value.status === 'active';
 });
 
+// Check if bracket tab should be shown for non-admins
+const canViewBracket = computed(() => {
+    return tournament.value &&
+        ['single_elimination', 'double_elimination', 'double_elimination_full', 'groups_playoff', 'team_groups_playoff'].includes(tournament.value.tournament_type) &&
+        (tournament.value.stage === 'bracket' || tournament.value.brackets_generated || tournament.value.status === 'completed');
+});
+
+// Check if groups tab should be shown for non-admins
+const canViewGroups = computed(() => {
+    return tournament.value &&
+        ['groups', 'groups_playoff', 'team_groups_playoff'].includes(tournament.value.tournament_type) &&
+        (tournament.value.stage === 'group' || tournament.value.stage === 'bracket' || tournament.value.status === 'completed') &&
+        groups.value.length > 0;
+});
+
+// Check if matches tab should be shown for non-admins
+const canViewMatches = computed(() => {
+    return tournament.value &&
+        (tournament.value.status === 'active' || tournament.value.status === 'completed') &&
+        matches.value.length > 0;
+});
+
+// Check if tournament is double elimination
+const isDoubleElimination = computed(() => {
+    return tournament.value?.tournament_type === 'double_elimination' ||
+        tournament.value?.tournament_type === 'double_elimination_full';
+});
+
+// Filter and sort matches for display
+const displayMatches = computed(() => {
+    return [...matches.value].sort((a, b) => {
+        // Sort by status priority
+        const statusOrder = ['in_progress', 'verification', 'ready', 'pending', 'completed'];
+        const statusDiff = statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status);
+        if (statusDiff !== 0) return statusDiff;
+
+        // Then by scheduled time
+        if (a.scheduled_at && b.scheduled_at) {
+            return new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime();
+        }
+
+        // Then by match code
+        return (a.match_code || '').localeCompare(b.match_code || '');
+    });
+});
+
+// Group matches by group code
+const matchesByGroup = computed(() => {
+    const grouped: Record<string, TournamentMatch[]> = {};
+
+    matches.value.filter(m => m.stage === 'group').forEach(match => {
+        // Find group for this match
+        const group = groups.value.find(g => {
+            const groupPlayers = players.value.filter(p => p.group_code === g.group_code);
+            return groupPlayers.some(p => p.id === match.player1_id || p.id === match.player2_id);
+        });
+
+        if (group) {
+            if (!grouped[group.group_code]) {
+                grouped[group.group_code] = [];
+            }
+            grouped[group.group_code].push(match);
+        }
+    });
+
+    return grouped;
+});
+
 const getStatusBadgeClass = (status: string): string => {
     switch (status) {
         case 'upcoming':
@@ -156,6 +233,21 @@ const getPositionBadgeClass = (position: number): string => {
             return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300';
         default:
             return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
+    }
+};
+
+const getMatchStatusBadgeClass = (status: string): string => {
+    switch (status) {
+        case 'completed':
+            return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
+        case 'in_progress':
+            return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
+        case 'verification':
+            return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300';
+        case 'ready':
+            return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
+        default:
+            return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300';
     }
 };
 
@@ -216,14 +308,65 @@ const fetchPlayers = async () => {
     }
 };
 
+const fetchMatches = async () => {
+
+    isLoadingMatches.value = true;
+    try {
+        // Use the public endpoint for non-admins
+        const endpoint = isAdmin.value
+            ? `/api/admin/tournaments/${props.tournamentId}/matches`
+            : `/api/tournaments/${props.tournamentId}/matches`;
+        matches.value = await apiClient<TournamentMatch[]>(endpoint);
+    } catch (err: any) {
+        console.error('Failed to load matches:', err);
+        matches.value = [];
+    } finally {
+        isLoadingMatches.value = false;
+    }
+};
+
+const fetchGroups = async () => {
+    if (!canViewGroups.value) return;
+
+    isLoadingGroups.value = true;
+    try {
+        groups.value = await apiClient<TournamentGroup[]>(`/api/tournaments/${props.tournamentId}/groups`);
+    } catch (err: any) {
+        console.error('Failed to load groups:', err);
+        groups.value = [];
+    } finally {
+        isLoadingGroups.value = false;
+    }
+};
+
 const handleApplicationUpdated = () => {
     fetchTournament();
     fetchPlayers();
 };
 
+// Get players in a specific group
+const getPlayersInGroup = (groupCode: string) => {
+    return players.value.filter(p => p.group_code === groupCode)
+        .sort((a, b) => {
+            // Sort by group position if available
+            if (a.group_position && b.group_position) {
+                return a.group_position - b.group_position;
+            }
+            // Otherwise sort by wins/losses
+            const aDiff = a.group_wins - a.group_losses;
+            const bDiff = b.group_wins - b.group_losses;
+            if (aDiff !== bDiff) return bDiff - aDiff;
+
+            // Then by games difference
+            return b.group_games_diff - a.group_games_diff;
+        });
+};
+
 onMounted(() => {
     fetchTournament();
     fetchPlayers();
+    fetchMatches();
+    fetchGroups();
 });
 
 // Add columns definition before the template
@@ -373,16 +516,6 @@ const columns = computed(() => [
                             {{ t('Results') }}
                         </Button>
                     </Link>
-
-                    <Button
-                        v-if="tournament.club"
-                        size="sm"
-                        variant="secondary"
-                        @click="showTablesModal = true"
-                    >
-                        <MonitorIcon class="mr-2 h-4 w-4"/>
-                        {{ t('Tables') }}
-                    </Button>
                 </div>
 
                 <!-- Login prompt for guests -->
@@ -487,10 +620,10 @@ const columns = computed(() => [
 
                 <!-- Tab Navigation -->
                 <div class="mb-6 border-b border-gray-200 dark:border-gray-700">
-                    <nav class="-mb-px flex space-x-8">
+                    <nav class="-mb-px flex space-x-8 overflow-x-auto">
                         <button
                             :class="[
-                                'py-4 px-1 text-sm font-medium border-b-2',
+                                'py-4 px-1 text-sm font-medium border-b-2 whitespace-nowrap',
                                 activeTab === 'info'
                                     ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
@@ -501,7 +634,7 @@ const columns = computed(() => [
                         </button>
                         <button
                             :class="[
-                                'py-4 px-1 text-sm font-medium border-b-2',
+                                'py-4 px-1 text-sm font-medium border-b-2 whitespace-nowrap',
                                 activeTab === 'players'
                                     ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
@@ -511,9 +644,45 @@ const columns = computed(() => [
                             {{ t('Players') }} ({{ tournament.confirmed_players_count }})
                         </button>
                         <button
+                            v-if="canViewGroups"
+                            :class="[
+                                'py-4 px-1 text-sm font-medium border-b-2 whitespace-nowrap',
+                                activeTab === 'groups'
+                                    ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                            ]"
+                            @click="activeTab = 'groups'"
+                        >
+                            {{ t('Groups') }}
+                        </button>
+                        <button
+                            v-if="canViewBracket"
+                            :class="[
+                                'py-4 px-1 text-sm font-medium border-b-2 whitespace-nowrap',
+                                activeTab === 'bracket'
+                                    ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                            ]"
+                            @click="activeTab = 'bracket'"
+                        >
+                            {{ t('Bracket') }}
+                        </button>
+                        <button
+                            v-if="canViewMatches"
+                            :class="[
+                                'py-4 px-1 text-sm font-medium border-b-2 whitespace-nowrap',
+                                activeTab === 'matches'
+                                    ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                            ]"
+                            @click="activeTab = 'matches'"
+                        >
+                            {{ t('Matches') }}
+                        </button>
+                        <button
                             v-if="tournament.requires_application && (isAuthenticated && isAdmin || tournament.pending_applications_count > 0)"
                             :class="[
-                                'py-4 px-1 text-sm font-medium border-b-2',
+                                'py-4 px-1 text-sm font-medium border-b-2 whitespace-nowrap',
                                 activeTab === 'applications'
                                     ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
@@ -523,9 +692,9 @@ const columns = computed(() => [
                             {{ t('Applications') }} ({{ tournament.pending_applications_count }})
                         </button>
                         <button
-                            v-if="tournament.is_completed"
+                            v-if="tournament.status === 'completed'"
                             :class="[
-                                'py-4 px-1 text-sm font-medium border-b-2',
+                                'py-4 px-1 text-sm font-medium border-b-2 whitespace-nowrap',
                                 activeTab === 'results'
                                     ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
@@ -547,6 +716,18 @@ const columns = computed(() => [
                             </CardHeader>
                             <CardContent>
                                 <div class="space-y-4">
+                                    <div>
+                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">{{
+                                                t('Tournament Type')
+                                            }}</h4>
+                                        <p class="mt-1 text-gray-600 dark:text-gray-400">
+                                            {{ tournament.tournament_type_display }}
+                                            <span v-if="tournament.races_to" class="text-sm">
+                                                ({{ t('Race to') }} {{ tournament.races_to }})
+                                            </span>
+                                        </p>
+                                    </div>
+
                                     <div v-if="tournament.details">
                                         <h4 class="font-medium text-gray-900 dark:text-gray-100">{{ t('Description') }}</h4>
                                         <p class="mt-1 text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
@@ -677,14 +858,231 @@ const columns = computed(() => [
                                     class="flex items-center justify-between p-3 bg-gray-50 rounded-lg dark:bg-gray-800"
                                 >
                                     <div>
-                                        <p class="font-medium">{{ player.user?.firstname }}
-                                            {{ player.user?.lastname }}</p>
+                                        <p class="font-medium">
+                                            <span v-if="player.seed_number"
+                                                  class="text-gray-500 mr-2">#{{ player.seed_number }}</span>
+                                            {{ player.user?.firstname }} {{ player.user?.lastname }}
+                                        </p>
                                         <p class="text-sm text-gray-600 dark:text-gray-400">
                                             {{ player.status_display }}
                                         </p>
                                         <p v-if="player.confirmed_at" class="text-xs text-gray-500">
                                             {{ t('Confirmed:') }} {{ formatDate(player.confirmed_at) }}
                                         </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                <!-- Groups Tab -->
+                <div v-if="activeTab === 'groups' && canViewGroups">
+                    <div class="space-y-6">
+                        <Card v-if="isLoadingGroups">
+                            <CardContent class="py-10">
+                                <div class="flex justify-center">
+                                    <Spinner class="text-primary h-8 w-8"/>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <div v-else-if="groups.length > 0" class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                            <Card v-for="group in groups" :key="group.id">
+                                <CardHeader>
+                                    <CardTitle>{{ t('Group :code', {code: group.group_code}) }}</CardTitle>
+                                    <CardDescription>
+                                        {{ t(':count players', {count: group.group_size}) }}
+                                        <span v-if="group.advance_count"> • {{
+                                                t(':count advance', {count: group.advance_count})
+                                            }}</span>
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <div class="space-y-2">
+                                        <div
+                                            v-for="(player, index) in getPlayersInGroup(group.group_code)"
+                                            :key="player.id"
+                                            :class="[
+                                                'flex items-center justify-between p-2 rounded',
+                                                index < group.advance_count ? 'bg-green-50 dark:bg-green-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                                            ]"
+                                        >
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-sm font-medium text-gray-500">
+                                                    {{ index + 1 }}
+                                                </span>
+                                                <span>{{ player.user?.firstname }} {{ player.user?.lastname }}</span>
+                                            </div>
+                                            <div class="text-sm text-gray-600 dark:text-gray-400">
+                                                <span v-if="player.group_wins > 0 || player.group_losses > 0">
+                                                    {{ player.group_wins }}W - {{ player.group_losses }}L
+                                                </span>
+                                                <span v-else>{{ t('Not played') }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Group Matches -->
+                                    <div v-if="matchesByGroup[group.group_code]?.length > 0" class="mt-4 pt-4 border-t">
+                                        <h4 class="text-sm font-medium mb-2">{{ t('Matches') }}</h4>
+                                        <div class="space-y-2">
+                                            <div
+                                                v-for="match in matchesByGroup[group.group_code]"
+                                                :key="match.id"
+                                                class="text-sm"
+                                            >
+                                                <div class="flex items-center justify-between">
+                                                    <div class="flex-1">
+                                                        <span
+                                                            :class="{'font-bold': match.winner_id === match.player1_id}">
+                                                            {{
+                                                                match.player1?.firstname?.substring(0, 1)
+                                                            }}. {{ match.player1?.lastname }}
+                                                        </span>
+                                                        <span class="mx-2">vs</span>
+                                                        <span
+                                                            :class="{'font-bold': match.winner_id === match.player2_id}">
+                                                            {{
+                                                                match.player2?.firstname?.substring(0, 1)
+                                                            }}. {{ match.player2?.lastname }}
+                                                        </span>
+                                                    </div>
+                                                    <div class="ml-2">
+                                                        <span v-if="match.status === 'completed'" class="font-medium">
+                                                            {{ match.player1_score }} - {{ match.player2_score }}
+                                                        </span>
+                                                        <span v-else
+                                                              :class="['px-2 py-1 text-xs rounded-full', getMatchStatusBadgeClass(match.status)]">
+                                                            {{ match.status_display }}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bracket Tab -->
+                <div v-if="activeTab === 'bracket' && canViewBracket">
+                    <div v-if="isLoadingMatches" class="flex justify-center py-12">
+                        <Spinner class="h-8 w-8 text-primary"/>
+                    </div>
+                    <div v-else-if="matches.length === 0" class="text-center py-12">
+                        <p class="text-gray-500">{{ t('Bracket has not been generated yet.') }}</p>
+                    </div>
+                    <template v-else>
+                        <SingleEliminationBracket
+                            v-if="!isDoubleElimination"
+                            :can-edit="false"
+                            :current-user-id="currentUserId"
+                            :matches="matches"
+                            :tournament="tournament!"
+                        />
+
+                        <DoubleEliminationBracket
+                            v-else
+                            :can-edit="false"
+                            :current-user-id="currentUserId"
+                            :matches="matches"
+                            :tournament="tournament!"
+                        />
+                    </template>
+                </div>
+
+                <!-- Matches Tab -->
+                <div v-if="activeTab === 'matches' && canViewMatches">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle class="flex items-center gap-2">
+                                <PlayIcon class="h-5 w-5"/>
+                                {{ t('Tournament Matches') }}
+                            </CardTitle>
+                            <CardDescription>
+                                {{ t('All tournament matches and results') }}
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div v-if="isLoadingMatches" class="flex justify-center py-8">
+                                <Spinner class="text-primary h-6 w-6"/>
+                            </div>
+                            <div v-else-if="displayMatches.length === 0" class="py-8 text-center text-gray-500">
+                                {{ t('No matches scheduled yet.') }}
+                            </div>
+                            <div v-else class="space-y-4">
+                                <div
+                                    v-for="match in displayMatches"
+                                    :key="match.id"
+                                    class="flex items-center justify-between rounded-lg border p-4"
+                                >
+                                    <!-- Match Info -->
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-4">
+                                            <!-- Match Code & Stage -->
+                                            <div class="min-w-[120px]">
+                                                <p class="font-medium">
+                                                    {{ match.match_code || `#${match.id}` }}
+                                                </p>
+                                                <p class="text-sm text-gray-500">
+                                                    {{ match.stage_display }}
+                                                    <span v-if="match.round_display"> - {{ match.round_display }}</span>
+                                                </p>
+                                            </div>
+
+                                            <!-- Players -->
+                                            <div class="flex-1">
+                                                <div class="flex items-center justify-between">
+                                                    <div class="flex-1">
+                                                        <p :class="{'text-green-600 font-bold': match.winner_id === match.player1_id}">
+                                                            {{ match.player1?.firstname }} {{ match.player1?.lastname }}
+                                                            <span v-if="!match.player1"
+                                                                  class="text-gray-400">{{ t('TBD') }}</span>
+                                                        </p>
+                                                        <p :class="{'text-green-600 font-bold': match.winner_id === match.player2_id}">
+                                                            {{ match.player2?.firstname }} {{ match.player2?.lastname }}
+                                                            <span v-if="!match.player2"
+                                                                  class="text-gray-400">{{ t('TBD') }}</span>
+                                                        </p>
+                                                    </div>
+
+                                                    <!-- Scores -->
+                                                    <div class="mx-4 text-center">
+                                                        <p class="text-xl font-bold">
+                                                            {{ match.player1_score ?? '-' }}
+                                                        </p>
+                                                        <p class="text-xl font-bold">
+                                                            {{ match.player2_score ?? '-' }}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Status & Table -->
+                                            <div class="text-right">
+                                                <span :class="[
+                                                    'inline-flex px-2 py-1 text-xs font-medium rounded-full',
+                                                    getMatchStatusBadgeClass(match.status)
+                                                ]">
+                                                    {{ match.status_display }}
+                                                </span>
+                                                <p v-if="match.club_table" class="mt-1 text-sm text-gray-500">
+                                                    {{ match.club_table.name }}
+                                                </p>
+                                                <p v-if="match.scheduled_at" class="mt-1 text-sm text-gray-500">
+                                                    <ClockIcon class="inline h-3 w-3"/>
+                                                    {{ formatDateTime(match.scheduled_at) }}
+                                                </p>
+                                                <p v-if="match.completed_at && match.status === 'completed'"
+                                                   class="mt-1 text-sm text-gray-500">
+                                                    <CheckCircleIcon class="inline h-3 w-3"/>
+                                                    {{ formatDateTime(match.completed_at) }}
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -773,7 +1171,7 @@ const columns = computed(() => [
                 </div>
 
                 <!-- Results Tab -->
-                <div v-if="activeTab === 'results' && tournament.is_completed">
+                <div v-if="activeTab === 'results' && tournament.status === 'completed'">
                     <Card>
                         <CardHeader>
                             <CardTitle class="flex items-center gap-2">
@@ -862,11 +1260,5 @@ const columns = computed(() => [
                 </div>
             </template>
         </div>
-        <TablesManager
-            v-if="tournament"
-            :show="showTablesModal"
-            :tournament-id="tournament.id"
-            @close="showTablesModal = false"
-        />
     </div>
 </template>

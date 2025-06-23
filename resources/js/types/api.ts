@@ -493,6 +493,7 @@ export interface Tournament {
 }
 
 export interface TournamentPlayer {
+    is_winner: boolean;
     id: number;
     tournament_id: number;
     user_id: number;
