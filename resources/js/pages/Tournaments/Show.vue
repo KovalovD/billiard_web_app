@@ -1225,7 +1225,7 @@ const columns = computed(() => [
                                     <template #cell-bonus="{ value }">
                                         <span v-if="value.amount > 0"
                                               class="font-medium text-orange-600 dark:text-orange-400">
-                                            {{ formatCurrency(value.amount) }}
+                                            {{ value.amount }}
                                         </span>
                                         <span v-else class="text-gray-400">—</span>
                                     </template>
