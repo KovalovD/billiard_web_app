@@ -185,7 +185,7 @@ class TournamentService
     public function updateTournament(Tournament $tournament, array $data): Tournament
     {
         $tournament->update($data);
-        return $tournament->fresh();
+        return $tournament->refresh();
     }
 
     /**

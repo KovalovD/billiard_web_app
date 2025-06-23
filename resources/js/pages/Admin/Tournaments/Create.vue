@@ -106,6 +106,7 @@ const tournamentTypes = [
     {value: 'groups', label: t('Groups')},
     {value: 'groups_playoff', label: t('Groups + Playoff')},
     {value: 'team_groups_playoff', label: t('Team Groups + Playoff')},
+    {value: 'killer_pool', label: t('Killer Pool')},
 ];
 
 const seedingMethods = [

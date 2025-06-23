@@ -16,12 +16,15 @@ import {
     Spinner,
     Textarea,
 } from '@/Components/ui';
-import { useOfficialRatings } from '@/composables/useOfficialRatings';
+import {useOfficialRatings} from '@/composables/useOfficialRatings';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
-import type { CreateOfficialRatingPayload } from '@/types/api';
-import { Head, Link, router } from '@inertiajs/vue3';
-import { ArrowLeftIcon, PlusIcon, SaveIcon } from 'lucide-vue-next';
-import { computed, ref } from 'vue';
+import type {CreateOfficialRatingPayload} from '@/types/api';
+import {Head, Link, router} from '@inertiajs/vue3';
+import {ArrowLeftIcon, PlusIcon, SaveIcon} from 'lucide-vue-next';
+import {computed, ref} from 'vue';
+import {useLocale} from "@/composables/useLocale";
+
+const {t} = useLocale();
 
 defineOptions({ layout: AuthenticatedLayout });
 
