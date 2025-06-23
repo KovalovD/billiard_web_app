@@ -113,4 +113,20 @@ class LeaguesService
 
         return $myLeagues;
     }
+
+    /**
+     * Calculate accumulated Grand Final Fund from finished multiplayer games
+     */
+    public function calculateAccumulatedGrandFinalFund(League $league): float
+    {
+        return $league
+            ->multiplayerGames()
+            ->where('status', 'finished')
+            ->get()
+            ->sum(function ($game) {
+                $prizePool = $game->prize_pool;
+                return $prizePool['grand_final_fund'] ?? 0;
+            })
+        ;
+    }
 }

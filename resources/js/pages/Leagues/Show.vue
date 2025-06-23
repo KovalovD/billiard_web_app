@@ -22,7 +22,8 @@ import {
     SmileIcon,
     TrophyIcon,
     UserPlusIcon,
-    UsersIcon
+    UsersIcon,
+    WalletIcon
 } from 'lucide-vue-next';
 import {computed, onMounted, ref, watch} from 'vue';
 import AddPlayerModal from "@/Components/AddPlayerModal.vue";
@@ -100,6 +101,14 @@ const pageTitle = computed(() => {
 const leagueStatus = computed(() => getLeagueStatus(league.value));
 const canUserJoinLeague = computed(() => canJoinLeague(league.value));
 const joinErrorMessage = computed(() => getJoinErrorMessage(league.value));
+
+// Format currency
+const formatCurrency = (amount: number): string => {
+    return amount.toLocaleString('uk-UA', {
+        style: 'currency',
+        currency: 'UAH'
+    }).replace('UAH', '₴');
+};
 
 // Find an active match by ID from query params
 const findMatchById = (id: string): MatchGame | null => {
@@ -502,6 +511,20 @@ watch(
                                 <span class="font-medium text-gray-600 dark:text-gray-400">{{ t('Invite Expiry') }}</span>
                                 <p class="text-gray-900 dark:text-gray-200">{{ league.invite_days_expire || 'N/A' }}
                                     days</p>
+                            </div>
+                            <!-- Grand Final Fund accumulated - only for multiplayer games -->
+                            <div v-if="league.game_multiplayer && league.grand_final_fund_accumulated !== undefined"
+                                 class="rounded-lg bg-yellow-50 p-3 dark:bg-yellow-900/20">
+                                <span class="flex items-center gap-1 font-medium text-yellow-800 dark:text-yellow-300">
+                                    <WalletIcon class="h-4 w-4"/>
+                                    {{ t('Grand Final Fund') }}
+                                </span>
+                                <p class="text-lg font-bold text-yellow-800 dark:text-yellow-300">
+                                    {{ formatCurrency(league.grand_final_fund_accumulated) }}
+                                </p>
+                                <p class="text-xs text-yellow-700 dark:text-yellow-400">
+                                    {{ t('Accumulated from finished games') }}
+                                </p>
                             </div>
                         </div>
 

@@ -104,6 +104,7 @@ export interface League {
     game?: string;
     game_type?: string;
     game_multiplayer?: boolean;
+    grand_final_fund_accumulated?: number;
 }
 
 export interface Rating {

@@ -3,6 +3,7 @@
 namespace App\Leagues\Http\Resources;
 
 use App\Leagues\Models\League;
+use App\Leagues\Services\LeaguesService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -11,6 +12,8 @@ class LeagueResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $leaguesService = app(LeaguesService::class);
+
         return [
             'id'                             => $this->id,
             'name'                           => $this->name,
@@ -41,6 +44,11 @@ class LeagueResource extends JsonResource
             'game_multiplayer'   => $this->whenLoaded('game', function () {
                 return $this->game->is_multiplayer;
             }),
+            // Grand Final Fund accumulated (only for multiplayer games)
+            'grand_final_fund_accumulated' => $this->when(
+                $this->game && $this->game->is_multiplayer,
+                fn() => $leaguesService->calculateAccumulatedGrandFinalFund($this->resource),
+            ),
         ];
     }
 }

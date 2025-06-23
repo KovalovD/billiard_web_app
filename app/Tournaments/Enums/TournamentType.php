@@ -11,6 +11,7 @@ enum TournamentType: string
     case GROUPS = 'groups';
     case GROUPS_PLAYOFF = 'groups_playoff';
     case TEAM_GROUPS_PLAYOFF = 'team_groups_playoff';
+    case KILLER_POOL = 'killer_pool';
 
     public static function eliminationTypes(): array
     {

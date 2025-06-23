@@ -11,6 +11,7 @@ use App\Tournaments\Enums\MatchStage;
 use App\Tournaments\Enums\MatchStatus;
 use App\Tournaments\Enums\TournamentStage;
 use App\Tournaments\Enums\TournamentStatus;
+use App\Tournaments\Enums\TournamentType;
 use App\Tournaments\Models\Tournament;
 use App\Tournaments\Models\TournamentPlayer;
 use Illuminate\Support\Collection;
@@ -145,7 +146,7 @@ class TournamentService
                 'place_rating_points'       => $data['place_rating_points'] ?? null,
                 'organizer'                 => $data['organizer'] ?? null,
                 'format'                    => $data['format'] ?? null,
-                'tournament_type'           => $data['tournament_type'],
+                'tournament_type' => $data['tournament_type'] ?? TournamentType::KILLER_POOL,
                 'group_size_min'            => $data['group_size_min'] ?? null,
                 'group_size_max'            => $data['group_size_max'] ?? null,
                 'playoff_players_per_group' => $data['playoff_players_per_group'] ?? null,
