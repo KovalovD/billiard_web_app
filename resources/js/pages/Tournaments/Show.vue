@@ -16,6 +16,7 @@ import {
     LayersIcon,
     LogInIcon,
     MapPinIcon,
+    MonitorIcon,
     PencilIcon,
     PlayIcon,
     StarIcon,
@@ -27,6 +28,7 @@ import {
 import {computed, onMounted, ref} from 'vue';
 import DataTable from '@/Components/ui/data-table/DataTable.vue';
 import StageTransition from "@/Components/Tournament/StageTransition.vue";
+import TablesManager from '@/Components/Tournament/TablesManager.vue';
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -36,7 +38,7 @@ const props = defineProps<{
 
 const {isAdmin, isAuthenticated} = useAuth();
 const {t} = useLocale();
-
+const showTablesModal = ref(false);
 const tournament = ref<Tournament | null>(null);
 const players = ref<TournamentPlayer[]>([]);
 const isLoadingTournament = ref(true);
@@ -371,6 +373,16 @@ const columns = computed(() => [
                             {{ t('Results') }}
                         </Button>
                     </Link>
+
+                    <Button
+                        v-if="tournament.club"
+                        size="sm"
+                        variant="secondary"
+                        @click="showTablesModal = true"
+                    >
+                        <MonitorIcon class="mr-2 h-4 w-4"/>
+                        {{ t('Tables') }}
+                    </Button>
                 </div>
 
                 <!-- Login prompt for guests -->
@@ -850,5 +862,11 @@ const columns = computed(() => [
                 </div>
             </template>
         </div>
+        <TablesManager
+            v-if="tournament"
+            :show="showTablesModal"
+            :tournament-id="tournament.id"
+            @close="showTablesModal = false"
+        />
     </div>
 </template>

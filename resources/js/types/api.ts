@@ -37,15 +37,12 @@ export interface ClubTable {
     id: number;
     club_id: number;
     name: string;
-    stream_url?: string | null;
+    stream_url: string | null;
     is_active: boolean;
     sort_order: number;
     created_at: string;
     updated_at: string;
-    club?: {
-        id: number;
-        name: string;
-    };
+    club?: Club;
 }
 
 export interface Game {

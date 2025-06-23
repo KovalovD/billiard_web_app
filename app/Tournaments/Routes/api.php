@@ -7,6 +7,7 @@ use App\Tournaments\Http\Controllers\AdminTournamentsController;
 use App\Tournaments\Http\Controllers\AdminTournamentSeedingController;
 use App\Tournaments\Http\Controllers\TournamentApplicationController;
 use App\Tournaments\Http\Controllers\TournamentsController;
+use App\Tournaments\Http\Controllers\TournamentTablesController;
 use Illuminate\Support\Facades\Route;
 
 // Public tournament routes
@@ -124,5 +125,8 @@ Route::middleware(['auth:sanctum', AdminMiddleware::class])
         Route::get('/{tournament}/matches/{match}',
             [AdminTournamentMatchesController::class, 'show'])->name('admin.tournaments.get-match');
 
+        Route::get('{tournament}/tables', [TournamentTablesController::class, 'index']);
+        Route::put('{tournament}/tables/{table}/stream-url', [TournamentTablesController::class, 'updateStreamUrl']);
+        Route::get('{tournament}/tables/{table}/widget-url', [TournamentTablesController::class, 'getWidgetUrl']);
     })
 ;

@@ -24,7 +24,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->statefulApi();
-
+        $middleware->validateCsrfTokens(except: [
+            'api/*',
+            'api/widgets/*',
+        ]);
         // Add TrustProxies as the first middleware
         $middleware->web(prepend: [
             TrustProxies::class,

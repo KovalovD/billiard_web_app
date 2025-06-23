@@ -29,9 +29,19 @@ Route::middleware('guest')->group(function () {
 });
 
 // Widget route - public access for OBS
-Route::get('/widgets/streaming', static function () {
-    return Inertia::render('Widgets/StreamingWidget');
-})->name('widgets.streaming');
+Route::group(['prefix' => 'widgets'], static function () {
+    Route::get('/table', static function () {
+        return Inertia::render('Widgets/TableWidget');
+    })->name('widgets.table');
+
+    Route::get('/streaming', static function () {
+        return Inertia::render('Widgets/StreamingWidget');
+    })->name('widgets.streaming');
+
+    Route::get('/table-match', static function () {
+        return Inertia::render('Widgets/TableMatch');
+    })->name('widgets.table-match');
+});
 
 // Dashboard as home for authenticated users
 Route::get('/dashboard', static function () {
