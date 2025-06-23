@@ -33,7 +33,6 @@ import {
     FileTextIcon,
     MapPinIcon,
     SettingsIcon,
-    StarIcon,
     TrophyIcon,
     UsersIcon
 } from 'lucide-vue-next';
@@ -92,7 +91,6 @@ const clubs = ref<Club[]>([]);
 const filteredClubs = ref<Club[]>([]);
 const officialRatings = ref<OfficialRating[]>([]);
 const filteredGames = ref<Game[]>([]);
-const filteredOfficialRatings = ref<OfficialRating[]>([]);
 
 // Loading states
 const isLoadingGames = ref(true);
@@ -184,7 +182,6 @@ const fetchOfficialRatings = async () => {
     isLoadingRatings.value = true;
     try {
         officialRatings.value = await apiClient<OfficialRating[]>('/api/official-ratings/active');
-        filteredOfficialRatings.value = officialRatings.value;
     } catch (error) {
         console.error('Failed to load official ratings:', error);
     } finally {
@@ -256,7 +253,7 @@ onMounted(() => {
                     <form class="space-y-6" @submit.prevent="handleSubmit">
                         <!-- Basic Information - Always visible -->
                         <div class="space-y-6">
-                            <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                            <div class="grid grid-cols-1 gap-6">
                                 <div class="space-y-2">
                                     <Label for="name">{{ t('Tournament Name') }} *</Label>
                                     <Input
@@ -265,6 +262,33 @@ onMounted(() => {
                                         :placeholder="t('Enter tournament name')"
                                         required
                                     />
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                                <div class="space-y-2">
+                                    <Label for="official_rating_id">{{ t('Official Rating') }}</Label>
+                                    <Select v-model="form.official_rating_id">
+                                        <SelectTrigger>
+                                            <SelectValue :placeholder="t('Select official rating (optional)')"/>
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem v-if="isLoadingRatings" :value="0">
+                                                {{ t('Loading ratings...') }}
+                                            </SelectItem>
+                                            <SelectItem
+                                                v-for="rating in officialRatings"
+                                                v-else
+                                                :key="rating.id"
+                                                :value="rating.id"
+                                            >
+                                                {{ rating.name }} ({{ rating.game_type_name }})
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                                        {{ t('Associate this tournament with an official rating system') }}
+                                    </p>
                                 </div>
 
                                 <div class="space-y-2">
@@ -305,7 +329,7 @@ onMounted(() => {
                                     </div>
                                 </AccordionTrigger>
                                 <AccordionContent value="structure">
-                                    <div class="space-y-6">
+                                    <div class="space-y-6 pt-4">
                                         <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
                                             <div class="space-y-2">
                                                 <Label for="tournament_type">{{ t('Tournament Type') }} *</Label>
@@ -417,7 +441,7 @@ onMounted(() => {
                                     </div>
                                 </AccordionTrigger>
                                 <AccordionContent value="registration">
-                                    <div class="space-y-6">
+                                    <div class="space-y-6 pt-4">
                                         <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
                                             <div class="space-y-2">
                                                 <Label for="start_date">{{ t('Start Date') }} *</Label>
@@ -501,7 +525,7 @@ onMounted(() => {
                                     </div>
                                 </AccordionTrigger>
                                 <AccordionContent value="location">
-                                    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                                    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 pt-4">
                                         <div class="space-y-2">
                                             <Label for="city_id">{{ t('City') }}</Label>
                                             <Select v-model="form.city_id">
@@ -541,60 +565,6 @@ onMounted(() => {
                                 </AccordionContent>
                             </AccordionItem>
 
-                            <!-- Official Rating -->
-                            <AccordionItem value="rating">
-                                <AccordionTrigger value="rating">
-                                    <div class="flex items-center gap-2">
-                                        <StarIcon class="h-5 w-5"/>
-                                        {{ t('Official Rating Association') }}
-                                    </div>
-                                </AccordionTrigger>
-                                <AccordionContent value="rating">
-                                    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                                        <div class="space-y-2">
-                                            <Label for="official_rating_id">{{ t('Official Rating') }}</Label>
-                                            <Select v-model="form.official_rating_id">
-                                                <SelectTrigger>
-                                                    <SelectValue :placeholder="t('Select official rating (optional)')"/>
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem v-if="isLoadingRatings" :value="0">
-                                                        {{ t('Loading ratings...') }}
-                                                    </SelectItem>
-                                                    <SelectItem
-                                                        v-for="rating in filteredOfficialRatings"
-                                                        v-else
-                                                        :key="rating.id"
-                                                        :value="rating.id"
-                                                    >
-                                                        {{ rating.name }} ({{ rating.game_type_name }})
-                                                    </SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                            <p class="text-sm text-gray-500 dark:text-gray-400">
-                                                {{ t('Associate this tournament with an official rating system') }}
-                                            </p>
-                                        </div>
-
-                                        <div class="space-y-2">
-                                            <Label for="rating_coefficient">{{ t('Rating Coefficient') }}</Label>
-                                            <Input
-                                                id="rating_coefficient"
-                                                v-model.number="form.rating_coefficient"
-                                                :disabled="!form.official_rating_id"
-                                                max="5.0"
-                                                min="0.1"
-                                                step="0.1"
-                                                type="number"
-                                            />
-                                            <p class="text-sm text-gray-500 dark:text-gray-400">
-                                                {{ t('Multiplier for rating points (0.1 - 5.0)') }}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </AccordionContent>
-                            </AccordionItem>
-
                             <!-- Financial Details -->
                             <AccordionItem value="financial">
                                 <AccordionTrigger value="financial">
@@ -604,7 +574,7 @@ onMounted(() => {
                                     </div>
                                 </AccordionTrigger>
                                 <AccordionContent value="financial">
-                                    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                                    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 pt-4">
                                         <div class="space-y-2">
                                             <Label for="entry_fee">{{ t('Entry Fee') }} (₴)</Label>
                                             <Input
@@ -626,6 +596,21 @@ onMounted(() => {
                                                 type="number"
                                             />
                                         </div>
+
+                                        <div v-if="form.official_rating_id" class="space-y-2">
+                                            <Label for="rating_coefficient">{{ t('Rating Coefficient') }}</Label>
+                                            <Input
+                                                id="rating_coefficient"
+                                                v-model.number="form.rating_coefficient"
+                                                max="5.0"
+                                                min="0.1"
+                                                step="0.1"
+                                                type="number"
+                                            />
+                                            <p class="text-sm text-gray-500 dark:text-gray-400">
+                                                {{ t('Multiplier for rating points (0.1 - 5.0)') }}
+                                            </p>
+                                        </div>
                                     </div>
                                 </AccordionContent>
                             </AccordionItem>
@@ -639,7 +624,7 @@ onMounted(() => {
                                     </div>
                                 </AccordionTrigger>
                                 <AccordionContent value="additional">
-                                    <div class="space-y-6">
+                                    <div class="space-y-6 pt-4">
                                         <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
                                             <div class="space-y-2">
                                                 <Label for="organizer">{{ t('Organizer') }}</Label>

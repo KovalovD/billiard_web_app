@@ -21,13 +21,13 @@ const isOpen = computed(() => accordion?.isOpen(props.value) ?? false)
     <Transition
         enter-active-class="transition-all duration-300 ease-out"
         enter-from-class="max-h-0 opacity-0"
-        enter-to-class="max-h-[1000px] opacity-100"
+        enter-to-class="max-h-[2000px] opacity-100"
         leave-active-class="transition-all duration-300 ease-in"
-        leave-from-class="max-h-[1000px] opacity-100"
+        leave-from-class="max-h-[2000px] opacity-100"
         leave-to-class="max-h-0 opacity-0"
     >
-        <div v-if="isOpen" class="overflow-hidden">
-            <div :class="cn('px-4 pb-4 pt-0', props.class)">
+        <div v-if="isOpen" class="overflow-visible">
+            <div :class="cn('px-4 pb-4 pt-0 overflow-visible', props.class)">
                 <slot/>
             </div>
         </div>

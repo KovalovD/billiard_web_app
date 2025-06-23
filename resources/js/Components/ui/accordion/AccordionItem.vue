@@ -18,7 +18,7 @@ const isOpen = computed(() => accordion?.isOpen(props.value) ?? false)
 </script>
 
 <template>
-    <div :class="cn('border rounded-lg', props.class)">
+    <div :class="cn('border rounded-lg overflow-visible', props.class)">
         <slot :is-open="isOpen"/>
     </div>
 </template>

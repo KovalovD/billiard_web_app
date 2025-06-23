@@ -4,12 +4,17 @@
 import Button from './button/Button.vue';
 import Input from './form/Input.vue';
 import Label from './form/Label.vue';
-import Select from './form/Select.vue';
-import SelectContent from './form/SelectContent.vue';
-import SelectItem from './form/SelectItem.vue';
-import SelectTrigger from './form/SelectTrigger.vue';
-import SelectValue from './form/SelectValue.vue';
 import Textarea from './form/Textarea.vue';
+
+// Select components (new location)
+import Select from './select/Select.vue';
+import SelectContent from './select/SelectContent.vue';
+import SelectGroup from './select/SelectGroup.vue';
+import SelectItem from './select/SelectItem.vue';
+import SelectLabel from './select/SelectLabel.vue';
+import SelectSeparator from './select/SelectSeparator.vue';
+import SelectTrigger from './select/SelectTrigger.vue';
+import SelectValue from './select/SelectValue.vue';
 
 import Accordion from './accordion/Accordion.vue';
 import AccordionItem from './accordion/AccordionItem.vue';
@@ -44,12 +49,17 @@ export {
     Button,
     Input,
     Label,
+    Textarea,
+
+    // Select components
     Select,
     SelectContent,
+    SelectGroup,
     SelectItem,
+    SelectLabel,
+    SelectSeparator,
     SelectTrigger,
     SelectValue,
-    Textarea,
 
     // Layout components
     Card,
@@ -75,12 +85,17 @@ export default {
     Button,
     Input,
     Label,
+    Textarea,
+
+    // Select components
     Select,
     SelectContent,
+    SelectGroup,
     SelectItem,
+    SelectLabel,
+    SelectSeparator,
     SelectTrigger,
     SelectValue,
-    Textarea,
 
     // Layout components
     Card,
