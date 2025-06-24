@@ -4,6 +4,7 @@ import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Spinn
 import TournamentApplicationCard from '@/Components/Tournament/TournamentApplicationCard.vue';
 import SingleEliminationBracket from '@/Components/Tournament/SingleEliminationBracket.vue';
 import DoubleEliminationBracket from '@/Components/Tournament/DoubleEliminationBracket.vue';
+import TablesManager from '@/Components/Tournament/TablesManager.vue';
 import {useAuth} from '@/composables/useAuth';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
@@ -20,6 +21,7 @@ import {
     LayersIcon,
     LogInIcon,
     MapPinIcon,
+    MonitorIcon,
     PencilIcon,
     PlayIcon,
     StarIcon,
@@ -51,6 +53,7 @@ const isLoadingMatches = ref(false);
 const isLoadingGroups = ref(false);
 const error = ref<string | null>(null);
 const activeTab = ref<'info' | 'players' | 'bracket' | 'matches' | 'groups' | 'results' | 'applications'>('info');
+const showTablesModal = ref(false);
 
 // Get current user ID
 const currentUserId = user.value?.id;
@@ -516,6 +519,17 @@ const columns = computed(() => [
                             {{ t('Results') }}
                         </Button>
                     </Link>
+
+
+                    <Button
+                        v-if="tournament.club"
+                        size="sm"
+                        variant="secondary"
+                        @click="showTablesModal = true"
+                    >
+                        <MonitorIcon class="mr-2 h-4 w-4"/>
+                        {{ t('Tables') }}
+                    </Button>
                 </div>
 
                 <!-- Login prompt for guests -->
@@ -1260,5 +1274,11 @@ const columns = computed(() => [
                 </div>
             </template>
         </div>
+        <TablesManager
+            v-if="tournament"
+            :show="showTablesModal"
+            :tournament-id="tournament.id"
+            @close="showTablesModal = false"
+        />
     </div>
 </template>
