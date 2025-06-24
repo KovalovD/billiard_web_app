@@ -1,22 +1,22 @@
+// resources/js/pages/Leagues/Index.vue
 <script lang="ts" setup>
 import {Button, Card, CardContent, CardHeader, CardTitle} from '@/Components/ui';
 import DataTable from '@/Components/ui/data-table/DataTable.vue';
-import TableActions, {type ActionItem} from '@/Components/TableActions.vue';
 import {useAuth} from '@/composables/useAuth';
 import {useLeagues} from '@/composables/useLeagues';
 import {useLeagueStatus} from '@/composables/useLeagueStatus';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import type {ApiError, League} from '@/types/api';
-import {Head, Link} from '@inertiajs/vue3';
-import {CalendarIcon, EyeIcon, GamepadIcon, PencilIcon, PlusIcon, TrophyIcon, UsersIcon} from 'lucide-vue-next';
-import {computed, onMounted, ref} from 'vue';
+import {Head, Link, router} from '@inertiajs/vue3';
+import {CalendarIcon, GamepadIcon, PlusIcon, TrophyIcon, UsersIcon} from 'lucide-vue-next';
+import {computed, onMounted, onUnmounted, ref} from 'vue';
 import {useLocale} from '@/composables/useLocale';
 
 const {t} = useLocale();
 
 defineOptions({layout: AuthenticatedLayout});
 
-const {isAdmin, isAuthenticated} = useAuth();
+const {isAdmin, isAuthenticated, user} = useAuth();
 const leagues = useLeagues();
 const {getLeagueStatus, getPlayersText} = useLeagueStatus();
 
@@ -58,7 +58,7 @@ const filteredAndSortedLeagues = computed(() => {
     });
 });
 
-// Define table columns
+// Define table columns (removed actions column)
 const columns = computed(() => [
     {
         key: 'name',
@@ -66,7 +66,7 @@ const columns = computed(() => [
         align: 'left' as const,
         render: (league: League) => ({
             name: league.name || t('Unnamed League'),
-            details: league.details
+            details: league.details,
         })
     },
     {
@@ -100,13 +100,6 @@ const columns = computed(() => [
         label: t('Start Date'),
         hideOnTablet: true,
         render: (league: League) => league.started_at
-    },
-    {
-        key: 'actions',
-        label: t('Actions'),
-        align: 'right' as const,
-        sticky: true,
-        width: '80px'
     }
 ]);
 
@@ -130,47 +123,56 @@ const formatDate = (dateString: string | null | undefined): string => {
     return new Date(dateString).toLocaleDateString();
 };
 
-const getLeagueUrl = (routeName: 'leagues.show.page' | 'leagues.edit', leagueId: number | undefined | null): string | null => {
-    if (typeof leagueId !== 'number') return null;
+const getRowClass = (): string => {
+    return 'cursor-pointer transition-colors duration-200';
+};
 
-    try {
-        return route(routeName, {league: leagueId});
-// eslint-disable-next-line
-    } catch (e) {
-        return null;
+// Event delegation handler
+const handleTableClick = (event: MouseEvent) => {
+    const target = event.target as HTMLElement;
+    const row = target.closest('tr[data-league-id]');
+
+    if (row) {
+        const leagueId = row.getAttribute('data-league-id');
+        if (leagueId) {
+            router.visit(`/leagues/${leagueId}`);
+        }
     }
 };
 
-const getActions = (league: League): ActionItem[] => {
-    const actions: ActionItem[] = [];
+const handleTableKeydown = (event: KeyboardEvent) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+        const target = event.target as HTMLElement;
+        const row = target.closest('tr[data-league-id]');
 
-    const viewUrl = getLeagueUrl('leagues.show.page', league.id);
-    if (viewUrl) {
-        actions.push({
-            label: t('View Details'),
-            icon: EyeIcon,
-            href: viewUrl,
-            show: true
-        });
-    }
-
-    if (isAuthenticated.value && isAdmin.value) {
-        const editUrl = getLeagueUrl('leagues.edit', league.id);
-        if (editUrl) {
-            actions.push({
-                label: t('Edit League'),
-                icon: PencilIcon,
-                href: editUrl,
-                show: true
-            });
+        if (row) {
+            event.preventDefault();
+            const leagueId = row.getAttribute('data-league-id');
+            if (leagueId) {
+                router.visit(`/leagues/${leagueId}`);
+            }
         }
     }
-
-    return actions;
 };
 
 onMounted(() => {
     fetchLeagues();
+
+    // Add event delegation to the table container
+    const tableContainer = document.querySelector('[data-league-table]');
+    if (tableContainer) {
+        tableContainer.addEventListener('click', handleTableClick);
+        tableContainer.addEventListener('keydown', handleTableKeydown);
+    }
+});
+
+onUnmounted(() => {
+    // Clean up event listeners
+    const tableContainer = document.querySelector('[data-league-table]');
+    if (tableContainer) {
+        tableContainer.removeEventListener('click', handleTableClick);
+        tableContainer.removeEventListener('keydown', handleTableKeydown);
+    }
 });
 </script>
 
@@ -222,78 +224,83 @@ onMounted(() => {
                     </CardTitle>
                 </CardHeader>
                 <CardContent class="p-0">
-                    <DataTable
-                        :columns="columns"
-                        :compact-mode="true"
-                        :data="filteredAndSortedLeagues"
-                        :empty-message="selectedStatus === 'all' ? t('No leagues have been created yet.') : t('No :status leagues available.', {status: selectedStatus})"
-                        :loading="isLoading"
-                    >
-                        <!-- Custom cell renderers -->
-                        <template #cell-name="{ value }">
-                            <div class="flex items-center">
-                                <div class="flex-shrink-0 h-8 w-8">
-                                    <div
-                                        class="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                                        <TrophyIcon class="h-4 w-4 text-blue-600 dark:text-blue-400"/>
+                    <div data-league-table>
+                        <DataTable
+                            :columns="columns"
+                            :compact-mode="true"
+                            :data="filteredAndSortedLeagues"
+                            :empty-message="selectedStatus === 'all' ? t('No leagues have been created yet.') : t('No :status leagues available.', {status: selectedStatus})"
+                            :loading="isLoading"
+                            :row-class="getRowClass"
+                            :row-attributes="(league) => ({
+                                'data-league-id': league.id?.toString(),
+                                'role': 'button',
+                                'tabindex': '0',
+                                'aria-label': `View ${league.name} league`
+                            })"
+                        >
+                            <!-- Custom cell renderers -->
+                            <template #cell-name="{ value }">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-8 w-8">
+                                        <div
+                                            class="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                                            <TrophyIcon class="h-4 w-4 text-blue-600 dark:text-blue-400"/>
+                                        </div>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                            {{ value.name }}
+                                        </div>
+                                        <div v-if="value.details"
+                                             class="text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">
+                                            {{ value.details }}
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                        {{ value.name }}
-                                    </div>
-                                    <div v-if="value.details"
-                                         class="text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">
-                                        {{ value.details }}
-                                    </div>
+                            </template>
+
+                            <template #cell-game="{ value }">
+                                <div class="flex items-center text-sm text-gray-900 dark:text-gray-100">
+                                    <GamepadIcon class="h-4 w-4 mr-2 text-gray-400"/>
+                                    {{ value }}
                                 </div>
-                            </div>
-                        </template>
+                            </template>
 
-                        <template #cell-game="{ value }">
-                            <div class="flex items-center text-sm text-gray-900 dark:text-gray-100">
-                                <GamepadIcon class="h-4 w-4 mr-2 text-gray-400"/>
-                                {{ value }}
-                            </div>
-                        </template>
+                            <template #cell-status="{ value }">
+                                <span
+                                    v-if="value"
+                                    :class="[
+                                        'inline-flex px-2 py-1 text-xs font-medium rounded-full',
+                                        value.class
+                                    ]"
+                                >
+                                    {{ value.text }}
+                                </span>
+                                <span v-else class="text-sm text-gray-500 dark:text-gray-400">{{ t('Unknown') }}</span>
+                            </template>
 
-                        <template #cell-status="{ value }">
-                            <span
-                                v-if="value"
-                                :class="[
-                                    'inline-flex px-2 py-1 text-xs font-medium rounded-full',
-                                    value.class
-                                ]"
-                            >
-                                {{ value.text }}
-                            </span>
-                            <span v-else class="text-sm text-gray-500 dark:text-gray-400">{{ t('Unknown') }}</span>
-                        </template>
+                            <template #cell-players="{ value }">
+                                <div class="flex items-center text-sm text-gray-900 dark:text-gray-100">
+                                    <UsersIcon class="h-4 w-4 mr-2 text-gray-400"/>
+                                    {{ value }}
+                                </div>
+                            </template>
 
-                        <template #cell-players="{ value }">
-                            <div class="flex items-center text-sm text-gray-900 dark:text-gray-100">
-                                <UsersIcon class="h-4 w-4 mr-2 text-gray-400"/>
-                                {{ value }}
-                            </div>
-                        </template>
+                            <template #cell-matches="{ value }">
+                                <div class="text-sm text-gray-900 dark:text-gray-100">
+                                    {{ value }} {{ t('Matches') }}
+                                </div>
+                            </template>
 
-                        <template #cell-matches="{ value }">
-                            <div class="text-sm text-gray-900 dark:text-gray-100">
-                                {{ value }} {{ t('Matches') }}
-                            </div>
-                        </template>
-
-                        <template #cell-startDate="{ value }">
-                            <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                                <CalendarIcon class="h-4 w-4 mr-2"/>
-                                {{ formatDate(value) }}
-                            </div>
-                        </template>
-
-                        <template #cell-actions="{ item }">
-                            <TableActions :actions="getActions(item)"/>
-                        </template>
-                    </DataTable>
+                            <template #cell-startDate="{ value }">
+                                <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                                    <CalendarIcon class="h-4 w-4 mr-2"/>
+                                    {{ formatDate(value) }}
+                                </div>
+                            </template>
+                        </DataTable>
+                    </div>
                 </CardContent>
             </Card>
         </div>
