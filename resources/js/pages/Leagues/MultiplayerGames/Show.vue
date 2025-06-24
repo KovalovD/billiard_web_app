@@ -9,7 +9,16 @@ import RatingSummaryCard from '@/Components/RatingSummaryCard.vue';
 import GameActionPanel from '@/Components/GameActionPanel.vue';
 import TimeFundCard from '@/Components/TimeFundCard.vue';
 import MultiplayerGameSummary from '@/Components/MultiplayerGameSummary.vue';
-import {ArrowLeftIcon, LogInIcon, TrophyIcon, UserIcon, UserPlusIcon} from 'lucide-vue-next';
+import {
+    ArrowLeftIcon,
+    CheckIcon,
+    CopyIcon,
+    LogInIcon,
+    MonitorIcon,
+    TrophyIcon,
+    UserIcon,
+    UserPlusIcon
+} from 'lucide-vue-next';
 import {Button, Card, CardContent, CardHeader, CardTitle} from '@/Components/ui';
 import {useAuth} from '@/composables/useAuth';
 import {useMultiplayerGames} from '@/composables/useMultiplayerGames';
@@ -53,16 +62,85 @@ const showFinishModal = ref(false);
 const showModeratorModal = ref(false);
 const actionFeedback = ref<{ type: 'success' | 'error', message: string } | null>(null);
 const activeTab = ref<'game' | 'prizes' | 'ratings' | 'timefund' | 'widget'>('game');
+const copiedWidgetId = ref<string | null>(null);
 
-const widgetLink1 = computed(() => {
-    return `/widgets/streaming?league=${props.leagueId}&game=${props.gameId}&theme=dark&refresh=3000&league_part=yes&next_player_part=yes`;
-})
-const widgetLink2 = computed(() => {
-    return `/widgets/streaming?league=${props.leagueId}&game=${props.gameId}&theme=transparent&refresh=2000&league_part=yes&next_player_part=yes&orientation=vertical`;
-})
-const widgetLink3 = computed(() => {
-    return `/widgets/streaming?league=${props.leagueId}&game=${props.gameId}&theme=light&refresh=5000&league_part=yes&next_player_part=yes`;
-})
+// Widget URL builders
+const getWidgetUrl = (params: Record<string, string> = {}): string => {
+    const baseUrl = `${window.location.origin}/widgets/streaming`;
+    const defaultParams = {
+        league: props.leagueId.toString(),
+        game: props.gameId.toString(),
+        theme: 'dark',
+        refresh: '3000',
+        show_league: 'true',
+        show_next: 'true',
+        show_cards: 'true'
+    };
+    const finalParams = {...defaultParams, ...params};
+    const queryString = new URLSearchParams(finalParams).toString();
+    return `${baseUrl}?${queryString}`;
+};
+
+// Widget presets
+const widgetPresets = computed(() => [
+    {
+        id: 'default',
+        name: t('Default Widget'),
+        description: t('Full widget with all information'),
+        url: getWidgetUrl(),
+        preview: {
+            theme: t('Dark'),
+            refresh: t('3 seconds'),
+            features: [t('League info'), t('Next players'), t('Cards')]
+        }
+    },
+    {
+        id: 'transparent',
+        name: t('Transparent Overlay'),
+        description: t('Perfect for stream overlays'),
+        url: getWidgetUrl({theme: 'transparent', refresh: '2000'}),
+        preview: {
+            theme: t('Transparent'),
+            refresh: t('2 seconds'),
+            features: [t('League info'), t('Next players'), t('Cards')]
+        }
+    },
+    {
+        id: 'minimal',
+        name: t('Minimal View'),
+        description: t('Current player only'),
+        url: getWidgetUrl({show_league: 'false', show_next: 'false', show_cards: 'false'}),
+        preview: {
+            theme: t('Dark'),
+            refresh: t('3 seconds'),
+            features: [t('Current player only')]
+        }
+    },
+    {
+        id: 'light',
+        name: t('Light Theme'),
+        description: t('For bright backgrounds'),
+        url: getWidgetUrl({theme: 'light', refresh: '5000'}),
+        preview: {
+            theme: t('Light'),
+            refresh: t('5 seconds'),
+            features: [t('League info'), t('Next players'), t('Cards')]
+        }
+    }
+]);
+
+// Copy widget URL to clipboard
+const copyWidgetUrl = async (widgetId: string, url: string) => {
+    try {
+        await navigator.clipboard.writeText(url);
+        copiedWidgetId.value = widgetId;
+        setTimeout(() => {
+            copiedWidgetId.value = null;
+        }, 2000);
+    } catch (err) {
+        console.error('Failed to copy:', err);
+    }
+};
 
 // Add to existing refs
 const showAddPlayerModal = ref(false);
@@ -611,6 +689,7 @@ onMounted(() => {
                                 {{ t('Time Fund') }}
                             </button>
                             <button
+                                v-if="isAuthenticated && (isAdmin || isModerator)"
                                 :class="[
                                     'py-4 px-1 text-sm font-medium border-b-2',
                                     activeTab === 'widget'
@@ -619,7 +698,7 @@ onMounted(() => {
                                 ]"
                                 @click="activeTab = 'widget'"
                             >
-                                {{ t('Widget') }}
+                                {{ t('OBS Widget') }}
                             </button>
                         </nav>
                     </div>
@@ -812,16 +891,129 @@ onMounted(() => {
                         <TimeFundCard :game="game"/>
                     </div>
 
-                    <div v-if="activeTab === 'widget'" class="space-y-6">
-                        <div>
-                            <Link :href="widgetLink1">Темна тема, 3 сек</Link>
+                    <!-- Widget tab -->
+                    <div v-if="activeTab === 'widget' && isAuthenticated && (isAdmin || isModerator)" class="space-y-6">
+                        <!-- Instructions -->
+                        <div class="rounded-lg bg-blue-50 dark:bg-blue-900/20 p-4">
+                            <h3 class="font-semibold text-blue-900 dark:text-blue-100 mb-2">
+                                {{ t('OBS Stream Widget Setup') }}</h3>
+                            <div class="text-sm text-blue-700 dark:text-blue-300">
+                                <p class="mb-2">{{
+                                        t('Display live game information in your stream with customizable widgets.')
+                                    }}</p>
+                                <ol class="list-decimal list-inside space-y-1">
+                                    <li>{{ t('Choose a widget preset below or customize parameters') }}</li>
+                                    <li>{{ t('Copy the widget URL') }}</li>
+                                    <li>{{ t('Add Browser Source in OBS') }}</li>
+                                    <li>{{ t('Set size: 1200x150-200px (width x height)') }}</li>
+                                </ol>
+                            </div>
                         </div>
-                        <div>
-                            <Link :href="widgetLink2">Прозора тема, 2 сек, вертикальна</Link>
+
+                        <!-- Widget Presets -->
+                        <div class="grid gap-4 md:grid-cols-2">
+                            <Card v-for="preset in widgetPresets" :key="preset.id">
+                                <CardHeader>
+                                    <CardTitle class="flex items-center justify-between">
+                                        <span class="flex items-center gap-2">
+                                            <MonitorIcon class="h-5 w-5"/>
+                                            {{ preset.name }}
+                                        </span>
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">{{
+                                            preset.description
+                                        }}</p>
+
+                                    <!-- Preview details -->
+                                    <div class="mb-4 space-y-1 text-sm">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-gray-600 dark:text-gray-400">{{ t('Theme:') }}</span>
+                                            <span>{{ preset.preview.theme }}</span>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-gray-600 dark:text-gray-400">{{ t('Refresh:') }}</span>
+                                            <span>{{ preset.preview.refresh }}</span>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-gray-600 dark:text-gray-400">{{ t('Features:') }}</span>
+                                            <span class="text-xs">{{ preset.preview.features.join(', ') }}</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Copy button -->
+                                    <Button
+                                        class="w-full"
+                                        size="sm"
+                                        variant="outline"
+                                        @click="copyWidgetUrl(preset.id, preset.url)"
+                                    >
+                                        <template v-if="copiedWidgetId === preset.id">
+                                            <CheckIcon class="mr-2 h-4 w-4 text-green-600"/>
+                                            {{ t('Copied!') }}
+                                        </template>
+                                        <template v-else>
+                                            <CopyIcon class="mr-2 h-4 w-4"/>
+                                            {{ t('Copy Widget URL') }}
+                                        </template>
+                                    </Button>
+
+                                    <!-- URL Preview -->
+                                    <details class="mt-3 cursor-pointer">
+                                        <summary
+                                            class="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200">
+                                            {{ t('View URL') }}
+                                        </summary>
+                                        <div class="mt-2 rounded bg-gray-100 p-2 dark:bg-gray-800">
+                                            <code class="text-xs break-all">{{ preset.url }}</code>
+                                        </div>
+                                    </details>
+                                </CardContent>
+                            </Card>
                         </div>
-                        <div>
-                            <Link :href="widgetLink3">Світла тема, 5 сек</Link>
-                        </div>
+
+                        <!-- Custom URL Builder Info -->
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>{{ t('Custom Widget Parameters') }}</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                    {{ t('You can customize the widget by adding parameters to the URL:') }}
+                                </p>
+                                <div class="space-y-2 text-sm">
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <span class="font-mono text-xs">theme</span>
+                                        <span class="col-span-2 text-gray-600 dark:text-gray-400">dark, light, transparent</span>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <span class="font-mono text-xs">refresh</span>
+                                        <span class="col-span-2 text-gray-600 dark:text-gray-400">{{
+                                                t('Update interval in milliseconds (1000-10000)')
+                                            }}</span>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <span class="font-mono text-xs">show_league</span>
+                                        <span class="col-span-2 text-gray-600 dark:text-gray-400">{{
+                                                t('true/false - Show league information')
+                                            }}</span>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <span class="font-mono text-xs">show_next</span>
+                                        <span class="col-span-2 text-gray-600 dark:text-gray-400">{{
+                                                t('true/false - Show next players')
+                                            }}</span>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <span class="font-mono text-xs">show_cards</span>
+                                        <span class="col-span-2 text-gray-600 dark:text-gray-400">{{
+                                                t('true/false - Show available cards')
+                                            }}</span>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
                     </div>
                 </div>
             </div>
