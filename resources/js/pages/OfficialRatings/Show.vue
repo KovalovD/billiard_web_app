@@ -307,8 +307,8 @@ const columns = computed(() => [
         })
     },
     {
-        key: 'prize',
-        label: t('Prize'),
+        key: 'earned_money',
+        label: t('Earned Money'),
         align: 'center' as const,
         render: (player: OfficialRatingPlayer) => ({
             amount: player.total_prize_amount,
@@ -566,7 +566,7 @@ const getRowClass = (player: OfficialRatingPlayer): string => {
                                         })
                                     }}
                                     <span v-if="ratingDelta.prize_amount_delta !== 0" class="ml-2">
-                                        {{ t('Prize') }}:
+                                        {{ t('Earned Money') }}:
                                         <span
                                             :class="ratingDelta.prize_amount_delta >= 0 ? 'text-green-600' : 'text-red-600'">
                                             {{
@@ -579,7 +579,7 @@ const getRowClass = (player: OfficialRatingPlayer): string => {
                                             :class="ratingDelta.bonus_amount_delta >= 0 ? 'text-green-600' : 'text-red-600'">
                                             {{
                                                 ratingDelta.bonus_amount_delta >= 0 ? `+${ratingDelta.bonus_amount_delta.toFixed(2)}` : 0.00
-                                            }}₴
+                                            }}
                                         </span>
                                     </span>
                                     <span v-if="ratingDelta.achievement_amount_delta !== 0" class="ml-2">
@@ -682,7 +682,7 @@ const getRowClass = (player: OfficialRatingPlayer): string => {
                                         </span>
                                     </template>
 
-                                    <template #cell-prize="{ value }">
+                                    <template #cell-earned_money="{ value }">
                                         <span v-if="value.amount > 0" :class="[
                                             'font-medium text-green-600 dark:text-green-400',
                                             value.isCurrentUser ? 'font-bold' : ''

@@ -6,7 +6,7 @@ import {useAuth} from '@/composables/useAuth';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
 import type {OfficialRating} from '@/types/api';
-import {Head, Link, router} from '@inertiajs/vue3';
+import {Head, Link, router, usePage} from '@inertiajs/vue3';
 import {useLocale} from '@/composables/useLocale';
 import {
     CalendarIcon,
@@ -25,13 +25,22 @@ defineOptions({layout: AuthenticatedLayout});
 
 const {isAdmin, isAuthenticated, user} = useAuth();
 const {t} = useLocale();
+const page = usePage();
 
 // State
 const ratings = ref<OfficialRating[]>([]);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
 const showInactiveRatings = ref(false);
-const activeTab = ref<'ratings' | 'one-year'>('ratings');
+
+// Get initial tab from URL query parameter
+const getInitialTab = (): 'ratings' | 'one-year' => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    return tabParam === 'one-year' ? 'one-year' : 'ratings';
+};
+
+const activeTab = ref<'ratings' | 'one-year'>(getInitialTab());
 
 // One Year Rating state
 const oneYearRatingData = ref<any[]>([]);
@@ -135,8 +144,8 @@ const oneYearColumns = computed(() => [
         })
     },
     {
-        key: 'prize',
-        label: t('Prize'),
+        key: 'earned_money',
+        label: t('Earned Money'),
         align: 'center' as const,
         render: (player: any) => ({
             amount: player.prize_amount || 0,
@@ -259,6 +268,21 @@ const getRatingRowClass = (rating: OfficialRating): string => {
     return 'cursor-pointer transition-colors duration-200';
 };
 
+// Handle tab change and update URL
+const switchTab = (tab: 'ratings' | 'one-year') => {
+    activeTab.value = tab;
+
+    // Update URL without page reload
+    const url = new URL(window.location.href);
+    if (tab === 'ratings') {
+        url.searchParams.delete('tab');
+    } else {
+        url.searchParams.set('tab', tab);
+    }
+
+    window.history.replaceState({}, '', url.toString());
+};
+
 // Handle table click events
 const setupTableClickHandlers = () => {
     // Only setup handlers for ratings tab
@@ -357,7 +381,7 @@ watch(showInactiveRatings, () => {
                                 ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                         ]"
-                        @click="activeTab = 'ratings'"
+                        @click="switchTab('ratings')"
                     >
                         {{ t('Rating Systems') }}
                     </button>
@@ -368,7 +392,7 @@ watch(showInactiveRatings, () => {
                                 ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                         ]"
-                        @click="activeTab = 'one-year'"
+                        @click="switchTab('one-year')"
                     >
                         {{ t('One Year Rating') }}
                     </button>
@@ -565,7 +589,7 @@ watch(showInactiveRatings, () => {
                                 </span>
                             </template>
 
-                            <template #cell-prize="{ value }">
+                            <template #cell-earned_money="{ value }">
                                 <span v-if="value.amount > 0" :class="[
                                     'font-medium text-green-600 dark:text-green-400',
                                     value.isCurrentUser ? 'font-bold' : ''
