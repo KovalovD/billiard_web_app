@@ -122,4 +122,6 @@ return [
         'store'  => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'notion_api'       => env('NOTION_API'),
+    'notion_deploy_db' => env('NOTION_DEPLOY_DB'),
 ];
