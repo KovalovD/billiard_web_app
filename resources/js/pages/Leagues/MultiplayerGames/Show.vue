@@ -905,7 +905,7 @@ onMounted(() => {
                                     <li>{{ t('Choose a widget preset below or customize parameters') }}</li>
                                     <li>{{ t('Copy the widget URL') }}</li>
                                     <li>{{ t('Add Browser Source in OBS') }}</li>
-                                    <li>{{ t('Set size: 1200x150-200px (width x height)') }}</li>
+                                    <li>{{ t('Set size: 1000x100px (width x height)') }}</li>
                                 </ol>
                             </div>
                         </div>
