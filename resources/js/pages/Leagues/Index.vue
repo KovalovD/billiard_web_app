@@ -16,7 +16,7 @@ const {t} = useLocale();
 
 defineOptions({layout: AuthenticatedLayout});
 
-const {isAdmin, isAuthenticated, user} = useAuth();
+const {isAdmin, isAuthenticated} = useAuth();
 const leagues = useLeagues();
 const {getLeagueStatus, getPlayersText} = useLeagueStatus();
 

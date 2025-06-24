@@ -66,7 +66,7 @@ const copiedWidgetId = ref<string | null>(null);
 
 // Widget URL builders
 const getWidgetUrl = (params: Record<string, string> = {}): string => {
-    const baseUrl = `${window.location.origin}/widgets/streaming`;
+    const baseUrl = `${window.location.origin}/widgets/killer-pool`;
     const defaultParams = {
         league: props.leagueId.toString(),
         game: props.gameId.toString(),
@@ -117,14 +117,14 @@ const widgetPresets = computed(() => [
         }
     },
     {
-        id: 'light',
-        name: t('Light Theme'),
-        description: t('For bright backgrounds'),
-        url: getWidgetUrl({theme: 'light', refresh: '5000'}),
+        id: 'vertical',
+        name: t('Vertical'),
+        description: t('For Tablet and TV screens'),
+        url: getWidgetUrl({theme: 'dark', refresh: '3000', orientation: 'vertical'}),
         preview: {
-            theme: t('Light'),
-            refresh: t('5 seconds'),
-            features: [t('League info'), t('Next players'), t('Cards')]
+            theme: t('Dark'),
+            refresh: t('3 seconds'),
+            features: [t('League info'), t('Next players'), t('Cards'), t('Vertical')]
         }
     }
 ]);

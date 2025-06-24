@@ -574,10 +574,10 @@ onMounted(() => {
                         </span>
                         <span :class="[
                             'px-3 py-1 rounded-full text-sm font-medium',
-                            selectedMatch.status === 'completed' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
+                            selectedMatch.status === 'completed' ? 'bg-blue-100 text-blue-800 dark:bg-green-900/30 dark:text-green-300' :
                             selectedMatch.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' :
                             selectedMatch.status === 'verification' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' :
-                            selectedMatch.status === 'ready' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' :
+                            selectedMatch.status === 'ready' ? 'bg-green-100 text-green-800 dark:bg-blue-900/30 dark:text-blue-300' :
                             'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
                         ]">
                             {{ selectedMatch.status_display }}

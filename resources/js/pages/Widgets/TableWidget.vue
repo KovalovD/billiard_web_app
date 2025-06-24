@@ -1,5 +1,7 @@
+// resources/js/pages/Widgets/TableWidget.vue
 <script lang="ts" setup>
 import {computed, onMounted, onUnmounted, ref} from 'vue'
+import {TrophyIcon} from 'lucide-vue-next'
 
 interface WidgetData {
     tournament: {
@@ -44,13 +46,10 @@ const tournamentId = urlParams.get('tournament')
 const tableId = urlParams.get('table')
 const refreshInterval = parseInt(urlParams.get('refresh') || '3000')
 const theme = urlParams.get('theme') || 'dark'
-const layout = urlParams.get('layout') || 'horizontal'
-const compact = urlParams.get('compact') === 'true'
 
 const widgetData = ref<WidgetData | null>(null)
 const isLoading = ref(true)
 const error = ref<string | null>(null)
-const connectionStatus = ref<'connected' | 'disconnected' | 'error'>('disconnected')
 
 let dataPollingInterval: number | null = null
 
@@ -65,21 +64,26 @@ const themeClasses = computed(() => {
     }
 })
 
-const containerClasses = computed(() => {
-    const classes = []
-
-    if (theme === 'transparent') {
-        classes.push('bg-black/50 backdrop-blur-sm')
+const cardClasses = computed(() => {
+    switch (theme) {
+        case 'light':
+            return 'bg-gray-50 border-gray-200'
+        case 'transparent':
+            return 'bg-black/40 backdrop-blur-sm border-white/20'
+        default:
+            return 'bg-gray-800 border-gray-700'
     }
+})
 
-    // Adaptive padding based on layout
-    if (layout === 'horizontal') {
-        classes.push(compact ? 'p-2' : 'p-3')
-    } else {
-        classes.push('p-4')
+const activeMatchClasses = computed(() => {
+    switch (theme) {
+        case 'light':
+            return 'bg-blue-50 border-blue-200'
+        case 'transparent':
+            return 'bg-blue-500/20 backdrop-blur-sm border-blue-500/40'
+        default:
+            return 'bg-blue-900/30 border-blue-700'
     }
-
-    return classes.join(' ')
 })
 
 const fetchWidgetData = async (): Promise<void> => {
@@ -93,15 +97,27 @@ const fetchWidgetData = async (): Promise<void> => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`)
 
         widgetData.value = await response.json()
-        connectionStatus.value = 'connected'
         error.value = null
-// eslint-disable-next-line
     } catch (err: any) {
-        error.value = `Failed to fetch data`
-        connectionStatus.value = 'error'
+        error.value = `Failed to fetch: ${err.message}`
+        console.error('Failed to fetch widget data:', err)
     } finally {
         isLoading.value = false
     }
+}
+
+const getScoreColor = (score1: number, score2: number, isPlayer1: boolean): string => {
+    if (score1 === score2) return ''
+
+    if (theme === 'light') {
+        return (isPlayer1 && score1 > score2) || (!isPlayer1 && score2 > score1)
+            ? 'text-green-600'
+            : ''
+    }
+
+    return (isPlayer1 && score1 > score2) || (!isPlayer1 && score2 > score1)
+        ? 'text-green-400'
+        : ''
 }
 
 const startPolling = (): void => {
@@ -121,166 +137,88 @@ onUnmounted(stopPolling)
 </script>
 
 <template>
-    <div :class="[themeClasses, 'font-sans min-h-[100px] max-h-[200px] h-full flex items-center justify-center']">
-        <div v-if="error" class="text-center p-2">
-            <div class="text-red-400 text-sm">Error: {{ error }}</div>
+    <div :class="[themeClasses, 'h-[100px] p-2 font-sans flex items-center justify-center overflow-hidden']">
+        <!-- Error State -->
+        <div v-if="error" class="text-center">
+            <div class="text-red-400 text-xs">⚠️ {{ error }}</div>
         </div>
 
-        <div v-else-if="isLoading" class="text-center p-2">
-            <div class="text-sm">Loading...</div>
+        <!-- Loading State -->
+        <div v-else-if="isLoading" class="text-center">
+            <div class="text-xs animate-pulse">Loading...</div>
         </div>
 
-        <div v-else-if="widgetData?.active_match"
-             :class="[containerClasses, 'rounded-lg w-full h-full flex items-center']">
-            <!-- Horizontal Layout (Adaptive Height) -->
-            <div v-if="layout === 'horizontal'" class="w-full">
-                <!-- Compact Version (100-130px) -->
-                <div v-if="compact" class="space-y-1">
-                    <!-- Single Line Header -->
-                    <div class="flex items-center justify-between text-xs opacity-60">
-                        <span>{{ widgetData.tournament.name }} • {{ widgetData.active_match.round_display }}</span>
-                        <span>{{ widgetData.table.name }}</span>
-                    </div>
-
-                    <!-- Players and Score in One Line -->
-                    <div class="flex items-center justify-between">
-                        <div class="flex-1 text-right pr-4">
-                            <div
-                                :class="widgetData.active_match.player1_score > widgetData.active_match.player2_score ? 'text-green-400' : ''"
-                                class="font-semibold">
-                                {{ widgetData.active_match.player1?.full_name || 'TBD' }}
-                            </div>
-                        </div>
-
-                        <div class="text-center px-4">
-                            <div class="text-2xl font-bold">
-                                <span
-                                    :class="widgetData.active_match.player1_score > widgetData.active_match.player2_score ? 'text-green-400' : ''">
-                                    {{ widgetData.active_match.player1_score }}
-                                </span>
-                                <span class="mx-2 opacity-50 text-lg">-</span>
-                                <span
-                                    :class="widgetData.active_match.player2_score > widgetData.active_match.player1_score ? 'text-green-400' : ''">
-                                    {{ widgetData.active_match.player2_score }}
-                                </span>
-                            </div>
-                            <div class="text-xs opacity-50">Race to {{ widgetData.tournament.races_to }}</div>
-                        </div>
-
-                        <div class="flex-1 text-left pl-4">
-                            <div
-                                :class="widgetData.active_match.player2_score > widgetData.active_match.player1_score ? 'text-green-400' : ''"
-                                class="font-semibold">
-                                {{ widgetData.active_match.player2?.full_name || 'TBD' }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Standard Version (130-200px) -->
-                <div v-else class="space-y-2">
-                    <!-- Header -->
-                    <div class="flex items-center justify-between text-sm opacity-75">
-                        <span>{{ widgetData.tournament.name }}</span>
-                        <span>{{ widgetData.table.name }}</span>
-                    </div>
-
-                    <!-- Match Info -->
-                    <div class="text-center">
-                        <div class="text-base font-semibold">
-                            {{ widgetData.active_match.round_display }}
-                            <span v-if="widgetData.active_match.stage_display" class="ml-2">
-                                • {{ widgetData.active_match.stage_display }}
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Players and Score -->
-                    <div class="grid grid-cols-3 gap-4 items-center">
-                        <div class="text-right">
-                            <div class="font-bold text-lg">
-                                {{ widgetData.active_match.player1?.full_name || 'TBD' }}
-                            </div>
-                        </div>
-
-                        <div class="text-center">
-                            <div class="text-2xl font-bold">
-                                <span
-                                    :class="widgetData.active_match.player1_score > widgetData.active_match.player2_score ? 'text-green-400' : ''">
-                                    {{ widgetData.active_match.player1_score }}
-                                </span>
-                                <span class="mx-2 opacity-50">-</span>
-                                <span
-                                    :class="widgetData.active_match.player2_score > widgetData.active_match.player1_score ? 'text-green-400' : ''">
-                                    {{ widgetData.active_match.player2_score }}
-                                </span>
-                            </div>
-                            <div class="text-xs opacity-50">Race to {{ widgetData.tournament.races_to }}</div>
-                        </div>
-
-                        <div class="text-left">
-                            <div class="font-bold text-lg">
-                                {{ widgetData.active_match.player2?.full_name || 'TBD' }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Vertical Layout -->
-            <div v-else class="space-y-3 w-full">
-                <!-- Header -->
-                <div class="text-center">
-                    <div class="text-xs opacity-60">{{ widgetData.tournament.name }}</div>
-                    <div class="text-sm font-semibold">
-                        {{ widgetData.active_match.round_display }}
-                    </div>
-                </div>
-
+        <!-- Active Match -->
+        <div v-else-if="widgetData?.active_match" class="w-full h-full flex gap-2 items-center">
+            <!-- Match Score -->
+            <div
+                :class="[activeMatchClasses, 'rounded border flex-1 px-4 py-2 h-full flex items-center justify-between']">
                 <!-- Player 1 -->
-                <div
-                    :class="widgetData.active_match.player1_score > widgetData.active_match.player2_score ? 'bg-green-600/20' : 'bg-gray-800/50'"
-                    class="flex items-center justify-between p-2 rounded text-sm">
-                    <span class="font-semibold">{{ widgetData.active_match.player1?.full_name || 'TBD' }}</span>
-                    <span class="text-xl font-bold">{{ widgetData.active_match.player1_score }}</span>
+                <div class="flex-1 min-w-0">
+                    <div class="text-right">
+                        <h2 class="text-base font-bold leading-tight truncate">
+                            {{ widgetData.active_match.player1?.full_name || 'TBD' }}
+                        </h2>
+                        <div class="text-xs opacity-60 mt-0.5">
+                            {{ widgetData.active_match.match_code }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Score -->
+                <div class="px-6 text-center flex-shrink-0">
+                    <div class="text-3xl font-bold">
+                        <span
+                            :class="getScoreColor(widgetData.active_match.player1_score, widgetData.active_match.player2_score, true)">
+                            {{ widgetData.active_match.player1_score }}
+                        </span>
+                        <span class="mx-2 opacity-50 text-2xl">-</span>
+                        <span
+                            :class="getScoreColor(widgetData.active_match.player1_score, widgetData.active_match.player2_score, false)">
+                            {{ widgetData.active_match.player2_score }}
+                        </span>
+                    </div>
+                    <div class="text-[10px] opacity-50 mt-0.5">Race to {{ widgetData.tournament.races_to }}</div>
                 </div>
 
                 <!-- Player 2 -->
-                <div
-                    :class="widgetData.active_match.player2_score > widgetData.active_match.player1_score ? 'bg-green-600/20' : 'bg-gray-800/50'"
-                    class="flex items-center justify-between p-2 rounded text-sm">
-                    <span class="font-semibold">{{ widgetData.active_match.player2?.full_name || 'TBD' }}</span>
-                    <span class="text-xl font-bold">{{ widgetData.active_match.player2_score }}</span>
-                </div>
-
-                <!-- Footer -->
-                <div class="text-center text-xs opacity-50">
-                    {{ widgetData.table.name }} • Race to {{ widgetData.tournament.races_to }}
+                <div class="flex-1 min-w-0">
+                    <div class="text-left">
+                        <h2 class="text-base font-bold leading-tight truncate">
+                            {{ widgetData.active_match.player2?.full_name || 'TBD' }}
+                        </h2>
+                        <div class="text-xs opacity-60 mt-0.5">
+                            {{ widgetData.table.name }}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- No Active Match -->
-        <div v-else-if="widgetData"
-             :class="[containerClasses, 'rounded-lg text-center w-full h-full flex items-center justify-center']">
-            <div>
-                <div class="text-base font-semibold mb-1">{{ widgetData.tournament.name }}</div>
-                <div class="text-sm opacity-75">{{ widgetData.table.name }}</div>
-                <div class="mt-2 text-lg">No Active Match</div>
+        <div v-else-if="widgetData" class="w-full h-full flex items-center justify-center">
+            <div :class="[cardClasses, 'rounded border px-6 py-3 text-center']">
+                <div class="flex items-center gap-3">
+                    <TrophyIcon class="w-5 h-5 opacity-60"/>
+                    <div>
+                        <div class="text-sm font-bold">{{ widgetData.tournament.name }}</div>
+                        <div class="text-xs opacity-60">{{ widgetData.table.name }} • No Active Match</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </template>
 
 <style scoped>
-body {
-    margin: 0;
-    padding: 0;
-}
-
 .font-sans {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ensure proper text rendering at small sizes */
+* {
+    text-rendering: optimizeLegibility;
 }
 </style>

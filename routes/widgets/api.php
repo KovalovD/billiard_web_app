@@ -21,12 +21,12 @@ Route::prefix('widgets')
         Route::post('table-match/tournaments/{tournament}/tables/{table}/score',
             [TableMatchController::class, 'updateScore']);
 
-        Route::prefix('streaming')->group(function () {
+        Route::prefix('killer-pool')->group(function () {
             Route::get('leagues/{league}/games/{game}', [MultiplayerGamesController::class, 'getCurrentGame'])
-                ->name('widgets.streaming.current-game')
+                ->name('widgets.killer-pool.current-game')
             ;
             Route::get('leagues/{league}/games/{game}/status', [MultiplayerGamesController::class, 'getGameStatus'])
-                ->name('widgets.streaming.game-status')
+                ->name('widgets.killer-pool.game-status')
             ;
         });
     })

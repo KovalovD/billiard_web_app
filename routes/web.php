@@ -34,9 +34,9 @@ Route::group(['prefix' => 'widgets'], static function () {
         return Inertia::render('Widgets/TableWidget');
     })->name('widgets.table');
 
-    Route::get('/streaming', static function () {
-        return Inertia::render('Widgets/StreamingWidget');
-    })->name('widgets.streaming');
+    Route::get('/killer-pool', static function () {
+        return Inertia::render('Widgets/KillerPoolWidget');
+    })->name('widgets.killer-pool');
 
     Route::get('/table-match', static function () {
         return Inertia::render('Widgets/TableMatch');
