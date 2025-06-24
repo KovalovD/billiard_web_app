@@ -390,8 +390,8 @@ onMounted(() => {
                             <Input
                                 id="search"
                                 v-model="searchQuery"
-                                class="pl-10"
                                 :placeholder="t('Search by name or email...')"
+                                class="pl-10"
                             />
                         </div>
                     </div>

@@ -94,7 +94,7 @@ const stats = [
 </script>
 
 <template>
-<Head :title="t('Welcome to WinnerBreak')"/>
+    <Head :title="t('Welcome to WinnerBreak')"/>
 
     <div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
         <!-- Navigation Header -->
@@ -110,16 +110,19 @@ const stats = [
 
                     <!-- Navigation Links -->
                     <div class="hidden md:flex items-center space-x-8">
-                        <Link class="text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors"
-                              href="/leagues">
+                        <Link
+                            class="text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors"
+                            href="/leagues">
                             {{ t('Leagues') }}
                         </Link>
-                        <Link class="text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors"
-                              href="/tournaments">
+                        <Link
+                            class="text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors"
+                            href="/tournaments">
                             {{ t('Tournaments') }}
                         </Link>
-                        <Link class="text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors"
-                              href="/official-ratings">
+                        <Link
+                            class="text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors"
+                            href="/official-ratings">
                             {{ t('Rankings') }}
                         </Link>
                     </div>
@@ -161,7 +164,9 @@ const stats = [
                     </h1>
 
                     <p class="mx-auto mt-6 max-w-2xl text-lg leading-8 text-gray-600 dark:text-gray-300">
-                        {{ t('The premier billiard league management platform. Join competitive leagues, participate in tournaments, and track your progress with our advanced rating system.') }}
+                        {{
+                            t('The premier billiard league management platform. Join competitive leagues, participate in tournaments, and track your progress with our advanced rating system.')
+                        }}
                     </p>
 
                     <div class="mt-10 flex items-center justify-center gap-x-6">
@@ -239,7 +244,9 @@ const stats = [
                             class="mx-auto w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-6">
                             <span class="text-2xl font-bold text-blue-600 dark:text-blue-400">1</span>
                         </div>
-                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">{{ t('Create Account') }}</h3>
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">{{
+                                t('Create Account')
+                            }}</h3>
                         <p class="text-gray-600 dark:text-gray-300">
                             {{ t('Sign up with your basic information and set up your player profile') }}
                         </p>
@@ -261,7 +268,9 @@ const stats = [
                             class="mx-auto w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mb-6">
                             <span class="text-2xl font-bold text-purple-600 dark:text-purple-400">3</span>
                         </div>
-                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">{{ t('Start Playing') }}</h3>
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">{{
+                                t('Start Playing')
+                            }}</h3>
                         <p class="text-gray-600 dark:text-gray-300">
                             {{ t('Challenge players, participate in tournaments, and climb the rankings') }}
                         </p>
@@ -374,8 +383,14 @@ const stats = [
 
                     <div class="flex space-x-6 text-sm text-gray-400">
                         <Link class="hover:text-white transition-colors" href="/leagues">{{ t('Leagues') }}</Link>
-                        <Link class="hover:text-white transition-colors" href="/tournaments">{{ t('Tournaments') }}</Link>
-                        <Link class="hover:text-white transition-colors" href="/official-ratings">{{ t('Rankings') }}</Link>
+                        <Link class="hover:text-white transition-colors" href="/tournaments">{{
+                                t('Tournaments')
+                            }}
+                        </Link>
+                        <Link class="hover:text-white transition-colors" href="/official-ratings">{{
+                                t('Rankings')
+                            }}
+                        </Link>
                     </div>
                 </div>
 

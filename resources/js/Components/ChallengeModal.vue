@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import InputError from '@/Components/InputError.vue';
 import {Button, Input, Label, Modal, Spinner, Textarea} from '@/Components/ui';
-import { apiClient } from '@/lib/apiClient';
-import type { ApiError, League, Player, SendGamePayload } from '@/types/api';
+import {apiClient} from '@/lib/apiClient';
+import type {ApiError, League, Player, SendGamePayload} from '@/types/api';
 import {reactive, ref, watch} from 'vue';
 
 interface Props {
@@ -89,7 +89,7 @@ const submitChallenge = async () => {
                     placeholder="https://twitch.tv/..."
                     type="url"
                 />
-                <InputError :message="formErrors.stream_url?.join(', ')" class="mt-1" />
+                <InputError :message="formErrors.stream_url?.join(', ')" class="mt-1"/>
             </div>
 
             <div>
@@ -102,7 +102,7 @@ const submitChallenge = async () => {
                     placeholder="Any specific challenge details..."
                     rows="3"
                 />
-                <InputError :message="formErrors.details?.join(', ')" class="mt-1" />
+                <InputError :message="formErrors.details?.join(', ')" class="mt-1"/>
             </div>
 
             <div class="flex justify-end space-x-3 pt-4">

@@ -205,8 +205,9 @@ onMounted(() => {
                                 <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('Initial Rating') }}</div>
                             </div>
                             <div class="text-center p-4 bg-gray-50 rounded-lg dark:bg-gray-800">
-                                <div :class="rating.is_active ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'"
-                                     class="text-2xl font-bold">
+                                <div
+                                    :class="rating.is_active ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'"
+                                    class="text-2xl font-bold">
                                     {{ rating.is_active ? t('Active') : t('Inactive') }}
                                 </div>
                                 <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('Status') }}</div>
@@ -249,9 +250,9 @@ onMounted(() => {
                 <Card>
                     <CardHeader>
                         <CardTitle>{{ t('Quick Actions') }}</CardTitle>
-                    <CardDescription>
+                        <CardDescription>
                             {{ t('Perform common management tasks quickly') }}
-                    </CardDescription>
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">

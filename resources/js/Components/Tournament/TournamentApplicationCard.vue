@@ -16,7 +16,7 @@ const emit = defineEmits<{
 }>();
 
 const {user, isAuthenticated} = useAuth();
-const { t } = useLocale();
+const {t} = useLocale();
 
 // State
 const application = ref<TournamentPlayer | null>(null);
@@ -200,7 +200,9 @@ onMounted(() => {
                 <div class="space-y-1">
                     <div class="flex items-center gap-2 text-sm">
                         <CalendarIcon class="h-4 w-4"/>
-                        {{ t('Application deadline: :date', {date: formatDateTime(applicationDeadline.toISOString())}) }}
+                        {{
+                            t('Application deadline: :date', {date: formatDateTime(applicationDeadline.toISOString())})
+                        }}
                     </div>
                     <div v-if="props.tournament.max_participants" class="text-sm">
                         {{ props.tournament.confirmed_players_count }} / {{ props.tournament.max_participants }}
@@ -299,7 +301,9 @@ onMounted(() => {
 
                 <div v-if="application?.is_confirmed"
                      class="text-sm text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 p-3 rounded">
-                    {{ t('Congratulations! Your application has been confirmed. You are registered for this tournament.') }}
+                    {{
+                        t('Congratulations! Your application has been confirmed. You are registered for this tournament.')
+                    }}
                 </div>
             </div>
         </CardContent>

@@ -233,7 +233,9 @@ onMounted(() => {
             <!-- Header -->
             <div class="mb-6 flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">{{ t('Create Tournament') }}</h1>
+                    <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">{{
+                            t('Create Tournament')
+                        }}</h1>
                     <p class="text-gray-600 dark:text-gray-400">{{ t('Set up a new billiard tournament') }}</p>
                 </div>
                 <Button variant="outline" @click="handleCancel">

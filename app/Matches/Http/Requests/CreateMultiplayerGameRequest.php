@@ -10,7 +10,7 @@ class CreateMultiplayerGameRequest extends BaseFormRequest
     {
         return [
             'name'                 => ['required', 'string', 'max:255'],
-            'official_rating_id' => ['nullable', 'integer', 'exists:official_ratings,id'],
+            'official_rating_id'   => ['nullable', 'integer', 'exists:official_ratings,id'],
             'max_players'          => ['nullable', 'integer', 'min:2', 'max:24'],
             'registration_ends_at' => ['nullable', 'date', 'after:now'],
             'allow_player_targeting' => ['nullable', 'boolean'],

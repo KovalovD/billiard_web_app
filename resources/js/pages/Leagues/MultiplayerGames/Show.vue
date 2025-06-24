@@ -31,7 +31,7 @@ const props = defineProps<{
 }>();
 
 const {isAdmin, user, isAuthenticated} = useAuth();
-const { t } = useLocale();
+const {t} = useLocale();
 
 const {
     getMultiplayerGame,
@@ -144,13 +144,13 @@ const statusText = computed(() => {
 
     switch (game.value.status) {
         case 'registration':
-          return t('Registration Open');
+            return t('Registration Open');
         case 'in_progress':
-          return t('In Progress');
+            return t('In Progress');
         case 'completed':
-          return t('Completed');
+            return t('Completed');
         case 'finished':
-          return t('Finished');
+            return t('Finished');
         default:
             return game.value.status;
     }
@@ -631,12 +631,12 @@ onMounted(() => {
                             <div class="order-2 lg:order-1 lg:col-span-1">
                                 <Card v-if="game.active_players.length > 0">
                                     <CardHeader>
-                                      <CardTitle>{{ t('Active Players') }}</CardTitle>
+                                        <CardTitle>{{ t('Active Players') }}</CardTitle>
                                     </CardHeader>
                                     <CardContent>
                                         <PlayersList
-                                            :max-lives="game.initial_lives"
                                             :highlight-current-turn="true"
+                                            :max-lives="game.initial_lives"
                                             :players="game.active_players"
                                             :selected-player-id="selectedActingPlayer?.id"
                                             :show-controls="isAuthenticated && isModerator && game.status === 'in_progress'"
@@ -652,7 +652,7 @@ onMounted(() => {
                                     :class="game.active_players.length > 0 ? 'mt-6' : ''"
                                 >
                                     <CardHeader>
-                                      <CardTitle>{{ t('Eliminated Players') }}</CardTitle>
+                                        <CardTitle>{{ t('Eliminated Players') }}</CardTitle>
                                     </CardHeader>
                                     <CardContent>
                                         <div class="divide-y">
@@ -690,9 +690,9 @@ onMounted(() => {
                                  class="order-1 lg:order-2 lg:col-span-2">
                                 <div v-if="selectedActingPlayer" class="space-y-4">
                                     <GameActionPanel
-                                        :max-lives="game.initial_lives"
                                         :is-current-turn="selectedActingPlayer.is_current_turn"
                                         :is-loading="isActionLoading"
+                                        :max-lives="game.initial_lives"
                                         :player="selectedActingPlayer"
                                         :target-players="game.active_players.filter(p => p.id !== selectedActingPlayer?.id)"
                                         @decrement-lives="() => handleAction('decrement_lives', selectedActingPlayer?.user.id, selectedActingPlayer?.user.id)"
@@ -728,7 +728,9 @@ onMounted(() => {
                                     <CardContent>
                                         <div class="text-center py-8">
                                             <p class="text-gray-600 dark:text-gray-400 mb-4">
-                                                {{ t('This multiplayer game is currently in progress. You can watch the live action by viewing the player list on the left.') }}
+                                                {{
+                                                    t('This multiplayer game is currently in progress. You can watch the live action by viewing the player list on the left.')
+                                                }}
                                             </p>
                                             <Link :href="route('login')">
                                                 <Button>

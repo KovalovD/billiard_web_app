@@ -27,7 +27,7 @@ import {useLocale} from '@/composables/useLocale';
 // Phone validation regex - matches formats like +1234567890, (123) 456-7890, 123-456-7890
 const phonePattern = /^(\+?\d{1,3}[-\s]?)?\(?(\d{3})\)?[-\s]?(\d{3})[-\s]?(\d{4})$/;
 
-defineOptions({ layout: AuthenticatedLayout });
+defineOptions({layout: AuthenticatedLayout});
 
 const user = ref<User | null>(null);
 const cities = ref<City[]>([]);
@@ -39,7 +39,7 @@ const isLoadingClubs = ref(false);
 
 const isPhoneValid = ref(true);
 
-const { t } = useLocale();
+const {t} = useLocale();
 
 const profileForm = ref({
     firstname: '',
@@ -254,7 +254,10 @@ onMounted(() => {
             <!-- Profile Navigation -->
             <div class="mb-6 flex space-x-4">
                 <Link :href="route('profile.edit')">
-                    <Button class="bg-primary text-primary-foreground" variant="outline">{{ t('Edit Profile') }}</Button>
+                    <Button class="bg-primary text-primary-foreground" variant="outline">{{
+                            t('Edit Profile')
+                        }}
+                    </Button>
                 </Link>
                 <Link :href="route('profile.stats')">
                     <Button class="bg-gray-100 dark:bg-gray-800" variant="outline">{{ t('Statistics') }}</Button>
@@ -270,10 +273,13 @@ onMounted(() => {
             <Card v-else>
                 <CardHeader>
                     <CardTitle>{{ t('Profile Information') }}</CardTitle>
-                    <CardDescription>{{ t("Update your account's profile information and email address.") }}</CardDescription>
+                    <CardDescription>{{
+                            t("Update your account's profile information and email address.")
+                        }}
+                    </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <form @submit.prevent="updateProfile" class="space-y-4">
+                    <form class="space-y-4" @submit.prevent="updateProfile">
                         <div v-if="profileSuccess"
                              class="rounded-md bg-green-50 p-3 text-sm text-green-600 dark:bg-green-900/30 dark:text-green-400">
                             {{ t('Profile updated successfully.') }}
@@ -282,14 +288,16 @@ onMounted(() => {
                         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div class="space-y-2">
                                 <Label for="firstname">{{ t('First Name') }}</Label>
-                                <Input id="firstname" v-model="profileForm.firstname" :disabled="isProcessingProfile" required
+                                <Input id="firstname" v-model="profileForm.firstname" :disabled="isProcessingProfile"
+                                       required
                                        type="text"/>
                                 <InputError :message="profileErrors.firstname?.join(', ')"/>
                             </div>
 
                             <div class="space-y-2">
                                 <Label for="lastname">{{ t('Last Name') }}</Label>
-                                <Input id="lastname" v-model="profileForm.lastname" :disabled="isProcessingProfile" required
+                                <Input id="lastname" v-model="profileForm.lastname" :disabled="isProcessingProfile"
+                                       required
                                        type="text"/>
                                 <InputError :message="profileErrors.lastname?.join(', ')"/>
                             </div>
@@ -307,11 +315,11 @@ onMounted(() => {
                             <Input
                                 id="phone"
                                 v-model="profileForm.phone"
-                                type="tel"
-                                required
-                                :disabled="isProcessingProfile"
                                 :class="{ 'border-red-300 focus:border-red-300 focus:ring-red-300': !isPhoneValid }"
+                                :disabled="isProcessingProfile"
                                 :placeholder="t('e.g., (123) 456-7890')"
+                                required
+                                type="tel"
                                 @blur="validatePhone"
                                 @input="validatePhone"
                             />
@@ -379,7 +387,7 @@ onMounted(() => {
                     <CardDescription>{{ t('Ensure your account is using a secure password.') }}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <form @submit.prevent="updatePassword" class="space-y-4">
+                    <form class="space-y-4" @submit.prevent="updatePassword">
                         <div
                             v-if="passwordSuccess"
                             class="rounded-md bg-green-50 p-3 text-sm text-green-600 dark:bg-green-900/30 dark:text-green-400"
@@ -392,10 +400,10 @@ onMounted(() => {
                             <Input
                                 id="current_password"
                                 v-model="passwordForm.current_password"
-                                type="password"
+                                :disabled="isProcessingPassword"
                                 autocomplete="current-password"
                                 required
-                                :disabled="isProcessingPassword"
+                                type="password"
                             />
                             <InputError :message="passwordErrors.current_password?.join(', ')"/>
                         </div>
@@ -405,10 +413,10 @@ onMounted(() => {
                             <Input
                                 id="password"
                                 v-model="passwordForm.password"
-                                type="password"
+                                :disabled="isProcessingPassword"
                                 autocomplete="new-password"
                                 required
-                                :disabled="isProcessingPassword"
+                                type="password"
                             />
                             <InputError :message="passwordErrors.password?.join(', ')"/>
                         </div>
@@ -418,10 +426,10 @@ onMounted(() => {
                             <Input
                                 id="password_confirmation"
                                 v-model="passwordForm.password_confirmation"
-                                type="password"
+                                :disabled="isProcessingPassword"
                                 autocomplete="new-password"
                                 required
-                                :disabled="isProcessingPassword"
+                                type="password"
                             />
                             <InputError :message="passwordErrors.password_confirmation?.join(', ')"/>
                         </div>
@@ -441,7 +449,9 @@ onMounted(() => {
                 <CardHeader>
                     <CardTitle>{{ t('Delete Account') }}</CardTitle>
                     <CardDescription class="text-red-500">
-                        {{ t('Once your account is deleted, all of its resources and data will be permanently deleted.') }}
+                        {{
+                            t('Once your account is deleted, all of its resources and data will be permanently deleted.')
+                        }}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -454,21 +464,26 @@ onMounted(() => {
     <!-- Delete Account Modal -->
     <div v-if="showDeleteModal" class="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4">
         <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-lg dark:bg-gray-800">
-            <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">{{ t('Are you sure you want to delete your account?') }}</h3>
+            <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
+                {{ t('Are you sure you want to delete your account?') }}</h3>
             <p class="mb-4 text-gray-600 dark:text-gray-400">
-                {{ t('Once your account is deleted, all of its resources and data will be permanently deleted. Please enter your password to confirm you would like to permanently delete your account.') }}
+                {{
+                    t('Once your account is deleted, all of its resources and data will be permanently deleted. Please enter your password to confirm you would like to permanently delete your account.')
+                }}
             </p>
 
             <form @submit.prevent="deleteAccount">
                 <div class="mb-4">
                     <Label for="delete_password">{{ t('Password') }}</Label>
-                    <Input id="delete_password" v-model="deleteForm.password" :disabled="isProcessingDelete" class="mt-1"
+                    <Input id="delete_password" v-model="deleteForm.password" :disabled="isProcessingDelete"
+                           class="mt-1"
                            required type="password"/>
                     <InputError :message="deleteErrors.password?.join(', ')" class="mt-1"/>
                 </div>
 
                 <div class="flex justify-end space-x-3">
-                    <Button :disabled="isProcessingDelete" variant="outline" @click="showDeleteModal = false"> {{ t('Cancel') }}
+                    <Button :disabled="isProcessingDelete" variant="outline" @click="showDeleteModal = false">
+                        {{ t('Cancel') }}
                     </Button>
                     <Button :disabled="isProcessingDelete" type="submit" variant="destructive">
                         <span v-if="isProcessingDelete">{{ t('Deleting...') }}</span>

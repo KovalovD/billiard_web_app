@@ -25,7 +25,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const emit = defineEmits(['close', 'created']);
-const { t } = useLocale();
+const {t} = useLocale();
 
 const {createMultiplayerGame, error, isLoading} = useMultiplayerGames();
 
@@ -146,8 +146,8 @@ const handleSubmit = async () => {
                     id="game_name"
                     v-model="form.name"
                     :disabled="isLoading"
-                    class="mt-1"
                     :placeholder="t('Enter game name')"
+                    class="mt-1"
                     required
                     type="text"
                 />
@@ -185,9 +185,9 @@ const handleSubmit = async () => {
                     id="max_players"
                     v-model.number="form.max_players"
                     :disabled="isLoading"
+                    :placeholder="t('Leave empty for unlimited')"
                     class="mt-1"
                     min="2"
-                    :placeholder="t('Leave empty for unlimited')"
                     type="number"
                 />
                 <InputError :message="validationErrors.max_players?.join(', ')"/>
@@ -199,8 +199,8 @@ const handleSubmit = async () => {
                     id="registration_ends_at"
                     v-model="form.registration_ends_at"
                     :disabled="isLoading"
-                    class="mt-1"
                     :placeholder="t('Leave empty for no end date')"
+                    class="mt-1"
                     type="datetime-local"
                 />
                 <InputError :message="validationErrors.registration_ends_at?.join(', ')"/>

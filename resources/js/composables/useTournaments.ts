@@ -1,7 +1,7 @@
 // resources/js/composables/useTournaments.ts
 import {useApi, useApiAction} from '@/composables/useApi';
 import {del, get, post, put} from '@/lib/apiClient';
-import type {Tournament, TournamentPlayer, CreateTournamentPayload} from '@/types/api';
+import type {CreateTournamentPayload, Tournament, TournamentPlayer} from '@/types/api';
 
 export function useTournaments() {
     // Отримати всі турніри

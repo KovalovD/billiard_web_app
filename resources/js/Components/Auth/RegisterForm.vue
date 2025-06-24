@@ -22,7 +22,7 @@ const phonePattern = /^(\+?\d{1,3}[-\s]?)?\(?(\d{3})\)?[-\s]?(\d{3})[-\s]?(\d{4}
 const emit = defineEmits(['success', 'error', 'cancel']);
 
 const registerService = useRegister();
-const { t } = useLocale();
+const {t} = useLocale();
 const form = ref<RegisterCredentials>({
     firstname: '',
     lastname: '',
@@ -137,11 +137,11 @@ onMounted(() => {
                     <Input
                         id="phone"
                         v-model="form.phone"
+                        :class="{ 'border-red-300 focus:border-red-300 focus:ring-red-300': form.phone && !isPhoneValid }"
                         :disabled="registerService.isLoading.value"
+                        :placeholder="t('e.g., (123) 456-7890')"
                         required
                         type="tel"
-                        :class="{ 'border-red-300 focus:border-red-300 focus:ring-red-300': form.phone && !isPhoneValid }"
-                        :placeholder="t('e.g., (123) 456-7890')"
                     />
                     <InputError v-if="registerService.getError('phone')" :message="registerService.getError('phone')"/>
                     <InputError

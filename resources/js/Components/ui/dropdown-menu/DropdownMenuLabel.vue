@@ -1,6 +1,6 @@
 <!-- resources/js/Components/ui/dropdown-menu/DropdownMenuLabel.vue -->
 <script lang="ts" setup>
-import {type HTMLAttributes, computed} from 'vue'
+import {computed, type HTMLAttributes} from 'vue'
 import {DropdownMenuLabel, type DropdownMenuLabelProps} from 'reka-ui'
 import {cn} from '@/lib/utils'
 

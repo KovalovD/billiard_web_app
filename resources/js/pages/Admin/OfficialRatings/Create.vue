@@ -26,9 +26,9 @@ import {useLocale} from "@/composables/useLocale";
 
 const {t} = useLocale();
 
-defineOptions({ layout: AuthenticatedLayout });
+defineOptions({layout: AuthenticatedLayout});
 
-const { createOfficialRating } = useOfficialRatings();
+const {createOfficialRating} = useOfficialRatings();
 
 const form = ref<CreateOfficialRatingPayload>({
     name: '',
@@ -48,15 +48,15 @@ const isFormValid = computed(() => {
 });
 
 const gameTypes = [
-    { value: 'pool', label: 'Pool' },
-    { value: 'pyramid', label: 'Pyramid' },
-    { value: 'snooker', label: 'Snooker' },
+    {value: 'pool', label: 'Pool'},
+    {value: 'pyramid', label: 'Pyramid'},
+    {value: 'snooker', label: 'Snooker'},
 ];
 
 const calculationMethods = [
-    { value: 'tournament_points', label: 'Tournament Points' },
-    { value: 'elo', label: 'ELO Rating' },
-    { value: 'custom', label: 'Custom' },
+    {value: 'tournament_points', label: 'Tournament Points'},
+    {value: 'elo', label: 'ELO Rating'},
+    {value: 'custom', label: 'Custom'},
 ];
 
 const handleSubmit = async () => {
@@ -100,7 +100,7 @@ const clearValidationError = (field: string) => {
 </script>
 
 <template>
-    <Head :title="t('Create Official Rating')" />
+    <Head :title="t('Create Official Rating')"/>
 
     <div class="py-12">
         <div class="mx-auto max-w-2xl sm:px-6 lg:px-8">
@@ -108,7 +108,7 @@ const clearValidationError = (field: string) => {
             <div class="mb-6 flex items-center justify-between">
                 <Link href="/official-ratings">
                     <Button variant="outline">
-                        <ArrowLeftIcon class="mr-2 h-4 w-4" />
+                        <ArrowLeftIcon class="mr-2 h-4 w-4"/>
                         {{ t('Back to Ratings') }}
                     </Button>
                 </Link>
@@ -127,7 +127,7 @@ const clearValidationError = (field: string) => {
             <Card>
                 <CardHeader>
                     <CardTitle class="flex items-center gap-2">
-                        <PlusIcon class="h-5 w-5" />
+                        <PlusIcon class="h-5 w-5"/>
                         {{ t('New Official Rating') }}
                     </CardTitle>
                     <CardDescription>
@@ -175,10 +175,11 @@ const clearValidationError = (field: string) => {
                                 <Label for="game_type">{{ t('Game Type *') }}</Label>
                                 <Select v-model="form.game_type" @update:modelValue="clearValidationError('game_type')">
                                     <SelectTrigger :class="{ 'border-red-300': getValidationError('game_type') }">
-                                        <SelectValue placeholder="{{ t('Select a game type') }}" />
+                                        <SelectValue placeholder="{{ t('Select a game type') }}"/>
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem v-for="gameType in gameTypes" :key="gameType.value" :value="gameType.value">
+                                        <SelectItem v-for="gameType in gameTypes" :key="gameType.value"
+                                                    :value="gameType.value">
                                             {{ gameType.label }}
                                         </SelectItem>
                                     </SelectContent>
@@ -221,12 +222,15 @@ const clearValidationError = (field: string) => {
                                 <!-- Calculation Method -->
                                 <div class="space-y-2">
                                     <Label for="calculation_method">Calculation Method</Label>
-                                    <Select v-model="form.calculation_method" @update:modelValue="clearValidationError('calculation_method')">
-                                        <SelectTrigger :class="{ 'border-red-300': getValidationError('calculation_method') }">
-                                            <SelectValue placeholder="{{ t('Select calculation method') }}" />
+                                    <Select v-model="form.calculation_method"
+                                            @update:modelValue="clearValidationError('calculation_method')">
+                                        <SelectTrigger
+                                            :class="{ 'border-red-300': getValidationError('calculation_method') }">
+                                            <SelectValue placeholder="{{ t('Select calculation method') }}"/>
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem v-for="method in calculationMethods" :key="method.value" :value="method.value">
+                                            <SelectItem v-for="method in calculationMethods" :key="method.value"
+                                                        :value="method.value">
                                                 {{ method.label }}
                                             </SelectItem>
                                         </SelectContent>
@@ -259,7 +263,9 @@ const clearValidationError = (field: string) => {
                                     }}
                                 </span>
                                 <span v-else-if="form.calculation_method === 'custom'">
-                                    {{ t('Custom rating calculation method. You can define specific rules for rating changes.') }}
+                                    {{
+                                        t('Custom rating calculation method. You can define specific rules for rating changes.')
+                                    }}
                                 </span>
                             </p>
                         </div>
@@ -272,8 +278,8 @@ const clearValidationError = (field: string) => {
                                 </Button>
                             </Link>
                             <Button :disabled="!isFormValid || isSaving" type="submit">
-                                <SaveIcon v-if="!isSaving" class="mr-2 h-4 w-4" />
-                                <Spinner v-else class="mr-2 h-4 w-4" />
+                                <SaveIcon v-if="!isSaving" class="mr-2 h-4 w-4"/>
+                                <Spinner v-else class="mr-2 h-4 w-4"/>
                                 {{ isSaving ? t('Creating...') : t('Create Rating') }}
                             </Button>
                         </div>

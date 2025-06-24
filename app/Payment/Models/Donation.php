@@ -8,18 +8,18 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Donation extends Model
 {
-	protected $fillable = [
-		'user_id', 'order_id', 'amount',
-		'currency', 'status', 'paid_at', 'payload',
-	];
+    protected $fillable = [
+        'user_id', 'order_id', 'amount',
+        'currency', 'status', 'paid_at', 'payload',
+    ];
 
-	protected $casts = [
-		'paid_at' => 'datetime',
-		'payload' => 'array',
-	];
+    protected $casts = [
+        'paid_at' => 'datetime',
+        'payload' => 'array',
+    ];
 
-	public function user(): BelongsTo
-	{
-		return $this->belongsTo(User::class);
-	}
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 }

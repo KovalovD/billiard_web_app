@@ -16,7 +16,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const emit = defineEmits(['close', 'success', 'error']);
-const { t } = useLocale();
+const {t} = useLocale();
 
 const form = reactive<SendResultPayload>({
     first_user_score: 0,

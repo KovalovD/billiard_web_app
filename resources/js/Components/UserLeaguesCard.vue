@@ -15,7 +15,7 @@ interface LeagueWithMatches {
 const leagues = ref<Record<string, LeagueWithMatches>>({});
 const isLoading = ref(true);
 const error = ref<string | null>(null);
-const { t } = useLocale();
+const {t} = useLocale();
 
 const emit = defineEmits(['activeMatchesFound']);
 
@@ -110,7 +110,7 @@ onMounted(fetchUserLeagues);
                             <p class="text-sm text-gray-500 dark:text-gray-400">
                                 {{ t('Your Rating') }}: <span class="font-semibold">{{ item.rating.rating }}</span>
                                 <span v-if="item.activeMatches.length" class="ml-2 text-amber-600 dark:text-amber-400">
-                                    ({{ t(':count matches total', { count: item.activeMatches.length }) }})
+                                    ({{ t(':count matches total', {count: item.activeMatches.length}) }})
                                 </span>
                             </p>
                         </div>

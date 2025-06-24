@@ -17,7 +17,7 @@ import MonoDonate from '@/Components/MonoDonate.vue';
 // Add to existing code
 const {t} = useLocale();
 // Simple local state management
-const { user } = useAuth();
+const {user} = useAuth();
 const isLoading = ref(true);
 const showingNavigationDropdown = ref(false);
 const showRegisterModal = ref(false);

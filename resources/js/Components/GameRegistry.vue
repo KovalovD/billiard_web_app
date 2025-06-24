@@ -16,7 +16,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const emit = defineEmits(['updated']);
-const { t } = useLocale();
+const {t} = useLocale();
 
 const {user, isAuthenticated, isAdmin} = useAuth();
 const {joinMultiplayerGame, leaveMultiplayerGame, removePlayerFromGame, isLoading} = useMultiplayerGames();
@@ -130,10 +130,14 @@ const handleRemovePlayer = async (playerId: number) => {
                     <div class="rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
                         <div class="flex items-center justify-between">
                             <div>
-                                <h3 class="font-medium text-blue-800 dark:text-blue-300">{{ t('Registration Open') }}</h3>
+                                <h3 class="font-medium text-blue-800 dark:text-blue-300">{{
+                                        t('Registration Open')
+                                    }}</h3>
                                 <p class="text-sm text-blue-600 dark:text-blue-400">
                                     {{ game.total_players_count }}
-                                    {{ game.total_players_count === 1 ? t('player') : t('players') }} {{ t('registered') }}
+                                    {{ game.total_players_count === 1 ? t('player') : t('players') }} {{
+                                        t('registered')
+                                    }}
                                     {{ game.max_players ? ` (${game.max_players} max)` : '' }}
                                 </p>
                             </div>

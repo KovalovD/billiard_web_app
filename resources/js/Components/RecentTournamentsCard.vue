@@ -12,7 +12,7 @@ const isLoadingRecent = ref(true);
 const isLoadingUpcoming = ref(true);
 const errorRecent = ref<string | null>(null);
 const errorUpcoming = ref<string | null>(null);
-const { t } = useLocale();
+const {t} = useLocale();
 
 // Get status badge for tournament
 const getStatusBadge = (tournament: Tournament) => {

@@ -17,7 +17,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const emit = defineEmits(['select-player', 'increment-lives', 'decrement-lives']);
-const { t } = useLocale();
+const {t} = useLocale();
 
 const sortedPlayers = computed(() => {
     return [...props.players].sort((a, b) => {
@@ -88,8 +88,8 @@ const hasCard = (player: MultiplayerGamePlayer, cardType: 'skip_turn' | 'pass_tu
                             <!-- Pass Turn card -->
                             <div
                                 v-if="hasCard(player, 'pass_turn')"
-                                class="flex h-5 w-5 items-center justify-center rounded bg-blue-100 dark:bg-blue-900/30"
                                 :title="t('Pass Turn')"
+                                class="flex h-5 w-5 items-center justify-center rounded bg-blue-100 dark:bg-blue-900/30"
                             >
                                 <ArrowRightIcon class="h-3 w-3 text-blue-600 dark:text-blue-400"/>
                             </div>
@@ -97,8 +97,8 @@ const hasCard = (player: MultiplayerGamePlayer, cardType: 'skip_turn' | 'pass_tu
                             <!-- Skip Turn card -->
                             <div
                                 v-if="hasCard(player, 'skip_turn')"
-                                class="flex h-5 w-5 items-center justify-center rounded bg-orange-100 dark:bg-orange-900/30"
                                 :title="t('Skip Turn')"
+                                class="flex h-5 w-5 items-center justify-center rounded bg-orange-100 dark:bg-orange-900/30"
                             >
                                 <ArrowDownIcon class="h-3 w-3 text-orange-600 dark:text-orange-400"/>
                             </div>
@@ -106,8 +106,8 @@ const hasCard = (player: MultiplayerGamePlayer, cardType: 'skip_turn' | 'pass_tu
                             <!-- Hand Shot card -->
                             <div
                                 v-if="hasCard(player, 'hand_shot')"
-                                class="flex h-5 w-5 items-center justify-center rounded bg-purple-100 dark:bg-purple-900/30"
                                 :title="t('Hand Shot')"
+                                class="flex h-5 w-5 items-center justify-center rounded bg-purple-100 dark:bg-purple-900/30"
                             >
                                 <HandIcon class="h-3 w-3 text-purple-600 dark:text-purple-400"/>
                             </div>

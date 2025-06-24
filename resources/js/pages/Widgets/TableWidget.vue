@@ -145,8 +145,9 @@ onUnmounted(stopPolling)
                     <!-- Players and Score in One Line -->
                     <div class="flex items-center justify-between">
                         <div class="flex-1 text-right pr-4">
-                            <div :class="widgetData.active_match.player1_score > widgetData.active_match.player2_score ? 'text-green-400' : ''"
-                                 class="font-semibold">
+                            <div
+                                :class="widgetData.active_match.player1_score > widgetData.active_match.player2_score ? 'text-green-400' : ''"
+                                class="font-semibold">
                                 {{ widgetData.active_match.player1?.full_name || 'TBD' }}
                             </div>
                         </div>
@@ -167,8 +168,9 @@ onUnmounted(stopPolling)
                         </div>
 
                         <div class="flex-1 text-left pl-4">
-                            <div :class="widgetData.active_match.player2_score > widgetData.active_match.player1_score ? 'text-green-400' : ''"
-                                 class="font-semibold">
+                            <div
+                                :class="widgetData.active_match.player2_score > widgetData.active_match.player1_score ? 'text-green-400' : ''"
+                                class="font-semibold">
                                 {{ widgetData.active_match.player2?.full_name || 'TBD' }}
                             </div>
                         </div>
@@ -236,15 +238,17 @@ onUnmounted(stopPolling)
                 </div>
 
                 <!-- Player 1 -->
-                <div :class="widgetData.active_match.player1_score > widgetData.active_match.player2_score ? 'bg-green-600/20' : 'bg-gray-800/50'"
-                     class="flex items-center justify-between p-2 rounded text-sm">
+                <div
+                    :class="widgetData.active_match.player1_score > widgetData.active_match.player2_score ? 'bg-green-600/20' : 'bg-gray-800/50'"
+                    class="flex items-center justify-between p-2 rounded text-sm">
                     <span class="font-semibold">{{ widgetData.active_match.player1?.full_name || 'TBD' }}</span>
                     <span class="text-xl font-bold">{{ widgetData.active_match.player1_score }}</span>
                 </div>
 
                 <!-- Player 2 -->
-                <div :class="widgetData.active_match.player2_score > widgetData.active_match.player1_score ? 'bg-green-600/20' : 'bg-gray-800/50'"
-                     class="flex items-center justify-between p-2 rounded text-sm">
+                <div
+                    :class="widgetData.active_match.player2_score > widgetData.active_match.player1_score ? 'bg-green-600/20' : 'bg-gray-800/50'"
+                    class="flex items-center justify-between p-2 rounded text-sm">
                     <span class="font-semibold">{{ widgetData.active_match.player2?.full_name || 'TBD' }}</span>
                     <span class="text-xl font-bold">{{ widgetData.active_match.player2_score }}</span>
                 </div>

@@ -21,7 +21,7 @@ import {Input} from '@/components/ui/input';
 import {Label} from '@/components/ui/label';
 
 const passwordInput = ref<HTMLInputElement | null>(null);
-const { t } = useLocale();
+const {t} = useLocale();
 
 const form = useForm({
     password: '',
@@ -46,7 +46,7 @@ const closeModal = () => {
 
 <template>
     <div class="space-y-6">
-      <HeadingSmall :description="t('Delete your account and all of its resources')" :title="t('Delete account')"/>
+        <HeadingSmall :description="t('Delete your account and all of its resources')" :title="t('Delete account')"/>
         <div class="space-y-4 rounded-lg border border-red-100 bg-red-50 p-4 dark:border-red-200/10 dark:bg-red-700/10">
             <div class="relative space-y-0.5 text-red-600 dark:text-red-100">
                 <p class="font-medium">{{ t('Warning') }}</p>
@@ -61,15 +61,18 @@ const closeModal = () => {
                         <DialogHeader class="space-y-3">
                             <DialogTitle>{{ t('Are you sure you want to delete your account?') }}</DialogTitle>
                             <DialogDescription>
-                              {{ t('Once your account is deleted, all of its resources and data will also be permanently deleted. Please enter your password to confirm you would like to permanently delete your account.') }}
+                                {{
+                                    t('Once your account is deleted, all of its resources and data will also be permanently deleted. Please enter your password to confirm you would like to permanently delete your account.')
+                                }}
                             </DialogDescription>
                         </DialogHeader>
 
                         <div class="grid gap-2">
                             <Label class="sr-only" for="password">{{ t('Password') }}</Label>
-                          <Input id="password" ref="passwordInput" v-model="form.password" name="password"
-                                 :placeholder="t('Password')" type="password"/>
-                          <InputError :message="form.errors.password"/>
+                            <Input id="password" ref="passwordInput" v-model="form.password"
+                                   :placeholder="t('Password')"
+                                   name="password" type="password"/>
+                            <InputError :message="form.errors.password"/>
                         </div>
 
                         <DialogFooter class="gap-2">

@@ -446,20 +446,26 @@ const getRowClass = (player: OfficialRatingPlayer): string => {
                     <CardContent>
                         <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
                             <div>
-                                <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-2">{{ t('Description') }}</h4>
+                                <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-2">{{
+                                        t('Description')
+                                    }}</h4>
                                 <p class="text-gray-600 dark:text-gray-400">
                                     {{ rating.description || t('No description provided.') }}
                                 </p>
                             </div>
                             <div>
-                                <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-2">{{ t('Rating Details') }}</h4>
+                                <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-2">{{
+                                        t('Rating Details')
+                                    }}</h4>
                                 <div class="space-y-2 text-sm">
                                     <div class="flex justify-between">
                                         <span class="text-gray-600 dark:text-gray-400">{{ t('Initial Rating') }}:</span>
                                         <span class="font-medium">{{ rating.initial_rating }}</span>
                                     </div>
                                     <div class="flex justify-between">
-                                        <span class="text-gray-600 dark:text-gray-400">{{ t('Calculation Method') }}:</span>
+                                        <span class="text-gray-600 dark:text-gray-400">{{
+                                                t('Calculation Method')
+                                            }}:</span>
                                         <span class="font-medium">{{
                                                 getCalculationMethodDisplay(rating.calculation_method)
                                             }}</span>
@@ -540,15 +546,25 @@ const getRowClass = (player: OfficialRatingPlayer): string => {
                         </CardHeader>
                         <CardContent>
                             <div v-if="isAuthenticated" class="mb-4 flex flex-wrap items-center gap-2">
-                                <input type="date" v-model="deltaDate" class="rounded border px-2 py-1 text-sm dark:bg-gray-800" />
-                                <Button size="sm" @click="fetchDelta" :disabled="!deltaDate || isLoadingDelta">{{ t('Load Delta') }}</Button>
-                                <Spinner v-if="isLoadingDelta" class="text-primary h-4 w-4" />
+                                <input v-model="deltaDate" class="rounded border px-2 py-1 text-sm dark:bg-gray-800"
+                                       type="date"/>
+                                <Button :disabled="!deltaDate || isLoadingDelta" size="sm" @click="fetchDelta">
+                                    {{ t('Load Delta') }}
+                                </Button>
+                                <Spinner v-if="isLoadingDelta" class="text-primary h-4 w-4"/>
                                 <div v-if="ratingDelta" class="text-sm ml-2">
                                     {{ t('Change since :date:', {date: deltaDate}) }}
                                     <span :class="ratingDelta.points_delta >= 0 ? 'text-green-600' : 'text-red-600'">
-                                        {{ ratingDelta.points_delta >= 0 ? `+${ratingDelta.points_delta}` : ratingDelta.points_delta }} pts
+                                        {{
+                                            ratingDelta.points_delta >= 0 ? `+${ratingDelta.points_delta}` : ratingDelta.points_delta
+                                        }} pts
                                     </span>,
-                                    {{ t('position :before → :after', {before: ratingDelta.position_before, after: ratingDelta.current_position}) }}
+                                    {{
+                                        t('position :before → :after', {
+                                            before: ratingDelta.position_before,
+                                            after: ratingDelta.current_position
+                                        })
+                                    }}
                                     <span v-if="ratingDelta.prize_amount_delta !== 0" class="ml-2">
                                         {{ t('Prize') }}:
                                         <span

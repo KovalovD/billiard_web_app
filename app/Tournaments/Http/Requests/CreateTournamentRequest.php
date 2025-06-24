@@ -43,8 +43,8 @@ class CreateTournamentRequest extends BaseFormRequest
             'seeding_method'            => ['nullable', new Enum(SeedingMethod::class)],
             'requires_application'      => ['boolean'],
             'auto_approve_applications' => ['boolean'],
-            'official_rating_id' => ['nullable', 'integer', 'exists:official_ratings,id'],
-            'rating_coefficient' => ['nullable', 'numeric', 'min:0.1', 'max:5.0'],
+            'official_rating_id'   => ['nullable', 'integer', 'exists:official_ratings,id'],
+            'rating_coefficient'   => ['nullable', 'numeric', 'min:0.1', 'max:5.0'],
         ];
     }
 

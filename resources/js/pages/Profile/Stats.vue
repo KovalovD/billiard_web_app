@@ -19,10 +19,10 @@ import {
 } from 'lucide-vue-next';
 import DataTable from '@/Components/ui/data-table/DataTable.vue';
 
-defineOptions({ layout: AuthenticatedLayout });
+defineOptions({layout: AuthenticatedLayout});
 
-const { user } = useAuth();
-const { t } = useLocale();
+const {user} = useAuth();
+const {t} = useLocale();
 
 // State for user stats
 const userRatings = ref<Rating[]>([]);
@@ -429,7 +429,7 @@ const recentMatchesColumns = computed(() => [
 </script>
 
 <template>
-    <Head :title="t('Profile Statistics')" />
+    <Head :title="t('Profile Statistics')"/>
 
     <div class="py-12">
         <div class="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
@@ -466,7 +466,9 @@ const recentMatchesColumns = computed(() => [
                         <div class="rounded-md bg-blue-50 p-4 dark:bg-blue-900/20">
                             <div class="mb-2 flex items-center space-x-2 text-blue-600 dark:text-blue-400">
                                 <SwordIcon class="h-5 w-5"/>
-                                <h3 class="text-sm font-medium text-blue-800 dark:text-blue-300">{{ t('Total Matches') }}</h3>
+                                <h3 class="text-sm font-medium text-blue-800 dark:text-blue-300">{{
+                                        t('Total Matches')
+                                    }}</h3>
                             </div>
                             <p class="text-3xl font-bold text-blue-600 dark:text-blue-400">
                                 {{ overallStats.total_matches ?? 0 }}
@@ -484,7 +486,9 @@ const recentMatchesColumns = computed(() => [
                         <div class="rounded-md bg-amber-50 p-4 dark:bg-amber-900/20">
                             <div class="mb-2 flex items-center space-x-2 text-amber-600 dark:text-amber-400">
                                 <PercentIcon class="h-5 w-5"/>
-                                <h3 class="text-sm font-medium text-amber-800 dark:text-amber-300">{{ t('Win Rate') }}</h3>
+                                <h3 class="text-sm font-medium text-amber-800 dark:text-amber-300">{{
+                                        t('Win Rate')
+                                    }}</h3>
                             </div>
                             <p class="text-3xl font-bold text-amber-600 dark:text-amber-400">
                                 {{ overallStats.win_rate ?? 0 }}%</p>
@@ -492,14 +496,16 @@ const recentMatchesColumns = computed(() => [
                         <div class="rounded-md bg-purple-50 p-4 dark:bg-purple-900/20">
                             <div class="mb-2 flex items-center space-x-2 text-purple-600 dark:text-purple-400">
                                 <BarChart4Icon class="h-5 w-5"/>
-                                <h3 class="text-sm font-medium text-purple-800 dark:text-purple-300">{{ t('League Memberships') }}</h3>
+                                <h3 class="text-sm font-medium text-purple-800 dark:text-purple-300">
+                                    {{ t('League Memberships') }}</h3>
                             </div>
                             <p class="text-3xl font-bold text-purple-600 dark:text-purple-400">
                                 {{ overallStats.leagues_count ?? 0 }}
                             </p>
                         </div>
                     </div>
-                    <div v-else class="py-6 text-center text-gray-500 dark:text-gray-400">{{ t('No overall statistics available.') }}
+                    <div v-else class="py-6 text-center text-gray-500 dark:text-gray-400">
+                        {{ t('No overall statistics available.') }}
                     </div>
                 </CardContent>
             </Card>
@@ -517,7 +523,8 @@ const recentMatchesColumns = computed(() => [
                         <div class="rounded-md bg-gray-50 p-4 dark:bg-gray-800/50">
                             <div class="mb-2 flex items-center space-x-2 text-indigo-600 dark:text-indigo-400">
                                 <AwardIcon class="h-5 w-5"/>
-                                <h3 class="text-sm font-medium text-indigo-800 dark:text-indigo-300">{{ t('Highest Rating') }}</h3>
+                                <h3 class="text-sm font-medium text-indigo-800 dark:text-indigo-300">
+                                    {{ t('Highest Rating') }}</h3>
                             </div>
                             <p class="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
                                 {{ overallStats.highest_rating ?? 0 }}
@@ -526,7 +533,9 @@ const recentMatchesColumns = computed(() => [
                         <div class="rounded-md bg-gray-50 p-4 dark:bg-gray-800/50">
                             <div class="mb-2 flex items-center space-x-2 text-teal-600 dark:text-teal-400">
                                 <TrendingUpIcon class="h-5 w-5"/>
-                                <h3 class="text-sm font-medium text-teal-800 dark:text-teal-300">{{ t('Average Rating') }}</h3>
+                                <h3 class="text-sm font-medium text-teal-800 dark:text-teal-300">{{
+                                        t('Average Rating')
+                                    }}</h3>
                             </div>
                             <p class="text-3xl font-bold text-teal-600 dark:text-teal-400">
                                 {{ overallStats.average_rating ?? 0 }}
@@ -535,14 +544,17 @@ const recentMatchesColumns = computed(() => [
                         <div class="rounded-md bg-gray-50 p-4 dark:bg-gray-800/50">
                             <div class="mb-2 flex items-center space-x-2 text-pink-600 dark:text-pink-400">
                                 <ActivityIcon class="h-5 w-5"/>
-                                <h3 class="text-sm font-medium text-pink-800 dark:text-pink-300">{{ t('Win/Loss Ratio') }}</h3>
+                                <h3 class="text-sm font-medium text-pink-800 dark:text-pink-300">{{
+                                        t('Win/Loss Ratio')
+                                    }}</h3>
                             </div>
                             <p class="text-3xl font-bold text-pink-600 dark:text-pink-400">
                                 {{ winLossRatio }}
                             </p>
                         </div>
                     </div>
-                    <div v-else class="py-6 text-center text-gray-500 dark:text-gray-400">{{ t('No rating analytics available.') }}
+                    <div v-else class="py-6 text-center text-gray-500 dark:text-gray-400">
+                        {{ t('No rating analytics available.') }}
                     </div>
                 </CardContent>
             </Card>

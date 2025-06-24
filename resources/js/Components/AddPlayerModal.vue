@@ -19,7 +19,7 @@ interface Emits {
 
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
-const { t } = useLocale();
+const {t} = useLocale();
 
 const error = ref<string | null>(null);
 

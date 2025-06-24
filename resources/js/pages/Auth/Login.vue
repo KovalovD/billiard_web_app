@@ -60,7 +60,7 @@ function handleKeydown(event: KeyboardEvent) {
 </script>
 
 <template>
-    <Head :title="t('Log in')" />
+    <Head :title="t('Log in')"/>
 
     <div class="flex min-h-screen flex-col items-center bg-gray-100 pt-6 sm:justify-center sm:pt-0 dark:bg-gray-900">
         <div class="mt-6 w-full px-6 py-4 sm:max-w-md">
@@ -86,7 +86,7 @@ function handleKeydown(event: KeyboardEvent) {
                                 required
                                 type="email"
                             />
-                            <InputError :message="form.errors.email" />
+                            <InputError :message="form.errors.email"/>
                         </div>
 
                         <div class="space-y-2">
@@ -99,20 +99,20 @@ function handleKeydown(event: KeyboardEvent) {
                             <Input
                                 id="password"
                                 v-model="form.password"
-                                type="password"
+                                :disabled="processing"
                                 autocomplete="current-password"
                                 required
-                                :disabled="processing"
+                                type="password"
                             />
-                            <InputError :message="form.errors.password" />
+                            <InputError :message="form.errors.password"/>
                         </div>
 
                         <div class="flex items-center space-x-2">
                             <input
                                 id="remember_me"
                                 v-model="form.remember"
-                                type="checkbox"
                                 class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:border-gray-700 dark:bg-gray-900 dark:focus:ring-offset-gray-800"
+                                type="checkbox"
                             />
                             <Label for="remember_me">{{ t('Remember me') }}</Label>
                         </div>

@@ -27,7 +27,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<Emits>();
-const { t } = useLocale();
+const {t} = useLocale();
 
 // State
 const activeTab = ref<'existing' | 'new'>('existing');
@@ -234,8 +234,8 @@ watch(() => props.show, (show) => {
                     <Input
                         id="search"
                         v-model="searchQuery"
-                        class="pl-10"
                         :placeholder="t('Search by name or email...')"
+                        class="pl-10"
                         type="text"
                     />
                 </div>

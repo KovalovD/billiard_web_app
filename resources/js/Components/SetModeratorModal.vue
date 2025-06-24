@@ -12,7 +12,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const emit = defineEmits(['close', 'set-moderator']);
-const { t } = useLocale();
+const {t} = useLocale();
 
 const isLoading = ref(false);
 const selectedUserId = ref<number | null>(null);
@@ -43,7 +43,9 @@ const setModerator = () => {
     <Modal :show="show" :title="t('Set Game Moderator')" @close="emit('close')">
         <div class="space-y-4 p-2">
             <div class="mb-4 text-gray-700 dark:text-gray-300">
-                <p>{{ t('Choose a player to be the game moderator. The moderator can perform actions on behalf of any player.') }}</p>
+                <p>{{
+                        t('Choose a player to be the game moderator. The moderator can perform actions on behalf of any player.')
+                    }}</p>
             </div>
 
             <div class="space-y-2">
@@ -60,7 +62,8 @@ const setModerator = () => {
                 >
                     <div class="flex-1">
                         <p class="font-medium">{{ player.user.firstname }} {{ player.user.lastname }}</p>
-                        <p v-if="player.user.id === game?.moderator_user_id" class="text-xs text-purple-600">{{ t('Current Moderator') }}</p>
+                        <p v-if="player.user.id === game?.moderator_user_id" class="text-xs text-purple-600">
+                            {{ t('Current Moderator') }}</p>
                     </div>
 
                     <div class="flex h-5 w-5 items-center justify-center rounded-full border border-gray-300">

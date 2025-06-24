@@ -209,7 +209,9 @@ onMounted(() => {
             <!-- Header -->
             <div class="mb-6 flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">{{ t('Tournament Applications') }}</h1>
+                    <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">{{
+                            t('Tournament Applications')
+                        }}</h1>
                     <p class="text-gray-600 dark:text-gray-400">
                         {{ tournament ? tournament.name : t('Loading...') }}
                     </p>
@@ -268,7 +270,12 @@ onMounted(() => {
                 <CardHeader>
                     <CardTitle>{{ t('Bulk Actions') }}</CardTitle>
                     <CardDescription>
-                        {{ t(':selected of :total pending applications selected', {selected: selectedPendingApplications.length, total: pendingApplications.length}) }}
+                        {{
+                            t(':selected of :total pending applications selected', {
+                                selected: selectedPendingApplications.length,
+                                total: pendingApplications.length
+                            })
+                        }}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -464,7 +471,9 @@ onMounted(() => {
             <Card v-if="!isLoadingApplications && allApplications.length === 0">
                 <CardContent class="py-10 text-center">
                     <UserCheckIcon class="mx-auto h-12 w-12 text-gray-400"/>
-                    <p class="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">{{ t('No Applications Yet') }}</p>
+                    <p class="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">{{
+                            t('No Applications Yet')
+                        }}</p>
                     <p class="mt-2 text-gray-600 dark:text-gray-400">
                         {{ t('No one has applied to this tournament yet.') }}
                     </p>

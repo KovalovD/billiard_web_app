@@ -216,8 +216,8 @@ const addNewPlayer = async () => {
 const removePlayer = async (userId: number) => {
     if (!confirm('Are you sure you want to remove this player from the rating?')) return;
 
-  const removePlayerApi = officialRatingsApi.removePlayerFromRating(props.ratingId, userId);
-  const success = await removePlayerApi.execute();
+    const removePlayerApi = officialRatingsApi.removePlayerFromRating(props.ratingId, userId);
+    const success = await removePlayerApi.execute();
 
     if (success) {
         await fetchPlayersData();

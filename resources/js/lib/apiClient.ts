@@ -1,8 +1,8 @@
 // resources/js/lib/apiClient.ts
 
 import axios from '@/bootstrap';
-import type { ApiError } from '@/types/api';
-import { ref } from 'vue';
+import type {ApiError} from '@/types/api';
+import {ref} from 'vue';
 
 // Token and deviceName management with reactivity
 export const apiToken = ref<string | null>(localStorage.getItem('authToken'));

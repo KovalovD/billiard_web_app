@@ -197,8 +197,9 @@ onUnmounted(stopPolling)
                     </h2>
 
                     <div class="text-center mb-8">
-                        <div :class="matchData.active_match.player1_score >= matchData.active_match.races_to ? 'text-green-600' : 'text-gray-800 dark:text-gray-200'"
-                             class="text-8xl font-bold">
+                        <div
+                            :class="matchData.active_match.player1_score >= matchData.active_match.races_to ? 'text-green-600' : 'text-gray-800 dark:text-gray-200'"
+                            class="text-8xl font-bold">
                             {{ matchData.active_match.player1_score }}
                         </div>
                         <div class="text-lg text-gray-600 dark:text-gray-400 mt-2">
@@ -232,8 +233,9 @@ onUnmounted(stopPolling)
                     </h2>
 
                     <div class="text-center mb-8">
-                        <div :class="matchData.active_match.player2_score >= matchData.active_match.races_to ? 'text-green-600' : 'text-gray-800 dark:text-gray-200'"
-                             class="text-8xl font-bold">
+                        <div
+                            :class="matchData.active_match.player2_score >= matchData.active_match.races_to ? 'text-green-600' : 'text-gray-800 dark:text-gray-200'"
+                            class="text-8xl font-bold">
                             {{ matchData.active_match.player2_score }}
                         </div>
                         <div class="text-lg text-gray-600 dark:text-gray-400 mt-2">

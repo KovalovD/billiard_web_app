@@ -31,7 +31,7 @@ const props = defineProps<{
 }>();
 
 const {isAdmin, isAuthenticated} = useAuth();
-const { t } = useLocale();
+const {t} = useLocale();
 const {getMultiplayerGames, error, startMultiplayerGame, cancelMultiplayerGame} = useMultiplayerGames();
 
 const league = ref<League | null>(null);

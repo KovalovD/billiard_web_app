@@ -593,10 +593,10 @@ onUnmounted(() => {
                         <!-- Zoom Controls -->
                         <div class="flex items-center gap-1 rounded-lg border border-gray-200 dark:border-gray-700 p-1">
                             <Button
+                                :title="t('Zoom Out')"
                                 size="sm"
                                 variant="ghost"
                                 @click="zoomOut"
-                                :title="t('Zoom Out')"
                             >
                                 <MinusIcon class="h-4 w-4"/>
                             </Button>
@@ -604,18 +604,18 @@ onUnmounted(() => {
                                 {{ Math.round(zoomLevel * 100) }}%
                             </span>
                             <Button
+                                :title="t('Zoom In')"
                                 size="sm"
                                 variant="ghost"
                                 @click="zoomIn"
-                                :title="t('Zoom In')"
                             >
                                 <PlusIcon class="h-4 w-4"/>
                             </Button>
                             <Button
+                                :title="t('Reset Zoom')"
                                 size="sm"
                                 variant="ghost"
                                 @click="resetZoom"
-                                :title="t('Reset Zoom')"
                             >
                                 <RotateCcwIcon class="h-4 w-4"/>
                             </Button>
@@ -623,10 +623,10 @@ onUnmounted(() => {
 
                         <!-- Fullscreen Button -->
                         <Button
+                            :title="isFullscreen ? t('Exit Fullscreen') : t('Enter Fullscreen')"
                             size="sm"
                             variant="outline"
                             @click="toggleFullscreen"
-                            :title="isFullscreen ? t('Exit Fullscreen') : t('Enter Fullscreen')"
                         >
                             <ExpandIcon v-if="!isFullscreen" class="h-4 w-4"/>
                             <ShrinkIcon v-else class="h-4 w-4"/>
@@ -651,16 +651,16 @@ onUnmounted(() => {
             <div
                 ref="bracketScrollContainerRef"
                 class="bracket-container overflow-auto bg-gray-50 dark:bg-gray-900/50 touch-none"
-                @touchstart="handleTouchStart"
                 @touchend="handleTouchEnd"
                 @touchmove="handleTouchMove"
+                @touchstart="handleTouchStart"
                 @wheel="handleWheel"
             >
                 <div :style="{ transform: `scale(${zoomLevel})` }" class="bracket-zoom-wrapper">
                     <div class="p-6">
                         <svg
-                            :width="svgWidth"
                             :height="svgHeight"
+                            :width="svgWidth"
                             class="bracket-svg"
                             style="min-width: 100%;"
                         >
@@ -696,21 +696,21 @@ onUnmounted(() => {
                             <!-- All Matches -->
                             <g class="matches">
                                 <g v-for="m in allPositionedMatches" :key="m.id"
-                                   class="match-group"
                                    :class="[canEdit ? 'cursor-pointer' : 'cursor-not-allowed']"
+                                   class="match-group"
                                    @click="handleMatchClick(m.id)">
                                     <!-- Match background -->
                                     <rect
-                                        :x="m.x"
-                                        :y="m.y"
                                         :class="[
                                             getMatchClass(m),
                                             m.bracketSide === 'lower' ? 'lower-bracket-match' : '',
                                             isCurrentUserMatch(m) ? 'user-match' : ''
                                         ]"
                                         :height="nodeHeight"
-                                        rx="8"
                                         :width="nodeWidth"
+                                        :x="m.x"
+                                        :y="m.y"
+                                        rx="8"
                                     />
 
                                     <!-- Walkover indicator -->
@@ -737,11 +737,11 @@ onUnmounted(() => {
                                     <g>
                                         <rect
                                             :class="m.winner_id === m.player1?.id ? 'player-winner' : 'player-bg'"
-                                            :y="m.y + 20"
                                             :height="30"
                                             :width="nodeWidth"
-                                            rx="4"
                                             :x="m.x"
+                                            :y="m.y + 20"
+                                            rx="4"
                                         />
                                         <text :x="m.x + 8" :y="m.y + 38" class="player-name">
                                             {{ getPlayerDisplay(m.player1, m.isWalkover, !!m.player2) }}
@@ -755,11 +755,11 @@ onUnmounted(() => {
                                     <g>
                                         <rect
                                             :class="m.winner_id === m.player2?.id ? 'player-winner' : 'player-bg'"
-                                            :y="m.y + 50"
                                             :height="30"
                                             :width="nodeWidth"
-                                            rx="4"
                                             :x="m.x"
+                                            :y="m.y + 50"
+                                            rx="4"
                                         />
                                         <text :x="m.x + 8" :y="m.y + 68" class="player-name">
                                             {{ getPlayerDisplay(m.player2, m.isWalkover, !!m.player1) }}
@@ -773,8 +773,8 @@ onUnmounted(() => {
                                     <circle
                                         :cx="m.x + nodeWidth - 10"
                                         :cy="m.y + 10"
-                                        r="4"
                                         :fill="getStatusColor(m.status)"
+                                        r="4"
                                     />
                                 </g>
                             </g>

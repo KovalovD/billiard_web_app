@@ -52,7 +52,8 @@ const handleError = (error: ApiError) => {
             </div>
 
             <LeagueForm v-if="isAdmin" :is-edit-mode="false" @error="handleError" @submitted="handleSuccess"/>
-            <div v-else class="rounded bg-red-100 p-4 text-center text-red-500">{{ t('You do not have permission to create leagues. Redirecting...') }}
+            <div v-else class="rounded bg-red-100 p-4 text-center text-red-500">
+                {{ t('You do not have permission to create leagues. Redirecting...') }}
             </div>
         </div>
     </div>

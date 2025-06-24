@@ -13,7 +13,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const emit = defineEmits(['select-card']);
-const { t } = useLocale();
+const {t} = useLocale();
 
 // Check if a card is available
 const hasCard = (cardType: 'skip_turn' | 'pass_turn' | 'hand_shot' | 'handicap'): boolean => {

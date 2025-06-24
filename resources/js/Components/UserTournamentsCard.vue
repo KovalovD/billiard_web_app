@@ -32,7 +32,7 @@ interface UserTournamentData {
 const tournamentsData = ref<UserTournamentData | null>(null);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
-const { t } = useLocale();
+const {t} = useLocale();
 
 const emit = defineEmits(['pendingApplicationsFound']);
 

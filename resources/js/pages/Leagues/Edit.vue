@@ -20,7 +20,7 @@ const props = defineProps<{
 }>();
 
 const {isAdmin} = useAuth();
-const { t } = useLocale();
+const {t} = useLocale();
 
 // Redirect if user is not admin
 watchEffect(() => {
@@ -82,7 +82,7 @@ const pageTitle = computed(() =>
                     <p class="mt-4 text-gray-500">{{ t('Loading league data...') }}</p>
                 </div>
                 <div v-else-if="loadingError" class="rounded bg-red-100 p-4 text-center text-red-600">
-                    {{ t('Error loading league data: :error', { error: loadingError.message }) }}
+                    {{ t('Error loading league data: :error', {error: loadingError.message}) }}
                 </div>
                 <LeagueForm v-else-if="league" :is-edit-mode="true" :league="league" @error="handleError"
                             @submitted="handleSuccess"/>

@@ -16,7 +16,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const { t } = useLocale();
+const {t} = useLocale();
 
 const authUserPosition = computed((): number | null => {
     if (!props.currentUserId) return null;
@@ -35,15 +35,15 @@ const authUserPosition = computed((): number | null => {
         <PlayerListItem
             v-for="playerRating in players"
             :key="playerRating.id"
+            :authUserHaveOngoingMatch="authUserHaveOngoingMatch"
+            :authUserIsConfirmed="authUserIsConfirmed"
+            :authUserPosition="authUserPosition"
+            :authUserRating="authUserRating"
             :isAuthenticated="isAuthenticated"
             :isCurrentUser="playerRating.player.id === currentUserId"
             :leagueId="leagueId"
-            :playerRating="playerRating"
-            :authUserHaveOngoingMatch="authUserHaveOngoingMatch"
-            :authUserPosition="authUserPosition"
-            :authUserIsConfirmed="authUserIsConfirmed"
-            :authUserRating="authUserRating"
             :multiplayerGame="multiplayerGame"
+            :playerRating="playerRating"
             @challenge="$emit('challenge', playerRating.player)"
         />
     </ul>

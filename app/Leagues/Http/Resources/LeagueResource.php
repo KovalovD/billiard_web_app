@@ -27,21 +27,21 @@ class LeagueResource extends JsonResource
             'rating_change_for_losers_rule'  => $this->rating_change_for_losers_rule,
             'created_at'                     => $this->created_at,
             'updated_at'                     => $this->updated_at,
-            'matches_count'      => $this->matches_count + $this->multiplayer_games_count,
-            'invite_days_expire' => $this->invite_days_expire,
-            'max_players'        => $this->max_players,
-            'max_score'          => $this->max_score,
-            'active_players'     => $this->active_ratings_count,
+            'matches_count'                => $this->matches_count + $this->multiplayer_games_count,
+            'invite_days_expire'           => $this->invite_days_expire,
+            'max_players'                  => $this->max_players,
+            'max_score'                    => $this->max_score,
+            'active_players'               => $this->active_ratings_count,
 
             // Game info - optimized to avoid redundancy
-            'game_id'            => $this->game_id,
-            'game'               => $this->whenLoaded('game', function () {
+            'game_id'                      => $this->game_id,
+            'game'                         => $this->whenLoaded('game', function () {
                 return $this->game->name;
             }),
-            'game_type'          => $this->whenLoaded('game', function () {
+            'game_type'                    => $this->whenLoaded('game', function () {
                 return $this->game->type;
             }),
-            'game_multiplayer'   => $this->whenLoaded('game', function () {
+            'game_multiplayer'             => $this->whenLoaded('game', function () {
                 return $this->game->is_multiplayer;
             }),
             // Grand Final Fund accumulated (only for multiplayer games)

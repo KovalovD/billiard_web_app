@@ -19,7 +19,7 @@ interface Props {
 const props = defineProps<Props>();
 const emit = defineEmits(['challenge']);
 
-const { t } = useLocale();
+const {t} = useLocale();
 
 const handleChallenge = () => {
     if (props.isAuthenticated) {
@@ -58,7 +58,9 @@ const canChallenge = (playerRating: Rating): boolean => {
                     playerRating.position
                 }}.</span>
             <span class="font-medium text-gray-800 dark:text-gray-200">{{ playerRating.player.name }}</span>
-            <span v-if="isCurrentUser" class="text-xs font-semibold text-blue-600 dark:text-blue-400">{{ t('(You)') }}</span>
+            <span v-if="isCurrentUser" class="text-xs font-semibold text-blue-600 dark:text-blue-400">{{
+                    t('(You)')
+                }}</span>
             <span
                 v-if="!playerRating.is_confirmed"
                 class="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-700 dark:bg-amber-900/20 dark:text-amber-400"
@@ -72,8 +74,8 @@ const canChallenge = (playerRating: Rating): boolean => {
             <!-- Challenge button for authenticated users -->
             <Button
                 v-if="canChallenge(playerRating) && !multiplayerGame"
-                size="sm"
                 :title="t('Challenge this player')"
+                size="sm"
                 variant="outline"
                 @click="handleChallenge"
             >
@@ -84,8 +86,8 @@ const canChallenge = (playerRating: Rating): boolean => {
             <!-- Login prompt for guests -->
             <Button
                 v-else-if="!isAuthenticated && !isCurrentUser && !multiplayerGame"
-                size="sm"
                 :title="t('Login to challenge players')"
+                size="sm"
                 variant="outline"
                 @click="$router.push(route('login'))"
             >

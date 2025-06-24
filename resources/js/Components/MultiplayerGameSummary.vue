@@ -10,7 +10,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const { t } = useLocale();
+const {t} = useLocale();
 
 // Format date for display
 const formatDate = (dateString: string | null): string => {
@@ -44,13 +44,13 @@ const statusBadgeClass = computed(() => {
 const statusText = computed(() => {
     switch (props.game.status) {
         case 'registration':
-          return t('Registration Open');
+            return t('Registration Open');
         case 'in_progress':
-          return t('In Progress');
+            return t('In Progress');
         case 'completed':
-          return t('Completed');
+            return t('Completed');
         case 'finished':
-          return t('Finished');
+            return t('Finished');
         default:
             return props.game.status;
     }
@@ -148,9 +148,9 @@ const timeFundTotal = computed(() => {
                             </p>
                             <p class="text-sm">
                                 <span class="text-gray-500 dark:text-gray-400">{{ t('Distribution:') }}</span>
-                              {{ t('1st') }}: {{ props.game.first_place_percent }}%,
-                              {{ t('2nd') }}: {{ props.game.second_place_percent }}%,
-                              {{ t('Grand Final') }}: {{ props.game.grand_final_percent }}%
+                                {{ t('1st') }}: {{ props.game.first_place_percent }}%,
+                                {{ t('2nd') }}: {{ props.game.second_place_percent }}%,
+                                {{ t('Grand Final') }}: {{ props.game.grand_final_percent }}%
                             </p>
                         </div>
 

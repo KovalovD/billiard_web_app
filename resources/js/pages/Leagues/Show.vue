@@ -40,7 +40,7 @@ const props = defineProps<{
 
 const {user, isAuthenticated, isAdmin} = useAuth();
 const leagues = useLeagues();
-const { t } = useLocale();
+const {t} = useLocale();
 const {getLeagueStatus, canJoinLeague, getJoinErrorMessage} = useLeagueStatus();
 
 // State for modals
@@ -441,7 +441,7 @@ watch(
 
             <!-- League Error State -->
             <div v-else-if="leagueError" class="mb-6 rounded bg-red-100 p-4 text-red-500">
-                {{ t('Error loading league: :error', { error: leagueError.message }) }}
+                {{ t('Error loading league: :error', {error: leagueError.message}) }}
             </div>
 
             <!-- League Content -->
@@ -508,7 +508,9 @@ watch(
                                 <p class="text-gray-900 dark:text-gray-200">{{ league.max_score || 'N/A' }}</p>
                             </div>
                             <div v-if="!league.game_multiplayer" class="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
-                                <span class="font-medium text-gray-600 dark:text-gray-400">{{ t('Invite Expiry') }}</span>
+                                <span class="font-medium text-gray-600 dark:text-gray-400">{{
+                                        t('Invite Expiry')
+                                    }}</span>
                                 <p class="text-gray-900 dark:text-gray-200">{{ league.invite_days_expire || 'N/A' }}
                                     days</p>
                             </div>
@@ -593,19 +595,19 @@ watch(
                         </div>
 
                         <div v-else-if="playersError" class="rounded bg-red-100 p-4 text-red-500">
-                            {{ t('Error loading players: :error', { error: playersError.message }) }}
+                            {{ t('Error loading players: :error', {error: playersError.message}) }}
                         </div>
 
                         <PlayerList
                             v-else
-                            :currentUserId="user?.id ?? null"
-                            :isAuthenticated="isAuthenticated"
-                            :multiplayer-game="league.game_multiplayer"
-                            :leagueId="Number(league.id)"
-                            :players="players || []"
                             :auth-user-have-ongoing-match="authUserRating?.hasOngoingMatches"
                             :auth-user-is-confirmed="authUserIsConfirmed"
                             :authUserRating="authUserRating"
+                            :currentUserId="user?.id ?? null"
+                            :isAuthenticated="isAuthenticated"
+                            :leagueId="Number(league.id)"
+                            :multiplayer-game="league.game_multiplayer"
+                            :players="players || []"
                             @challenge="openChallengeModal"
                         />
                     </CardContent>
@@ -624,7 +626,7 @@ watch(
                         </div>
 
                         <div v-else-if="matchesError" class="rounded bg-red-100 p-4 text-red-500">
-                            {{ t('Error loading matches: :error', { error: matchesError.message }) }}
+                            {{ t('Error loading matches: :error', {error: matchesError.message}) }}
                         </div>
 
                         <div v-else-if="!matches || matches.length === 0" class="py-4 text-center text-gray-500">
@@ -641,9 +643,11 @@ watch(
                                 <div class="flex items-start justify-between">
                                     <div>
                                         <div class="flex items-center space-x-2">
-                                            <span class="text-sm text-gray-500">{{ new Date(match.created_at).toLocaleDateString() }}</span>
-                                            <span class="rounded-full px-2 py-0.5 text-xs"
-                                                  :class="getMatchStatusClass(match.status)">
+                                            <span class="text-sm text-gray-500">{{
+                                                    new Date(match.created_at).toLocaleDateString()
+                                                }}</span>
+                                            <span :class="getMatchStatusClass(match.status)"
+                                                  class="rounded-full px-2 py-0.5 text-xs">
                                                {{ getMatchStatusDisplay(match.status) }}
                                            </span>
                                             <span
@@ -727,14 +731,16 @@ watch(
                                             class="space-y-2"
                                         >
                                             <Button
-                                                size="sm"
-                                                variant="outline"
                                                 :class="
                                                    needsConfirmation(match) ? 'animate-pulse border-amber-300 bg-amber-100 hover:bg-amber-200' : ''
                                                "
+                                                size="sm"
+                                                variant="outline"
                                                 @click="openResultModal(match)"
                                             >
-                                                {{ needsConfirmation(match) ? t('Confirm Result') : t('Submit Result') }}
+                                                {{
+                                                    needsConfirmation(match) ? t('Confirm Result') : t('Submit Result')
+                                                }}
                                             </Button>
 
                                             <!-- Only receivers can decline -->
@@ -788,8 +794,8 @@ watch(
         v-if="isAuthenticated"
         :currentUser="user"
         :matchGame="matchForResults"
-        :show="showResultModal"
         :max-score="league?.max_score"
+        :show="showResultModal"
         @close="showResultModal = false"
         @error="(error: ApiError) => displayMessage(error.message)"
         @success="handleResultSuccess"

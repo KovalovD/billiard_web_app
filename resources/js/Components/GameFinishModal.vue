@@ -13,7 +13,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const emit = defineEmits(['close', 'finished']);
-const { t } = useLocale();
+const {t} = useLocale();
 
 const isLoading = ref(false);
 const error = ref<string | null>(null);

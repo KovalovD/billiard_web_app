@@ -64,7 +64,7 @@ const handleMatchDeclined = () => {
 onMounted(async () => {
     isLoadingLeagues.value = true;
     try {
-        const { data, execute } = leagues.fetchLeagues();
+        const {data, execute} = leagues.fetchLeagues();
         await execute();
 
         if (data.value) {
@@ -80,7 +80,7 @@ onMounted(async () => {
 </script>
 
 <template>
-    <Head title="Dashboard" />
+    <Head title="Dashboard"/>
 
     <div class="py-12">
         <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
@@ -97,7 +97,8 @@ onMounted(async () => {
 
                     <div class="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
                         <div class="rounded-lg bg-indigo-50 p-6 dark:bg-indigo-900/30">
-                            <h3 class="mb-2 text-lg font-medium text-indigo-800 dark:text-indigo-300">{{ t('Join Leagues') }}</h3>
+                            <h3 class="mb-2 text-lg font-medium text-indigo-800 dark:text-indigo-300">
+                                {{ t('Join Leagues') }}</h3>
                             <p class="mb-4 text-indigo-600 dark:text-indigo-400">
                                 {{ t('find_leagues_text') }}
                             </p>
@@ -107,7 +108,8 @@ onMounted(async () => {
                             </Link>
                         </div>
                         <div class="rounded-lg bg-emerald-50 p-6 dark:bg-emerald-900/30">
-                            <h3 class="mb-2 text-lg font-medium text-emerald-800 dark:text-emerald-300">{{ t('Join Tournaments') }}</h3>
+                            <h3 class="mb-2 text-lg font-medium text-emerald-800 dark:text-emerald-300">
+                                {{ t('Join Tournaments') }}</h3>
                             <p class="mb-4 text-emerald-600 dark:text-emerald-400">
                                 {{ t('find_tournaments_text') }}
                             </p>
@@ -138,8 +140,11 @@ onMounted(async () => {
                     <div v-if="!isAuthenticated" class="mt-6 rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
                         <div class="flex items-center justify-between">
                             <div>
-                                <h3 class="text-lg font-medium text-blue-800 dark:text-blue-300">{{ t('Ready to compete?') }}</h3>
-                                <p class="text-blue-600 dark:text-blue-400">{{ t('Join WinnerBreak to participate in leagues, tournaments, and track your progress.') }}</p>
+                                <h3 class="text-lg font-medium text-blue-800 dark:text-blue-300">
+                                    {{ t('Ready to compete?') }}</h3>
+                                <p class="text-blue-600 dark:text-blue-400">{{
+                                        t('Join WinnerBreak to participate in leagues, tournaments, and track your progress.')
+                                    }}</p>
                             </div>
                             <div class="flex space-x-2">
                                 <Link :href="route('login')">
@@ -190,9 +195,11 @@ onMounted(async () => {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div v-if="isLoadingLeagues" class="py-4 text-center text-gray-500 dark:text-gray-400">{{ t('Loading leagues...') }}
+                        <div v-if="isLoadingLeagues" class="py-4 text-center text-gray-500 dark:text-gray-400">
+                            {{ t('Loading leagues...') }}
                         </div>
-                        <div v-else-if="recentLeagues.length === 0" class="py-4 text-center text-gray-500 dark:text-gray-400">
+                        <div v-else-if="recentLeagues.length === 0"
+                             class="py-4 text-center text-gray-500 dark:text-gray-400">
                             {{ t('No leagues found. Check back later.') }}
                         </div>
                         <ul v-else class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -202,7 +209,8 @@ onMounted(async () => {
                                         <h4 class="font-medium text-gray-900 dark:text-white">{{ league.name }}</h4>
                                         <p class="text-sm text-gray-500 dark:text-gray-400">Game: {{ league.game }}</p>
                                     </div>
-                                    <Link :href="`/leagues/${league.id}`" class="text-sm text-blue-600 hover:underline dark:text-blue-400">
+                                    <Link :href="`/leagues/${league.id}`"
+                                          class="text-sm text-blue-600 hover:underline dark:text-blue-400">
                                         {{ t('View') }}
                                     </Link>
                                 </div>

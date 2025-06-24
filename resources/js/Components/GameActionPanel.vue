@@ -22,7 +22,7 @@ const emit = defineEmits([
     'use-card',
     'record-turn'
 ]);
-const { t } = useLocale();
+const {t} = useLocale();
 
 // Local state
 const selectedCardType = ref<'skip_turn' | 'pass_turn' | 'hand_shot' | 'handicap' | null>(null);
@@ -173,7 +173,9 @@ const handleRecordTurn = () => {
                 <h3 class="font-medium flex items-center">
                     {{ player.user.firstname }} {{ player.user.lastname }} ({{ player.division }})
                     <span v-if="isCurrentTurn"
-                          class="ml-2 px-2 py-0.5 text-xs text-white bg-green-600 rounded-full font-semibold dark:bg-green-700">{{ t('Current Turn') }}</span>
+                          class="ml-2 px-2 py-0.5 text-xs text-white bg-green-600 rounded-full font-semibold dark:bg-green-700">{{
+                            t('Current Turn')
+                        }}</span>
                 </h3>
             </div>
         </div>
@@ -301,8 +303,8 @@ const handleRecordTurn = () => {
             <Button
                 v-if="selectedCardType"
                 :disabled="!canPerformAction || isLoading || !isCurrentTurn"
-                @click="handleUseCard"
                 :variant="selectedCardType === 'skip_turn' || (selectedCardType === 'handicap' && selectedHandicapAction === 'skip_turn') ? 'destructive' : 'default'"
+                @click="handleUseCard"
             >
                 <Spinner v-if="isLoading" class="mr-2 h-4 w-4"/>
                 {{ t('Use') }} {{ getButtonText }} {{ t('Card') }}

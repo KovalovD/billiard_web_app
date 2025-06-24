@@ -56,8 +56,7 @@ const fetchConfirmedPlayers = async () => {
 
 // Deactivate individual player
 const deactivatePlayer = async (ratingId: number) => {
-    if (!confirm(t('Are you sure you want to deactivate this player? They will no longer be able to participate in this league.')))
-    {
+    if (!confirm(t('Are you sure you want to deactivate this player? They will no longer be able to participate in this league.'))) {
         return;
     }
 

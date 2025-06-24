@@ -34,7 +34,6 @@ const handleClick = () => {
     <div
         ref="itemRef"
         :aria-selected="isSelected"
-        :data-value="value"
         :class="cn(
             'relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors',
             'hover:bg-accent hover:text-accent-foreground',
@@ -43,6 +42,7 @@ const handleClick = () => {
             isSelected && 'bg-accent/50',
             props.class
         )"
+        :data-value="value"
         role="option"
         tabindex="-1"
         @click.stop="handleClick"

@@ -181,8 +181,12 @@ onMounted(() => {
             <!-- Header -->
             <div class="mb-6 flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">{{ t('Available Leagues') }}</h1>
-                    <p class="text-gray-600 dark:text-gray-400">{{ t('Manage and participate in competitive leagues') }}</p>
+                    <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">{{
+                            t('Available Leagues')
+                        }}</h1>
+                    <p class="text-gray-600 dark:text-gray-400">{{
+                            t('Manage and participate in competitive leagues')
+                        }}</p>
                 </div>
                 <!-- Only show create button to authenticated admins -->
                 <Link v-if="isAuthenticated && isAdmin" :href="route('leagues.create')">

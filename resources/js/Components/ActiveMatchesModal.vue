@@ -16,7 +16,7 @@ interface Props {
 const props = defineProps<Props>();
 const emit = defineEmits(['close', 'declined']);
 
-const { t } = useLocale();
+const {t} = useLocale();
 
 const {user} = useAuth();
 const isProcessing = ref(false);
@@ -112,7 +112,9 @@ const declineChallenge = async (match: MatchGame) => {
 <template>
     <Modal :show="show" :title="`${t('Active Matches')} (${matchesCount})`" maxWidth="2xl" @close="emit('close')">
         <div class="space-y-4 p-6">
-            <p v-if="matchesCount === 0" class="text-center text-gray-500">{{ t('No active matches at the moment.') }}</p>
+            <p v-if="matchesCount === 0" class="text-center text-gray-500">{{
+                    t('No active matches at the moment.')
+                }}</p>
 
             <div v-else class="space-y-6">
                 <div
@@ -323,7 +325,8 @@ const declineChallenge = async (match: MatchGame) => {
             </div>
 
             <div class="flex justify-end border-t border-gray-200 pt-4 dark:border-gray-700">
-                <Button class="rounded-md border border-gray-300" variant="outline" @click="emit('close')"> {{ t('Close') }}
+                <Button class="rounded-md border border-gray-300" variant="outline" @click="emit('close')">
+                    {{ t('Close') }}
                 </Button>
             </div>
         </div>

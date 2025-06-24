@@ -210,8 +210,8 @@ const submit = async () => {
 
                 <div>
                     <Label for="name">League Name</Label>
-                    <Input id="name" v-model="form.name" :disabled="isLoading" required />
-                    <InputError :message="formErrors.name?.join(', ')" />
+                    <Input id="name" v-model="form.name" :disabled="isLoading" required/>
+                    <InputError :message="formErrors.name?.join(', ')"/>
                 </div>
 
                 <div>
@@ -227,7 +227,7 @@ const submit = async () => {
                             </SelectItem>
                         </SelectContent>
                     </Select>
-                    <InputError :message="formErrors.game_id?.join(', ')" />
+                    <InputError :message="formErrors.game_id?.join(', ')"/>
                 </div>
 
                 <div>
@@ -238,8 +238,9 @@ const submit = async () => {
 
                 <div>
                     <Label for="start_rating">Starting Rating</Label>
-                    <Input id="start_rating" v-model.number="form.start_rating" :disabled="isLoading" required type="number" />
-                    <InputError :message="formErrors.start_rating?.join(', ')" />
+                    <Input id="start_rating" v-model.number="form.start_rating" :disabled="isLoading" required
+                           type="number"/>
+                    <InputError :message="formErrors.start_rating?.join(', ')"/>
                 </div>
 
                 <div class="flex items-center space-x-2">
@@ -251,13 +252,13 @@ const submit = async () => {
                         type="checkbox"
                     />
                     <Label for="has_rating">Enable Rating System</Label>
-                    <InputError :message="formErrors.has_rating?.join(', ')" />
+                    <InputError :message="formErrors.has_rating?.join(', ')"/>
                 </div>
 
                 <div>
                     <Label for="details">Details (Optional)</Label>
-                    <Textarea id="details" v-model="form.details" :disabled="isLoading" />
-                    <InputError :message="formErrors.details?.join(', ')" />
+                    <Textarea id="details" v-model="form.details" :disabled="isLoading"/>
+                    <InputError :message="formErrors.details?.join(', ')"/>
                 </div>
 
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -292,14 +293,14 @@ const submit = async () => {
 
                 <div>
                     <Label for="started_at">Start Date (Optional)</Label>
-                    <Input id="started_at" v-model="form.started_at" :disabled="isLoading" type="datetime-local" />
-                    <InputError :message="formErrors.started_at?.join(', ')" />
+                    <Input id="started_at" v-model="form.started_at" :disabled="isLoading" type="datetime-local"/>
+                    <InputError :message="formErrors.started_at?.join(', ')"/>
                 </div>
 
                 <div>
                     <Label for="finished_at">End Date (Optional)</Label>
-                    <Input id="finished_at" v-model="form.finished_at" :disabled="isLoading" type="datetime-local" />
-                    <InputError :message="formErrors.finished_at?.join(', ')" />
+                    <Input id="finished_at" v-model="form.finished_at" :disabled="isLoading" type="datetime-local"/>
+                    <InputError :message="formErrors.finished_at?.join(', ')"/>
                 </div>
 
                 <div v-if="form.has_rating" class="space-y-6">

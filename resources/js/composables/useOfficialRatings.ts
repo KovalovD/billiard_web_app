@@ -1,7 +1,7 @@
 // resources/js/composables/useOfficialRatings.ts
 import {useApi, useApiAction} from '@/composables/useApi';
 import {del, get, post, put} from '@/lib/apiClient';
-import type {OfficialRating, OfficialRatingPlayer, CreateOfficialRatingPayload} from '@/types/api';
+import type {CreateOfficialRatingPayload, OfficialRating, OfficialRatingPlayer} from '@/types/api';
 
 export function useOfficialRatings() {
     // Отримати всі офіційні рейтинги

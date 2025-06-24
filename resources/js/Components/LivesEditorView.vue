@@ -14,7 +14,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const emit = defineEmits(['increment-lives', 'decrement-lives', 'set-turn']);
-const { t } = useLocale();
+const {t} = useLocale();
 
 // Sort players by turn order
 const sortedPlayers = computed(() => {
@@ -100,8 +100,8 @@ const setCurrentTurn = (player: MultiplayerGamePlayer) => {
                         <Button
                             v-if="player.user.id !== currentTurnPlayerId"
                             :disabled="isLoading"
-                            size="sm"
                             :title="t('Set as current turn')"
+                            size="sm"
                             variant="outline"
                             @click="setCurrentTurn(player)"
                         >

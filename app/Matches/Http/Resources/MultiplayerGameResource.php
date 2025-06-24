@@ -101,7 +101,7 @@ class MultiplayerGameResource extends JsonResource
             'financial_data'            => $financialData,
             'current_user_player'       => $currentUserPlayer ? [
                 'id'              => $currentUserPlayer->id,
-                'division' => $this->getDivisionForUser($currentUserPlayer),
+                'division'      => $this->getDivisionForUser($currentUserPlayer),
                 'user'          => new UserResource($currentUserPlayer->user),
                 'lives'           => $currentUserPlayer->lives,
                 'turn_order'      => $currentUserPlayer->turn_order,

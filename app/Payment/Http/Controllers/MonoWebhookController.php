@@ -38,7 +38,7 @@ class MonoWebhookController
                 'status'   => 'success',
                 'paid_at'  => Carbon::createFromTimestamp($tx['time']),
                 'payload'  => $tx,
-            ]
+            ],
         );
 
         return response()->json(['ok' => true]);

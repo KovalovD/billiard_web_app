@@ -1,5 +1,5 @@
 // resources/js/composables/useApi.ts
-import type { ApiError } from '@/types/api';
+import type {ApiError} from '@/types/api';
 import {ref, Ref} from 'vue';
 
 /**

@@ -48,7 +48,7 @@ const description = props.description || errorInfo[props.status as keyof typeof 
 </script>
 
 <template>
-    <Head :title="title" />
+    <Head :title="title"/>
 
     <div class="flex min-h-screen flex-col items-center justify-center bg-gray-100 px-6 text-center dark:bg-gray-900">
         <div class="w-full max-w-md rounded-lg bg-white p-8 shadow-lg dark:bg-gray-800">

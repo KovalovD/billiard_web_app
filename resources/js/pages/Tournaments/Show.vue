@@ -549,7 +549,7 @@ const columns = computed(() => [
 
             <!-- Error State -->
             <div v-else-if="error" class="mb-6 rounded bg-red-100 p-4 text-red-500">
-                {{ t('Error loading tournament: :error', { error }) }}
+                {{ t('Error loading tournament: :error', {error}) }}
             </div>
 
             <!-- Tournament Content -->
@@ -618,8 +618,10 @@ const columns = computed(() => [
                         <CardContent class="p-6">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <h3 class="text-lg font-medium text-blue-800 dark:text-blue-300">{{ t('Tournament Registration') }}</h3>
-                                    <p class="text-blue-600 dark:text-blue-400">{{ t('This tournament requires application to participate.') }}</p>
+                                    <h3 class="text-lg font-medium text-blue-800 dark:text-blue-300">
+                                        {{ t('Tournament Registration') }}</h3>
+                                    <p class="text-blue-600 dark:text-blue-400">
+                                        {{ t('This tournament requires application to participate.') }}</p>
                                 </div>
                                 <Link :href="route('login')">
                                     <Button>
@@ -743,13 +745,17 @@ const columns = computed(() => [
                                     </div>
 
                                     <div v-if="tournament.details">
-                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">{{ t('Description') }}</h4>
+                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">{{
+                                                t('Description')
+                                            }}</h4>
                                         <p class="mt-1 text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
                                             {{ tournament.details }}</p>
                                     </div>
 
                                     <div v-if="tournament.regulation">
-                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">{{ t('Regulation') }}</h4>
+                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">{{
+                                                t('Regulation')
+                                            }}</h4>
                                         <p class="mt-1 text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
                                             {{ tournament.regulation }}</p>
                                     </div>
@@ -760,12 +766,15 @@ const columns = computed(() => [
                                     </div>
 
                                     <div v-if="tournament.organizer">
-                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">{{ t('Organizer') }}</h4>
+                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">{{
+                                                t('Organizer')
+                                            }}</h4>
                                         <p class="mt-1 text-gray-600 dark:text-gray-400">{{ tournament.organizer }}</p>
                                     </div>
 
                                     <div v-if="tournament.application_deadline">
-                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">{{ t('Application Deadline') }}</h4>
+                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">
+                                            {{ t('Application Deadline') }}</h4>
                                         <p class="mt-1 text-gray-600 dark:text-gray-400">
                                             {{ formatDateTime(tournament.application_deadline) }}</p>
                                     </div>
@@ -835,7 +844,10 @@ const columns = computed(() => [
                                         <div class="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
                                             {{ formatCurrency(tournament.prize_pool) }}
                                         </div>
-                                        <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('Total Prize Pool') }}</div>
+                                        <div class="text-sm text-gray-600 dark:text-gray-400">{{
+                                                t('Total Prize Pool')
+                                            }}
+                                        </div>
                                     </div>
                                 </div>
                             </CardContent>
@@ -1175,7 +1187,8 @@ const columns = computed(() => [
                         <Card v-if="pendingApplications.length === 0 && rejectedApplications.length === 0">
                             <CardContent class="py-10 text-center">
                                 <ClipboardListIcon class="mx-auto h-12 w-12 text-gray-400"/>
-                                <p class="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">{{ t('No Applications') }}</p>
+                                <p class="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">
+                                    {{ t('No Applications') }}</p>
                                 <p class="mt-2 text-gray-600 dark:text-gray-400">
                                     {{ t('There are no applications to display.') }}
                                 </p>
