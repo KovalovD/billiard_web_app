@@ -501,21 +501,6 @@ const scrollToCenter = () => {
     });
 };
 
-const getStatusColor = (status: string) => {
-    switch (status) {
-        case 'completed':
-            return '#16a34a';
-        case 'in_progress':
-            return '#eab308';
-        case 'verification':
-            return '#9333ea';
-        case 'ready':
-            return '#3b82f6';
-        default:
-            return '#6b7280';
-    }
-};
-
 const getMatchClass = (match: any) => {
     if (match.status === 'completed') return 'match-completed';
     if (match.status === 'in_progress') return 'match-active';
@@ -769,11 +754,12 @@ onUnmounted(() => {
                                         </text>
                                     </g>
 
-                                    <!-- Status indicator -->
+                                    <!-- Status indicator - Only for in_progress matches -->
                                     <circle
+                                        v-if="m.status === 'in_progress'"
                                         :cx="m.x + nodeWidth - 10"
                                         :cy="m.y + 10"
-                                        :fill="getStatusColor(m.status)"
+                                        class="status-in-progress"
                                         r="4"
                                     />
                                 </g>
@@ -802,10 +788,6 @@ onUnmounted(() => {
     max-height: calc(100vh - 120px);
 }
 
-.dark .bracket-fullscreen-container:fullscreen {
-    background: #111827;
-}
-
 .bracket-zoom-wrapper {
     transform-origin: top left;
     transition: transform 0.2s ease-out;
@@ -829,10 +811,6 @@ onUnmounted(() => {
     fill: #374151;
 }
 
-.dark .bracket-label {
-    fill: #d1d5db;
-}
-
 /* Match styles */
 .match-pending {
     fill: #ffffff;
@@ -841,8 +819,8 @@ onUnmounted(() => {
 }
 
 .match-ready {
-    fill: #dbeafe;
-    stroke: #3b82f6;
+    fill: rgba(230, 255, 237, 1);
+    stroke: #10b981;
     stroke-width: 1.5;
 }
 
@@ -859,15 +837,15 @@ onUnmounted(() => {
 }
 
 .match-completed {
-    fill: rgba(230, 255, 237, 0.1);
-    stroke: #10b981;
+    fill: rgba(219, 234, 254, 0.2);
+    stroke: #3b82f6;
     stroke-width: 1;
 }
 
 /* Current user match highlight */
 .user-match {
     stroke-width: 2 !important;
-    stroke: #ffc66d !important;
+    stroke: rgba(255, 198, 109, 0.7) !important;
 }
 
 /* Lower bracket match styles */
@@ -889,7 +867,7 @@ onUnmounted(() => {
 }
 
 .player-winner {
-    fill: #16a34a;
+    fill: #2b81fd;
     fill-opacity: 0.1;
 }
 
@@ -929,51 +907,21 @@ onUnmounted(() => {
     stroke-dasharray: 4 2;
 }
 
-/* Dark mode adjustments */
-.dark .match-pending {
-    fill: #374151;
-    stroke: #4b5563;
+/* In-progress status indicator with breathing animation */
+.status-in-progress {
+    fill: #ef4444;
+    animation: breathe 2s ease-in-out infinite;
 }
 
-.dark .match-ready {
-    fill: #1e3a8a;
-    stroke: #3b82f6;
-}
-
-.dark .match-active {
-    fill: #7f1d1d;
-    stroke: #ef4444;
-}
-
-.dark .match-verification {
-    fill: #581c87;
-    stroke: #9333ea;
-}
-
-.dark .match-completed {
-    fill: #064e3b;
-    stroke: #10b981;
-}
-
-.dark .player-name,
-.dark .player-score {
-    fill: #f3f4f6;
-}
-
-.dark .match-number {
-    fill: #9ca3af;
-}
-
-.dark .connector-line {
-    stroke: #4b5563;
-}
-
-.dark .connector-line-lower {
-    stroke: #7c3aed;
-}
-
-.dark .walkover-text {
-    fill: #fbbf24;
+@keyframes breathe {
+    0%, 100% {
+        opacity: 1;
+        r: 4;
+    }
+    50% {
+        opacity: 0.6;
+        r: 5;
+    }
 }
 
 /* Scrollbar styling */
@@ -987,24 +935,12 @@ onUnmounted(() => {
     border-radius: 4px;
 }
 
-.dark .bracket-container::-webkit-scrollbar-track {
-    background: #1f2937;
-}
-
 .bracket-container::-webkit-scrollbar-thumb {
     background: #9ca3af;
     border-radius: 4px;
 }
 
 .bracket-container::-webkit-scrollbar-thumb:hover {
-    background: #6b7280;
-}
-
-.dark .bracket-container::-webkit-scrollbar-thumb {
-    background: #4b5563;
-}
-
-.dark .bracket-container::-webkit-scrollbar-thumb:hover {
     background: #6b7280;
 }
 </style>
