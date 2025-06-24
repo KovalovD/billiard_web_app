@@ -2,24 +2,14 @@
 <script lang="ts" setup>
 import {Button, Card, CardContent, CardHeader, CardTitle} from '@/Components/ui';
 import DataTable from '@/Components/ui/data-table/DataTable.vue';
-import TableActions, {type ActionItem} from '@/Components/TableActions.vue';
 import {useAuth} from '@/composables/useAuth';
 import {useLocale} from '@/composables/useLocale';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
 import type {Tournament, TournamentPlayer} from '@/types/api';
-import {Head, Link} from '@inertiajs/vue3';
-import {
-    CalendarIcon,
-    CrownIcon,
-    EyeIcon,
-    MapPinIcon,
-    PencilIcon,
-    PlusIcon,
-    TrophyIcon,
-    UsersIcon,
-} from 'lucide-vue-next';
-import {computed, onMounted, ref} from 'vue';
+import {Head, Link, router} from '@inertiajs/vue3';
+import {CalendarIcon, CrownIcon, MapPinIcon, PlusIcon, TrophyIcon, UsersIcon,} from 'lucide-vue-next';
+import {computed, onMounted, onUnmounted, ref} from 'vue';
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -57,7 +47,7 @@ const userTournamentMap = computed(() => {
     return map;
 });
 
-// Define table columns
+// Define table columns (removed actions column)
 const columns = computed(() => [
     {
         key: 'name',
@@ -156,13 +146,6 @@ const columns = computed(() => [
             }
             return formatPrizePool(tournament.prize_pool);
         }
-    },
-    {
-        key: 'actions',
-        label: t('Actions'),
-        align: 'right' as const,
-        sticky: true,
-        width: '80px'
     }
 ]);
 
@@ -300,36 +283,59 @@ const formatPrizePool = (amount: number): string => {
 };
 
 const getRowClass = (tournament: Tournament): string => {
+    const baseClass = 'cursor-pointer transition-colors duration-200';
     if (isUserParticipant(tournament.id)) {
-        return 'bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 border-l-4 border-blue-300';
+        return `${baseClass} bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 border-l-4 border-blue-300`;
     }
-    return '';
+    return baseClass;
 };
 
-const getActions = (tournament: Tournament): ActionItem[] => {
-    const actions: ActionItem[] = [
-        {
-            label: t('View'),
-            icon: EyeIcon,
-            href: `/tournaments/${tournament.id}`,
-            show: true
+// Event delegation handler
+const handleTableClick = (event: MouseEvent) => {
+    const target = event.target as HTMLElement;
+    const row = target.closest('tr[data-tournament-id]');
+
+    if (row) {
+        const tournamentId = row.getAttribute('data-tournament-id');
+        if (tournamentId) {
+            router.visit(`/tournaments/${tournamentId}`);
         }
-    ];
-
-    if (isAuthenticated.value && isAdmin.value) {
-        actions.push({
-            label: t('Edit'),
-            icon: PencilIcon,
-            href: `/admin/tournaments/${tournament.id}/edit`,
-            show: true
-        });
     }
+};
 
-    return actions;
+const handleTableKeydown = (event: KeyboardEvent) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+        const target = event.target as HTMLElement;
+        const row = target.closest('tr[data-tournament-id]');
+
+        if (row) {
+            event.preventDefault();
+            const tournamentId = row.getAttribute('data-tournament-id');
+            if (tournamentId) {
+                router.visit(`/tournaments/${tournamentId}`);
+            }
+        }
+    }
 };
 
 onMounted(() => {
     fetchTournaments();
+
+    // Add event delegation to the table container
+    const tableContainer = document.querySelector('[data-tournament-table]');
+    if (tableContainer) {
+        tableContainer.addEventListener('click', handleTableClick);
+        tableContainer.addEventListener('keydown', handleTableKeydown);
+    }
+});
+
+onUnmounted(() => {
+    // Clean up event listeners
+    const tableContainer = document.querySelector('[data-tournament-table]');
+    if (tableContainer) {
+        tableContainer.removeEventListener('click', handleTableClick);
+        tableContainer.removeEventListener('keydown', handleTableKeydown);
+    }
 });
 </script>
 
@@ -386,103 +392,107 @@ onMounted(() => {
                     </CardTitle>
                 </CardHeader>
                 <CardContent class="p-0">
-                    <DataTable
-                        :columns="columns"
-                        :compact-mode="true"
-                        :data="filteredTournaments"
-                        :empty-message="selectedStatus === 'all' ? t('No tournaments have been created yet.') : t('No :status tournaments.', {status: selectedStatus})"
-                        :loading="isLoading"
-                        :row-class="getRowClass"
-                    >
-                        <!-- Custom cell renderers -->
-                        <template #cell-name="{ value }">
-                            <div class="flex items-center gap-2">
-                                <div>
-                                    <p class="font-medium">{{ value.name }}</p>
-                                    <p v-if="value.organizer" class="text-sm text-gray-600 dark:text-gray-400">
-                                        {{ value.organizer }}
-                                    </p>
-                                </div>
-                                <div v-if="value.isParticipant" class="ml-2">
-                                    <CrownIcon class="h-4 w-4 text-yellow-500"/>
-                                </div>
-                            </div>
-                        </template>
-
-                        <template #cell-participation="{ value }">
-                            <span v-if="value"
-                                  :class="['inline-flex rounded-full px-2 py-1 text-xs font-semibold', value.badgeClass]">
-                                {{ value.badgeText }}
-                            </span>
-                            <span v-else class="text-gray-400">—</span>
-                        </template>
-
-                        <template #cell-game="{ value }">
-                            <div v-if="value" class="flex items-center text-sm text-gray-900 dark:text-gray-100">
-                                <TrophyIcon class="h-4 w-4 mr-2 text-gray-400"/>
-                                {{ value }}
-                            </div>
-                            <div v-else class="text-sm text-gray-400">{{ t('N/A') }}</div>
-                        </template>
-
-                        <template #cell-status="{ value }">
-                            <span
-                                :class="[
-                                    'inline-flex px-2 py-1 text-xs font-medium rounded-full',
-                                    getStatusBadgeClass(value.status)
-                                ]"
-                            >
-                                {{ value.status_display }}
-                            </span>
-                        </template>
-
-                        <template #cell-date="{ value }">
-                            <div v-if="value" class="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                                <CalendarIcon class="h-4 w-4 mr-2"/>
-                                {{ value }}
-                            </div>
-                            <div v-else class="text-sm text-gray-400">{{ t('N/A') }}</div>
-                        </template>
-
-                        <template #cell-location="{ value }">
-                            <div v-if="value && value.hasLocation"
-                                 class="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                                <MapPinIcon class="h-4 w-4 mr-2"/>
-                                <div>
-                                    <div>{{ value.city.name }}</div>
-                                    <div class="text-xs">{{ value.city.country.name }}</div>
-                                </div>
-                            </div>
-                            <div v-else class="text-sm text-gray-400">{{ t('N/A') }}</div>
-                        </template>
-
-                        <template #cell-players="{ value }">
-                            <div v-if="value" class="flex items-center text-sm text-gray-900 dark:text-gray-100">
-                                <UsersIcon class="h-4 w-4 mr-2 text-gray-400"/>
-                                <div>
-                                    {{ value.count }}
-                                    <span v-if="value.hasMax">
-                                        / {{ value.max }}
-                                    </span>
-                                    <div class="text-xs text-gray-500">
-                                        {{ value.count !== 1 ? t('players') : t('player') }}
+                    <div data-tournament-table>
+                        <DataTable
+                            :columns="columns"
+                            :compact-mode="true"
+                            :data="filteredTournaments"
+                            :empty-message="selectedStatus === 'all' ? t('No tournaments have been created yet.') : t('No :status tournaments.', {status: selectedStatus})"
+                            :loading="isLoading"
+                            :row-class="getRowClass"
+                            :row-attributes="(tournament) => ({
+                                'data-tournament-id': tournament.id?.toString(),
+                                'role': 'button',
+                                'tabindex': '0',
+                                'aria-label': `View ${tournament.name} tournament`
+                            })"
+                        >
+                            <!-- Custom cell renderers -->
+                            <template #cell-name="{ value }">
+                                <div class="flex items-center gap-2">
+                                    <div>
+                                        <p class="font-medium">{{ value.name }}</p>
+                                        <p v-if="value.organizer" class="text-sm text-gray-600 dark:text-gray-400">
+                                            {{ value.organizer }}
+                                        </p>
+                                    </div>
+                                    <div v-if="value.isParticipant" class="ml-2">
+                                        <CrownIcon class="h-4 w-4 text-yellow-500"/>
                                     </div>
                                 </div>
-                            </div>
-                            <div v-else class="text-sm text-gray-400">{{ t('N/A') }}</div>
-                        </template>
+                            </template>
 
-                        <template #cell-prize="{ value }">
-                            <span v-if="value" class="text-green-600 dark:text-green-400 font-medium">
-                                {{ value }}
-                            </span>
-                            <span v-else class="text-gray-400">{{ t('N/A') }}</span>
-                        </template>
+                            <template #cell-participation="{ value }">
+                                <span v-if="value"
+                                      :class="['inline-flex rounded-full px-2 py-1 text-xs font-semibold', value.badgeClass]">
+                                    {{ value.badgeText }}
+                                </span>
+                                <span v-else class="text-gray-400">—</span>
+                            </template>
 
-                        <template #cell-actions="{ item }">
-                            <TableActions :actions="getActions(item)"/>
-                        </template>
-                    </DataTable>
+                            <template #cell-game="{ value }">
+                                <div v-if="value" class="flex items-center text-sm text-gray-900 dark:text-gray-100">
+                                    <TrophyIcon class="h-4 w-4 mr-2 text-gray-400"/>
+                                    {{ value }}
+                                </div>
+                                <div v-else class="text-sm text-gray-400">{{ t('N/A') }}</div>
+                            </template>
+
+                            <template #cell-status="{ value }">
+                                <span
+                                    :class="[
+                                        'inline-flex px-2 py-1 text-xs font-medium rounded-full',
+                                        getStatusBadgeClass(value.status)
+                                    ]"
+                                >
+                                    {{ value.status_display }}
+                                </span>
+                            </template>
+
+                            <template #cell-date="{ value }">
+                                <div v-if="value" class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                                    <CalendarIcon class="h-4 w-4 mr-2"/>
+                                    {{ value }}
+                                </div>
+                                <div v-else class="text-sm text-gray-400">{{ t('N/A') }}</div>
+                            </template>
+
+                            <template #cell-location="{ value }">
+                                <div v-if="value && value.hasLocation"
+                                     class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                                    <MapPinIcon class="h-4 w-4 mr-2"/>
+                                    <div>
+                                        <div>{{ value.city.name }}</div>
+                                        <div class="text-xs">{{ value.city.country.name }}</div>
+                                    </div>
+                                </div>
+                                <div v-else class="text-sm text-gray-400">{{ t('N/A') }}</div>
+                            </template>
+
+                            <template #cell-players="{ value }">
+                                <div v-if="value" class="flex items-center text-sm text-gray-900 dark:text-gray-100">
+                                    <UsersIcon class="h-4 w-4 mr-2 text-gray-400"/>
+                                    <div>
+                                        {{ value.count }}
+                                        <span v-if="value.hasMax">
+                                            / {{ value.max }}
+                                        </span>
+                                        <div class="text-xs text-gray-500">
+                                            {{ value.count !== 1 ? t('players') : t('player') }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div v-else class="text-sm text-gray-400">{{ t('N/A') }}</div>
+                            </template>
+
+                            <template #cell-prize="{ value }">
+                                <span v-if="value" class="text-green-600 dark:text-green-400 font-medium">
+                                    {{ value }}
+                                </span>
+                                <span v-else class="text-gray-400">{{ t('N/A') }}</span>
+                            </template>
+                        </DataTable>
+                    </div>
                 </CardContent>
             </Card>
         </div>

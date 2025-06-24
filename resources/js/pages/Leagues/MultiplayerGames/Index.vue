@@ -9,11 +9,10 @@ import {useMultiplayerGames} from '@/composables/useMultiplayerGames';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
 import type {League, MultiplayerGame} from '@/types/api';
-import {Head, Link} from '@inertiajs/vue3';
+import {Head, Link, router} from '@inertiajs/vue3';
 import {
     ArrowLeftIcon,
     CalendarIcon,
-    EyeIcon,
     GamepadIcon,
     PlayIcon,
     PlusIcon,
@@ -21,7 +20,7 @@ import {
     UsersIcon,
     XIcon
 } from 'lucide-vue-next';
-import {computed, onMounted, ref} from 'vue';
+import {computed, onMounted, onUnmounted, ref} from 'vue';
 import {useLocale} from '@/composables/useLocale';
 
 defineOptions({layout: AuthenticatedLayout});
@@ -219,22 +218,15 @@ const handleCancel = async (game: MultiplayerGame) => {
     }
 };
 
+const getRowClass = (game: MultiplayerGame): string => {
+    return 'cursor-pointer transition-colors duration-200';
+};
+
 const getActions = (game: MultiplayerGame): ActionItem[] => {
-    const actions: ActionItem[] = [
-        {
-            label: t('View'),
-            icon: EyeIcon,
-            href: `/leagues/${props.leagueId}/multiplayer-games/${game.id}`,
-            show: true
-        }
-    ];
+    const actions: ActionItem[] = [];
 
     if (isAuthenticated.value && isAdmin.value) {
         if (game.status === 'registration') {
-            actions.push({
-                separator: true,
-                show: true
-            });
             actions.push({
                 label: t('Start Game'),
                 icon: PlayIcon,
@@ -267,9 +259,65 @@ const getActions = (game: MultiplayerGame): ActionItem[] => {
     return actions;
 };
 
+// Event delegation handler
+const handleTableClick = (event: MouseEvent) => {
+    const target = event.target as HTMLElement;
+
+    // Don't navigate if clicking on action buttons or their children
+    if (target.closest('[data-table-actions]') || target.closest('button')) {
+        return;
+    }
+
+    const row = target.closest('tr[data-game-id]');
+
+    if (row) {
+        const gameId = row.getAttribute('data-game-id');
+        if (gameId) {
+            router.visit(`/leagues/${props.leagueId}/multiplayer-games/${gameId}`);
+        }
+    }
+};
+
+const handleTableKeydown = (event: KeyboardEvent) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+        const target = event.target as HTMLElement;
+
+        // Don't navigate if focus is on action buttons
+        if (target.closest('[data-table-actions]') || target.closest('button')) {
+            return;
+        }
+
+        const row = target.closest('tr[data-game-id]');
+
+        if (row) {
+            event.preventDefault();
+            const gameId = row.getAttribute('data-game-id');
+            if (gameId) {
+                router.visit(`/leagues/${props.leagueId}/multiplayer-games/${gameId}`);
+            }
+        }
+    }
+};
+
 onMounted(() => {
     fetchLeague();
     fetchGames();
+
+    // Add event delegation to the table container
+    const tableContainer = document.querySelector('[data-multiplayer-games-table]');
+    if (tableContainer) {
+        tableContainer.addEventListener('click', handleTableClick);
+        tableContainer.addEventListener('keydown', handleTableKeydown);
+    }
+});
+
+onUnmounted(() => {
+    // Clean up event listeners
+    const tableContainer = document.querySelector('[data-multiplayer-games-table]');
+    if (tableContainer) {
+        tableContainer.removeEventListener('click', handleTableClick);
+        tableContainer.removeEventListener('keydown', handleTableKeydown);
+    }
 });
 </script>
 
@@ -342,80 +390,90 @@ onMounted(() => {
                     </div>
 
                     <!-- Data Table -->
-                    <DataTable
-                        v-else
-                        :columns="columns"
-                        :compact-mode="true"
-                        :data="filteredGames"
-                        :empty-message="selectedStatus === 'all' ? t('No multiplayer games for this league.') : t('No :status games.', { status: selectedStatus })"
-                        :loading="isLoadingGames"
-                    >
-                        <!-- Custom cell renderers -->
-                        <template #cell-name="{ value }">
-                            <div class="flex items-center">
-                                <div class="flex-shrink-0 h-8 w-8">
-                                    <div
-                                        class="h-8 w-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                                        <GamepadIcon class="h-4 w-4 text-purple-600 dark:text-purple-400"/>
+                    <div v-else data-multiplayer-games-table>
+                        <DataTable
+                            :columns="columns"
+                            :compact-mode="true"
+                            :data="filteredGames"
+                            :empty-message="selectedStatus === 'all' ? t('No multiplayer games for this league.') : t('No :status games.', { status: selectedStatus })"
+                            :loading="isLoadingGames"
+                            :row-class="getRowClass"
+                            :row-attributes="(game) => ({
+                                'data-game-id': game.id?.toString(),
+                                'role': 'button',
+                                'tabindex': '0',
+                                'aria-label': `View ${game.name} game`
+                            })"
+                        >
+                            <!-- Custom cell renderers -->
+                            <template #cell-name="{ value }">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-8 w-8">
+                                        <div
+                                            class="h-8 w-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                                            <GamepadIcon class="h-4 w-4 text-purple-600 dark:text-purple-400"/>
+                                        </div>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                            {{ value.name }}
+                                        </div>
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">
+                                            ID: {{ value.id }}
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                        {{ value.name }}
-                                    </div>
-                                    <div class="text-sm text-gray-500 dark:text-gray-400">
-                                        ID: {{ value.id }}
-                                    </div>
+                            </template>
+
+                            <template #cell-status="{ value }">
+                                <span
+                                    :class="[
+                                        'inline-flex px-2 py-1 text-xs font-medium rounded-full',
+                                        getStatusBadgeClass(value)
+                                    ]"
+                                >
+                                    {{ value.replace('_', ' ').toUpperCase() }}
+                                </span>
+                            </template>
+
+                            <template #cell-players="{ value }">
+                                <div class="flex items-center text-sm text-gray-900 dark:text-gray-100">
+                                    <UsersIcon class="h-4 w-4 mr-2 text-gray-400"/>
+                                    <div>{{ value }}</div>
                                 </div>
-                            </div>
-                        </template>
+                            </template>
 
-                        <template #cell-status="{ value }">
-                            <span
-                                :class="[
-                                    'inline-flex px-2 py-1 text-xs font-medium rounded-full',
-                                    getStatusBadgeClass(value)
-                                ]"
-                            >
-                                {{ value.replace('_', ' ').toUpperCase() }}
-                            </span>
-                        </template>
+                            <template #cell-date="{ value }">
+                                <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                                    <CalendarIcon class="h-4 w-4 mr-2"/>
+                                    <div class="text-xs">{{ value }}</div>
+                                </div>
+                            </template>
 
-                        <template #cell-players="{ value }">
-                            <div class="flex items-center text-sm text-gray-900 dark:text-gray-100">
-                                <UsersIcon class="h-4 w-4 mr-2 text-gray-400"/>
-                                <div>{{ value }}</div>
-                            </div>
-                        </template>
+                            <template #cell-entryFee="{ value }">
+                                <span class="text-green-600 dark:text-green-400 font-medium">
+                                    {{ value }}
+                                </span>
+                            </template>
 
-                        <template #cell-date="{ value }">
-                            <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                                <CalendarIcon class="h-4 w-4 mr-2"/>
-                                <div class="text-xs">{{ value }}</div>
-                            </div>
-                        </template>
+                            <template #cell-registration="{ value }">
+                                <div v-if="value" class="flex items-center">
+                                    <div class="h-2 w-2 bg-green-400 rounded-full mr-2"></div>
+                                    <span class="text-sm text-green-600 dark:text-green-400">{{ t('Open') }}</span>
+                                </div>
+                                <div v-else class="flex items-center">
+                                    <div class="h-2 w-2 bg-red-400 rounded-full mr-2"></div>
+                                    <span class="text-sm text-red-600 dark:text-red-400">{{ t('Closed') }}</span>
+                                </div>
+                            </template>
 
-                        <template #cell-entryFee="{ value }">
-                            <span class="text-green-600 dark:text-green-400 font-medium">
-                                {{ value }}
-                            </span>
-                        </template>
-
-                        <template #cell-registration="{ value }">
-                            <div v-if="value" class="flex items-center">
-                                <div class="h-2 w-2 bg-green-400 rounded-full mr-2"></div>
-                                <span class="text-sm text-green-600 dark:text-green-400">{{ t('Open') }}</span>
-                            </div>
-                            <div v-else class="flex items-center">
-                                <div class="h-2 w-2 bg-red-400 rounded-full mr-2"></div>
-                                <span class="text-sm text-red-600 dark:text-red-400">{{ t('Closed') }}</span>
-                            </div>
-                        </template>
-
-                        <template #cell-actions="{ item }">
-                            <TableActions :actions="getActions(item)"/>
-                        </template>
-                    </DataTable>
+                            <template #cell-actions="{ item }">
+                                <div data-table-actions>
+                                    <TableActions :actions="getActions(item)"/>
+                                </div>
+                            </template>
+                        </DataTable>
+                    </div>
                 </CardContent>
             </Card>
         </div>

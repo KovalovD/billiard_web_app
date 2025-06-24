@@ -1,28 +1,25 @@
+<!-- resources/js/pages/OfficialRatings/Index.vue -->
 <script lang="ts" setup>
 import {Button, Card, CardContent, CardHeader, CardTitle} from '@/Components/ui';
 import DataTable from '@/Components/ui/data-table/DataTable.vue';
-import TableActions, {type ActionItem} from '@/Components/TableActions.vue';
 import {useAuth} from '@/composables/useAuth';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
 import type {OfficialRating} from '@/types/api';
-import {Head, Link} from '@inertiajs/vue3';
+import {Head, Link, router} from '@inertiajs/vue3';
 import {useLocale} from '@/composables/useLocale';
 import {
     CalendarIcon,
     CheckCircleIcon,
     ChevronDownIcon,
-    EyeIcon,
-    PencilIcon,
     PlusIcon,
-    SettingsIcon,
     StarIcon,
     TrophyIcon,
     UserIcon,
     UsersIcon,
     XCircleIcon
 } from 'lucide-vue-next';
-import {computed, nextTick, onMounted, ref} from 'vue';
+import {computed, nextTick, onMounted, ref, watch} from 'vue';
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -68,7 +65,7 @@ const showScrollToUserButton = computed(() => {
     return currentUserInOneYear.value && oneYearRatingData.value.length > 10;
 });
 
-// Define table columns for ratings
+// Define table columns for ratings (removed actions column)
 const ratingColumns = computed(() => [
     {
         key: 'name',
@@ -104,13 +101,6 @@ const ratingColumns = computed(() => [
         align: 'center' as const,
         hideOnTablet: true,
         render: (rating: OfficialRating) => rating.tournaments_count
-    },
-    {
-        key: 'actions',
-        label: t('Actions'),
-        align: 'right' as const,
-        sticky: true,
-        width: '80px'
     }
 ]);
 
@@ -211,36 +201,8 @@ const fetchOneYearRating = async () => {
     }
 };
 
-const getActions = (rating: OfficialRating): ActionItem[] => {
-    const actions: ActionItem[] = [
-        {
-            label: t('View'),
-            icon: EyeIcon,
-            href: `/official-ratings/${rating.id}`,
-            show: true
-        }
-    ];
-
-    if (isAuthenticated.value && isAdmin.value) {
-        actions.push({
-            separator: true,
-            show: true
-        });
-        actions.push({
-            label: t('Manage'),
-            icon: SettingsIcon,
-            href: `/admin/official-ratings/${rating.id}/manage`,
-            show: true
-        });
-        actions.push({
-            label: t('Edit'),
-            icon: PencilIcon,
-            href: `/admin/official-ratings/${rating.id}/edit`,
-            show: true
-        });
-    }
-
-    return actions;
+const handleRatingClick = (rating: OfficialRating) => {
+    router.visit(`/official-ratings/${rating.id}`);
 };
 
 const scrollToUser = async () => {
@@ -293,10 +255,73 @@ const getRowClass = (player: any): string => {
     return baseClass;
 };
 
+const getRatingRowClass = (rating: OfficialRating): string => {
+    return 'cursor-pointer transition-colors duration-200';
+};
+
+// Handle table click events
+const setupTableClickHandlers = () => {
+    // Only setup handlers for ratings tab
+    if (activeTab.value !== 'ratings') return;
+
+    nextTick(() => {
+        const tableContainer = document.querySelector('[data-rating-table]');
+        if (tableContainer) {
+            const rows = tableContainer.querySelectorAll('tbody tr[data-rating-id]');
+            rows.forEach(row => {
+                const ratingId = row.getAttribute('data-rating-id');
+                if (ratingId) {
+                    // Remove existing listeners to prevent duplicates
+                    const newRow = row.cloneNode(true) as HTMLElement;
+                    row.parentNode?.replaceChild(newRow, row);
+
+                    // Add new listeners
+                    newRow.addEventListener('click', () => {
+                        router.visit(`/official-ratings/${ratingId}`);
+                    });
+                    newRow.addEventListener('keydown', (e: KeyboardEvent) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            router.visit(`/official-ratings/${ratingId}`);
+                        }
+                    });
+                }
+            });
+        }
+    });
+};
+
 // Lifecycle
 onMounted(() => {
     fetchRatings();
     fetchOneYearRating();
+});
+
+// Watch for tab changes and re-setup handlers
+watch(activeTab, () => {
+    if (activeTab.value === 'ratings') {
+        nextTick(() => {
+            setupTableClickHandlers();
+        });
+    }
+});
+
+// Watch for data changes and loading state
+watch([() => filteredRatings.value, () => isLoading.value], () => {
+    if (!isLoading.value && filteredRatings.value.length > 0 && activeTab.value === 'ratings') {
+        nextTick(() => {
+            setupTableClickHandlers();
+        });
+    }
+});
+
+// Watch for filter changes
+watch(showInactiveRatings, () => {
+    if (activeTab.value === 'ratings') {
+        nextTick(() => {
+            setupTableClickHandlers();
+        });
+    }
 });
 </script>
 
@@ -372,73 +397,78 @@ onMounted(() => {
                         </CardTitle>
                     </CardHeader>
                     <CardContent class="p-0">
-                        <DataTable
-                            :columns="ratingColumns"
-                            :compact-mode="true"
-                            :data="filteredRatings"
-                            :empty-message="showInactiveRatings ? t('No ratings have been created yet.') : t('No active ratings available.')"
-                            :loading="isLoading"
-                        >
-                            <!-- Custom cell renderers -->
-                            <template #cell-name="{ value, item }">
-                                <div class="flex items-center">
-                                    <div class="flex-shrink-0 h-8 w-8">
-                                        <div
-                                            class="h-8 w-8 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
-                                            <StarIcon class="h-4 w-4 text-yellow-600 dark:text-yellow-400"/>
+                        <div data-rating-table>
+                            <DataTable
+                                :columns="ratingColumns"
+                                :compact-mode="true"
+                                :data="filteredRatings"
+                                :empty-message="showInactiveRatings ? t('No ratings have been created yet.') : t('No active ratings available.')"
+                                :loading="isLoading"
+                                :row-class="getRatingRowClass"
+                                :row-attributes="(rating) => ({
+                                    'data-rating-id': rating.id?.toString(),
+                                    'role': 'button',
+                                    'tabindex': '0',
+                                    'aria-label': `View ${rating.name} rating`
+                                })"
+                            >
+                                <!-- Custom cell renderers -->
+                                <template #cell-name="{ value, item }">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-8 w-8">
+                                            <div
+                                                class="h-8 w-8 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
+                                                <StarIcon class="h-4 w-4 text-yellow-600 dark:text-yellow-400"/>
+                                            </div>
+                                        </div>
+                                        <div class="ml-4">
+                                            <div :class="[
+                                                'text-sm font-medium text-gray-900 dark:text-gray-100',
+                                                !item.is_active && 'opacity-60'
+                                            ]">
+                                                {{ value.name }}
+                                            </div>
+                                            <div v-if="value.description"
+                                                 class="text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">
+                                                {{ value.description }}
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="ml-4">
-                                        <div :class="[
-                                            'text-sm font-medium text-gray-900 dark:text-gray-100',
-                                            !item.is_active && 'opacity-60'
-                                        ]">
-                                            {{ value.name }}
-                                        </div>
-                                        <div v-if="value.description"
-                                             class="text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">
-                                            {{ value.description }}
-                                        </div>
+                                </template>
+
+                                <template #cell-game="{ value }">
+                                    <div class="flex items-center text-sm text-gray-900 dark:text-gray-100">
+                                        <TrophyIcon class="h-4 w-4 mr-2 text-gray-400"/>
+                                        {{ value }}
                                     </div>
-                                </div>
-                            </template>
+                                </template>
 
-                            <template #cell-game="{ value }">
-                                <div class="flex items-center text-sm text-gray-900 dark:text-gray-100">
-                                    <TrophyIcon class="h-4 w-4 mr-2 text-gray-400"/>
-                                    {{ value }}
-                                </div>
-                            </template>
+                                <template #cell-status="{ value }">
+                                    <div class="flex items-center">
+                                        <CheckCircleIcon v-if="value" class="h-4 w-4 text-green-500 mr-2"/>
+                                        <XCircleIcon v-else class="h-4 w-4 text-red-500 mr-2"/>
+                                        <span
+                                            :class="value ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+                                            {{ value ? t('Active') : t('Inactive') }}
+                                        </span>
+                                    </div>
+                                </template>
 
-                            <template #cell-status="{ value }">
-                                <div class="flex items-center">
-                                    <CheckCircleIcon v-if="value" class="h-4 w-4 text-green-500 mr-2"/>
-                                    <XCircleIcon v-else class="h-4 w-4 text-red-500 mr-2"/>
-                                    <span
-                                        :class="value ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
-                                        {{ value ? t('Active') : t('Inactive') }}
-                                    </span>
-                                </div>
-                            </template>
+                                <template #cell-players="{ value }">
+                                    <div class="flex items-center text-sm text-gray-900 dark:text-gray-100">
+                                        <UsersIcon class="h-4 w-4 mr-2 text-gray-400"/>
+                                        {{ value }}
+                                    </div>
+                                </template>
 
-                            <template #cell-players="{ value }">
-                                <div class="flex items-center text-sm text-gray-900 dark:text-gray-100">
-                                    <UsersIcon class="h-4 w-4 mr-2 text-gray-400"/>
-                                    {{ value }}
-                                </div>
-                            </template>
-
-                            <template #cell-tournaments="{ value }">
-                                <div class="flex items-center text-sm text-gray-900 dark:text-gray-100">
-                                    <TrophyIcon class="h-4 w-4 mr-2 text-gray-400"/>
-                                    {{ value }}
-                                </div>
-                            </template>
-
-                            <template #cell-actions="{ item }">
-                                <TableActions :actions="getActions(item)"/>
-                            </template>
-                        </DataTable>
+                                <template #cell-tournaments="{ value }">
+                                    <div class="flex items-center text-sm text-gray-900 dark:text-gray-100">
+                                        <TrophyIcon class="h-4 w-4 mr-2 text-gray-400"/>
+                                        {{ value }}
+                                    </div>
+                                </template>
+                            </DataTable>
+                        </div>
                     </CardContent>
                 </Card>
             </div>
