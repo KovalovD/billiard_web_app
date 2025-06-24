@@ -218,7 +218,7 @@ const handleCancel = async (game: MultiplayerGame) => {
     }
 };
 
-const getRowClass = (game: MultiplayerGame): string => {
+const getRowClass = (): string => {
     return 'cursor-pointer transition-colors duration-200';
 };
 

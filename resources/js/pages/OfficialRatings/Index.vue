@@ -6,7 +6,7 @@ import {useAuth} from '@/composables/useAuth';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
 import type {OfficialRating} from '@/types/api';
-import {Head, Link, router, usePage} from '@inertiajs/vue3';
+import {Head, Link, router} from '@inertiajs/vue3';
 import {useLocale} from '@/composables/useLocale';
 import {
     CalendarIcon,
@@ -25,7 +25,6 @@ defineOptions({layout: AuthenticatedLayout});
 
 const {isAdmin, isAuthenticated, user} = useAuth();
 const {t} = useLocale();
-const page = usePage();
 
 // State
 const ratings = ref<OfficialRating[]>([]);
@@ -210,10 +209,6 @@ const fetchOneYearRating = async () => {
     }
 };
 
-const handleRatingClick = (rating: OfficialRating) => {
-    router.visit(`/official-ratings/${rating.id}`);
-};
-
 const scrollToUser = async () => {
     if (!currentUserInOneYear.value) return;
 
@@ -264,7 +259,7 @@ const getRowClass = (player: any): string => {
     return baseClass;
 };
 
-const getRatingRowClass = (rating: OfficialRating): string => {
+const getRatingRowClass = (): string => {
     return 'cursor-pointer transition-colors duration-200';
 };
 
