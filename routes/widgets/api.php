@@ -1,6 +1,6 @@
 <?php
 
-use App\Widgets\Http\Controllers\MultiplayerGamesController;
+use App\Widgets\Http\Controllers\KillerPoolController;
 use App\Widgets\Http\Controllers\TableMatchController;
 use App\Widgets\Http\Controllers\TableWidgetController;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -22,10 +22,10 @@ Route::prefix('widgets')
             [TableMatchController::class, 'updateScore']);
 
         Route::prefix('killer-pool')->group(function () {
-            Route::get('leagues/{league}/games/{game}', [MultiplayerGamesController::class, 'getCurrentGame'])
+            Route::get('leagues/{league}/games/{game}', [KillerPoolController::class, 'getCurrentGame'])
                 ->name('widgets.killer-pool.current-game')
             ;
-            Route::get('leagues/{league}/games/{game}/status', [MultiplayerGamesController::class, 'getGameStatus'])
+            Route::get('leagues/{league}/games/{game}/status', [KillerPoolController::class, 'getGameStatus'])
                 ->name('widgets.killer-pool.game-status')
             ;
         });

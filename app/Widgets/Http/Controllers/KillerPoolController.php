@@ -9,7 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 
-class MultiplayerGamesController
+class KillerPoolController
 {
     /**
      * Get current game data for streaming widget
