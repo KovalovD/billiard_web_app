@@ -6,7 +6,7 @@
             rel="noopener"
             target="_blank"
         >
-            {{ t('Support') }}
+            {{ t('Donate') }}
         </a>
 
         <img

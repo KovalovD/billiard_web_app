@@ -1,8 +1,8 @@
-<!-- resources/js/pages/OfficialRatings/Index.vue -->
 <script lang="ts" setup>
 import {Button, Card, CardContent, CardHeader, CardTitle} from '@/Components/ui';
 import DataTable from '@/Components/ui/data-table/DataTable.vue';
 import {useAuth} from '@/composables/useAuth';
+import {useSeo} from '@/composables/useSeo';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
 import type {OfficialRating} from '@/types/api';
@@ -25,6 +25,7 @@ defineOptions({layout: AuthenticatedLayout});
 
 const {isAdmin, isAuthenticated, user} = useAuth();
 const {t} = useLocale();
+const {setSeoMeta, generateBreadcrumbJsonLd} = useSeo();
 
 // State
 const ratings = ref<OfficialRating[]>([]);
@@ -312,13 +313,42 @@ const setupTableClickHandlers = () => {
 
 // Lifecycle
 onMounted(() => {
+    setSeoMeta({
+        title: activeTab.value === 'one-year' ? t('One Year Billiard Player Rankings') : t('Official Billiard Rating Systems'),
+        description: activeTab.value === 'one-year'
+            ? t('View the annual billiard player rankings. See top players by prize money, tournament wins, and ELO ratings across all competitions.')
+            : t('Explore official billiard rating systems and player rankings. Track professional players and their performance across different game types.'),
+        keywords: ['billiard rankings', 'pool player ratings', 'ELO rating', 'professional billiards', 'player standings', 'tournament rankings'],
+        ogType: 'website',
+        jsonLd: {
+            ...generateBreadcrumbJsonLd([
+                {name: t('Home'), url: window.location.origin},
+                {name: t('Official Ratings'), url: `${window.location.origin}/official-ratings`}
+            ]),
+            "@context": "https://schema.org",
+            "@type": "SportsActivityLocation",
+            "name": t('WinnerBreak Official Ratings'),
+            "description": t('Professional billiard player rankings and rating systems'),
+            "sport": "Billiards"
+        }
+    });
+
     fetchRatings();
     fetchOneYearRating();
 });
 
 // Watch for tab changes and re-setup handlers
-watch(activeTab, () => {
-    if (activeTab.value === 'ratings') {
+watch(activeTab, (newTab) => {
+    setSeoMeta({
+        title: newTab === 'one-year' ? t('One Year Billiard Player Rankings') : t('Official Billiard Rating Systems'),
+        description: newTab === 'one-year'
+            ? t('View the annual billiard player rankings. See top players by prize money, tournament wins, and ELO ratings across all competitions.')
+            : t('Explore official billiard rating systems and player rankings. Track professional players and their performance across different game types.'),
+        keywords: ['billiard rankings', 'pool player ratings', 'ELO rating', 'professional billiards', 'player standings', 'tournament rankings'],
+        ogType: 'website'
+    });
+
+    if (newTab === 'ratings') {
         nextTick(() => {
             setupTableClickHandlers();
         });
@@ -345,12 +375,13 @@ watch(showInactiveRatings, () => {
 </script>
 
 <template>
-    <Head :title="t('Official Ratings')"/>
+    <Head
+        :title="activeTab === 'one-year' ? t('One Year Billiard Player Rankings') : t('Official Billiard Rating Systems')"/>
 
     <div class="py-12">
         <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
             <!-- Header -->
-            <div class="mb-6 flex items-center justify-between">
+            <header class="mb-6 flex items-center justify-between">
                 <div>
                     <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">{{ t('Official Ratings') }}</h1>
                     <p class="text-gray-600 dark:text-gray-400">{{ t('Professional billiard player rankings') }}</p>
@@ -358,17 +389,19 @@ watch(showInactiveRatings, () => {
 
                 <!-- Only show create button to authenticated admins -->
                 <Link v-if="isAuthenticated && isAdmin && activeTab === 'ratings'"
-                      href="/admin/official-ratings/create">
+                      href="/admin/official-ratings/create"
+                      aria-label="Create new rating system">
                     <Button>
-                        <PlusIcon class="mr-2 h-4 w-4"/>
+                        <PlusIcon class="mr-2 h-4 w-4" aria-hidden="true"/>
                         {{ t('Create Rating') }}
                     </Button>
                 </Link>
-            </div>
+            </header>
 
             <!-- Tab Navigation -->
-            <div class="mb-6 border-b border-gray-200 dark:border-gray-700">
-                <nav class="-mb-px flex space-x-8">
+            <nav class="mb-6 border-b border-gray-200 dark:border-gray-700" role="navigation"
+                 aria-label="Rating tabs">
+                <div class="-mb-px flex space-x-8">
                     <button
                         :class="[
                             'py-4 px-1 text-sm font-medium border-b-2',
@@ -376,6 +409,8 @@ watch(showInactiveRatings, () => {
                                 ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                         ]"
+                        :aria-selected="activeTab === 'ratings'"
+                        role="tab"
                         @click="switchTab('ratings')"
                     >
                         {{ t('Rating Systems') }}
@@ -387,15 +422,17 @@ watch(showInactiveRatings, () => {
                                 ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                         ]"
+                        :aria-selected="activeTab === 'one-year'"
+                        role="tab"
                         @click="switchTab('one-year')"
                     >
                         {{ t('One Year Rating') }}
                     </button>
-                </nav>
-            </div>
+                </div>
+            </nav>
 
             <!-- Rating Systems Tab -->
-            <div v-if="activeTab === 'ratings'">
+            <main v-if="activeTab === 'ratings'" role="tabpanel">
                 <!-- Filters -->
                 <div class="mb-6 flex items-center gap-4">
                     <label class="flex items-center gap-2">
@@ -403,6 +440,7 @@ watch(showInactiveRatings, () => {
                             v-model="showInactiveRatings"
                             class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                             type="checkbox"
+                            aria-label="Show inactive rating systems"
                         />
                         <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('Show inactive ratings') }}</span>
                     </label>
@@ -411,7 +449,7 @@ watch(showInactiveRatings, () => {
                 <Card>
                     <CardHeader>
                         <CardTitle class="flex items-center gap-2">
-                            <StarIcon class="h-5 w-5"/>
+                            <StarIcon class="h-5 w-5" aria-hidden="true"/>
                             {{ t('Rating Systems') }}
                         </CardTitle>
                     </CardHeader>
@@ -428,7 +466,7 @@ watch(showInactiveRatings, () => {
                                     'data-rating-id': rating.id?.toString(),
                                     'role': 'button',
                                     'tabindex': '0',
-                                    'aria-label': `View ${rating.name} rating`
+                                    'aria-label': `View ${rating.name} rating details`
                                 })"
                             >
                                 <!-- Custom cell renderers -->
@@ -437,7 +475,8 @@ watch(showInactiveRatings, () => {
                                         <div class="flex-shrink-0 h-8 w-8">
                                             <div
                                                 class="h-8 w-8 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
-                                                <StarIcon class="h-4 w-4 text-yellow-600 dark:text-yellow-400"/>
+                                                <StarIcon class="h-4 w-4 text-yellow-600 dark:text-yellow-400"
+                                                          aria-hidden="true"/>
                                             </div>
                                         </div>
                                         <div class="ml-4">
@@ -457,15 +496,16 @@ watch(showInactiveRatings, () => {
 
                                 <template #cell-game="{ value }">
                                     <div class="flex items-center text-sm text-gray-900 dark:text-gray-100">
-                                        <TrophyIcon class="h-4 w-4 mr-2 text-gray-400"/>
+                                        <TrophyIcon class="h-4 w-4 mr-2 text-gray-400" aria-hidden="true"/>
                                         {{ value }}
                                     </div>
                                 </template>
 
                                 <template #cell-status="{ value }">
                                     <div class="flex items-center">
-                                        <CheckCircleIcon v-if="value" class="h-4 w-4 text-green-500 mr-2"/>
-                                        <XCircleIcon v-else class="h-4 w-4 text-red-500 mr-2"/>
+                                        <CheckCircleIcon v-if="value" class="h-4 w-4 text-green-500 mr-2"
+                                                         aria-hidden="true"/>
+                                        <XCircleIcon v-else class="h-4 w-4 text-red-500 mr-2" aria-hidden="true"/>
                                         <span
                                             :class="value ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
                                             {{ value ? t('Active') : t('Inactive') }}
@@ -475,14 +515,14 @@ watch(showInactiveRatings, () => {
 
                                 <template #cell-players="{ value }">
                                     <div class="flex items-center text-sm text-gray-900 dark:text-gray-100">
-                                        <UsersIcon class="h-4 w-4 mr-2 text-gray-400"/>
+                                        <UsersIcon class="h-4 w-4 mr-2 text-gray-400" aria-hidden="true"/>
                                         {{ value }}
                                     </div>
                                 </template>
 
                                 <template #cell-tournaments="{ value }">
                                     <div class="flex items-center text-sm text-gray-900 dark:text-gray-100">
-                                        <TrophyIcon class="h-4 w-4 mr-2 text-gray-400"/>
+                                        <TrophyIcon class="h-4 w-4 mr-2 text-gray-400" aria-hidden="true"/>
                                         {{ value }}
                                     </div>
                                 </template>
@@ -490,16 +530,16 @@ watch(showInactiveRatings, () => {
                         </div>
                     </CardContent>
                 </Card>
-            </div>
+            </main>
 
             <!-- One Year Rating Tab -->
-            <div v-if="activeTab === 'one-year'">
+            <main v-if="activeTab === 'one-year'" role="tabpanel">
                 <Card>
                     <CardHeader>
                         <div class="flex items-center justify-between">
                             <div>
                                 <CardTitle class="flex items-center gap-2">
-                                    <CalendarIcon class="h-5 w-5"/>
+                                    <CalendarIcon class="h-5 w-5" aria-hidden="true"/>
                                     {{ t('One Year Rating') }}
                                 </CardTitle>
                                 <div class="mt-2 text-sm text-gray-600 dark:text-gray-400">
@@ -514,10 +554,11 @@ watch(showInactiveRatings, () => {
                                 size="sm"
                                 variant="outline"
                                 @click="scrollToUser"
+                                aria-label="Find my position in rankings"
                             >
-                                <UserIcon class="h-4 w-4"/>
+                                <UserIcon class="h-4 w-4" aria-hidden="true"/>
                                 {{ t('Find Me') }} (#{{ currentUserInOneYear?.position }})
-                                <ChevronDownIcon class="h-4 w-4"/>
+                                <ChevronDownIcon class="h-4 w-4" aria-hidden="true"/>
                             </Button>
                         </div>
                     </CardHeader>
@@ -548,6 +589,7 @@ watch(showInactiveRatings, () => {
                                         v-if="value.isCurrentUser"
                                         class="h-4 w-4 text-blue-600 dark:text-blue-400"
                                         title="This is you!"
+                                        aria-label="Your position"
                                     />
                                 </div>
                             </template>
@@ -625,7 +667,7 @@ watch(showInactiveRatings, () => {
                         </DataTable>
                     </CardContent>
                 </Card>
-            </div>
+            </main>
         </div>
     </div>
 </template>

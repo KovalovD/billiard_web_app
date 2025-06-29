@@ -1,20 +1,58 @@
 {
-  "name": "WinnerBreak",
+  "name": "WinnerBreak - Professional Billiard League Platform",
   "short_name": "WinnerBreak",
+  "description": "Join competitive billiard leagues, tournaments, and track your progress with advanced ELO ratings",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#33121e",
-  "theme_color": "#33121e",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#3B82F6",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["sports", "games", "entertainment"],
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "/android-chrome-512x512.png",
       "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
       "type": "image/png"
     }
-  ]
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/desktop-home.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "label": "WinnerBreak Homepage"
+    },
+    {
+      "src": "/screenshots/mobile-leagues.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "label": "Leagues on Mobile"
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
 }
