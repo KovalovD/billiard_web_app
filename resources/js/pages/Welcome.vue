@@ -14,13 +14,11 @@ import {
     ZapIcon
 } from 'lucide-vue-next';
 import {onMounted, ref} from 'vue';
-import {useLocale} from '@/composables/useLocale';
 import {useSeo} from '@/composables/useSeo';
 import MonoDonate from '@/Components/MonoDonate.vue';
 
 // State for modal visibility
 const showRegisterModal = ref(false);
-const {t} = useLocale();
 const {setSeoMeta, generateOrganizationJsonLd} = useSeo();
 
 const openRegisterModal = () => {
@@ -44,43 +42,43 @@ const handleRegisterError = (error: any) => {
 const features = [
     {
         icon: TrophyIcon,
-        title: t('Join Leagues'),
-        description: t('Participate in competitive billiard leagues with players of your skill level'),
+        title: 'Join Leagues',
+        description: 'Participate in competitive billiard leagues with players of your skill level',
         color: 'text-yellow-600 dark:text-yellow-400',
         bgColor: 'bg-yellow-50 dark:bg-yellow-900/20'
     },
     {
         icon: CalendarIcon,
-        title: t('Tournament Play'),
-        description: t('Compete in official tournaments and climb the professional rankings'),
+        title: 'Tournament Play',
+        description: 'Compete in official tournaments and climb the professional rankings',
         color: 'text-blue-600 dark:text-blue-400',
         bgColor: 'bg-blue-50 dark:bg-blue-900/20'
     },
     {
         icon: UsersIcon,
-        title: t('Challenge Players'),
-        description: t('Send challenges to other players and track your match history'),
+        title: 'Challenge Players',
+        description: 'Send challenges to other players and track your match history',
         color: 'text-green-600 dark:text-green-400',
         bgColor: 'bg-green-50 dark:bg-green-900/20'
     },
     {
         icon: StarIcon,
-        title: t('Rating System'),
-        description: t('Advanced ELO-based rating system tracks your skill progression'),
+        title: 'Rating System',
+        description: 'Advanced ELO-based rating system tracks your skill progression',
         color: 'text-purple-600 dark:text-purple-400',
         bgColor: 'bg-purple-50 dark:bg-purple-900/20'
     },
     {
         icon: GamepadIcon,
-        title: t('Multiplayer Games'),
-        description: t('Join multiplayer elimination games with prize pools'),
+        title: 'Multiplayer Games',
+        description: 'Join multiplayer elimination games with prize pools',
         color: 'text-indigo-600 dark:text-indigo-400',
         bgColor: 'bg-indigo-50 dark:bg-indigo-900/20'
     },
     {
         icon: ZapIcon,
-        title: t('Real-time Updates'),
-        description: t('Live match results and instant rating updates'),
+        title: 'Real-time Updates',
+        description: 'Live match results and instant rating updates',
         color: 'text-orange-600 dark:text-orange-400',
         bgColor: 'bg-orange-50 dark:bg-orange-900/20'
     }
@@ -88,16 +86,16 @@ const features = [
 
 // Quick stats (these would typically come from an API)
 const stats = [
-    {label: t('Active Players'), value: '500+'},
-    {label: t('Leagues Running'), value: '25+'},
-    {label: t('Matches Played'), value: '10,000+'},
-    {label: t('Tournaments Held'), value: '100+'}
+    {label: 'Active Players', value: '500+'},
+    {label: 'Leagues Running', value: '25+'},
+    {label: 'Matches Played', value: '10,000+'},
+    {label: 'Tournaments Held', value: '100+'}
 ];
 
 onMounted(() => {
     setSeoMeta({
-        title: t('Professional Billiard League Platform'),
-        description: t('Join WinnerBreak - the premier billiard league management platform. Compete in leagues, tournaments, track your ELO rating, and connect with players worldwide.'),
+        title: 'Professional Billiard League Platform',
+        description: 'Join WinnerBreak - the premier billiard league management platform. Compete in leagues, tournaments, track your ELO rating, and connect with players worldwide.',
         keywords: ['billiards', 'pool', 'league', 'tournament', 'ELO rating', 'competition', 'sports', 'cue sports', 'professional billiards'],
         ogType: 'website',
         jsonLd: {
@@ -105,7 +103,7 @@ onMounted(() => {
             "@type": "WebSite",
             "name": "WinnerBreak",
             "url": window.location.origin,
-            "description": t('Professional billiard league management platform for competitive players'),
+            "description": 'Professional billiard league management platform for competitive players',
             "potentialAction": {
                 "@type": "SearchAction",
                 "target": `${window.location.origin}/search?q={search_term_string}`,
@@ -118,7 +116,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <Head :title="t('Professional Billiard League Platform')"/>
+    <Head title="Professional Billiard League Platform"/>
 
     <div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
         <!-- Navigation Header -->
@@ -140,19 +138,19 @@ onMounted(() => {
                             class="text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors"
                             href="/leagues"
                             aria-label="Browse competitive billiard leagues">
-                            {{ t('Leagues') }}
+                            Leagues
                         </Link>
                         <Link
                             class="text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors"
                             href="/tournaments"
                             aria-label="View billiard tournaments">
-                            {{ t('Tournaments') }}
+                            Tournaments
                         </Link>
                         <Link
                             class="text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors"
                             href="/official-ratings"
                             aria-label="Check official player rankings">
-                            {{ t('Rankings') }}
+                            Rankings
                         </Link>
                     </div>
 
@@ -163,7 +161,7 @@ onMounted(() => {
                             <Link :href="route('dashboard')"
                                   class="text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors"
                                   aria-label="Go to your dashboard">
-                                {{ t('Dashboard') }}
+                                Dashboard
                             </Link>
                         </template>
                         <template v-else>
@@ -171,11 +169,11 @@ onMounted(() => {
                                   class="text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors"
                                   aria-label="Login to your account">
                                 <LogInIcon class="mr-1 inline h-4 w-4" aria-hidden="true"/>
-                                {{ t('Login') }}
+                                Login
                             </Link>
                             <Button @click="openRegisterModal" aria-label="Create new account">
                                 <UserIcon class="mr-2 h-4 w-4" aria-hidden="true"/>
-                                {{ t('Register') }}
+                                Register
                             </Button>
                         </template>
                     </div>
@@ -190,25 +188,24 @@ onMounted(() => {
                     <div class="text-center">
                         <h1 id="hero-heading"
                             class="text-4xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-6xl">
-                            {{ t('Welcome to') }}
+                            Welcome to
                             <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                                 WinnerBreak
                             </span>
                         </h1>
 
                         <p class="mx-auto mt-6 max-w-2xl text-lg leading-8 text-gray-600 dark:text-gray-300">
-                            {{
-                                t('The premier billiard league management platform. Join competitive leagues, participate in tournaments, and track your progress with our advanced rating system.')
-                            }}
+                            The premier billiard league management platform. Join competitive leagues, participate in
+                            tournaments, and track your progress with our advanced rating system.
                         </p>
 
                         <div class="mt-10 flex items-center justify-center gap-x-6">
                             <Button size="lg" @click="openRegisterModal" aria-label="Get started with WinnerBreak">
-                                {{ t('Get Started') }}
+                                Get Started
                             </Button>
                             <Link :href="route('leagues.index.page')" aria-label="Browse available leagues">
                                 <Button size="lg" variant="outline">
-                                    {{ t('Browse Leagues') }}
+                                    Browse Leagues
                                 </Button>
                             </Link>
                         </div>
@@ -218,7 +215,7 @@ onMounted(() => {
 
             <!-- Stats Section -->
             <section class="py-16 px-4 sm:px-6 lg:px-8" aria-labelledby="stats-heading">
-                <h2 id="stats-heading" class="sr-only">{{ t('Platform Statistics') }}</h2>
+                <h2 id="stats-heading" class="sr-only">Platform Statistics</h2>
                 <div class="mx-auto max-w-7xl">
                     <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
                         <div v-for="stat in stats" :key="stat.label" class="text-center">
@@ -235,10 +232,10 @@ onMounted(() => {
                     <div class="text-center mb-16">
                         <h2 id="features-heading"
                             class="text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">
-                            {{ t('Everything you need to compete') }}
+                            Everything you need to compete
                         </h2>
                         <p class="mt-4 text-lg text-gray-600 dark:text-gray-300">
-                            {{ t('Professional tools for serious billiard players') }}
+                            Professional tools for serious billiard players
                         </p>
                     </div>
 
@@ -271,10 +268,10 @@ onMounted(() => {
                     <div class="text-center mb-16">
                         <h2 id="how-it-works-heading"
                             class="text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">
-                            {{ t('How it works') }}
+                            How it works
                         </h2>
                         <p class="mt-4 text-lg text-gray-600 dark:text-gray-300">
-                            {{ t('Get started in three simple steps') }}
+                            Get started in three simple steps
                         </p>
                     </div>
 
@@ -285,11 +282,9 @@ onMounted(() => {
                                 <span class="text-2xl font-bold text-blue-600 dark:text-blue-400"
                                       aria-hidden="true">1</span>
                             </div>
-                            <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">{{
-                                    t('Create Account')
-                                }}</h3>
+                            <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Create Account</h3>
                             <p class="text-gray-600 dark:text-gray-300">
-                                {{ t('Sign up with your basic information and set up your player profile') }}
+                                Sign up with your basic information and set up your player profile
                             </p>
                         </li>
 
@@ -299,11 +294,9 @@ onMounted(() => {
                                 <span class="text-2xl font-bold text-green-600 dark:text-green-400"
                                       aria-hidden="true">2</span>
                             </div>
-                            <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">{{
-                                    t('Join League')
-                                }}</h3>
+                            <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Join League</h3>
                             <p class="text-gray-600 dark:text-gray-300">
-                                {{ t('Browse and join leagues that match your skill level and game preferences') }}
+                                Browse and join leagues that match your skill level and game preferences
                             </p>
                         </li>
 
@@ -313,11 +306,9 @@ onMounted(() => {
                                 <span class="text-2xl font-bold text-purple-600 dark:text-purple-400"
                                       aria-hidden="true">3</span>
                             </div>
-                            <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">{{
-                                    t('Start Playing')
-                                }}</h3>
+                            <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Start Playing</h3>
                             <p class="text-gray-600 dark:text-gray-300">
-                                {{ t('Challenge players, participate in tournaments, and climb the rankings') }}
+                                Challenge players, participate in tournaments, and climb the rankings
                             </p>
                         </li>
                     </ol>
@@ -328,25 +319,25 @@ onMounted(() => {
             <section class="py-20 px-4 sm:px-6 lg:px-8" aria-labelledby="cta-heading">
                 <div class="mx-auto max-w-4xl text-center">
                     <h2 id="cta-heading" class="text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">
-                        {{ t('Ready to break into the competition?') }}
+                        Ready to break into the competition
                     </h2>
                     <p class="mt-6 text-lg text-gray-600 dark:text-gray-300">
-                        {{ t('Join thousands of players already competing in leagues and tournaments worldwide.') }}
+                        Join thousands of players already competing in leagues and tournaments worldwide
                     </p>
                     <div class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
                         <Button size="lg" @click="openRegisterModal" aria-label="Create free account">
                             <UserIcon class="mr-2 h-5 w-5" aria-hidden="true"/>
-                            {{ t('Create Free Account') }}
+                            Create Free Account
                         </Button>
                         <Link :href="route('login')" aria-label="Sign in to existing account">
                             <Button size="lg" variant="outline">
                                 <LogInIcon class="mr-2 h-5 w-5" aria-hidden="true"/>
-                                {{ t('Sign In') }}
+                                Sign In
                             </Button>
                         </Link>
                     </div>
                     <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">
-                        {{ t('No credit card required. Start competing today!') }}
+                        No credit card required. Start competing today
                     </p>
                 </div>
             </section>
@@ -357,10 +348,10 @@ onMounted(() => {
                 <div class="mx-auto max-w-7xl">
                     <div class="text-center mb-12">
                         <h2 id="explore-heading" class="text-2xl font-bold text-gray-900 dark:text-white">
-                            {{ t('Explore without signing up') }}
+                            Explore without signing up
                         </h2>
                         <p class="mt-2 text-gray-600 dark:text-gray-300">
-                            {{ t('Take a look around and see what WinnerBreak has to offer') }}
+                            Take a look around and see what WinnerBreak has to offer
                         </p>
                     </div>
 
@@ -374,11 +365,11 @@ onMounted(() => {
                                         <TrophyIcon class="h-6 w-6 text-blue-600 dark:text-blue-400"
                                                     aria-hidden="true"/>
                                     </div>
-                                    <CardTitle>{{ t('Browse Leagues') }}</CardTitle>
+                                    <CardTitle>Browse Leagues</CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <CardDescription>
-                                        {{ t('Explore active leagues and see how players are ranked') }}
+                                        Explore active leagues and see how players are ranked
                                     </CardDescription>
                                 </CardContent>
                             </Card>
@@ -393,11 +384,11 @@ onMounted(() => {
                                         <CalendarIcon class="h-6 w-6 text-green-600 dark:text-green-400"
                                                       aria-hidden="true"/>
                                     </div>
-                                    <CardTitle>{{ t('View Tournaments') }}</CardTitle>
+                                    <CardTitle>View Tournaments</CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <CardDescription>
-                                        {{ t('Check out upcoming and completed tournaments') }}
+                                        Check out upcoming and completed tournaments
                                     </CardDescription>
                                 </CardContent>
                             </Card>
@@ -411,11 +402,11 @@ onMounted(() => {
                                         <StarIcon class="h-6 w-6 text-purple-600 dark:text-purple-400"
                                                   aria-hidden="true"/>
                                     </div>
-                                    <CardTitle>{{ t('Official Rankings') }}</CardTitle>
+                                    <CardTitle>Official Rankings</CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <CardDescription>
-                                        {{ t('View professional player rankings and standings') }}
+                                        View professional player rankings and standings
                                     </CardDescription>
                                 </CardContent>
                             </Card>
@@ -434,20 +425,14 @@ onMounted(() => {
                     </div>
 
                     <nav class="flex space-x-6 text-sm text-gray-400" aria-label="Footer navigation">
-                        <Link class="hover:text-white transition-colors" href="/leagues">{{ t('Leagues') }}</Link>
-                        <Link class="hover:text-white transition-colors" href="/tournaments">{{
-                                t('Tournaments')
-                            }}
-                        </Link>
-                        <Link class="hover:text-white transition-colors" href="/official-ratings">{{
-                                t('Rankings')
-                            }}
-                        </Link>
+                        <Link class="hover:text-white transition-colors" href="/leagues">Leagues</Link>
+                        <Link class="hover:text-white transition-colors" href="/tournaments">Tournaments</Link>
+                        <Link class="hover:text-white transition-colors" href="/official-ratings">Rankings</Link>
                     </nav>
                 </div>
 
                 <div class="mt-8 pt-8 border-t border-gray-800 text-center text-sm text-gray-400">
-                    <p>&copy; 2025 WinnerBreak. {{ t('All rights reserved.') }}</p>
+                    <p>&copy; 2025 WinnerBreak. All rights reserved.</p>
                 </div>
             </div>
         </footer>
