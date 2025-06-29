@@ -56,6 +56,7 @@ class Tournament extends Model
     ];
 
     protected $casts = [
+        'updated_at' => 'datetime',
         'start_date'                => 'datetime',
         'end_date'                  => 'datetime',
         'application_deadline'      => 'datetime',

@@ -234,9 +234,3 @@ Route::get('/error/{status}', [ErrorController::class, 'show'])
 
 // Fallback route for handling 404s
 Route::fallback([ErrorController::class, 'notFound']);
-// Sitemap routes
-Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap.index');
-Route::get('/sitemap-static.xml', [SitemapController::class, 'static'])->name('sitemap.static');
-Route::get('/sitemap-leagues.xml', [SitemapController::class, 'leagues'])->name('sitemap.leagues');
-Route::get('/sitemap-tournaments.xml', [SitemapController::class, 'tournaments'])->name('sitemap.tournaments');
-Route::get('/sitemap-ratings.xml', [SitemapController::class, 'ratings'])->name('sitemap.ratings');

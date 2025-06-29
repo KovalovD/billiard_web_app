@@ -26,6 +26,7 @@ class OfficialRating extends Model
         'is_active'    => 'boolean',
         'rating_rules' => 'array',
         'game_type' => GameType::class,
+        'updated_at' => 'datetime',
     ];
 
     protected $withCount = ['players', 'tournaments'];

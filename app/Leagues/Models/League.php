@@ -41,6 +41,7 @@ class League extends Model
     ];
 
     protected $casts = [
+        'updated_at' => 'datetime',
         'has_rating'                     => 'boolean',
         'rating_change_for_winners_rule' => 'array',
         'rating_change_for_losers_rule'  => 'array',
