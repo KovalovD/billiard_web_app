@@ -2,8 +2,19 @@
 
 use App\Core\Http\Middleware\AdminMiddleware;
 use App\OfficialRatings\Http\Controllers\AdminOfficialRatingsController;
+use App\OfficialRatings\Http\Controllers\GameRuleController;
 use App\OfficialRatings\Http\Controllers\OfficialRatingsController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/game-rules', [GameRuleController::class, 'index']);
+Route::get('/game-rules/{gameRule}', [GameRuleController::class, 'show']);
+Route::get('/official-ratings/{officialRating}/rules', [GameRuleController::class, 'getByRating']);
+
+Route::middleware(['auth:sanctum', AdminMiddleware::class])->group(function () {
+    Route::post('/game-rules', [GameRuleController::class, 'store']);
+    Route::put('/game-rules/{gameRule}', [GameRuleController::class, 'update']);
+    Route::delete('/game-rules/{gameRule}', [GameRuleController::class, 'destroy']);
+});
 
 // Public official ratings routes
 Route::group(['prefix' => 'official-ratings'], static function () {
