@@ -483,14 +483,6 @@ const openH2HDialog = () => {
     h2hStats.value = null;
 };
 
-const closeH2HDialog = () => {
-    showH2HDialog.value = false;
-    h2hSearchQuery.value = '';
-    h2hSearchResults.value = [];
-    selectedOpponent.value = null;
-    h2hStats.value = null;
-};
-
 // Lifecycle
 onMounted(() => {
     fetchPlayer().then(() => {
