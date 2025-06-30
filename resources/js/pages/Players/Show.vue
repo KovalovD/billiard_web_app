@@ -39,8 +39,7 @@ import {
     TrophyIcon,
     UserIcon,
     UsersIcon,
-    XCircleIcon,
-    XIcon
+    XCircleIcon
 } from 'lucide-vue-next';
 import {computed, onMounted, ref} from 'vue';
 
@@ -1097,36 +1096,27 @@ onMounted(() => {
 
             <!-- Head to Head Dialog -->
             <Dialog :open="showH2HDialog" @update:open="showH2HDialog = $event">
-                <DialogContent class="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-0">
-                    <!-- Header with gradient background -->
-                    <div
-                        class="relative bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-700 dark:to-purple-700 p-6">
-                        <DialogHeader>
-                            <DialogTitle class="text-2xl font-bold text-white flex items-center gap-3">
-                                <SwordsIcon class="h-7 w-7"/>
-                                {{ t('Head to Head Battle') }}
-                            </DialogTitle>
-                        </DialogHeader>
-                        <button
-                            @click="closeH2HDialog"
-                            class="absolute top-6 right-6 text-white/80 hover:text-white transition-colors"
-                        >
-                            <XIcon class="h-6 w-6"/>
-                        </button>
-                    </div>
+                <DialogContent class="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+                    <DialogHeader class="pb-4 border-b border-gray-200 dark:border-gray-700">
+                        <DialogTitle class="text-xl font-semibold flex items-center gap-2">
+                            <SwordsIcon class="h-5 w-5"/>
+                            {{ t('Head to Head Comparison') }}
+                        </DialogTitle>
+                    </DialogHeader>
 
-                    <div class="flex-1 overflow-y-auto p-6 space-y-6">
+                    <div class="flex-1 overflow-y-auto">
                         <!-- Opponent Search -->
-                        <div v-if="!selectedOpponent" class="space-y-6">
-                            <div class="text-center space-y-4">
+                        <div v-if="!selectedOpponent" class="p-6 space-y-6">
+                            <div class="text-center space-y-3">
                                 <div
-                                    class="mx-auto w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
-                                    <UserIcon class="h-10 w-10 text-gray-400"/>
+                                    class="mx-auto h-16 w-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                                    <UserIcon class="h-8 w-8 text-gray-400"/>
                                 </div>
                                 <div>
-                                    <h3 class="text-lg font-semibold">{{ t('Choose an Opponent') }}</h3>
-                                    <p class="text-sm text-gray-500 mt-1">
-                                        {{ t('Search for a player to compare statistics') }}</p>
+                                    <h3 class="text-lg font-medium">{{ t('Select an Opponent') }}</h3>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                        {{ t('Search for a player to compare head-to-head statistics') }}
+                                    </p>
                                 </div>
                             </div>
 
@@ -1135,36 +1125,38 @@ onMounted(() => {
                                     <Input
                                         v-model="h2hSearchQuery"
                                         @input="searchPlayers"
-                                        :placeholder="t('Type player name...')"
-                                        class="pl-12 pr-4 h-12 text-base"
+                                        :placeholder="t('Search player name...')"
+                                        class="pl-10"
                                     />
-                                    <SearchIcon class="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400"/>
+                                    <SearchIcon class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"/>
                                 </div>
                             </div>
 
                             <!-- Search Results -->
                             <div v-if="h2hSearching" class="text-center py-8">
-                                <Spinner class="mx-auto h-8 w-8 text-primary"/>
-                                <p class="mt-3 text-gray-500">{{ t('Searching players...') }}</p>
+                                <Spinner class="mx-auto h-6 w-6 text-primary"/>
+                                <p class="mt-2 text-sm text-gray-500">{{ t('Searching players...') }}</p>
                             </div>
 
-                            <div v-else-if="h2hSearchResults.length > 0" class="max-w-2xl mx-auto">
-                                <div class="grid gap-3">
-                                    <button
-                                        v-for="result in h2hSearchResults"
-                                        :key="result.id"
-                                        @click="selectOpponent(result)"
-                                        class="group relative p-4 bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-lg transition-all duration-200"
-                                    >
-                                        <div class="flex items-center gap-4">
+                            <div v-else-if="h2hSearchResults.length > 0" class="max-w-2xl mx-auto space-y-2">
+                                <button
+                                    v-for="result in h2hSearchResults"
+                                    :key="result.id"
+                                    @click="selectOpponent(result)"
+                                    class="w-full p-3 text-left bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-md transition-all group"
+                                >
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-3">
                                             <div
-                                                class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                                                {{
-                                                    result.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-                                                }}
+                                                class="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                                                <span class="text-sm font-medium text-gray-600 dark:text-gray-300">
+                                                    {{
+                                                        result.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+                                                    }}
+                                                </span>
                                             </div>
-                                            <div class="flex-1 text-left">
-                                                <p class="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                            <div>
+                                                <p class="font-medium text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                                                     {{ result.full_name }}
                                                 </p>
                                                 <p class="text-sm text-gray-500 dark:text-gray-400">
@@ -1172,126 +1164,124 @@ onMounted(() => {
                                                     <span v-if="result.home_club"> • {{ result.home_club.name }}</span>
                                                 </p>
                                             </div>
-                                            <ChevronRightIcon
-                                                class="h-5 w-5 text-gray-400 group-hover:text-blue-500 transition-colors"/>
                                         </div>
-                                    </button>
-                                </div>
+                                        <ChevronRightIcon
+                                            class="h-5 w-5 text-gray-400 group-hover:text-blue-500 transition-colors"/>
+                                    </div>
+                                </button>
+                            </div>
+
+                            <div v-else-if="h2hSearchQuery.length >= 2" class="text-center py-8 text-gray-500">
+                                {{ t('No players found') }}
                             </div>
                         </div>
 
                         <!-- Head to Head Stats -->
-                        <div v-if="selectedOpponent && h2hStats" class="space-y-6">
-                            <!-- VS Header -->
-                            <div class="relative">
-                                <div
-                                    class="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 dark:from-blue-500/20 dark:to-purple-500/20 rounded-2xl"/>
-                                <div class="relative grid grid-cols-3 gap-4 p-6">
-                                    <!-- Player 1 -->
-                                    <div class="text-center">
-                                        <div
-                                            class="mx-auto w-24 h-24 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white mb-3">
-                                            <UserIcon class="h-12 w-12"/>
+                        <div v-if="selectedOpponent && h2hStats" class="p-6 space-y-6">
+                            <!-- Players Header -->
+                            <Card>
+                                <CardContent class="p-6">
+                                    <div class="grid grid-cols-3 gap-4 items-center">
+                                        <!-- Player 1 -->
+                                        <div class="text-center">
+                                            <div
+                                                class="mx-auto h-20 w-20 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-3">
+                                                <UserIcon class="h-10 w-10 text-blue-600 dark:text-blue-400"/>
+                                            </div>
+                                            <h3 class="font-semibold text-gray-900 dark:text-gray-100">
+                                                {{ player.full_name }}</h3>
+                                            <p class="text-sm text-gray-500 dark:text-gray-400">
+                                                {{ player.home_city?.name }}
+                                            </p>
                                         </div>
-                                        <h3 class="font-bold text-lg">{{ player.full_name }}</h3>
-                                        <p class="text-sm text-gray-500 dark:text-gray-400">
-                                            {{ player.home_city?.name }}
-                                        </p>
-                                    </div>
 
-                                    <!-- VS Badge -->
-                                    <div class="flex items-center justify-center">
-                                        <div class="relative">
+                                        <!-- VS Badge -->
+                                        <div class="flex items-center justify-center">
                                             <div
-                                                class="absolute inset-0 bg-gradient-to-r from-orange-400 to-red-500 rounded-full blur-xl opacity-50"/>
-                                            <div
-                                                class="relative bg-gradient-to-r from-orange-400 to-red-500 text-white rounded-full w-20 h-20 flex items-center justify-center font-bold text-2xl shadow-xl">
-                                                VS
+                                                class="bg-gray-100 dark:bg-gray-800 rounded-full h-16 w-16 flex items-center justify-center">
+                                                <span
+                                                    class="text-xl font-bold text-gray-600 dark:text-gray-300">VS</span>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    <!-- Player 2 -->
-                                    <div class="text-center">
-                                        <div
-                                            class="mx-auto w-24 h-24 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white mb-3">
-                                            <UserIcon class="h-12 w-12"/>
+                                        <!-- Player 2 -->
+                                        <div class="text-center">
+                                            <div
+                                                class="mx-auto h-20 w-20 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-3">
+                                                <UserIcon class="h-10 w-10 text-purple-600 dark:text-purple-400"/>
+                                            </div>
+                                            <h3 class="font-semibold text-gray-900 dark:text-gray-100">
+                                                {{ selectedOpponent.full_name }}</h3>
+                                            <p class="text-sm text-gray-500 dark:text-gray-400">
+                                                {{ selectedOpponent.home_city?.name }}
+                                            </p>
                                         </div>
-                                        <h3 class="font-bold text-lg">{{ selectedOpponent.full_name }}</h3>
-                                        <p class="text-sm text-gray-500 dark:text-gray-400">
-                                            {{ selectedOpponent.home_city?.name }}
-                                        </p>
                                     </div>
-                                </div>
-                            </div>
+                                </CardContent>
+                            </Card>
 
-                            <!-- Statistics Cards -->
+                            <!-- Statistics Overview -->
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <!-- Total Matches -->
-                                <Card class="border-2 hover:shadow-lg transition-shadow">
-                                    <CardContent class="p-6 text-center">
-                                        <GamepadIcon class="h-8 w-8 mx-auto mb-2 text-blue-500"/>
-                                        <p class="text-3xl font-bold">{{ h2hStats.summary.total_matches }}</p>
-                                        <p class="text-sm text-gray-500 mt-1">{{ t('Total Matches') }}</p>
+                                <Card>
+                                    <CardContent class="p-4 text-center">
+                                        <GamepadIcon class="h-6 w-6 mx-auto mb-2 text-gray-400"/>
+                                        <p class="text-2xl font-bold">{{ h2hStats.summary.total_matches }}</p>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('Total Matches') }}</p>
                                     </CardContent>
                                 </Card>
 
                                 <!-- Win Distribution -->
-                                <Card class="border-2 hover:shadow-lg transition-shadow col-span-2">
-                                    <CardContent class="p-6">
-                                        <div class="space-y-4">
-                                            <!-- Win Counter -->
-                                            <div class="flex justify-between items-center">
+                                <Card class="md:col-span-2">
+                                    <CardContent class="p-4">
+                                        <div class="space-y-3">
+                                            <!-- Wins Counter -->
+                                            <div class="flex items-center justify-between">
                                                 <div class="text-center">
-                                                    <p class="text-4xl font-bold"
-                                                       :class="h2hStats.summary.player1_wins > h2hStats.summary.player2_wins ? 'text-green-500' : 'text-gray-400'">
+                                                    <p class="text-3xl font-bold"
+                                                       :class="h2hStats.summary.player1_wins > h2hStats.summary.player2_wins ? 'text-green-600 dark:text-green-400' : 'text-gray-400'">
                                                         {{ h2hStats.summary.player1_wins }}
                                                     </p>
-                                                    <p class="text-xs text-gray-500 mt-1">{{ t('Wins') }}</p>
+                                                    <p class="text-xs text-gray-600 dark:text-gray-400">{{
+                                                            t('Wins')
+                                                        }}</p>
                                                 </div>
-                                                <div class="flex-1 mx-6">
+                                                <div class="flex-1 mx-4">
                                                     <div
-                                                        class="relative h-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                                        class="relative h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                                                         <div
-                                                            class="absolute left-0 top-0 h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-500"
+                                                            class="absolute left-0 top-0 h-full bg-blue-600 dark:bg-blue-500 transition-all duration-500"
                                                             :style="`width: ${h2hStats.summary.player1_win_rate}%`"
                                                         />
                                                     </div>
-                                                    <div class="flex justify-between mt-2 text-xs text-gray-500">
+                                                    <div
+                                                        class="flex justify-between mt-1 text-xs text-gray-600 dark:text-gray-400">
                                                         <span>{{ h2hStats.summary.player1_win_rate }}%</span>
                                                         <span>{{ h2hStats.summary.player2_win_rate }}%</span>
                                                     </div>
                                                 </div>
                                                 <div class="text-center">
-                                                    <p class="text-4xl font-bold"
-                                                       :class="h2hStats.summary.player2_wins > h2hStats.summary.player1_wins ? 'text-green-500' : 'text-gray-400'">
+                                                    <p class="text-3xl font-bold"
+                                                       :class="h2hStats.summary.player2_wins > h2hStats.summary.player1_wins ? 'text-green-600 dark:text-green-400' : 'text-gray-400'">
                                                         {{ h2hStats.summary.player2_wins }}
                                                     </p>
-                                                    <p class="text-xs text-gray-500 mt-1">{{ t('Wins') }}</p>
+                                                    <p class="text-xs text-gray-600 dark:text-gray-400">{{
+                                                            t('Wins')
+                                                        }}</p>
                                                 </div>
                                             </div>
 
                                             <!-- Games Score -->
-                                            <div class="pt-4 border-t">
-                                                <div class="flex justify-between items-center">
-                                                    <div>
-                                                        <p class="text-2xl font-semibold">
-                                                            {{ h2hStats.summary.player1_games_won }}</p>
-                                                        <p class="text-xs text-gray-500">{{ t('Games Won') }}</p>
-                                                    </div>
-                                                    <div class="text-center">
-                                                        <p class="text-sm text-gray-500">{{ t('Total Games') }}</p>
-                                                        <p class="text-lg font-semibold">
-                                                            {{
-                                                                h2hStats.summary.player1_games_won + h2hStats.summary.player2_games_won
-                                                            }}
-                                                        </p>
-                                                    </div>
-                                                    <div class="text-right">
-                                                        <p class="text-2xl font-semibold">
-                                                            {{ h2hStats.summary.player2_games_won }}</p>
-                                                        <p class="text-xs text-gray-500">{{ t('Games Won') }}</p>
-                                                    </div>
+                                            <div class="pt-3 border-t border-gray-200 dark:border-gray-700">
+                                                <div class="flex justify-between items-center text-sm">
+                                                    <span class="text-gray-600 dark:text-gray-400">{{
+                                                            t('Games Won')
+                                                        }}</span>
+                                                    <span class="font-medium">
+                                                        {{
+                                                            h2hStats.summary.player1_games_won
+                                                        }} - {{ h2hStats.summary.player2_games_won }}
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
@@ -1300,76 +1290,64 @@ onMounted(() => {
                             </div>
 
                             <!-- Match History -->
-                            <Card class="border-2">
-                                <CardHeader class="bg-gray-50 dark:bg-gray-800/50">
-                                    <CardTitle class="flex items-center gap-2">
-                                        <ClockIcon class="h-5 w-5"/>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle class="flex items-center gap-2 text-base">
+                                        <ClockIcon class="h-4 w-4"/>
                                         {{ t('Match History') }}
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent class="p-0">
                                     <div class="divide-y divide-gray-200 dark:divide-gray-700">
                                         <div
-                                            v-for="(match) in h2hStats.match_history"
+                                            v-for="match in h2hStats.match_history"
                                             :key="match.match_id"
-                                            class="group hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                                            class="p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
                                         >
-                                            <div class="p-4">
-                                                <div class="flex items-center justify-between gap-4">
-                                                    <!-- Tournament Info -->
-                                                    <div class="flex-1 min-w-0">
-                                                        <p class="font-medium text-gray-900 dark:text-gray-100 truncate">
-                                                            {{ match.tournament_name }}
-                                                        </p>
-                                                        <div class="flex items-center gap-2 mt-1">
-                                                <span
-                                                    :class="['inline-flex px-2 py-0.5 text-xs font-medium rounded-full', getStageBadgeClass(match.match_stage)]">
-                                                    {{ formatStage(match.match_stage) }}
-                                                </span>
-                                                            <span v-if="match.match_round"
-                                                                  class="text-xs text-gray-500">
-                                                    {{ formatRound(match.match_round) }}
-                                                </span>
-                                                            <span class="text-xs text-gray-400">•</span>
-                                                            <span class="text-xs text-gray-500">
-                                                    {{ formatDate(match.completed_at) }}
-                                                </span>
-                                                        </div>
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex-1">
+                                                    <p class="font-medium text-gray-900 dark:text-gray-100">
+                                                        {{ match.tournament_name }}
+                                                    </p>
+                                                    <div
+                                                        class="flex items-center gap-2 mt-1 text-sm text-gray-600 dark:text-gray-400">
+                                                        <span
+                                                            :class="['px-2 py-0.5 text-xs rounded-full', getStageBadgeClass(match.match_stage)]">
+                                                            {{ formatStage(match.match_stage) }}
+                                                        </span>
+                                                        <span v-if="match.match_round">{{
+                                                                formatRound(match.match_round)
+                                                            }}</span>
+                                                        <span>• {{ formatDate(match.completed_at) }}</span>
                                                     </div>
+                                                </div>
 
-                                                    <!-- Score -->
-                                                    <div class="flex items-center gap-4">
-                                                        <div class="text-right">
-                                                            <p class="text-xs text-gray-500 mb-1">{{ t('Race to') }}
-                                                                {{ match.races_to }}</p>
-                                                            <div class="flex items-center gap-3">
-                                                    <span
-                                                        class="text-2xl font-bold transition-colors"
-                                                        :class="match.winner_id === player.id ? 'text-green-500' : 'text-gray-400'"
-                                                    >
-                                                        {{ match.player1_score }}
-                                                    </span>
-                                                                <span class="text-gray-400">:</span>
-                                                                <span
-                                                                    class="text-2xl font-bold transition-colors"
-                                                                    :class="match.winner_id === selectedOpponent.id ? 'text-green-500' : 'text-gray-400'"
-                                                                >
-                                                        {{ match.player2_score }}
-                                                    </span>
-                                                            </div>
+                                                <div class="flex items-center gap-4">
+                                                    <div class="text-right">
+                                                        <div class="flex items-center gap-2">
+                                                            <span class="text-xl font-bold"
+                                                                  :class="match.winner_id === player.id ? 'text-green-600 dark:text-green-400' : 'text-gray-400'">
+                                                                {{ match.player1_score }}
+                                                            </span>
+                                                            <span class="text-gray-400">:</span>
+                                                            <span class="text-xl font-bold"
+                                                                  :class="match.winner_id === selectedOpponent.id ? 'text-green-600 dark:text-green-400' : 'text-gray-400'">
+                                                                {{ match.player2_score }}
+                                                            </span>
                                                         </div>
-
-                                                        <!-- Winner indicator -->
-                                                        <div class="w-8">
-                                                            <TrophyIcon
-                                                                v-if="match.winner_id === player.id"
-                                                                class="h-5 w-5 text-green-500"
-                                                            />
-                                                            <XCircleIcon
-                                                                v-else
-                                                                class="h-5 w-5 text-red-400"
-                                                            />
-                                                        </div>
+                                                        <p class="text-xs text-gray-500 mt-1">
+                                                            {{ t('Race to') }} {{ match.races_to }}
+                                                        </p>
+                                                    </div>
+                                                    <div>
+                                                        <TrophyIcon
+                                                            v-if="match.winner_id === player.id"
+                                                            class="h-5 w-5 text-green-500"
+                                                        />
+                                                        <XCircleIcon
+                                                            v-else
+                                                            class="h-5 w-5 text-red-400"
+                                                        />
                                                     </div>
                                                 </div>
                                             </div>
@@ -1380,13 +1358,9 @@ onMounted(() => {
                         </div>
 
                         <!-- Loading State -->
-                        <div v-if="h2hLoading" class="text-center py-16">
-                            <div class="relative inline-flex">
-                                <div
-                                    class="absolute inset-0 bg-blue-500 rounded-full blur-xl opacity-20 animate-pulse"/>
-                                <Spinner class="relative h-12 w-12 text-blue-500"/>
-                            </div>
-                            <p class="mt-4 text-gray-500">{{ t('Analyzing match history...') }}</p>
+                        <div v-if="h2hLoading" class="p-16 text-center">
+                            <Spinner class="mx-auto h-8 w-8 text-primary"/>
+                            <p class="mt-3 text-gray-500">{{ t('Loading head to head statistics...') }}</p>
                         </div>
                     </div>
                 </DialogContent>
