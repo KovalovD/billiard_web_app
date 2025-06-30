@@ -1,0 +1,6 @@
+# services/scheduler/railway.toml
+[build]
+builder = "nixpacks"        # тот же билд-процесс, что и у web
+
+[start]
+command = "php artisan schedule:run --verbose --no-interaction"

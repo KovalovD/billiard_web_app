@@ -69,5 +69,7 @@ return [
     'Support'                                      => 'Support',
     'Loading...'                                   => 'Loading...',
     'QR Code for donation'                         => 'QR Code for donation',
-    'Page :current of :total' => 'Page :current of :total',
+    'Page :current of :total'                      => 'Page :current of :total',
+    'Change since :date:'                          => 'Change since :date:',
+    'position :before → :after'                    => 'position :before → :after',
 ];
