@@ -86,7 +86,7 @@ onMounted(() => {
     </div>
 
     <div v-else>
-        <Head :title="$page.props.title || 'B2B League'"/>
+        <Head :title="$page.props.title || 'WinnerBreak'"/>
         <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
             <ToastContainer/>
             <nav class="border-b border-gray-100 bg-white dark:border-gray-700 dark:bg-gray-800">
@@ -110,6 +110,9 @@ onMounted(() => {
                                 </NavLink>
                                 <NavLink :active="$page.url.startsWith('/tournaments')" :href="'/tournaments'">
                                     {{ t('Tournaments') }}
+                                </NavLink>
+                                <NavLink :active="$page.url.startsWith('/players')" :href="'/players'">
+                                    {{ t('Players') }}
                                 </NavLink>
                                 <NavLink :active="$page.url.startsWith('/official-ratings')"
                                          :href="'/official-ratings'"> {{ t('Official Ratings') }}
@@ -208,6 +211,9 @@ onMounted(() => {
                         </ResponsiveNavLink>
                         <ResponsiveNavLink :active="$page.url.startsWith('/tournaments')" :href="'/tournaments'">
                             {{ t('Tournaments') }}
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink :active="$page.url.startsWith('/players')" :href="'/players'">
+                            {{ t('Players') }}
                         </ResponsiveNavLink>
                         <ResponsiveNavLink :active="$page.url.startsWith('/official-ratings')"
                                            :href="'/official-ratings'">

@@ -4,6 +4,7 @@ namespace App\Core\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Leagues\Models\Rating;
+use App\Tournaments\Models\TournamentPlayer;
 use database\factories\UserFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -77,6 +78,11 @@ class User extends Authenticatable
             'N' => 'Non-binary',
             default => 'Unknown',
         };
+    }
+
+    public function tournamentPlayers(): HasMany
+    {
+        return $this->hasMany(TournamentPlayer::class);
     }
 
     /**

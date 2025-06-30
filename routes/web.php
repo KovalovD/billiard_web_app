@@ -3,7 +3,6 @@
 use App\Core\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Core\Http\Controllers\Auth\RegisteredUserController;
 use App\Core\Http\Controllers\ErrorController;
-use App\Core\Http\Controllers\SitemapController;
 use App\Core\Http\Middleware\AdminMiddleware;
 use App\Tournaments\Http\Controllers\AdminTournamentBracketController;
 use App\Tournaments\Http\Controllers\AdminTournamentGroupsController;
@@ -99,6 +98,18 @@ Route::get('/official-ratings/{ratingId}', static function ($ratingId) {
         'ratingId' => $ratingId,
     ]);
 })->name('official-ratings.show')->where('ratingId', '[0-9]+');
+
+Route::get('/players', static function () {
+    return Inertia::render('Players/Index', [
+        'header' => 'Players',
+    ]);
+})->name('players.index.page');
+
+Route::get('/players/{playerId}', static function ($playerId) {
+    return Inertia::render('Players/Show', [
+        'playerId' => $playerId,
+    ]);
+})->name('players.show.page')->where('playerId', '[0-9]+');
 
 // --- Authenticated routes ---
 Route::middleware('auth')->group(function () {

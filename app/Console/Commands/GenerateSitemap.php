@@ -35,6 +35,10 @@ class GenerateSitemap extends Command
             ->setPriority(0.9)
             ->setChangeFrequency(Url::CHANGE_FREQUENCY_WEEKLY));
 
+        $sitemap->add(Url::create('/players')
+            ->setPriority(0.9)
+            ->setChangeFrequency(Url::CHANGE_FREQUENCY_WEEKLY));
+
         // Add dynamic pages
         League::whereNotNull('updated_at')->each(function (League $league) use ($sitemap) {
             $sitemap->add(Url::create("/leagues/{$league->id}")

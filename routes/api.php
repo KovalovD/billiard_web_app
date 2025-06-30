@@ -9,6 +9,7 @@ use App\Leagues\Http\Controllers\PlayersController;
 use App\Matches\Http\Controllers\MatchGamesController;
 use App\OfficialRatings\Http\Controllers\GameRuleController;
 use App\Payment\Http\Controllers\MonoWebhookController;
+use App\Players\Http\Controllers\PlayerController;
 use App\User\Http\Controllers\CitiesController;
 use App\User\Http\Controllers\ClubsController;
 use App\User\Http\Controllers\ProfileController;
@@ -38,6 +39,12 @@ Route::get('/game-rules', [GameRuleController::class, 'index']);
 Route::post('/game-rules', [GameRuleController::class, 'store']);
 Route::get('/game-rules/{gameRule}', [GameRuleController::class, 'show']);
 Route::get('/official-ratings/{officialRating}/rules', [GameRuleController::class, 'getByRating']);
+
+Route::prefix('players')->group(function () {
+    Route::get('/', [PlayerController::class, 'index'])->name('players.index');
+    Route::get('/{player}', [PlayerController::class, 'show'])->name('players.show');
+    Route::get('/{player1}/vs/{player2}', [PlayerController::class, 'headToHead'])->name('players.head-to-head');
+});
 
 // Admin-only endpoints
 Route::middleware(['auth:sanctum', AdminMiddleware::class])->group(function () {

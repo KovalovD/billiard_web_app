@@ -25,7 +25,7 @@ class OfficialRating extends Model
     protected $casts = [
         'is_active'    => 'boolean',
         'rating_rules' => 'array',
-        'game_type' => GameType::class,
+        'game_type'  => GameType::class,
         'updated_at' => 'datetime',
     ];
 
