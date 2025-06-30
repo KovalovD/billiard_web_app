@@ -1,4 +1,3 @@
-// resources/js/Pages/Players/Show.vue
 <script lang="ts" setup>
 import {
     Accordion,
@@ -30,18 +29,18 @@ import {
     AwardIcon,
     CalendarIcon,
     ChartBarIcon,
+    ChevronRightIcon,
+    ClockIcon,
     GamepadIcon,
     MapPinIcon,
+    SearchIcon,
     StarIcon,
+    SwordsIcon,
     TrophyIcon,
     UserIcon,
     UsersIcon,
-    SwordsIcon,
-    SearchIcon,
-    ChevronRightIcon,
-    XIcon,
-    ClockIcon,
-    XCircleIcon
+    XCircleIcon,
+    XIcon
 } from 'lucide-vue-next';
 import {computed, onMounted, ref} from 'vue';
 
@@ -210,7 +209,31 @@ const {setSeoMeta, generateBreadcrumbJsonLd} = useSeo();
 const player = ref<PlayerDetail | null>(null);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
-const activeTab = ref<'overview' | 'tournaments' | 'leagues' | 'matches'>('overview');
+
+// Get initial tab from URL query parameter
+const getInitialTab = (): 'overview' | 'tournaments' | 'leagues' | 'matches' => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    const validTabs = ['overview', 'tournaments', 'leagues', 'matches'];
+    return validTabs.includes(tabParam as string) ? tabParam as any : 'overview';
+};
+
+const activeTab = ref<'overview' | 'tournaments' | 'leagues' | 'matches'>(getInitialTab());
+
+// Handle tab change and update URL
+const switchTab = (tab: 'overview' | 'tournaments' | 'leagues' | 'matches') => {
+    activeTab.value = tab;
+
+    // Update URL without page reload
+    const url = new URL(window.location.href);
+    if (tab === 'overview') {
+        url.searchParams.delete('tab');
+    } else {
+        url.searchParams.set('tab', tab);
+    }
+
+    window.history.replaceState({}, '', url.toString());
+};
 
 // Head to Head state
 const showH2HDialog = ref(false);
@@ -720,7 +743,7 @@ onMounted(() => {
                                     ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                             ]"
-                            @click="activeTab = 'overview'"
+                            @click="switchTab('overview')"
                         >
                             {{ t('Overview') }}
                         </button>
@@ -731,7 +754,7 @@ onMounted(() => {
                                     ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                             ]"
-                            @click="activeTab = 'tournaments'"
+                            @click="switchTab('tournaments')"
                         >
                             {{ t('Tournaments') }} ({{ player.tournament_stats.total_tournaments }})
                         </button>
@@ -742,7 +765,7 @@ onMounted(() => {
                                     ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                             ]"
-                            @click="activeTab = 'leagues'"
+                            @click="switchTab('leagues')"
                         >
                             {{ t('Leagues') }} ({{ player.league_stats.length }})
                         </button>
@@ -753,7 +776,7 @@ onMounted(() => {
                                     ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                             ]"
-                            @click="activeTab = 'matches'"
+                            @click="switchTab('matches')"
                         >
                             {{ t('Tournament Matches') }}
                         </button>
@@ -1072,7 +1095,6 @@ onMounted(() => {
                 </div>
             </template>
 
-            <!-- Head to Head Dialog -->
             <!-- Head to Head Dialog -->
             <Dialog :open="showH2HDialog" @update:open="showH2HDialog = $event">
                 <DialogContent class="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-0">

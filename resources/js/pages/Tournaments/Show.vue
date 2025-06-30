@@ -1,4 +1,3 @@
-<!-- resources/js/pages/Tournaments/Show.vue -->
 <script lang="ts" setup>
 import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Spinner} from '@/Components/ui';
 import TournamentApplicationCard from '@/Components/Tournament/TournamentApplicationCard.vue';
@@ -52,8 +51,32 @@ const isLoadingPlayers = ref(true);
 const isLoadingMatches = ref(false);
 const isLoadingGroups = ref(false);
 const error = ref<string | null>(null);
-const activeTab = ref<'info' | 'players' | 'bracket' | 'matches' | 'groups' | 'results' | 'applications'>('info');
 const showTablesModal = ref(false);
+
+// Get initial tab from URL query parameter
+const getInitialTab = (): 'info' | 'players' | 'bracket' | 'matches' | 'groups' | 'results' | 'applications' => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    const validTabs = ['info', 'players', 'bracket', 'matches', 'groups', 'results', 'applications'];
+    return validTabs.includes(tabParam as string) ? tabParam as any : 'info';
+};
+
+const activeTab = ref<'info' | 'players' | 'bracket' | 'matches' | 'groups' | 'results' | 'applications'>(getInitialTab());
+
+// Handle tab change and update URL
+const switchTab = (tab: 'info' | 'players' | 'bracket' | 'matches' | 'groups' | 'results' | 'applications') => {
+    activeTab.value = tab;
+
+    // Update URL without page reload
+    const url = new URL(window.location.href);
+    if (tab === 'info') {
+        url.searchParams.delete('tab');
+    } else {
+        url.searchParams.set('tab', tab);
+    }
+
+    window.history.replaceState({}, '', url.toString());
+};
 
 // Get current user ID
 const currentUserId = user.value?.id;
@@ -644,7 +667,7 @@ const columns = computed(() => [
                                     ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                             ]"
-                            @click="activeTab = 'info'"
+                            @click="switchTab('info')"
                         >
                             {{ t('Information') }}
                         </button>
@@ -655,7 +678,7 @@ const columns = computed(() => [
                                     ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                             ]"
-                            @click="activeTab = 'players'"
+                            @click="switchTab('players')"
                         >
                             {{ t('Players') }} ({{ tournament.confirmed_players_count }})
                         </button>
@@ -667,7 +690,7 @@ const columns = computed(() => [
                                     ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                             ]"
-                            @click="activeTab = 'groups'"
+                            @click="switchTab('groups')"
                         >
                             {{ t('Groups') }}
                         </button>
@@ -679,7 +702,7 @@ const columns = computed(() => [
                                     ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                             ]"
-                            @click="activeTab = 'bracket'"
+                            @click="switchTab('bracket')"
                         >
                             {{ t('Bracket') }}
                         </button>
@@ -691,7 +714,7 @@ const columns = computed(() => [
                                     ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                             ]"
-                            @click="activeTab = 'matches'"
+                            @click="switchTab('matches')"
                         >
                             {{ t('Matches') }}
                         </button>
@@ -703,7 +726,7 @@ const columns = computed(() => [
                                     ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                             ]"
-                            @click="activeTab = 'applications'"
+                            @click="switchTab('applications')"
                         >
                             {{ t('Applications') }} ({{ tournament.pending_applications_count }})
                         </button>
@@ -715,7 +738,7 @@ const columns = computed(() => [
                                     ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                             ]"
-                            @click="activeTab = 'results'"
+                            @click="switchTab('results')"
                         >
                             {{ t('Results') }}
                         </button>

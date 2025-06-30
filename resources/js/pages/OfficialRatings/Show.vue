@@ -41,12 +41,36 @@ const isLoadingRating = ref(true);
 const isLoadingPlayers = ref(true);
 const isLoadingTournaments = ref(true);
 const error = ref<string | null>(null);
-const activeTab = ref<'players' | 'tournaments' | 'rules'>('players');
 const showScrollToUser = ref(false);
 const deltaDate = ref('');
 const ratingDelta = ref<RatingDelta | null>(null);
 const isLoadingDelta = ref(false);
 const tableRef = ref<HTMLElement | null>(null);
+
+// Get initial tab from URL query parameter
+const getInitialTab = (): 'players' | 'tournaments' | 'rules' => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    const validTabs = ['players', 'tournaments', 'rules'];
+    return validTabs.includes(tabParam as string) ? tabParam as any : 'players';
+};
+
+const activeTab = ref<'players' | 'tournaments' | 'rules'>(getInitialTab());
+
+// Handle tab change and update URL
+const switchTab = (tab: 'players' | 'tournaments' | 'rules') => {
+    activeTab.value = tab;
+
+    // Update URL without page reload
+    const url = new URL(window.location.href);
+    if (tab === 'players') {
+        url.searchParams.delete('tab');
+    } else {
+        url.searchParams.set('tab', tab);
+    }
+
+    window.history.replaceState({}, '', url.toString());
+};
 
 const {
     currentRule,
@@ -486,7 +510,7 @@ const getRowClass = (player: OfficialRatingPlayer): string => {
                                     ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                             ]"
-                            @click="activeTab = 'players'"
+                            @click="switchTab('players')"
                         >
                             {{ t('Players') }} ({{ rating.players_count }})
                         </button>
@@ -497,7 +521,7 @@ const getRowClass = (player: OfficialRatingPlayer): string => {
                                     ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                             ]"
-                            @click="activeTab = 'tournaments'"
+                            @click="switchTab('tournaments')"
                         >
                             {{ t('Tournaments') }} ({{ rating.tournaments_count }})
                         </button>
@@ -508,7 +532,7 @@ const getRowClass = (player: OfficialRatingPlayer): string => {
                                     ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                             ]"
-                            @click="activeTab = 'rules'"
+                            @click="switchTab('rules')"
                         >
                             {{ t('Rules') }}
                         </button>

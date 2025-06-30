@@ -1,4 +1,3 @@
-// resources/js/pages/Leagues/MultiplayerGames/Show.vue
 <script lang="ts" setup>
 import SetModeratorModal from '@/Components/SetModeratorModal.vue';
 import GameRegistry from '@/Components/GameRegistry.vue';
@@ -61,8 +60,35 @@ const selectedActingPlayer = ref<MultiplayerGamePlayer | null>(null);
 const showFinishModal = ref(false);
 const showModeratorModal = ref(false);
 const actionFeedback = ref<{ type: 'success' | 'error', message: string } | null>(null);
-const activeTab = ref<'game' | 'prizes' | 'ratings' | 'timefund' | 'widget'>('game');
 const copiedWidgetId = ref<string | null>(null);
+
+// Get initial tab from URL query parameter
+const getInitialTab = (): 'game' | 'prizes' | 'ratings' | 'timefund' | 'widget' => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    const validTabs = ['game', 'prizes', 'ratings', 'timefund', 'widget'];
+    return validTabs.includes(tabParam as string) ? tabParam as any : 'game';
+};
+
+const activeTab = ref<'game' | 'prizes' | 'ratings' | 'timefund' | 'widget'>(getInitialTab());
+
+// Handle tab change and update URL
+const switchTab = (tab: 'game' | 'prizes' | 'ratings' | 'timefund' | 'widget') => {
+    activeTab.value = tab;
+
+    // Update URL without page reload
+    const url = new URL(window.location.href);
+    if (tab === 'game') {
+        url.searchParams.delete('tab');
+    } else {
+        url.searchParams.set('tab', tab);
+    }
+
+    window.history.replaceState({}, '', url.toString());
+};
+
+// Add to existing refs
+const showAddPlayerModal = ref(false);
 
 // Widget URL builders
 const getWidgetUrl = (params: Record<string, string> = {}): string => {
@@ -141,9 +167,6 @@ const copyWidgetUrl = async (widgetId: string, url: string) => {
         console.error('Failed to copy:', err);
     }
 };
-
-// Add to existing refs
-const showAddPlayerModal = ref(false);
 
 // Add method to handle player addition (admin only)
 const handlePlayerAdded = async () => {
@@ -651,7 +674,7 @@ onMounted(() => {
                                         ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:border-gray-600'
                                 ]"
-                                @click="activeTab = 'game'"
+                                @click="switchTab('game')"
                             >
                                 {{ t('Game') }}
                             </button>
@@ -662,7 +685,7 @@ onMounted(() => {
                                         ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:border-gray-600'
                                 ]"
-                                @click="activeTab = 'prizes'"
+                                @click="switchTab('prizes')"
                             >
                                 {{ t('Prizes') }}
                             </button>
@@ -673,7 +696,7 @@ onMounted(() => {
                                         ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:border-gray-600'
                                 ]"
-                                @click="activeTab = 'ratings'"
+                                @click="switchTab('ratings')"
                             >
                                 {{ t('Rating Points') }}
                             </button>
@@ -684,7 +707,7 @@ onMounted(() => {
                                         ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:border-gray-600'
                                 ]"
-                                @click="activeTab = 'timefund'"
+                                @click="switchTab('timefund')"
                             >
                                 {{ t('Time Fund') }}
                             </button>
@@ -696,7 +719,7 @@ onMounted(() => {
                                         ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:border-gray-600'
                                 ]"
-                                @click="activeTab = 'widget'"
+                                @click="switchTab('widget')"
                             >
                                 {{ t('OBS Widget') }}
                             </button>
