@@ -59,4 +59,14 @@ readonly class PlayerController
 
         return response()->json($stats);
     }
+
+    /**
+     * Get detailed match statistics for a player
+     */
+    public function matchStats(User $player): JsonResponse
+    {
+        $stats = $this->playerService->getDetailedMatchStats($player);
+
+        return response()->json($stats);
+    }
 }

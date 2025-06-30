@@ -42,6 +42,7 @@ import {
     XCircleIcon
 } from 'lucide-vue-next';
 import {computed, onMounted, ref} from 'vue';
+import DetailedMatchStats from "@/Components/Players/DetailedMatchStats.vue";
 
 interface PlayerDetail {
     id: number;
@@ -209,28 +210,26 @@ const player = ref<PlayerDetail | null>(null);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
 
-// Get initial tab from URL query parameter
-const getInitialTab = (): 'overview' | 'tournaments' | 'leagues' | 'matches' => {
+// Update initial tab function
+const getInitialTab = (): 'overview' | 'tournaments' | 'leagues' | 'matches' | 'statistics' => {
     const urlParams = new URLSearchParams(window.location.search);
     const tabParam = urlParams.get('tab');
-    const validTabs = ['overview', 'tournaments', 'leagues', 'matches'];
+    const validTabs = ['overview', 'tournaments', 'leagues', 'matches', 'statistics'];
     return validTabs.includes(tabParam as string) ? tabParam as any : 'overview';
 };
 
-const activeTab = ref<'overview' | 'tournaments' | 'leagues' | 'matches'>(getInitialTab());
+// Update activeTab type
+const activeTab = ref<'overview' | 'tournaments' | 'leagues' | 'matches' | 'statistics'>(getInitialTab());
 
-// Handle tab change and update URL
-const switchTab = (tab: 'overview' | 'tournaments' | 'leagues' | 'matches') => {
+// Update switchTab function
+const switchTab = (tab: 'overview' | 'tournaments' | 'leagues' | 'matches' | 'statistics') => {
     activeTab.value = tab;
-
-    // Update URL without page reload
     const url = new URL(window.location.href);
     if (tab === 'overview') {
         url.searchParams.delete('tab');
     } else {
         url.searchParams.set('tab', tab);
     }
-
     window.history.replaceState({}, '', url.toString());
 };
 
@@ -771,6 +770,17 @@ onMounted(() => {
                         >
                             {{ t('Tournament Matches') }}
                         </button>
+                        <button
+                            :class="[
+                                'py-4 px-1 text-sm font-medium border-b-2',
+                                activeTab === 'statistics'
+                                    ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                            ]"
+                            @click="switchTab('statistics')"
+                        >
+                            {{ t('Detailed Statistics') }}
+                        </button>
                     </nav>
                 </div>
 
@@ -1083,6 +1093,10 @@ onMounted(() => {
                             </div>
                         </CardContent>
                     </Card>
+                </div>
+
+                <div v-if="activeTab === 'statistics'">
+                    <DetailedMatchStats :player-id="player.id"/>
                 </div>
             </template>
 

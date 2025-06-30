@@ -76,4 +76,7 @@ return [
     'View :name\'s billiard statistics, tournament wins, league performance, and official ratings. Professional pool player profile and achievements.' => 'View :name\'s billiard statistics, tournament wins, league performance, and official ratings. Professional pool player profile and achievements.',
     'Tournament: :name'                                                                                                                                => 'Tournament: :name',
     'Rating: :name'                                                                                                                                    => 'Rating: :name',
+    'Max deficit: :n' => 'Max deficit: :n',
+    'Deficit: :n'     => 'Deficit: :n',
+    'Frame :n'        => 'Frame :n',
 ];
