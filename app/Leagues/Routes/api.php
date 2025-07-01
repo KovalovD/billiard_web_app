@@ -8,8 +8,8 @@ use App\Matches\Http\Controllers\MatchGamesController;
 use App\User\Http\Controllers\UserTournamentsController;
 
 Route::apiResource('leagues', LeaguesController::class, ['only' => ['index', 'show']]);
-Route::get('leagues/{league}/players', [LeaguesController::class, 'players'])->name('leagues.players');
-Route::get('leagues/{league}/games', [LeaguesController::class, 'games'])->name('leagues.games');
+Route::get('leagues/{league:slug}/players', [LeaguesController::class, 'players'])->name('leagues.players');
+Route::get('leagues/{league:slug}/games', [LeaguesController::class, 'games'])->name('leagues.games');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('games', [LeaguesController::class, 'availableGames'])->name('leagues.available-games');
@@ -23,14 +23,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('my-leagues-and-challenges',
         [LeaguesController::class, 'myLeaguesAndChallenges'])->name('my-leagues-and-challenges');
 
-    Route::group(['prefix' => 'leagues/{league}'], static function () {
+    Route::group(['prefix' => 'leagues/{league:slug}'], static function () {
         Route::get('load-user-rating', [LeaguesController::class, 'loadUserRating'])->name('leagues.load-user-rating');
 
         Route::group(['prefix' => 'players'], static function () {
             Route::post('enter', [PlayersController::class, 'enter'])->name('players.enter');
             Route::post('leave', [PlayersController::class, 'leave'])->name('players.leave');
 
-            Route::post('{user}/send-match-game',
+            Route::post('{user:slug}/send-match-game',
                 [MatchGamesController::class, 'sendMatchGame'])->name('players.send-match-game');
             Route::group(['prefix' => 'match-games/{matchGame}'], static function () {
                 Route::post('accept', [MatchGamesController::class, 'acceptMatch'])->name('players.accept-match');
@@ -46,7 +46,7 @@ Route::middleware(['auth:sanctum', AdminMiddleware::class])->group(function () {
         ['only' => ['store', 'update', 'destroy']],
     );
 
-    Route::group(['prefix' => 'leagues/{league}/admin'], static function () {
+    Route::group(['prefix' => 'leagues/{league:slug}/admin'], static function () {
         Route::get('pending-players', [AdminPlayersController::class, 'pendingPlayers'])->name('admin.pending-players');
         Route::post('confirm-player/{rating}',
             [AdminPlayersController::class, 'confirmPlayer'])->name('admin.confirm-player');

@@ -4,6 +4,7 @@ namespace App\Matches\Models;
 
 use App\Core\Models\Game;
 use App\Core\Models\User;
+use App\Core\Traits\HasSlug;
 use App\Leagues\Models\League;
 use App\OfficialRatings\Models\OfficialRating;
 use App\OfficialRatings\Models\OfficialRatingPlayer;
@@ -17,12 +18,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class MultiplayerGame extends Model
 {
     use HasFactory;
+    use HasSlug;
 
     protected $fillable = [
         'league_id',
         'game_id',
         'official_rating_id',
         'name',
+        'slug',
         'status',
         'initial_lives',
         'max_players',

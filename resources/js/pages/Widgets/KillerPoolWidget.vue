@@ -1,6 +1,6 @@
 // resources/js/pages/Widgets/StreamingWidget.vue
 <script lang="ts" setup>
-import LivesTracker from '@/Components/LivesTracker.vue'
+import LivesTracker from '@/Components/League/MultiplayerGame/LivesTracker.vue'
 import {computed, onMounted, onUnmounted, ref} from 'vue'
 import {ArrowDownIcon, ArrowRightIcon, HandHelpingIcon, HandIcon, TrophyIcon, UsersIcon} from 'lucide-vue-next'
 

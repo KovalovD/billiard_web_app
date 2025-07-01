@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import InputError from '@/Components/InputError.vue';
+import InputError from '@/Components/ui/form/InputError.vue';
 import {Button, Input, Label, Modal, Spinner, Textarea} from '@/Components/ui';
 import {apiClient} from '@/lib/apiClient';
 import type {ApiError, League, Player, SendGamePayload} from '@/types/api';

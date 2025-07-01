@@ -3,6 +3,7 @@
 namespace App\Leagues\Models;
 
 use App\Core\Models\Game;
+use App\Core\Traits\HasSlug;
 use App\Leagues\Enums\RatingType;
 use App\Matches\Models\MatchGame;
 use App\Matches\Models\MultiplayerGame;
@@ -18,6 +19,7 @@ class League extends Model
 {
     use SoftDeletes;
     use HasFactory;
+    use HasSlug;
 
     public $timestamps = false;
 
@@ -25,6 +27,7 @@ class League extends Model
     protected $withCount = ['matches', 'activeRatings', 'multiplayerGames'];
     protected $fillable = [
         'name',
+        'slug',
         'picture',
         'details',
         'has_rating',

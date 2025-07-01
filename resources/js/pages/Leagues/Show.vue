@@ -1,9 +1,9 @@
 // resources/js/pages/Leagues/Show.vue
 <script lang="ts" setup>
-import ChallengeModal from '@/Components/ChallengeModal.vue';
-import PendingConfirmationBanner from '@/Components/PendingConfirmationBanner.vue';
-import PlayerList from '@/Components/PlayerList.vue';
-import ResultModal from '@/Components/ResultModal.vue';
+import ChallengeModal from '@/Components/League/ChallengeModal.vue';
+import PendingConfirmationBanner from '@/Components/League/PendingConfirmationBanner.vue';
+import PlayerList from '@/Components/League/PlayerList.vue';
+import ResultModal from '@/Components/League/ResultModal.vue';
 import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Modal, Spinner} from '@/Components/ui';
 import {useAuth} from '@/composables/useAuth';
 import {useLeagues} from '@/composables/useLeagues';
@@ -26,7 +26,7 @@ import {
     WalletIcon
 } from 'lucide-vue-next';
 import {computed, onMounted, ref, watch} from 'vue';
-import AddPlayerModal from "@/Components/AddPlayerModal.vue";
+import AddPlayerModal from "@/Components/League/MultiplayerGame/AddPlayerModal.vue";
 import {useLocale} from '@/composables/useLocale';
 
 const adminDropdownOpen = ref(false);

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import InputError from '@/Components/InputError.vue';
-import RatingRuleEditor from '@/Components/RatingRuleEditor.vue';
+import InputError from '@/Components/ui/form/InputError.vue';
+import RatingRuleEditor from '@/Components/OfficialRating/RatingRuleEditor.vue';
 import {
     Button,
     Card,

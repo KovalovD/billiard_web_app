@@ -3,6 +3,7 @@
 namespace App\OfficialRatings\Models;
 
 use App\Core\Models\Game;
+use App\Core\Traits\HasSlug;
 use App\Matches\Enums\GameType;
 use App\Tournaments\Models\Tournament;
 use Illuminate\Database\Eloquent\Collection;
@@ -12,8 +13,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class OfficialRating extends Model
 {
+    use HasSlug;
+
     protected $fillable = [
         'name',
+        'slug',
         'description',
         'game_type',
         'is_active',

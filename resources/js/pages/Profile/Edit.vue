@@ -1,6 +1,6 @@
 //resources/js/pages/Profile/Edit.vue
 <script lang="ts" setup>
-import InputError from '@/Components/InputError.vue';
+import InputError from '@/Components/ui/form/InputError.vue';
 import {
     Button,
     Card,

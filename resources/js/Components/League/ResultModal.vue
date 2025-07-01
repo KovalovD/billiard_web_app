@@ -1,6 +1,6 @@
 // resources/js/Components/ResultModal.vue
 <script lang="ts" setup>
-import InputError from '@/Components/InputError.vue';
+import InputError from '@/Components/ui/form/InputError.vue';
 import {Button, Input, Label, Modal, Spinner} from '@/Components/ui';
 import {apiClient} from '@/lib/apiClient';
 import type {ApiError, MatchGame, Rating, SendResultPayload, User} from '@/types/api';

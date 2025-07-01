@@ -1,7 +1,7 @@
 // resources/js/Components/GameActionPanel.vue
 <script lang="ts" setup>
-import LivesTracker from '@/Components/LivesTracker.vue';
-import PlayerCards from '@/Components/PlayerCards.vue';
+import LivesTracker from '@/Components/League/MultiplayerGame/LivesTracker.vue';
+import PlayerCards from '@/Components/League/MultiplayerGame/PlayerCards.vue';
 import {Button, Spinner} from '@/Components/ui';
 import type {MultiplayerGamePlayer} from '@/types/api';
 import {computed, ref, watch} from 'vue';

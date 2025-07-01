@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import LeagueForm from '@/Components/LeagueForm.vue';
+import LeagueForm from '@/Components/League/LeagueForm.vue';
 import {Button, Spinner} from '@/Components/ui';
 import {useApi} from '@/composables/useApi';
 import {useAuth} from '@/composables/useAuth';

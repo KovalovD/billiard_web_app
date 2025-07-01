@@ -3,6 +3,7 @@
 namespace App\Core\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Core\Traits\HasSlug;
 use App\Leagues\Models\Rating;
 use App\Tournaments\Models\TournamentPlayer;
 use database\factories\UserFactory;
@@ -17,7 +18,9 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, HasApiTokens;
+    use HasFactory, Notifiable, HasApiTokens, HasSlug;
+
+    protected string $slugSource = 'full_name';
 
     /**
      * The attributes that are mass assignable.
@@ -25,6 +28,7 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
+        'slug',
         'firstname',
         'lastname',
         'email',

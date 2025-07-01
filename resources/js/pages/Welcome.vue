@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import RegisterModal from '@/Components/Auth/RegisterModal.vue';
 import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/Components/ui';
-import ApplicationLogo from '@/Components/ApplicationLogo.vue';
+import ApplicationLogo from '@/Components/ui/ApplicationLogo.vue';
 import {Head, Link} from '@inertiajs/vue3';
 import {
     CalendarIcon,
@@ -15,7 +15,7 @@ import {
 } from 'lucide-vue-next';
 import {onMounted, ref} from 'vue';
 import {useSeo} from '@/composables/useSeo';
-import MonoDonate from '@/Components/MonoDonate.vue';
+import MonoDonate from '@/Components/ui/MonoDonate.vue';
 
 // State for modal visibility
 const showRegisterModal = ref(false);

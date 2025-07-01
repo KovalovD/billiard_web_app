@@ -5,6 +5,7 @@ namespace App\Tournaments\Models;
 use App\Core\Models\City;
 use App\Core\Models\Club;
 use App\Core\Models\Game;
+use App\Core\Traits\HasSlug;
 use App\OfficialRatings\Models\OfficialRating;
 use App\Tournaments\Enums\SeedingMethod;
 use App\Tournaments\Enums\TournamentStage;
@@ -18,8 +19,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Tournament extends Model
 {
+    use HasSlug;
+
     protected $fillable = [
         'name',
+        'slug',
         'regulation',
         'details',
         'status',

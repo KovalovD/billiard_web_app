@@ -1,13 +1,13 @@
 <script lang="ts" setup>
-import SetModeratorModal from '@/Components/SetModeratorModal.vue';
-import GameRegistry from '@/Components/GameRegistry.vue';
-import LivesEditorView from '@/Components/LivesEditorView.vue';
-import PlayersList from '@/Components/PlayersList.vue';
-import PrizeSummaryCard from '@/Components/PrizeSummaryCard.vue';
-import RatingSummaryCard from '@/Components/RatingSummaryCard.vue';
-import GameActionPanel from '@/Components/GameActionPanel.vue';
-import TimeFundCard from '@/Components/TimeFundCard.vue';
-import MultiplayerGameSummary from '@/Components/MultiplayerGameSummary.vue';
+import SetModeratorModal from '@/Components/League/MultiplayerGame/SetModeratorModal.vue';
+import GameRegistry from '@/Components/League/MultiplayerGame/GameRegistry.vue';
+import LivesEditorView from '@/Components/League/MultiplayerGame/LivesEditorView.vue';
+import PlayersList from '@/Components/League/MultiplayerGame/PlayersList.vue';
+import PrizeSummaryCard from '@/Components/League/MultiplayerGame/PrizeSummaryCard.vue';
+import RatingSummaryCard from '@/Components/League/MultiplayerGame/RatingSummaryCard.vue';
+import GameActionPanel from '@/Components/League/MultiplayerGame/GameActionPanel.vue';
+import TimeFundCard from '@/Components/League/MultiplayerGame/TimeFundCard.vue';
+import MultiplayerGameSummary from '@/Components/League/MultiplayerGame/MultiplayerGameSummary.vue';
 import {
     ArrowLeftIcon,
     CheckIcon,
@@ -27,8 +27,8 @@ import type {League, MultiplayerGame, MultiplayerGamePlayer} from '@/types/api';
 import {Head, Link} from '@inertiajs/vue3';
 import {computed, onMounted, ref, watch} from 'vue';
 import {useLocale} from '@/composables/useLocale';
-import GameFinishModal from "@/Components/GameFinishModal.vue";
-import AddPlayerModal from "@/Components/AddPlayerModal.vue";
+import GameFinishModal from "@/Components/League/MultiplayerGame/GameFinishModal.vue";
+import AddPlayerModal from "@/Components/League/MultiplayerGame/AddPlayerModal.vue";
 import DataTable from '@/Components/ui/data-table/DataTable.vue';
 
 defineOptions({layout: AuthenticatedLayout});

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {Button, Input, Label, Modal, Spinner} from '@/Components/ui';
+import {Button, Input, Label, Modal, Spinner} from '@/Components/ui/index';
 import {apiClient} from '@/lib/apiClient';
 import type {ApiError, User} from '@/types/api';
 import {SearchIcon, UserPlusIcon, UsersIcon} from 'lucide-vue-next';

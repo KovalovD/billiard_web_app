@@ -1,18 +1,18 @@
 <script lang="ts" setup>
-import ApplicationLogo from '@/Components/ApplicationLogo.vue';
+import ApplicationLogo from '@/Components/ui/ApplicationLogo.vue';
 import RegisterModal from '@/Components/Auth/RegisterModal.vue';
-import Dropdown from '@/Components/Dropdown.vue';
-import DropdownLink from '@/Components/DropdownLink.vue';
-import NavLink from '@/Components/NavLink.vue';
-import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
+import Dropdown from '@/Components/ui/dropdown/Dropdown.vue';
+import DropdownLink from '@/Components/ui/dropdown/DropdownLink.vue';
+import NavLink from '@/Components/ui/NavLink.vue';
+import ResponsiveNavLink from '@/Components/ui/ResponsiveNavLink.vue';
 import {useAuth} from '@/composables/useAuth';
 import {Head, Link} from '@inertiajs/vue3';
 import axios from 'axios';
 import {onMounted, ref} from 'vue';
-import LocaleSwitcher from "@/Components/LocaleSwitcher.vue";
+import LocaleSwitcher from "@/Components/ui/LocaleSwitcher.vue";
 import {useLocale} from '@/composables/useLocale';
-import ToastContainer from '@/Components/ToastContainer.vue';
-import MonoDonate from '@/Components/MonoDonate.vue';
+import ToastContainer from '@/Components/ui/ToastContainer.vue';
+import MonoDonate from '@/Components/ui/MonoDonate.vue';
 
 // Add to existing code
 const {t} = useLocale();

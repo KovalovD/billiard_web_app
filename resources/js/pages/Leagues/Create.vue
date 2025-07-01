@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import LeagueForm from '@/Components/LeagueForm.vue'; // Import form component
+import LeagueForm from '@/Components/League/LeagueForm.vue'; // Import form component
 import {Button} from '@/Components/ui';
 import {useAuth} from '@/composables/useAuth';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue'; // Import for defineOptions

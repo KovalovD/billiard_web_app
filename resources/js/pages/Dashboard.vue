@@ -1,8 +1,8 @@
 <script lang="ts" setup>
-import ActiveMatchesModal from '@/Components/ActiveMatchesModal.vue';
-import RecentTournamentsCard from '@/Components/RecentTournamentsCard.vue';
-import UserLeaguesCard from '@/Components/UserLeaguesCard.vue';
-import UserTournamentsCard from '@/Components/UserTournamentsCard.vue';
+import ActiveMatchesModal from '@/Components/League/ActiveMatchesModal.vue';
+import RecentTournamentsCard from '@/Components/ui/RecentTournamentsCard.vue';
+import UserLeaguesCard from '@/Components/ui/UserLeaguesCard.vue';
+import UserTournamentsCard from '@/Components/ui/UserTournamentsCard.vue';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/Components/ui';
 import {useAuth} from '@/composables/useAuth';
 import {useLeagues} from '@/composables/useLeagues';

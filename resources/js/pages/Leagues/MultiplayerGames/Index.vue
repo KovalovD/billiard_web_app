@@ -1,8 +1,8 @@
 <script lang="ts" setup>
-import CreateMultiplayerGameModal from '@/Components/CreateMultiplayerGameModal.vue';
+import CreateMultiplayerGameModal from '@/Components/League/MultiplayerGame/CreateMultiplayerGameModal.vue';
 import {Button, Card, CardContent, CardHeader, CardTitle} from '@/Components/ui';
 import DataTable from '@/Components/ui/data-table/DataTable.vue';
-import TableActions, {type ActionItem} from '@/Components/TableActions.vue';
+import TableActions, {type ActionItem} from '@/Components/League/MultiplayerGame/TableActions.vue';
 import {useAuth} from '@/composables/useAuth';
 import {useMultiplayerGames} from '@/composables/useMultiplayerGames';
 import {useSeo} from '@/composables/useSeo';

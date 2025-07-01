@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import LivesTracker from '@/Components/LivesTracker.vue';
+import LivesTracker from '@/Components/League/MultiplayerGame/LivesTracker.vue';
 import type {MultiplayerGamePlayer} from '@/types/api';
 import {ArrowDownIcon, ArrowRightIcon, CheckIcon, HandHelpingIcon, HandIcon} from 'lucide-vue-next';
 import {computed} from 'vue';
