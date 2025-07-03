@@ -21,19 +21,13 @@ import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
 import type {City, Club, Country} from '@/types/api';
 import {Head, router} from '@inertiajs/vue3';
-import {
-    FilterIcon,
-    MapPinIcon,
-    SearchIcon,
-    TrophyIcon,
-    UserIcon,
-    UsersIcon
-} from 'lucide-vue-next';
+import {FilterIcon, MapPinIcon, SearchIcon, TrophyIcon, UserIcon, UsersIcon} from 'lucide-vue-next';
 import {computed, onMounted, onUnmounted, ref, watch} from 'vue';
 import {debounce} from 'lodash';
 
 interface Player {
     id: number;
+    slug: string;
     firstname: string;
     lastname: string;
     full_name: string;
@@ -266,10 +260,10 @@ const getRowClass = (player: Player): string => {
 // Event handlers
 const handleTableClick = (event: MouseEvent) => {
     const target = event.target as HTMLElement;
-    const row = target.closest('tr[data-player-id]');
+    const row = target.closest('tr[data-player-slug]');
 
     if (row) {
-        const playerId = row.getAttribute('data-player-id');
+        const playerId = row.getAttribute('data-player-slug');
         if (playerId) {
             router.visit(`/players/${playerId}`);
         }
@@ -279,11 +273,11 @@ const handleTableClick = (event: MouseEvent) => {
 const handleTableKeydown = (event: KeyboardEvent) => {
     if (event.key === 'Enter' || event.key === ' ') {
         const target = event.target as HTMLElement;
-        const row = target.closest('tr[data-player-id]');
+        const row = target.closest('tr[data-player-slug]');
 
         if (row) {
             event.preventDefault();
-            const playerId = row.getAttribute('data-player-id');
+            const playerId = row.getAttribute('data-player-slug');
             if (playerId) {
                 router.visit(`/players/${playerId}`);
             }
@@ -520,7 +514,7 @@ onUnmounted(() => {
                                 :loading="isLoading"
                                 :row-class="getRowClass"
                                 :row-attributes="(player) => ({
-                                    'data-player-id': player.id?.toString(),
+                                    'data-player-slug': player.slug?.toString(),
                                     'role': 'button',
                                     'tabindex': '0',
                                     'aria-label': `View ${player.full_name} profile`

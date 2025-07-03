@@ -46,6 +46,7 @@ import DetailedMatchStats from "@/Components/Players/DetailedMatchStats.vue";
 
 interface PlayerDetail {
     id: number;
+    slug: string;
     firstname: string;
     lastname: string;
     full_name: string;

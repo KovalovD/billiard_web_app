@@ -201,7 +201,7 @@ const formatCurrency = (amount: number): string => {
 };
 
 const handleBackToTournament = () => {
-    router.visit(`/tournaments/${props.tournamentId}`);
+    router.visit(`/tournaments/${tournament.value?.slug}`);
 };
 
 onMounted(() => {

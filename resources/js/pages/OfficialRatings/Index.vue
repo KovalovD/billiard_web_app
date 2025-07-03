@@ -287,9 +287,9 @@ const setupTableClickHandlers = () => {
     nextTick(() => {
         const tableContainer = document.querySelector('[data-rating-table]');
         if (tableContainer) {
-            const rows = tableContainer.querySelectorAll('tbody tr[data-rating-id]');
+            const rows = tableContainer.querySelectorAll('tbody tr[data-rating-slug]');
             rows.forEach(row => {
-                const ratingId = row.getAttribute('data-rating-id');
+                const ratingId = row.getAttribute('data-rating-slug');
                 if (ratingId) {
                     // Remove existing listeners to prevent duplicates
                     const newRow = row.cloneNode(true) as HTMLElement;
@@ -463,7 +463,7 @@ watch(showInactiveRatings, () => {
                                 :loading="isLoading"
                                 :row-class="getRatingRowClass"
                                 :row-attributes="(rating) => ({
-                                    'data-rating-id': rating.id?.toString(),
+                                    'data-rating-slug': rating.slug?.toString(),
                                     'role': 'button',
                                     'tabindex': '0',
                                     'aria-label': `View ${rating.name} rating details`

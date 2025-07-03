@@ -439,7 +439,7 @@ onUnmounted(() => {
                     <Button
                         size="sm"
                         variant="outline"
-                        @click="router.visit(`/tournaments/${props.tournamentId}`)"
+                        @click="router.visit(`/tournaments/${tournament?.slug}`)"
                     >
                         <ArrowLeftIcon class="mr-2 h-4 w-4"/>
                         {{ t('Back to Tournament') }}

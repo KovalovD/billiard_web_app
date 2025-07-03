@@ -5,15 +5,15 @@ use App\Matches\Http\Controllers\MultiplayerGamesController;
 use Illuminate\Support\Facades\Route;
 
 
-Route::get('leagues/{league:slug}/multiplayer-games',
+Route::get('leagues/{league}/multiplayer-games',
     [MultiplayerGamesController::class, 'index'])->name('multiplayer-games.index');
-Route::get('leagues/{league:slug}/multiplayer-games/{multiplayerGame:slug}',
+Route::get('leagues/{league}/multiplayer-games/{multiplayerGame}',
     [MultiplayerGamesController::class, 'show'])->name('multiplayer-games.show');
 
 Route::middleware(['auth:sanctum'])->group(function () {
     // Multiplayer Games routes
-    Route::group(['prefix' => 'leagues/{league:slug}/multiplayer-games'], static function () {
-        Route::group(['prefix' => '{multiplayerGame:slug}'], static function () {
+    Route::group(['prefix' => 'leagues/{league}/multiplayer-games'], static function () {
+        Route::group(['prefix' => '{multiplayerGame}'], static function () {
             Route::post('/join', [MultiplayerGamesController::class, 'join'])->name('multiplayer-games.join');
             Route::post('/leave', [MultiplayerGamesController::class, 'leave'])->name('multiplayer-games.leave');
             Route::post('/action',
@@ -31,11 +31,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
         // Admin-only routes
         Route::middleware(AdminMiddleware::class)->group(function () {
             Route::post('/', [MultiplayerGamesController::class, 'store'])->name('multiplayer-games.store');
-            Route::post('/{multiplayerGame:slug}/start',
+            Route::post('/{multiplayerGame}/start',
                 [MultiplayerGamesController::class, 'start'])->name('multiplayer-games.start');
-            Route::post('/{multiplayerGame:slug}/cancel',
+            Route::post('/{multiplayerGame}/cancel',
                 [MultiplayerGamesController::class, 'cancel'])->name('multiplayer-games.cancel');
-            Route::delete('/{multiplayerGame:slug}/players/{user:slug}',
+            Route::delete('/{multiplayerGame}/players/{user}',
                 [MultiplayerGamesController::class, 'removePlayer'])->name('multiplayer-games.remove-player');
         });
     });

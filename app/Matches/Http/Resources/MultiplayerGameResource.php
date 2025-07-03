@@ -73,6 +73,7 @@ class MultiplayerGameResource extends JsonResource
 
         return [
             'id'                        => $this->resource->id ?? null,
+            'slug'                      => $this->slug,
             'league_id'                 => $this->resource->league_id ?? null,
             'official_rating_id'        => $this->resource->league_id ?? null,
             'game_id'                   => $this->resource->game_id ?? null,

@@ -474,14 +474,14 @@ const columns = computed(() => [
 
                 <!-- Admin controls - only for authenticated admins -->
                 <div v-if="isAuthenticated && isAdmin && tournament" class="flex flex-wrap gap-2">
-                    <Link :href="`/admin/tournaments/${tournament.id}/edit`">
+                    <Link :href="`/admin/tournaments/${tournament.slug}/edit`">
                         <Button size="sm" variant="secondary">
                             <PencilIcon class="mr-2 h-4 w-4"/>
                             {{ t('Edit') }}
                         </Button>
                     </Link>
 
-                    <Link :href="`/admin/tournaments/${tournament.id}/players`">
+                    <Link :href="`/admin/tournaments/${tournament.slug}/players`">
                         <Button size="sm" variant="secondary">
                             <UserPlusIcon class="mr-2 h-4 w-4"/>
                             {{ t('Players') }}
@@ -489,28 +489,28 @@ const columns = computed(() => [
                     </Link>
 
                     <!-- Stage-based buttons -->
-                    <Link v-if="showSeedingButton" :href="`/admin/tournaments/${tournament.id}/seeding`">
+                    <Link v-if="showSeedingButton" :href="`/admin/tournaments/${tournament.slug}/seeding`">
                         <Button size="sm" variant="secondary">
                             <StarIcon class="mr-2 h-4 w-4"/>
                             {{ t('Seeding') }}
                         </Button>
                     </Link>
 
-                    <Link v-if="showGroupsButton" :href="`/admin/tournaments/${tournament.id}/groups`">
+                    <Link v-if="showGroupsButton" :href="`/admin/tournaments/${tournament.slug}/groups`">
                         <Button size="sm" variant="secondary">
                             <LayersIcon class="mr-2 h-4 w-4"/>
                             {{ t('Groups') }}
                         </Button>
                     </Link>
 
-                    <Link v-if="showBracketButton" :href="`/admin/tournaments/${tournament.id}/bracket`">
+                    <Link v-if="showBracketButton" :href="`/admin/tournaments/${tournament.slug}/bracket`">
                         <Button size="sm" variant="secondary">
                             <GitBranchIcon class="mr-2 h-4 w-4"/>
                             {{ t('Bracket') }}
                         </Button>
                     </Link>
 
-                    <Link v-if="showMatchesButton" :href="`/admin/tournaments/${tournament.id}/matches`">
+                    <Link v-if="showMatchesButton" :href="`/admin/tournaments/${tournament.slug}/matches`">
                         <Button size="sm" variant="secondary">
                             <PlayIcon class="mr-2 h-4 w-4"/>
                             {{ t('Matches') }}
@@ -518,7 +518,7 @@ const columns = computed(() => [
                     </Link>
 
                     <Link v-if="tournament.pending_applications_count > 0"
-                          :href="`/admin/tournaments/${tournament.id}/applications`">
+                          :href="`/admin/tournaments/${tournament.slug}/applications`">
                         <Button class="relative" size="sm" variant="secondary">
                             <ClipboardListIcon class="mr-2 h-4 w-4"/>
                             {{ t('Applications') }}
@@ -529,14 +529,14 @@ const columns = computed(() => [
                         </Button>
                     </Link>
                     <Link v-else-if="tournament.requires_application"
-                          :href="`/admin/tournaments/${tournament.id}/applications`">
+                          :href="`/admin/tournaments/${tournament.slug}/applications`">
                         <Button size="sm" variant="secondary">
                             <ClipboardListIcon class="mr-2 h-4 w-4"/>
                             {{ t('Applications') }}
                         </Button>
                     </Link>
 
-                    <Link :href="`/admin/tournaments/${tournament.id}/results`">
+                    <Link :href="`/admin/tournaments/${tournament.slug}/results`">
                         <Button size="sm" variant="secondary">
                             <TrophyIcon class="mr-2 h-4 w-4"/>
                             {{ t('Results') }}

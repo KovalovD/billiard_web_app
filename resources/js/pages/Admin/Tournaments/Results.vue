@@ -189,7 +189,7 @@ onMounted(() => {
         <div class="mx-auto max-w-6xl sm:px-6 lg:px-8">
             <!-- Header -->
             <div class="mb-6 flex items-center justify-between">
-                <Link :href="`/tournaments/${props.tournamentId}`">
+                <Link :href="`/tournaments/${tournament?.slug}`">
                     <Button variant="outline">
                         <ArrowLeftIcon class="mr-2 h-4 w-4"/>
                         Back to Tournament

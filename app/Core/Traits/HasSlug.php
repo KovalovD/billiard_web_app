@@ -29,20 +29,13 @@ trait HasSlug
     }
 
     /**
-     * Get the route key for the model.
-     */
-    public function getRouteKeyName(): string
-    {
-        return 'slug';
-    }
-
-    /**
      * Generate a unique slug for the model
      */
     public function generateSlug(): string
     {
         $slugSource = $this->getSlugSource();
         $slug = Str::slug($slugSource);
+        $slug = Str::replace('pul', 'pool', $slug);
         $originalSlug = $slug;
         $count = 1;
 

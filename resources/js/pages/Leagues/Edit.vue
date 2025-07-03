@@ -71,7 +71,7 @@ const pageTitle = computed(() =>
                         {{ t('Back to Leagues') }}
                     </Button>
                 </Link>
-                <Link v-if="league" :href="route('leagues.show.page', { league: league.id })" class="ml-4">
+                <Link v-if="league" :href="route('leagues.show.page', { league: league.slug })" class="ml-4">
                     <Button variant="outline">{{ t('View League') }}</Button>
                 </Link>
             </div>

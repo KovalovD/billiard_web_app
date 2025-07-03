@@ -41,6 +41,7 @@ class OfficialRatingPlayerResource extends JsonResource
                     return [
                         'id'   => $this->officialRating->id,
                         'name' => $this->officialRating->name,
+                        'slug' => $this->officialRating->slug,
                         'game' => [
                             'name' => $this->officialRating->game->name,
                             'type' => $this->officialRating->game->type,

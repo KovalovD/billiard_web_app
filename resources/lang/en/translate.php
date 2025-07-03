@@ -79,4 +79,5 @@ return [
     'Max deficit: :n' => 'Max deficit: :n',
     'Deficit: :n'     => 'Deficit: :n',
     'Frame :n'        => 'Frame :n',
+    'Multiplayer Games - :league' => 'Multiplayer Games - :league',
 ];

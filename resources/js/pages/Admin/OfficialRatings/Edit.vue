@@ -181,7 +181,7 @@ onMounted(() => {
         <div class="mx-auto max-w-2xl sm:px-6 lg:px-8">
             <!-- Header -->
             <div class="mb-6 flex items-center justify-between">
-                <Link :href="`/official-ratings/${props.ratingId}`">
+                <Link :href="`/official-ratings/${rating?.slug}`">
                     <Button variant="outline">
                         <ArrowLeftIcon class="mr-2 h-4 w-4"/>
                         Back to Rating

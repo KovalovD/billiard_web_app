@@ -16,6 +16,7 @@ class LeagueResource extends JsonResource
 
         return [
             'id'                             => $this->id,
+            'slug'                         => $this->slug,
             'name'                           => $this->name,
             'picture'                        => $this->picture,
             'details'                        => $this->details,

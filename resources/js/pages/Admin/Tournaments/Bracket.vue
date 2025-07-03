@@ -423,7 +423,7 @@ onMounted(() => {
                         <RefreshCwIcon :class="{ 'animate-spin': isLoading }" class="mr-2 h-4 w-4"/>
                         {{ t('Refresh') }}
                     </Button>
-                    <Button variant="outline" @click="router.visit(`/tournaments/${props.tournamentId}`)">
+                    <Button variant="outline" @click="router.visit(`/tournaments/${tournament?.slug}`)">
                         <ArrowLeftIcon class="mr-2 h-4 w-4"/>
                         {{ t('Back to Tournament') }}
                     </Button>

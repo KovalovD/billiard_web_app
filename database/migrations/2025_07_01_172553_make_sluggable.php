@@ -135,6 +135,7 @@ return new class extends Migration {
     private function generateUniqueSlug(string $title, string $table, int $currentId): string
     {
         $slug = Str::slug($title);
+        $slug = Str::replace('pul', 'pool', $slug);
         $originalSlug = $slug;
         $count = 1;
 

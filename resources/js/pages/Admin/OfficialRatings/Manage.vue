@@ -27,29 +27,7 @@ const isRecalculating = ref(false);
 const error = ref<string | null>(null);
 const successMessage = ref<string | null>(null);
 
-const managementOptions = [
-    {
-        title: t('Manage Players'),
-        description: t('Add, remove, and manage players in this rating'),
-        icon: UsersIcon,
-        href: `/admin/official-ratings/${props.ratingId}/players`,
-        color: 'blue'
-    },
-    {
-        title: t('Manage Tournaments'),
-        description: t('Associate tournaments with this rating and manage coefficients'),
-        icon: TrophyIcon,
-        href: `/admin/official-ratings/${props.ratingId}/tournaments`,
-        color: 'green'
-    },
-    {
-        title: t('Edit Rating Settings'),
-        description: t('Modify rating configuration and settings'),
-        icon: SettingsIcon,
-        href: `/admin/official-ratings/${props.ratingId}/edit`,
-        color: 'purple'
-    }
-];
+const managementOptions = ref();
 
 const quickActions = [
     {
@@ -66,11 +44,35 @@ const fetchData = async () => {
     error.value = null;
 
     try {
-        const ratingResponse = await fetchOfficialRating(props.ratingId, true);
+        const ratingResponse = fetchOfficialRating(props.ratingId, true);
         if (ratingResponse.execute) {
             const success = await ratingResponse.execute();
             if (success) {
                 rating.value = ratingResponse.data.value!;
+
+                managementOptions.value = [
+                    {
+                        title: t('Manage Players'),
+                        description: t('Add, remove, and manage players in this rating'),
+                        icon: UsersIcon,
+                        href: `/admin/official-ratings/${rating.value?.slug}/players`,
+                        color: 'blue'
+                    },
+                    {
+                        title: t('Manage Tournaments'),
+                        description: t('Associate tournaments with this rating and manage coefficients'),
+                        icon: TrophyIcon,
+                        href: `/admin/official-ratings/${rating.value?.slug}/tournaments`,
+                        color: 'green'
+                    },
+                    {
+                        title: t('Edit Rating Settings'),
+                        description: t('Modify rating configuration and settings'),
+                        icon: SettingsIcon,
+                        href: `/admin/official-ratings/${rating.value?.slug}/edit`,
+                        color: 'purple'
+                    }
+                ];
             }
         }
     } catch (err: any) {
@@ -140,7 +142,7 @@ onMounted(() => {
         <div class="mx-auto max-w-4xl sm:px-6 lg:px-8">
             <!-- Header -->
             <div class="mb-6 flex items-center justify-between">
-                <Link :href="`/official-ratings/${props.ratingId}`">
+                <Link :href="`/official-ratings/${rating?.slug}`">
                     <Button variant="outline">
                         <ArrowLeftIcon class="mr-2 h-4 w-4"/>
                         {{ t('Back to Rating') }}

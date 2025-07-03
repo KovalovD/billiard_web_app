@@ -378,7 +378,7 @@ watch(
                 </Link>
 
                 <div v-if="isAuthenticated && isAdmin && league" class="flex space-x-2">
-                    <Link :href="route('leagues.edit', { league: league.id })">
+                    <Link :href="route('leagues.edit', { league: league.slug })">
                         <Button variant="secondary">
                             <PencilIcon class="mr-2 h-4 w-4"/>
                             {{ t('Edit League') }}
@@ -532,7 +532,7 @@ watch(
 
                         <!-- Multiplayer Games Section - Available to everyone -->
                         <div v-if="league?.game_multiplayer" class="mb-6 mt-4">
-                            <Link :href="`/leagues/${leagueId}/multiplayer-games`">
+                            <Link :href="`/leagues/${league?.slug}/multiplayer-games`">
                                 <Button variant="secondary">
                                     <GamepadIcon class="mr-2 h-4 w-4"/>
                                     {{ t('View Multiplayer Games') }}

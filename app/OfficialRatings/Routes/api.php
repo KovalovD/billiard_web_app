@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/game-rules', [GameRuleController::class, 'index']);
 Route::get('/game-rules/{gameRule}', [GameRuleController::class, 'show']);
-Route::get('/official-ratings/{officialRating:slug}/rules', [GameRuleController::class, 'getByRating']);
+Route::get('/official-ratings/{officialRating}/rules', [GameRuleController::class, 'getByRating']);
 
 Route::middleware(['auth:sanctum', AdminMiddleware::class])->group(function () {
     Route::post('/game-rules', [GameRuleController::class, 'store']);
@@ -23,18 +23,18 @@ Route::group(['prefix' => 'official-ratings'], static function () {
     Route::get('/one-year-rating',
         [OfficialRatingsController::class, 'getOneYearRating'])->name('official-ratings.one-year-rating');
 
-    Route::get('/{officialRating:slug}', [OfficialRatingsController::class, 'show'])->name('official-ratings.show.api');
-    Route::get('/{officialRating:slug}/players',
+    Route::get('/{officialRating}', [OfficialRatingsController::class, 'show'])->name('official-ratings.show.api');
+    Route::get('/{officialRating}/players',
         [OfficialRatingsController::class, 'players'])->name('official-ratings.players');
-    Route::get('/{officialRating:slug}/tournaments',
+    Route::get('/{officialRating}/tournaments',
         [OfficialRatingsController::class, 'tournaments'])->name('official-ratings.tournaments');
-    Route::get('/{officialRating:slug}/top-players',
+    Route::get('/{officialRating}/top-players',
         [OfficialRatingsController::class, 'topPlayers'])->name('official-ratings.top-players');
-    Route::get('/{officialRating:slug}/players/{userId}',
+    Route::get('/{officialRating}/players/{userId}',
         [OfficialRatingsController::class, 'playerRating'])->name('official-ratings.player-rating');
 
 
-    Route::middleware('auth:sanctum')->get('/{officialRating:slug}/player-delta',
+    Route::middleware('auth:sanctum')->get('/{officialRating}/player-delta',
         [OfficialRatingsController::class, 'playerDelta'])->name('official-ratings.player-delta');
 });
 // Admin official ratings routes
@@ -42,38 +42,38 @@ Route::middleware(['auth:sanctum', AdminMiddleware::class])
     ->prefix('admin/official-ratings')
     ->group(function () {
         Route::post('/', [AdminOfficialRatingsController::class, 'store'])->name('admin.official-ratings.store');
-        Route::put('/{officialRating:slug}',
+        Route::put('/{officialRating}',
             [AdminOfficialRatingsController::class, 'update'])->name('admin.official-ratings.update');
-        Route::delete('/{officialRating:slug}',
+        Route::delete('/{officialRating}',
             [AdminOfficialRatingsController::class, 'destroy'])->name('admin.official-ratings.destroy');
         // Tournament management
-        Route::post('/{officialRating:slug}/tournaments',
+        Route::post('/{officialRating}/tournaments',
             [AdminOfficialRatingsController::class, 'addTournament'])->name('admin.official-ratings.add-tournament');
-        Route::delete('/{officialRating:slug}/tournaments/{tournament:slug}',
+        Route::delete('/{officialRating}/tournaments/{tournament}',
             [
                 AdminOfficialRatingsController::class, 'removeTournament',
             ])->name('admin.official-ratings.remove-tournament');
 
         // Player management
-        Route::post('/{officialRating:slug}/players',
+        Route::post('/{officialRating}/players',
             [AdminOfficialRatingsController::class, 'addPlayer'])->name('admin.official-ratings.add-player');
-        Route::delete('/{officialRating:slug}/players/{userId}',
+        Route::delete('/{officialRating}/players/{userId}',
             [AdminOfficialRatingsController::class, 'removePlayer'])->name('admin.official-ratings.remove-player');
 
         // Rating management
-        Route::post('/{officialRating:slug}/recalculate', [
+        Route::post('/{officialRating}/recalculate', [
             AdminOfficialRatingsController::class, 'recalculatePositions',
         ])->name('admin.official-ratings.recalculate-positions');
-        Route::post('/{officialRating:slug}/recalculate-from-records', [
+        Route::post('/{officialRating}/recalculate-from-records', [
             AdminOfficialRatingsController::class, 'recalculateFromRecords',
         ])->name('admin.official-ratings.recalculate-from-records');
-        Route::post('/{officialRating:slug}/update-from-tournament/{tournament}',
+        Route::post('/{officialRating}/update-from-tournament/{tournament}',
             [
                 AdminOfficialRatingsController::class, 'updateFromTournament',
             ])->name('admin.official-ratings.update-from-tournament');
 
         // Data integrity
-        Route::get('/{officialRating:slug}/integrity-report',
+        Route::get('/{officialRating}/integrity-report',
             [AdminOfficialRatingsController::class, 'getIntegrityReport'])
             ->name('admin.official-ratings.integrity-report')
         ;

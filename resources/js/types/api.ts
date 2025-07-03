@@ -2,6 +2,7 @@
 
 export interface User {
     id: number;
+    slug: string;
     firstname: string;
     lastname: string;
     name?: string;
@@ -81,6 +82,7 @@ export interface LoginResponse {
 
 export interface League {
     id: number;
+    slug: string;
     name: string;
     picture?: string | null;
     details?: string | null;
@@ -219,6 +221,7 @@ export interface MultiplayerGamePlayer {
 
 export interface MultiplayerGame {
     id: number;
+    slug: string;
     official_rating_id: number;
     league_id: number;
     game_id: number;
@@ -305,6 +308,7 @@ export interface UserStats {
 
 export interface OfficialRating {
     id: number;
+    slug: string;
     name: string;
     description: string | number;
     is_active: boolean;
@@ -431,6 +435,7 @@ export type BracketType = 'single' | 'double_upper' | 'double_lower';
 
 export interface Tournament {
     id: number;
+    slug: string;
     name: string;
     regulation?: string;
     details?: string;
@@ -664,32 +669,4 @@ export interface CreateTournamentPayload {
     auto_approve_applications?: boolean;
     official_rating_id?: number;
     rating_coefficient?: number;
-}
-
-export interface UpdateTournamentMatchPayload {
-    player1_score?: number;
-    player2_score?: number;
-    club_table_id?: number;
-    stream_url?: string;
-    status?: MatchStatus;
-    scheduled_at?: string;
-    admin_notes?: string;
-}
-
-export interface StartTournamentMatchPayload {
-    club_table_id: number;
-    stream_url?: string;
-}
-
-export interface FinishTournamentMatchPayload {
-    player1_score: number;
-    player2_score: number;
-}
-
-export interface UpdateTournamentPlayerSeedingPayload {
-    seed_number: number;
-}
-
-export interface AssignTournamentGroupPayload {
-    group_code: string;
 }

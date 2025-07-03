@@ -212,7 +212,7 @@ onMounted(fetchData);
             <!-- Header -->
             <div class="mb-6 flex items-center justify-between">
                 <div class="flex items-center gap-4">
-                    <Link :href="`/admin/official-ratings/${ratingId}/manage`">
+                    <Link :href="`/admin/official-ratings/${rating?.slug}/manage`">
                         <Button variant="outline">
                             <ArrowLeftIcon class="mr-2 h-4 w-4"/>
                             Back to Rating

@@ -401,13 +401,13 @@ const getRowClass = (player: OfficialRatingPlayer): string => {
                 </Link>
 
                 <div v-if="isAdmin && rating" class="flex space-x-2">
-                    <Link :href="`/admin/official-ratings/${rating.id}/edit`">
+                    <Link :href="`/admin/official-ratings/${rating.slug}/edit`">
                         <Button variant="secondary">
                             <PencilIcon class="mr-2 h-4 w-4"/>
                             {{ t('Edit Rating') }}
                         </Button>
                     </Link>
-                    <Link :href="`/admin/official-ratings/${rating.id}/manage`">
+                    <Link :href="`/admin/official-ratings/${rating.slug}/manage`">
                         <Button variant="secondary">
                             <UserPlusIcon class="mr-2 h-4 w-4"/>
                             {{ t('Manage') }}

@@ -294,12 +294,12 @@ const getRowClass = (tournament: Tournament): string => {
 // Event delegation handler
 const handleTableClick = (event: MouseEvent) => {
     const target = event.target as HTMLElement;
-    const row = target.closest('tr[data-tournament-id]');
+    const row = target.closest('tr[data-tournament-slug]');
 
     if (row) {
-        const tournamentId = row.getAttribute('data-tournament-id');
-        if (tournamentId) {
-            router.visit(`/tournaments/${tournamentId}`);
+        const tournamentSlug = row.getAttribute('data-tournament-slug');
+        if (tournamentSlug) {
+            router.visit(`/tournaments/${tournamentSlug}`);
         }
     }
 };
@@ -307,13 +307,13 @@ const handleTableClick = (event: MouseEvent) => {
 const handleTableKeydown = (event: KeyboardEvent) => {
     if (event.key === 'Enter' || event.key === ' ') {
         const target = event.target as HTMLElement;
-        const row = target.closest('tr[data-tournament-id]');
+        const row = target.closest('tr[data-tournament-slug]');
 
         if (row) {
             event.preventDefault();
-            const tournamentId = row.getAttribute('data-tournament-id');
-            if (tournamentId) {
-                router.visit(`/tournaments/${tournamentId}`);
+            const tournamentSlug = row.getAttribute('data-tournament-slug');
+            if (tournamentSlug) {
+                router.visit(`/tournaments/${tournamentSlug}`);
             }
         }
     }
@@ -423,7 +423,7 @@ onUnmounted(() => {
                                 :loading="isLoading"
                                 :row-class="getRowClass"
                                 :row-attributes="(tournament) => ({
-                                    'data-tournament-id': tournament.id?.toString(),
+                                    'data-tournament-slug': tournament.slug?.toString(),
                                     'role': 'button',
                                     'tabindex': '0',
                                     'aria-label': `View ${tournament.name} tournament details`

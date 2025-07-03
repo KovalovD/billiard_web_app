@@ -237,7 +237,7 @@ const getActions = (game: MultiplayerGame): ActionItem[] => {
             actions.push({
                 label: t('Manage'),
                 icon: SettingsIcon,
-                href: `/leagues/${props.leagueId}/multiplayer-games/${game.id}`,
+                href: `/leagues/${league.value?.slug}/multiplayer-games/${game.slug}`,
                 show: true
             });
             actions.push({
@@ -251,7 +251,7 @@ const getActions = (game: MultiplayerGame): ActionItem[] => {
             actions.push({
                 label: t('Manage'),
                 icon: SettingsIcon,
-                href: `/leagues/${props.leagueId}/multiplayer-games/${game.id}`,
+                href: `/leagues/${league.value?.slug}/multiplayer-games/${game.slug}`,
                 show: true
             });
         }
@@ -269,12 +269,12 @@ const handleTableClick = (event: MouseEvent) => {
         return;
     }
 
-    const row = target.closest('tr[data-game-id]');
+    const row = target.closest('tr[data-game-slug]');
 
     if (row) {
-        const gameId = row.getAttribute('data-game-id');
+        const gameId = row.getAttribute('data-game-slug');
         if (gameId) {
-            router.visit(`/leagues/${props.leagueId}/multiplayer-games/${gameId}`);
+            router.visit(`/leagues/${league.value?.slug}/multiplayer-games/${gameId}`);
         }
     }
 };
@@ -288,13 +288,13 @@ const handleTableKeydown = (event: KeyboardEvent) => {
             return;
         }
 
-        const row = target.closest('tr[data-game-id]');
+        const row = target.closest('tr[data-game-slug]');
 
         if (row) {
             event.preventDefault();
-            const gameId = row.getAttribute('data-game-id');
+            const gameId = row.getAttribute('data-game-slug');
             if (gameId) {
-                router.visit(`/leagues/${props.leagueId}/multiplayer-games/${gameId}`);
+                router.visit(`/leagues/${league.value?.slug}/multiplayer-games/${gameId}`);
             }
         }
     }
@@ -360,7 +360,7 @@ onUnmounted(() => {
             <!-- Header with back button -->
             <header class="mb-6 flex items-center justify-between">
                 <div class="flex items-center gap-4">
-                    <Link :href="`/leagues/${leagueId}`" aria-label="Navigate back to league page">
+                    <Link :href="`/leagues/${league?.slug}`" aria-label="Navigate back to league page">
                         <Button variant="outline">
                             <ArrowLeftIcon class="mr-2 h-4 w-4" aria-hidden="true"/>
                             {{ t('Back to League') }}
@@ -435,7 +435,7 @@ onUnmounted(() => {
                                 :loading="isLoadingGames"
                                 :row-class="getRowClass"
                                 :row-attributes="(game) => ({
-                                    'data-game-id': game.id?.toString(),
+                                    'data-game-slug': game.slug?.toString(),
                                     'role': 'button',
                                     'tabindex': '0',
                                     'aria-label': `View ${game.name} game details`

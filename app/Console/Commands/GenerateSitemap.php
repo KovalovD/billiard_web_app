@@ -2,7 +2,9 @@
 
 namespace App\Console\Commands;
 
+use App\Core\Models\User;
 use App\Leagues\Models\League;
+use App\Matches\Models\MultiplayerGame;
 use App\OfficialRatings\Models\OfficialRating;
 use App\Tournaments\Models\Tournament;
 use Illuminate\Console\Command;
@@ -41,8 +43,23 @@ class GenerateSitemap extends Command
 
         // Add dynamic pages
         League::whereNotNull('updated_at')->each(function (League $league) use ($sitemap) {
-            $sitemap->add(Url::create("/leagues/{$league->id}")
+            $sitemap->add(Url::create("/leagues/{$league->slug}")
                 ->setLastModificationDate($league->updated_at)
+                ->setPriority(0.8)
+                ->setChangeFrequency(Url::CHANGE_FREQUENCY_WEEKLY));
+        });
+
+        MultiplayerGame::with('league')->whereNotNull('updated_at')->each(function (MultiplayerGame $game) use ($sitemap,
+        ) {
+            $sitemap->add(Url::create("/leagues/{$game->league->slug}/multiplayer-games/{$game->slug}")
+                ->setLastModificationDate($game->updated_at)
+                ->setPriority(0.8)
+                ->setChangeFrequency(Url::CHANGE_FREQUENCY_WEEKLY));
+        });
+
+        User::whereNotNull('updated_at')->each(function (User $user) use ($sitemap) {
+            $sitemap->add(Url::create("/players/{$user->slug}")
+                ->setLastModificationDate($user->updated_at)
                 ->setPriority(0.8)
                 ->setChangeFrequency(Url::CHANGE_FREQUENCY_WEEKLY));
         });
@@ -50,7 +67,7 @@ class GenerateSitemap extends Command
         Tournament::whereNotNull('updated_at')->where('status', '!=', 'cancelled')->each(function (
             Tournament $tournament,
         ) use ($sitemap) {
-            $sitemap->add(Url::create("/tournaments/{$tournament->id}")
+            $sitemap->add(Url::create("/tournaments/{$tournament->slug}")
                 ->setLastModificationDate($tournament->updated_at)
                 ->setPriority(0.8)
                 ->setChangeFrequency(Url::CHANGE_FREQUENCY_WEEKLY));
@@ -60,7 +77,7 @@ class GenerateSitemap extends Command
         (
             $sitemap,
         ) {
-            $sitemap->add(Url::create("/official-ratings/{$rating->id}")
+            $sitemap->add(Url::create("/official-ratings/{$rating->slug}")
                 ->setLastModificationDate($rating->updated_at)
                 ->setPriority(0.7)
                 ->setChangeFrequency(Url::CHANGE_FREQUENCY_MONTHLY));

@@ -16,6 +16,7 @@ class PlayerDetailResource extends JsonResource
 
         return [
             'id'                 => $this->id,
+            'slug' => $this->slug,
             'firstname'          => $this->firstname,
             'lastname'           => $this->lastname,
             'full_name'          => $this->full_name,

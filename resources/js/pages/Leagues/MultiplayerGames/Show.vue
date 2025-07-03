@@ -566,7 +566,7 @@ onMounted(() => {
         <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
             <!-- Header with back button -->
             <div class="mb-6 flex items-center justify-between">
-                <Link :href="`/leagues/${leagueId}/multiplayer-games`">
+              <Link :href="`/leagues/${league?.slug}/multiplayer-games`">
                     <Button variant="outline">
                         <ArrowLeftIcon class="mr-2 h-4 w-4"/>
                         {{ t('Back to Games') }}

@@ -307,7 +307,7 @@ const handleSubmit = async () => {
 };
 
 const handleCancel = () => {
-    router.visit(`/tournaments/${props.tournamentId}`);
+    router.visit(`/tournaments/${tournament.value?.slug}`);
 };
 
 onMounted(async () => {

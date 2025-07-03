@@ -131,10 +131,10 @@ const getRowClass = (): string => {
 // Event delegation handler
 const handleTableClick = (event: MouseEvent) => {
     const target = event.target as HTMLElement;
-    const row = target.closest('tr[data-league-id]');
+    const row = target.closest('tr[data-league-slug]');
 
     if (row) {
-        const leagueId = row.getAttribute('data-league-id');
+        const leagueId = row.getAttribute('data-league-slug');
         if (leagueId) {
             router.visit(`/leagues/${leagueId}`);
         }
@@ -144,11 +144,11 @@ const handleTableClick = (event: MouseEvent) => {
 const handleTableKeydown = (event: KeyboardEvent) => {
     if (event.key === 'Enter' || event.key === ' ') {
         const target = event.target as HTMLElement;
-        const row = target.closest('tr[data-league-id]');
+        const row = target.closest('tr[data-league-slug]');
 
         if (row) {
             event.preventDefault();
-            const leagueId = row.getAttribute('data-league-id');
+            const leagueId = row.getAttribute('data-league-slug');
             if (leagueId) {
                 router.visit(`/leagues/${leagueId}`);
             }
@@ -255,7 +255,7 @@ onUnmounted(() => {
                                 :loading="isLoading"
                                 :row-class="getRowClass"
                                 :row-attributes="(league) => ({
-                                    'data-league-id': league.id?.toString(),
+                                    'data-league-slug': league.slug?.toString(),
                                     'role': 'button',
                                     'tabindex': '0',
                                     'aria-label': `View ${league.name} league details`
