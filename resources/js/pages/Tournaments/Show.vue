@@ -32,6 +32,7 @@ import {
 import {computed, onMounted, ref} from 'vue';
 import DataTable from '@/Components/ui/data-table/DataTable.vue';
 import StageTransition from "@/Components/Tournament/StageTransition.vue";
+import {useSeo} from "@/composables/useSeo";
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -52,6 +53,7 @@ const isLoadingMatches = ref(false);
 const isLoadingGroups = ref(false);
 const error = ref<string | null>(null);
 const showTablesModal = ref(false);
+const {setSeoMeta, generateBreadcrumbJsonLd, generateSportsEventJsonLd} = useSeo();
 
 // Get initial tab from URL query parameter
 const getInitialTab = (): 'info' | 'players' | 'bracket' | 'matches' | 'groups' | 'results' | 'applications' => {
@@ -388,12 +390,6 @@ const getPlayersInGroup = (groupCode: string) => {
         });
 };
 
-onMounted(() => {
-    fetchTournament();
-    fetchPlayers();
-    fetchMatches();
-    fetchGroups();
-});
 
 // Add columns definition before the template
 const columns = computed(() => [
@@ -456,6 +452,61 @@ const columns = computed(() => [
         })
     }
 ]);
+
+onMounted(() => {
+    fetchTournament().then(() => {
+        if (tournament.value) {
+            setSeoMeta({
+                title: t(':name - :type Billiard Tournament', {
+                    name: tournament.value.name,
+                    type: tournament.value.tournament_type_display
+                }),
+                description: t('tournament_desc', {
+                    name: tournament.value.name,
+                    city: tournament.value.city ? `${tournament.value.city.name}, ${tournament.value.city.country?.name}` : t('Multiple locations'),
+                    type: tournament.value.tournament_type_display,
+                    prize: formatCurrency(tournament.value.prize_pool || 0),
+                    players: tournament.value.confirmed_players_count
+                }),
+                keywords: [
+                    tournament.value.name,
+                    'billiard tournament',
+                    tournament.value.game?.name || 'pool tournament',
+                    tournament.value.city?.name || '',
+                    'prize pool',
+                    'professional billiards'
+                ].filter(k => k),
+                ogType: 'website',
+                jsonLd: {
+                    ...generateBreadcrumbJsonLd([
+                        {name: t('Home'), url: window.location.origin},
+                        {name: t('Tournaments'), url: `${window.location.origin}/tournaments`},
+                        {
+                            name: tournament.value.name,
+                            url: `${window.location.origin}/tournaments/${tournament.value.slug}`
+                        }
+                    ]),
+                    ...generateSportsEventJsonLd({
+                        name: tournament.value.name,
+                        description: tournament.value.details || t('Professional billiard tournament'),
+                        startDate: tournament.value.start_date,
+                        endDate: tournament.value.end_date,
+                        location: tournament.value.city ? {
+                            name: tournament.value.club?.name || tournament.value.city.name,
+                            city: tournament.value.city.name,
+                            country: tournament.value.city.country?.name
+                        } : undefined,
+                        organizer: tournament.value.organizer || 'WinnerBreak'
+                    })
+                }
+            });
+        }
+    });
+    fetchPlayers();
+    fetchMatches();
+    fetchGroups();
+});
+
 </script>
 
 <template>

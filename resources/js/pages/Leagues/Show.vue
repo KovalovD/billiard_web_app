@@ -28,6 +28,7 @@ import {
 import {computed, onMounted, ref, watch} from 'vue';
 import AddPlayerModal from "@/Components/League/MultiplayerGame/AddPlayerModal.vue";
 import {useLocale} from '@/composables/useLocale';
+import {useSeo} from "@/composables/useSeo";
 
 const adminDropdownOpen = ref(false);
 const adminDropdownRef = ref(null);
@@ -37,6 +38,8 @@ defineOptions({layout: AuthenticatedLayout});
 const props = defineProps<{
     leagueId: number | string;
 }>();
+
+const {setSeoMeta, generateBreadcrumbJsonLd, generateSportsEventJsonLd} = useSeo();
 
 const {user, isAuthenticated, isAdmin} = useAuth();
 const leagues = useLeagues();
@@ -324,7 +327,34 @@ const authUserIsConfirmed = computed(() => {
 
 // Initialize data
 onMounted(() => {
-    fetchLeague();
+    fetchLeague().then(() => {
+        if (league.value) {
+            setSeoMeta({
+                title: t(':name - Billiard League Details', {name: league.value.name}),
+                description: t('league_desc', {
+                    name: league.value.name,
+                    details: league.value.details ? league.value.details.substring(0, 100) + '... ' : ''
+                }),
+                keywords: [league.value.name, 'billiard league', league.value.game || 'pool', 'league standings', 'ELO rating', 'competitive billiards'],
+                ogType: 'website',
+                jsonLd: {
+                    ...generateBreadcrumbJsonLd([
+                        {name: t('Home'), url: window.location.origin},
+                        {name: t('Leagues'), url: `${window.location.origin}/leagues`},
+                        {name: league.value.name, url: `${window.location.origin}/leagues/${league.value.slug}`},
+                    ]),
+                    ...generateSportsEventJsonLd({
+                        name: league.value.name,
+                        description: league.value.details || t('Competitive billiard league'),
+                        startDate: league.value.started_at,
+                        endDate: league.value.finished_at,
+                        location: undefined,
+                        organizer: 'WinnerBreak'
+                    })
+                }
+            });
+        }
+    });
     fetchPlayers();
     fetchMatches();
 

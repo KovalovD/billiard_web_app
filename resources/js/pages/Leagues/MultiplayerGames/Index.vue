@@ -309,7 +309,7 @@ onMounted(() => {
         if (league.value) {
             setSeoMeta({
                 title: t('Multiplayer Games - :league', {league: league.value.name}),
-                description: t('Join multiplayer billiard games in :league. Compete in elimination games with prize pools and advance through the brackets.', {league: league.value.name}),
+                description: t('mp_game_desc', {league: league.value.name}),
                 keywords: ['multiplayer billiards', 'elimination games', 'prize pool', 'league games', league.value.name],
                 ogType: 'website',
                 jsonLd: {

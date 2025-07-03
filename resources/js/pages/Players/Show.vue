@@ -489,7 +489,7 @@ onMounted(() => {
         if (player.value) {
             setSeoMeta({
                 title: t(':name - Professional Billiard Player Profile', {name: playerFullName.value}),
-                description: t('View :name\'s billiard statistics, tournament wins, league performance, and official ratings. Professional pool player profile and achievements.', {name: playerFullName.value}),
+              description: t('player_desc', {name: playerFullName.value}),
                 keywords: [`${playerFullName.value}`, 'billiard player', 'pool player profile', 'tournament statistics', 'player achievements'],
                 ogType: 'profile',
                 jsonLd: {

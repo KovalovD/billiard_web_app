@@ -17,4 +17,18 @@ enum TournamentType: string
     {
         return [self::SINGLE_ELIMINATION->value, self::DOUBLE_ELIMINATION->value, self::DOUBLE_ELIMINATION_FULL->value];
     }
+
+    public function displayName(): string
+    {
+        return match ($this) {
+            self::SINGLE_ELIMINATION => 'Single Elimination',
+            self::DOUBLE_ELIMINATION => 'Double Elimination',
+            self::DOUBLE_ELIMINATION_FULL => 'Double Elimination All Places',
+            self::ROUND_ROBIN => 'Round Robin',
+            self::GROUPS => 'Groups',
+            self::GROUPS_PLAYOFF => 'Groups Playoff',
+            self::TEAM_GROUPS_PLAYOFF => 'Team Groups Playoff',
+            self::KILLER_POOL => 'Killer Pool',
+        };
+    }
 }

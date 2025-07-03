@@ -30,6 +30,7 @@ import {useLocale} from '@/composables/useLocale';
 import GameFinishModal from "@/Components/League/MultiplayerGame/GameFinishModal.vue";
 import AddPlayerModal from "@/Components/League/MultiplayerGame/AddPlayerModal.vue";
 import DataTable from '@/Components/ui/data-table/DataTable.vue';
+import {useSeo} from "@/composables/useSeo";
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -61,6 +62,7 @@ const showFinishModal = ref(false);
 const showModeratorModal = ref(false);
 const actionFeedback = ref<{ type: 'success' | 'error', message: string } | null>(null);
 const copiedWidgetId = ref<string | null>(null);
+const {setSeoMeta, generateBreadcrumbJsonLd} = useSeo();
 
 // Get initial tab from URL query parameter
 const getInitialTab = (): 'game' | 'prizes' | 'ratings' | 'timefund' | 'widget' => {
@@ -553,10 +555,68 @@ watch(game, (newGame) => {
     }
 }, {deep: true});
 
+const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('uk-UA', {style: 'currency', currency: 'UAH'})
+        .format(amount)
+        .replace('UAH', '₴');
+};
+
 // Lifecycle hooks
 onMounted(() => {
     fetchLeague();
     fetchGame();
+
+    const setSeoAfterLoad = () => {
+        if (league.value && game.value) {
+            setSeoMeta({
+                title: t(':game - :league Multiplayer Game', {game: game.value.name, league: league.value.name}),
+                description: t('mp_game_desc_solo', {
+                    league: league.value.name,
+                    players: game.value.total_players_count,
+                    prize: formatCurrency(game.value.entrance_fee * game.value.total_players_count)
+                }),
+                keywords: [game.value.name, league.value.name, 'multiplayer billiards', 'killer pool', 'elimination game', 'prize pool'],
+                ogType: 'website',
+                jsonLd: {
+                    ...generateBreadcrumbJsonLd([
+                        {name: t('Home'), url: window.location.origin},
+                        {name: t('Leagues'), url: `${window.location.origin}/leagues`},
+                        {name: league.value.name, url: `${window.location.origin}/leagues/${league.value.slug}`},
+                        {
+                            name: t('Multiplayer Games'),
+                            url: `${window.location.origin}/leagues/${league.value.slug}/multiplayer-games`
+                        },
+                        {
+                            name: game.value.name,
+                            url: `${window.location.origin}/leagues/${league.value.slug}/multiplayer-games/${game.value.slug}`
+                        }
+                    ]),
+                    "@context": "https://schema.org",
+                    "@type": "SportsEvent",
+                    "name": game.value.name,
+                    "description": t('Multiplayer billiard game in :league', {league: league.value.name}),
+                    "sport": "Billiards",
+                    "startDate": game.value.started_at,
+                    "endDate": game.value.completed_at,
+                    "location": {
+                        "@type": "VirtualLocation",
+                        "name": league.value.name
+                    },
+                    "organizer": {
+                        "@type": "Organization",
+                        "name": "WinnerBreak"
+                    }
+                }
+            });
+        }
+    };
+
+    const unwatch = setInterval(() => {
+        if (!isLoadingLeague.value && league.value && !isLoadingGame.value && game.value) {
+            setSeoAfterLoad();
+            clearInterval(unwatch);
+        }
+    }, 100);
 });
 </script>
 

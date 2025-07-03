@@ -23,6 +23,7 @@ import {computed, nextTick, onMounted, ref} from 'vue';
 import DataTable from '@/Components/ui/data-table/DataTable.vue';
 import {useGameRules} from '@/composables/useGameRules';
 import {useToastStore} from '@/stores/toast';
+import {useSeo} from "@/composables/useSeo";
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -33,6 +34,7 @@ const props = defineProps<{
 const {t} = useLocale();
 
 const {isAdmin, isAuthenticated, user} = useAuth();
+const {setSeoMeta, generateBreadcrumbJsonLd} = useSeo();
 
 const rating = ref<OfficialRating | null>(null);
 const players = ref<OfficialRatingPlayer[]>([]);
@@ -275,13 +277,6 @@ const deleteRules = async () => {
     }
 };
 
-onMounted(() => {
-    fetchRating();
-    fetchPlayers();
-    fetchTournaments();
-    fetchRuleByRating(Number(props.ratingId));
-});
-
 // Add columns definition before the template
 const columns = computed(() => [
     {
@@ -384,6 +379,41 @@ const getRowClass = (player: OfficialRatingPlayer): string => {
     }
     return baseClass;
 };
+
+onMounted(() => {
+    fetchRating().then(() => {
+        if (rating.value) {
+            setSeoMeta({
+                title: t(':name - Official Billiard Rating System', {name: rating.value.name}),
+                description: t('rating_desc', {
+                    description: rating.value.description ? rating.value.description + '. ' : '',
+                    game: rating.value.game_type_name || 'billiard'
+                }),
+                keywords: [rating.value.name, 'billiard rating', rating.value.game_type_name || 'pool', 'player rankings', 'ELO rating', 'tournament standings'],
+                ogType: 'website',
+                jsonLd: {
+                    ...generateBreadcrumbJsonLd([
+                        {name: t('Home'), url: window.location.origin},
+                        {name: t('Official Ratings'), url: `${window.location.origin}/official-ratings`},
+                        {
+                            name: rating.value.name,
+                            url: `${window.location.origin}/official-ratings/${rating.value.slug}`
+                        }
+                    ]),
+                    "@context": "https://schema.org",
+                    "@type": "SportsActivityLocation",
+                    "name": rating.value.name,
+                    "description": rating.value.description || t('Official billiard rating system'),
+                    "sport": "Billiards"
+                }
+            });
+        }
+    });
+    fetchPlayers();
+    fetchTournaments();
+    fetchRuleByRating(Number(props.ratingId));
+});
+
 </script>
 
 <template>
