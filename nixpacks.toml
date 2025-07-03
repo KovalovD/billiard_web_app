@@ -18,6 +18,7 @@ cmds = [
 [phases.build]
 dependsOn = ["install"]
 cmds = [
+    "php artisan ziggy:generate",
     "npm run build",
     # факультативно лінкуємо storage і кэшимо конфіг
     "php artisan storage:link || true",
