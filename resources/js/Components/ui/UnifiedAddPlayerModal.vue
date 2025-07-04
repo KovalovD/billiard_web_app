@@ -151,7 +151,7 @@ const addExistingPlayer = async () => {
         });
 
         emit('added');
-        handleClose();
+        resetState();
     } catch (error: any) {
         emit('error', error);
     } finally {
@@ -171,7 +171,7 @@ const addNewPlayer = async () => {
         });
 
         emit('added');
-        handleClose();
+        resetState();
     } catch (error: any) {
         emit('error', error);
     } finally {

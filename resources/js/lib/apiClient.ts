@@ -60,7 +60,7 @@ export async function apiClient<T>(endpoint: string, options: import('axios').Ax
         const response = await axios.request<T>(config);
         return response.data;
     } catch (error: any) {
-        const apiError: ApiError = new Error(error.response?.data?.message || error.message || 'API error') as ApiError;
+        const apiError: ApiError = new Error(error.response?.data?.error?.message || error.response?.data?.message || error.message || 'API error') as ApiError;
         apiError.response = error.response;
         apiError.data = error.response?.data;
         apiError.status = error.response?.status;

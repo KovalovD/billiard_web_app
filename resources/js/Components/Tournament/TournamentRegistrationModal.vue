@@ -2,9 +2,10 @@
 import {Button, Input, Label, Modal, Spinner} from '@/Components/ui/index';
 import {apiClient} from '@/lib/apiClient';
 import type {ApiError, Tournament} from '@/types/api';
-import {CheckCircleIcon, UserPlusIcon} from 'lucide-vue-next';
+import {AlertCircleIcon, CheckCircleIcon, UserPlusIcon} from 'lucide-vue-next';
 import {computed, ref, watch} from 'vue';
 import {useLocale} from '@/composables/useLocale';
+import {debounce} from 'lodash';
 
 interface Props {
     show: boolean;
@@ -13,7 +14,6 @@ interface Props {
 
 interface Emits {
     (e: 'close'): void;
-
     (e: 'success'): void;
 }
 
@@ -32,6 +32,7 @@ const form = ref({
 });
 
 const isSubmitting = ref(false);
+const isCheckingEmail = ref(false);
 const errors = ref<Record<string, string>>({});
 const emailCheckResult = ref<{
     exists: boolean;
@@ -55,6 +56,7 @@ const isFormValid = computed(() => {
 const canSubmit = computed(() => {
     return isFormValid.value &&
         !isSubmitting.value &&
+        !isCheckingEmail.value &&
         (!emailCheckResult.value || emailCheckResult.value.can_apply);
 });
 
@@ -74,12 +76,15 @@ const resetForm = () => {
     successMessage.value = '';
 };
 
-const checkEmail = async () => {
+// Debounced email check
+const checkEmail = debounce(async () => {
     if (!form.value.email || !form.value.email.includes('@')) {
         emailCheckResult.value = null;
+        isCheckingEmail.value = false;
         return;
     }
 
+    isCheckingEmail.value = true;
     try {
         emailCheckResult.value = await apiClient<{
             exists: boolean;
@@ -90,8 +95,10 @@ const checkEmail = async () => {
     } catch (error) {
         console.error('Email check failed:', error);
         emailCheckResult.value = null;
+    } finally {
+        isCheckingEmail.value = false;
     }
-};
+}, 500);
 
 const handleSubmit = async () => {
     if (!canSubmit.value) return;
@@ -119,28 +126,62 @@ const handleSubmit = async () => {
         }
     } catch (error: any) {
         const apiError = error as ApiError;
-        if (apiError.data?.errors) {
-            errors.value = Object.entries(apiError.data.errors).reduce((acc, [key, messages]) => {
-                acc[key] = Array.isArray(messages) ? messages[0] : messages;
-                return acc;
-            }, {} as Record<string, string>);
+
+        // Handle validation errors from the API
+        if (apiError.status === 422) {
+            // Check for errors in different possible locations
+            const validationErrors =
+                apiError.data?.error?.extras?.errors || // Format: { error: { extras: { errors: {} } } }
+                apiError.data?.errors || // Format: { errors: {} }
+                apiError.response?.data?.error?.extras?.errors || // Format in response.data
+                apiError.response?.data?.errors || // Alternative format
+                null;
+
+            if (validationErrors) {
+                // Map backend errors to form fields
+                Object.entries(validationErrors).forEach(([key, messages]) => {
+                    errors.value[key] = Array.isArray(messages) ? messages[0] : messages;
+                });
+            } else {
+                // Fallback for validation errors without field details
+                errors.value.general = apiError.data?.error?.message ||
+                    apiError.data?.message ||
+                    t('Validation failed. Please check your input.');
+            }
         } else {
-            errors.value.general = apiError.message || t('An error occurred during registration.');
+            // Handle other types of errors
+            errors.value.general = apiError.data?.error?.message ||
+                apiError.data?.message ||
+                apiError.message ||
+                t('An error occurred during registration.');
         }
     } finally {
         isSubmitting.value = false;
     }
 };
-
 const handleClose = () => {
     resetForm();
     emit('close');
 };
 
+// Clear field error when user starts typing
+const clearFieldError = (field: string) => {
+    if (errors.value[field]) {
+        delete errors.value[field];
+    }
+};
+
 // Watchers
 watch(() => form.value.email, () => {
+    clearFieldError('email');
     checkEmail();
 });
+
+watch(() => form.value.firstname, () => clearFieldError('firstname'));
+watch(() => form.value.lastname, () => clearFieldError('lastname'));
+watch(() => form.value.phone, () => clearFieldError('phone'));
+watch(() => form.value.password, () => clearFieldError('password'));
+watch(() => form.value.password_confirmation, () => clearFieldError('password_confirmation'));
 
 watch(() => props.show, (show) => {
     if (show) {
@@ -176,12 +217,18 @@ watch(() => props.show, (show) => {
                     <span v-if="tournament.city" class="ml-4">
                         {{ t('Location:') }} {{ tournament.city.name }}
                     </span>
+                    <span v-if="tournament.entry_fee > 0" class="ml-4">
+                        {{ t('Entry fee:') }} {{ tournament.entry_fee }}₴
+                    </span>
                 </p>
             </div>
 
             <!-- General Error -->
             <div v-if="errors.general" class="rounded-md bg-red-50 p-4 dark:bg-red-900/20">
-                <p class="text-sm text-red-800 dark:text-red-300">{{ errors.general }}</p>
+                <div class="flex">
+                    <AlertCircleIcon class="h-5 w-5 text-red-400"/>
+                    <p class="ml-3 text-sm text-red-800 dark:text-red-300">{{ errors.general }}</p>
+                </div>
             </div>
 
             <!-- Personal Information -->
@@ -220,20 +267,23 @@ watch(() => props.show, (show) => {
                 <div class="space-y-4">
                     <div>
                         <Label for="email">{{ t('Email') }} *</Label>
-                        <Input
-                            id="email"
-                            v-model="form.email"
-                            :class="{'border-red-500': errors.email}"
-                            :placeholder="t('email@example.com')"
-                            type="email"
-                        />
+                        <div class="relative">
+                            <Input
+                                id="email"
+                                v-model="form.email"
+                                :class="{'border-red-500': errors.email}"
+                                :placeholder="t('email@example.com')"
+                                type="email"
+                            />
+                            <Spinner v-if="isCheckingEmail" class="absolute right-3 top-3 h-4 w-4 text-gray-400"/>
+                        </div>
                         <p v-if="errors.email" class="mt-1 text-sm text-red-600">{{ errors.email }}</p>
 
                         <!-- Email Check Result -->
-                        <div v-if="emailCheckResult && emailCheckResult.exists" class="mt-2">
+                        <div v-if="emailCheckResult && !errors.email" class="mt-2">
                             <p :class="[
                                 'text-sm',
-                                emailCheckResult.can_apply ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'
+                                emailCheckResult.can_apply ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'
                             ]">
                                 {{ emailCheckResult.message }}
                             </p>
@@ -268,6 +318,7 @@ watch(() => props.show, (show) => {
                             type="password"
                         />
                         <p v-if="errors.password" class="mt-1 text-sm text-red-600">{{ errors.password }}</p>
+                        <p v-else class="mt-1 text-xs text-gray-500">{{ t('Minimum 8 characters') }}</p>
                     </div>
 
                     <div>
@@ -275,13 +326,12 @@ watch(() => props.show, (show) => {
                         <Input
                             id="password_confirmation"
                             v-model="form.password_confirmation"
-                            :class="{'border-red-500': form.password && form.password_confirmation && form.password !== form.password_confirmation}"
+                            :class="{'border-red-500': errors.password_confirmation}"
                             :placeholder="t('Confirm your password')"
                             type="password"
                         />
-                        <p v-if="form.password && form.password_confirmation && form.password !== form.password_confirmation"
-                           class="mt-1 text-sm text-red-600">
-                            {{ t('Passwords do not match') }}
+                        <p v-if="errors.password_confirmation" class="mt-1 text-sm text-red-600">
+                            {{ errors.password_confirmation }}
                         </p>
                     </div>
                 </div>
@@ -291,8 +341,10 @@ watch(() => props.show, (show) => {
             <div class="space-y-2 rounded-md bg-gray-50 p-4 text-sm text-gray-600 dark:bg-gray-800 dark:text-gray-400">
                 <p>• {{ t('After registration, your tournament application will be pending admin approval.') }}</p>
                 <p>• {{ t('You will receive an email with your login credentials.') }}</p>
-                <p v-if="tournament.entry_fee > 0">
-                    • {{ t('Entry fee: :amount', {amount: tournament.entry_fee}) }}
+                <p v-if="tournament.application_deadline">
+                    • {{ t('Application deadline:') }} {{
+                        new Date(tournament.application_deadline).toLocaleDateString()
+                    }}
                 </p>
             </div>
         </div>
