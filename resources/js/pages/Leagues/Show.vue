@@ -429,14 +429,14 @@ watch(
                         >
                             <div class="py-1" role="none">
                                 <Link
-                                    :href="`/admin/leagues/${league.id}/pending-players`"
+                                    :href="`/admin/leagues/${league.slug}/pending-players`"
                                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
                                     role="menuitem"
                                 >
                                     {{ t('Pending Players') }}
                                 </Link>
                                 <Link
-                                    :href="`/admin/leagues/${league.id}/confirmed-players`"
+                                    :href="`/admin/leagues/${league.slug}/confirmed-players`"
                                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
                                     role="menuitem"
                                 >

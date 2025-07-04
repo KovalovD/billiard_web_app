@@ -115,11 +115,8 @@ readonly class AdminPlayersService
             // Then add to multiplayer game
             $gameSuccess = false;
             if ($ratingSuccess) {
-                try {
-                    $this->gameService->join($league, $multiplayerGame, $user);
-                    $gameSuccess = true;
-                } catch (Throwable) {
-                }
+                $this->gameService->join($league, $multiplayerGame, $user);
+                $gameSuccess = true;
             }
 
             return [

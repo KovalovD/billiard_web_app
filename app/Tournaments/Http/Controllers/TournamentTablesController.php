@@ -2,7 +2,6 @@
 
 namespace App\Tournaments\Http\Controllers;
 
-use App\Core\Http\Controllers\Controller;
 use App\Core\Http\Resources\ClubTableResource;
 use App\Core\Models\ClubTable;
 use App\Tournaments\Models\Tournament;
@@ -10,7 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
-class TournamentTablesController extends Controller
+readonly class TournamentTablesController
 {
     /**
      * Get available tables for tournament

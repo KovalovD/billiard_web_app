@@ -154,7 +154,7 @@ onMounted(async () => {
         <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
             <!-- Header with back button -->
             <div class="mb-6 flex items-center justify-between">
-                <Link :href="`/leagues/${leagueId}`">
+                <Link :href="`/leagues/${league?.slug}`">
                     <Button variant="outline">
                         <ArrowLeftIcon class="mr-2 h-4 w-4"/>
                         {{ t('Back to League') }}
@@ -166,7 +166,7 @@ onMounted(async () => {
                 </h1>
 
                 <div class="flex space-x-2">
-                    <Link :href="`/admin/leagues/${leagueId}/pending-players`">
+                    <Link :href="`/admin/leagues/${league?.slug}/pending-players`">
                         <Button variant="outline"> {{ t('Pending Players') }}</Button>
                     </Link>
                 </div>

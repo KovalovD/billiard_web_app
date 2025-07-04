@@ -114,7 +114,11 @@ class MultiplayerGame extends Model
 
             // Player must be in rating and in B or C division
             if (!$userRating) {
-                return false;
+                OfficialRatingPlayer::create([
+                    'user_id'            => $user->id,
+                    'official_rating_id' => $this->official_rating_id,
+                    'is_active'          => true,
+                ]);
             }
         }
 
