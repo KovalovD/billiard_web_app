@@ -90,4 +90,10 @@ return [
     'rating_desc'                                                                    => ':description View player rankings, tournament standings, and rating points for :game competitive play.',
     ':name - :type Billiard Tournament'                                              => ':name - :type Billiard Tournament',
     'tournament_desc'                                                                => ':name tournament in :city. :type format with :prize prize pool. :players players competing for championship.',
+    'Applied: :date'                                    => 'Applied: :date',
+    'Pending Applications (:count)'                     => 'Pending Applications (:count)',
+    ':selected of :total pending applications selected' => ':selected of :total pending applications selected',
+    'Confirm Selected (:count)'                         => 'Confirm Selected (:count)',
+    'Reject Selected (:count)'                          => 'Reject Selected (:count)',
+    'Confirmed: :date'                                  => 'Confirmed: :date',
 ];

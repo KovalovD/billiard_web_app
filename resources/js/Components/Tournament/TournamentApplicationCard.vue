@@ -29,7 +29,7 @@ const error = ref<string | null>(null);
 const canApply = computed(() => {
     if (!isAuthenticated.value || !user.value) return false;
     if (application.value) return false;
-    return props.tournament.can_accept_applications;
+    return true;
 });
 
 const canCancelApplication = computed(() => {
@@ -274,11 +274,6 @@ onMounted(() => {
                 <!-- Information Messages -->
                 <div v-if="isDeadlinePassed" class="text-sm text-red-600 dark:text-red-400">
                     {{ t('Application deadline has passed.') }}
-                </div>
-
-                <div v-if="!props.tournament.can_accept_applications && !isDeadlinePassed"
-                     class="text-sm text-gray-600 dark:text-gray-400">
-                    {{ t('This tournament is not accepting applications at this time.') }}
                 </div>
 
                 <div

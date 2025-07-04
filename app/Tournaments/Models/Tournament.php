@@ -129,7 +129,7 @@ class Tournament extends Model
 
     public function canAcceptApplications(): bool
     {
-        if ($this->status !== 'upcoming') {
+        if ($this->status !== TournamentStatus::UPCOMING) {
             return false;
         }
 

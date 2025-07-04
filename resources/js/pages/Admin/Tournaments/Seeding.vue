@@ -202,9 +202,9 @@ const proceedToNextStage = async () => {
 
         // Redirect based on tournament type
         if (tournament.value?.tournament_type && ['groups', 'groups_playoff', 'team_groups_playoff'].includes(tournament.value.tournament_type)) {
-            router.visit(`/admin/tournaments/${props.tournamentId}/groups`);
+            router.visit(`/admin/tournaments/${tournament.value?.slug}/groups`);
         } else {
-            router.visit(`/admin/tournaments/${props.tournamentId}/bracket`);
+            router.visit(`/admin/tournaments/${tournament.value?.slug}/bracket`);
         }
     } catch (err: any) {
         error.value = err.message || t('Failed to complete seeding');

@@ -56,16 +56,16 @@ const transitionToStage = async (newStage: string) => {
         // Redirect based on stage
         switch (newStage) {
             case 'seeding':
-                router.visit(`/admin/tournaments/${props.tournament.id}/seeding`);
+                router.visit(`/admin/tournaments/${props.tournament.slug}/seeding`);
                 break;
             case 'group':
-                router.visit(`/admin/tournaments/${props.tournament.id}/groups`);
+                router.visit(`/admin/tournaments/${props.tournament.slug}/groups`);
                 break;
             case 'bracket':
-                router.visit(`/admin/tournaments/${props.tournament.id}/bracket`);
+                router.visit(`/admin/tournaments/${props.tournament.slug}/bracket`);
                 break;
             case 'completed':
-                router.visit(`/admin/tournaments/${props.tournament.id}/results`);
+                router.visit(`/admin/tournaments/${props.tournament.slug}/results`);
                 break;
         }
     } catch (err: any) {

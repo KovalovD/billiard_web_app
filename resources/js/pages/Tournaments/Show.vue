@@ -10,6 +10,7 @@ import {apiClient} from '@/lib/apiClient';
 import type {Tournament, TournamentGroup, TournamentMatch, TournamentPlayer} from '@/types/api';
 import {Head, Link} from '@inertiajs/vue3';
 import {useLocale} from '@/composables/useLocale';
+import TournamentRegistrationModal from '@/Components/Tournament/TournamentRegistrationModal.vue';
 import {
     ArrowLeftIcon,
     CalendarIcon,
@@ -39,7 +40,7 @@ defineOptions({layout: AuthenticatedLayout});
 const props = defineProps<{
     tournamentId: number | string;
 }>();
-
+const showRegistrationModal = ref(false);
 const {isAdmin, isAuthenticated, user} = useAuth();
 const {t} = useLocale();
 
@@ -79,7 +80,11 @@ const switchTab = (tab: 'info' | 'players' | 'bracket' | 'matches' | 'groups' | 
 
     window.history.replaceState({}, '', url.toString());
 };
-
+const handleRegistrationSuccess = () => {
+    showRegistrationModal.value = false;
+    fetchTournament();
+    fetchPlayers();
+};
 // Get current user ID
 const currentUserId = user.value?.id;
 
@@ -693,16 +698,24 @@ onMounted(() => {
                             <div class="flex items-center justify-between">
                                 <div>
                                     <h3 class="text-lg font-medium text-blue-800 dark:text-blue-300">
-                                        {{ t('Tournament Registration') }}</h3>
+                                        {{ t('Tournament Registration') }}
+                                    </h3>
                                     <p class="text-blue-600 dark:text-blue-400">
-                                        {{ t('This tournament requires application to participate.') }}</p>
+                                        {{ t('Register now to participate in this tournament.') }}
+                                    </p>
                                 </div>
-                                <Link :href="route('login')">
-                                    <Button>
-                                        <LogInIcon class="mr-2 h-4 w-4"/>
-                                        {{ t('Login to Apply') }}
+                                <div class="flex gap-2">
+                                    <Link :href="route('login')">
+                                        <Button variant="outline">
+                                            <LogInIcon class="mr-2 h-4 w-4"/>
+                                            {{ t('Login') }}
+                                        </Button>
+                                    </Link>
+                                    <Button @click="showRegistrationModal = true">
+                                        <UserPlusIcon class="mr-2 h-4 w-4"/>
+                                        {{ t('Register & Apply') }}
                                     </Button>
-                                </Link>
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
@@ -1362,10 +1375,17 @@ onMounted(() => {
             </template>
         </div>
         <TablesManager
-            v-if="tournament"
+            v-if="tournament && isAdmin"
             :show="showTablesModal"
             :tournament-id="tournament.id"
             @close="showTablesModal = false"
+        />
+        <TournamentRegistrationModal
+            v-if="tournament"
+            :show="showRegistrationModal"
+            :tournament="tournament"
+            @close="showRegistrationModal = false"
+            @success="handleRegistrationSuccess"
         />
     </div>
 </template>

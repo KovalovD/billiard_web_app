@@ -6,17 +6,22 @@ use App\Tournaments\Http\Controllers\AdminTournamentMatchesController;
 use App\Tournaments\Http\Controllers\AdminTournamentsController;
 use App\Tournaments\Http\Controllers\AdminTournamentSeedingController;
 use App\Tournaments\Http\Controllers\TournamentApplicationController;
+use App\Tournaments\Http\Controllers\TournamentRegistrationController;
 use App\Tournaments\Http\Controllers\TournamentsController;
 use App\Tournaments\Http\Controllers\TournamentTablesController;
 use App\User\Http\Controllers\UserTournamentsController;
 use Illuminate\Support\Facades\Route;
-
 
 Route::get('user/tournaments/recent', [UserTournamentsController::class, 'recent'])->name('user.tournaments.recent');
 Route::get('user/tournaments/upcoming',
     [UserTournamentsController::class, 'upcoming'])->name('user.tournaments.upcoming');
 
 Route::group(['prefix' => 'tournaments'], static function () {
+    Route::post('/{tournament}/register',
+        [TournamentRegistrationController::class, 'register'])->name('tournaments.register');
+    Route::get('/{tournament}/check-email/{email}',
+        [TournamentRegistrationController::class, 'checkEmail'])->name('tournaments.check-email');
+
     Route::get('/{tournament}/brackets', [TournamentsController::class, 'brackets'])->name('tournaments.brackets');
     Route::get('/{tournament}/groups', [TournamentsController::class, 'groups'])->name('tournaments.groups');
     Route::get('/{tournament}/tables', [TournamentsController::class, 'tables'])->name('tournaments.tables');
