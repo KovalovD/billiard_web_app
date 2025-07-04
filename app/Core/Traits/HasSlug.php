@@ -48,21 +48,6 @@ trait HasSlug
     }
 
     /**
-     * Check if slug already exists
-     */
-    protected function slugExists(string $slug): bool
-    {
-        $query = static::where('slug', $slug);
-
-        // If updating, exclude current model
-        if ($this->exists) {
-            $query->where($this->getKeyName(), '!=', $this->getKey());
-        }
-
-        return $query->exists();
-    }
-
-    /**
      * Get the source for generating the slug
      */
     protected function getSlugSource(): string
@@ -82,6 +67,21 @@ trait HasSlug
     protected function getSlugSourceField(): string
     {
         return property_exists($this, 'slugSource') ? $this->slugSource : 'name';
+    }
+
+    /**
+     * Check if slug already exists
+     */
+    protected function slugExists(string $slug): bool
+    {
+        $query = static::where('slug', $slug);
+
+        // If updating, exclude current model
+        if ($this->exists) {
+            $query->where($this->getKeyName(), '!=', $this->getKey());
+        }
+
+        return $query->exists();
     }
 
     /**

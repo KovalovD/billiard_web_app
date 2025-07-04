@@ -1,5 +1,4 @@
 <?php
-// app/Tournaments/Http/Controllers/AdminTournamentsController.php
 
 namespace App\Tournaments\Http\Controllers;
 
@@ -8,9 +7,7 @@ use App\Auth\DataTransferObjects\RegisterDTO;
 use App\Core\Http\Resources\UserResource;
 use App\OfficialRatings\Services\OfficialRatingService;
 use App\Tournaments\Http\Requests\AddTournamentPlayerRequest;
-use App\Tournaments\Http\Requests\AssignTournamentGroupRequest;
 use App\Tournaments\Http\Requests\CreateTournamentRequest;
-use App\Tournaments\Http\Requests\UpdateTournamentPlayerSeedingRequest;
 use App\Tournaments\Http\Requests\UpdateTournamentRequest;
 use App\Tournaments\Http\Resources\TournamentMatchResource;
 use App\Tournaments\Http\Resources\TournamentPlayerResource;
@@ -19,6 +16,7 @@ use App\Tournaments\Models\Tournament;
 use App\Tournaments\Models\TournamentPlayer;
 use App\Tournaments\Services\TournamentBracketService;
 use App\Tournaments\Services\TournamentService;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -197,52 +195,6 @@ readonly class AdminTournamentsController
     }
 
     /**
-     * Update player seeding
-     * @admin
-     */
-    public function updatePlayerSeeding(
-        UpdateTournamentPlayerSeedingRequest $request,
-        Tournament $tournament,
-        TournamentPlayer $player,
-    ): JsonResponse {
-        if ($player->tournament_id !== $tournament->id) {
-            return response()->json([
-                'message' => 'Player does not belong to this tournament',
-            ], 400);
-        }
-
-        $player = $this->tournamentService->updatePlayerSeeding($player, $request->validated('seed_number'));
-
-        return response()->json([
-            'player'  => new TournamentPlayerResource($player),
-            'message' => 'Player seeding updated successfully',
-        ]);
-    }
-
-    /**
-     * Assign player to group
-     * @admin
-     */
-    public function assignPlayerToGroup(
-        AssignTournamentGroupRequest $request,
-        Tournament $tournament,
-        TournamentPlayer $player,
-    ): JsonResponse {
-        if ($player->tournament_id !== $tournament->id) {
-            return response()->json([
-                'message' => 'Player does not belong to this tournament',
-            ], 400);
-        }
-
-        $player = $this->tournamentService->assignPlayerToGroup($player, $request->validated('group_code'));
-
-        return response()->json([
-            'player'  => new TournamentPlayerResource($player),
-            'message' => 'Player assigned to group successfully',
-        ]);
-    }
-
-    /**
      * Set tournament results with bonus and achievement amounts
      * @admin
      */
@@ -346,26 +298,6 @@ readonly class AdminTournamentsController
     }
 
     /**
-     * Complete seeding phase
-     * @admin
-     */
-    public function completeSeeding(Tournament $tournament): JsonResponse
-    {
-        try {
-            $this->tournamentService->completeSeedingPhase($tournament);
-
-            return response()->json([
-                'tournament' => new TournamentResource($tournament),
-                'message'    => 'Seeding phase completed successfully',
-            ]);
-        } catch (Throwable $e) {
-            return response()->json([
-                'message' => $e->getMessage(),
-            ], 400);
-        }
-    }
-
-    /**
      * Get tournament matches
      * @admin
      */
@@ -397,29 +329,9 @@ readonly class AdminTournamentsController
     }
 
     /**
-     * Get available official ratings for tournament game type
-     * @admin
-     */
-    public function getAvailableOfficialRatings(Tournament $tournament): JsonResponse
-    {
-        $gameType = $tournament->game->type;
-        $ratings = $this->officialRatingService->getRatingsByGameType($gameType);
-
-        return response()->json([
-            'ratings' => $ratings->map(function ($rating) {
-                return [
-                    'id'        => $rating->id,
-                    'name'      => $rating->name,
-                    'description' => $rating->description,
-                    'game_type' => $rating->game_type->value,
-                ];
-            }),
-        ]);
-    }
-
-    /**
      * Get available stage transitions for tournament
      * @admin
+     * @throws Exception
      */
     public function getStageTransitions(Tournament $tournament): JsonResponse
     {

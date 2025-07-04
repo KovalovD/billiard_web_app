@@ -792,38 +792,6 @@ class PlayerService
     }
 
     /**
-     * Calculate worst opponents (lowest win rate against)
-     */
-    private function calculateWorstOpponents($matches, int $playerId, int $minMatches = 3): array
-    {
-        $opponentStats = $this->aggregateOpponentStats($matches, $playerId);
-
-        // Filter by minimum matches and sort by win rate
-        $worstOpponents = [];
-        foreach ($opponentStats as $opponentId => $stats) {
-            if ($stats['total'] >= $minMatches) {
-                $winRate = ($stats['wins'] / $stats['total']) * 100;
-                $worstOpponents[] = [
-                    'opponent_id'      => $opponentId,
-                    'opponent_name'    => $stats['name'],
-                    'matches'          => $stats['total'],
-                    'wins'             => $stats['wins'],
-                    'losses'           => $stats['total'] - $stats['wins'],
-                    'win_rate'         => round($winRate, 2),
-                    'avg_score_margin' => round($stats['score_margin'] / $stats['total'], 2),
-                ];
-            }
-        }
-
-        // Sort by win rate ascending
-        usort($worstOpponents, static function ($a, $b) {
-            return $a['win_rate'] <=> $b['win_rate'];
-        });
-
-        return array_slice($worstOpponents, 0, 10);
-    }
-
-    /**
      * Aggregate statistics by opponent
      */
     private function aggregateOpponentStats($matches, int $playerId): array
@@ -862,6 +830,38 @@ class PlayerService
         }
 
         return $opponentStats;
+    }
+
+    /**
+     * Calculate worst opponents (lowest win rate against)
+     */
+    private function calculateWorstOpponents($matches, int $playerId, int $minMatches = 3): array
+    {
+        $opponentStats = $this->aggregateOpponentStats($matches, $playerId);
+
+        // Filter by minimum matches and sort by win rate
+        $worstOpponents = [];
+        foreach ($opponentStats as $opponentId => $stats) {
+            if ($stats['total'] >= $minMatches) {
+                $winRate = ($stats['wins'] / $stats['total']) * 100;
+                $worstOpponents[] = [
+                    'opponent_id'      => $opponentId,
+                    'opponent_name'    => $stats['name'],
+                    'matches'          => $stats['total'],
+                    'wins'             => $stats['wins'],
+                    'losses'           => $stats['total'] - $stats['wins'],
+                    'win_rate'         => round($winRate, 2),
+                    'avg_score_margin' => round($stats['score_margin'] / $stats['total'], 2),
+                ];
+            }
+        }
+
+        // Sort by win rate ascending
+        usort($worstOpponents, static function ($a, $b) {
+            return $a['win_rate'] <=> $b['win_rate'];
+        });
+
+        return array_slice($worstOpponents, 0, 10);
     }
 
     /**

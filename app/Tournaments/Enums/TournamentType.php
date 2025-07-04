@@ -18,7 +18,7 @@ enum TournamentType: string
         return [self::SINGLE_ELIMINATION->value, self::DOUBLE_ELIMINATION->value, self::DOUBLE_ELIMINATION_FULL->value];
     }
 
-    public function displayName(): string
+    public function displayValue(): string
     {
         return match ($this) {
             self::SINGLE_ELIMINATION => 'Single Elimination',

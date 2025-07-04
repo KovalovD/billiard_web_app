@@ -10,7 +10,7 @@ enum TournamentStage: string
     case BRACKET = 'bracket';
     case COMPLETED = 'completed';
 
-    public function displayName(): string
+    public function displayValue(): string
     {
         return match ($this) {
             self::REGISTRATION => 'Registration',

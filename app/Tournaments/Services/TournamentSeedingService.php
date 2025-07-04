@@ -33,20 +33,12 @@ class TournamentSeedingService
                 throw new RuntimeException('At least 2 confirmed players are required for seeding');
             }
 
-            switch ($method) {
-                case 'random':
-                    return $this->randomSeeding($confirmedPlayers);
-
-                case 'rating':
-                    return $this->ratingBasedSeeding($tournament, $confirmedPlayers);
-
-                case 'manual':
-                    // Manual seeding is handled separately
-                    return $confirmedPlayers;
-
-                default:
-                    throw new RuntimeException("Invalid seeding method: {$method}");
-            }
+            return match ($method) {
+                'random' => $this->randomSeeding($confirmedPlayers),
+                'rating' => $this->ratingBasedSeeding($tournament, $confirmedPlayers),
+                'manual' => $confirmedPlayers,
+                default => throw new RuntimeException("Invalid seeding method: $method"),
+            };
         });
     }
 
@@ -83,7 +75,7 @@ class TournamentSeedingService
                     ->first()
                 ;
 
-                $playerRatings[$player->id] = $ratingPlayer ? $ratingPlayer->rating_points : 0;
+                $playerRatings[$player->id] = $ratingPlayer->rating_points ?? 0;
             }
 
             // Sort by rating (descending)
@@ -108,7 +100,7 @@ class TournamentSeedingService
      */
     public function updateSeeds(Tournament $tournament, array $seeds): void
     {
-        DB::transaction(function () use ($tournament, $seeds) {
+        DB::transaction(static function () use ($tournament, $seeds) {
             if ($tournament->stage !== TournamentStage::SEEDING) {
                 throw new RuntimeException('Tournament is not in seeding phase');
             }
@@ -147,7 +139,7 @@ class TournamentSeedingService
      */
     public function completeSeedingPhase(Tournament $tournament): void
     {
-        DB::transaction(function () use ($tournament) {
+        DB::transaction(static function () use ($tournament) {
             if ($tournament->stage !== TournamentStage::SEEDING) {
                 throw new RuntimeException('Tournament is not in seeding phase');
             }
@@ -161,7 +153,7 @@ class TournamentSeedingService
             ;
 
             if ($unseededPlayers > 0) {
-                throw new RuntimeException("There are {$unseededPlayers} confirmed players without seed numbers");
+                throw new RuntimeException("There are $unseededPlayers confirmed players without seed numbers");
             }
 
             // Move to next stage based on tournament type
@@ -175,6 +167,10 @@ class TournamentSeedingService
                 'seeding_completed_at' => now(),
                 'seeding_completed'    => true,
             ]);
+
+            $tournament->matches()->forceDelete();
+            $tournament->brackets()->forceDelete();
+            $tournament->groups()->forceDelete();
         });
     }
 }

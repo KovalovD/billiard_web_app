@@ -49,7 +49,8 @@ class GenerateSitemap extends Command
                 ->setChangeFrequency(Url::CHANGE_FREQUENCY_WEEKLY));
         });
 
-        MultiplayerGame::with('league')->whereNotNull('updated_at')->each(function (MultiplayerGame $game) use ($sitemap,
+        MultiplayerGame::with('league')->whereNotNull('updated_at')->each(function (MultiplayerGame $game) use (
+            $sitemap,
         ) {
             $sitemap->add(Url::create("/leagues/{$game->league->slug}/multiplayer-games/{$game->slug}")
                 ->setLastModificationDate($game->updated_at)

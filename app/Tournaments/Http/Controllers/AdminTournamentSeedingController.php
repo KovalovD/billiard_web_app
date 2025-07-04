@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use RuntimeException;
+use Throwable;
 
 /**
  * @group Admin Tournament Seeding
@@ -35,6 +36,7 @@ readonly class AdminTournamentSeedingController
     /**
      * Generate seeds for tournament players
      * @admin
+     * @throws Throwable
      */
     public function generateSeeds(Request $request, Tournament $tournament): JsonResponse
     {
@@ -61,6 +63,7 @@ readonly class AdminTournamentSeedingController
     /**
      * Update player seeds manually
      * @admin
+     * @throws Throwable
      */
     public function updateSeeds(Request $request, Tournament $tournament): JsonResponse
     {
@@ -88,6 +91,7 @@ readonly class AdminTournamentSeedingController
     /**
      * Complete seeding phase
      * @admin
+     * @throws Throwable
      */
     public function completeSeeding(Tournament $tournament): JsonResponse
     {

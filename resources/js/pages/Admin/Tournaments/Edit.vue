@@ -300,7 +300,7 @@ const handleSubmit = async () => {
     const success = await updateApi.execute(form.value);
 
     if (success) {
-        router.visit(`/tournaments/${props.tournamentId}`);
+        router.visit(`/tournaments/${tournament.value?.slug}`);
     }
 
     isSubmitting.value = false;

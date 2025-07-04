@@ -9,7 +9,7 @@ enum TournamentStatus: string
     case COMPLETED = 'completed';
     case CANCELLED = 'cancelled';
 
-    public function displayName(): string
+    public function displayValue(): string
     {
         return match ($this) {
             self::UPCOMING => 'Upcoming',

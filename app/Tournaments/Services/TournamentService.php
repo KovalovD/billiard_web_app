@@ -14,16 +14,17 @@ use App\Tournaments\Enums\TournamentStatus;
 use App\Tournaments\Enums\TournamentType;
 use App\Tournaments\Models\Tournament;
 use App\Tournaments\Models\TournamentPlayer;
+use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Throwable;
 
-class TournamentService
+readonly class TournamentService
 {
     public function __construct(
-        private readonly AuthService $authService,
-        private readonly OfficialRatingService $officialRatingService,
+        private AuthService $authService,
+        private OfficialRatingService $officialRatingService,
     ) {
     }
 
@@ -459,6 +460,9 @@ class TournamentService
         // Update timestamps based on stage
         if ($stage === TournamentStage::GROUP->value || $stage === TournamentStage::BRACKET->value) {
             $tournament->update(['seeding_completed_at' => now()]);
+            $tournament->matches()->forceDelete();
+            $tournament->brackets()->forceDelete();
+            $tournament->groups()->forceDelete();
         }
 
         if ($stage === TournamentStage::BRACKET->value && $tournament->tournament_type === 'groups_playoff') {
@@ -466,39 +470,6 @@ class TournamentService
         }
 
         return $tournament->fresh();
-    }
-
-    /**
-     * Complete seeding phase
-     * @throws Throwable
-     */
-    public function completeSeedingPhase(Tournament $tournament): void
-    {
-        if ($tournament->stage !== TournamentStage::SEEDING) {
-            throw new RuntimeException('Tournament is not in seeding phase');
-        }
-
-        // Verify all confirmed players have seed numbers
-        $unseededPlayers = $tournament
-            ->players()
-            ->where('status', 'confirmed')
-            ->whereNull('seed_number')
-            ->count()
-        ;
-
-        if ($unseededPlayers > 0) {
-            throw new RuntimeException("There are {$unseededPlayers} confirmed players without seed numbers");
-        }
-
-        // Move to next stage based on tournament type
-        $nextStage = in_array($tournament->tournament_type->value, ['groups', 'groups_playoff', 'team_groups_playoff'])
-            ? TournamentStage::GROUP
-            : TournamentStage::BRACKET;
-
-        $tournament->update([
-            'stage'                => $nextStage,
-            'seeding_completed_at' => now(),
-        ]);
     }
 
     /**
@@ -519,145 +490,8 @@ class TournamentService
     }
 
     /**
-     * Start tournament registration phase
-     */
-    public function startRegistration(Tournament $tournament): Tournament
-    {
-        if ($tournament->status !== TournamentStatus::UPCOMING) {
-            throw new RuntimeException('Tournament must be in upcoming status to start registration');
-        }
-
-        $tournament->update([
-            'stage' => TournamentStage::REGISTRATION,
-        ]);
-
-        return $tournament->fresh();
-    }
-
-    /**
-     * Move from registration to seeding phase
-     */
-    public function startSeeding(Tournament $tournament): Tournament
-    {
-        if ($tournament->stage !== TournamentStage::REGISTRATION) {
-            throw new RuntimeException('Tournament must be in registration stage to start seeding');
-        }
-
-        $confirmedPlayers = $tournament->confirmed_players_count;
-
-        if ($confirmedPlayers < 2) {
-            throw new RuntimeException('At least 2 confirmed players are required to start seeding');
-        }
-
-        $tournament->update([
-            'stage' => TournamentStage::SEEDING,
-        ]);
-
-        return $tournament->fresh();
-    }
-
-    /**
-     * Complete group stage and move to bracket
-     */
-    public function completeGroupStage(Tournament $tournament): Tournament
-    {
-        if ($tournament->stage !== TournamentStage::GROUP) {
-            throw new RuntimeException('Tournament must be in group stage');
-        }
-
-        // Verify all group matches are completed
-        $incompleteMatches = $tournament
-            ->matches()
-            ->where('stage', MatchStage::GROUP)
-            ->whereIn('status', [MatchStatus::PENDING, MatchStatus::IN_PROGRESS])
-            ->count()
-        ;
-
-        if ($incompleteMatches > 0) {
-            throw new RuntimeException("There are {$incompleteMatches} incomplete group matches");
-        }
-
-        // Calculate group standings and determine advancing players
-        $this->calculateGroupStandings($tournament);
-
-        $tournament->update([
-            'stage'               => TournamentStage::BRACKET,
-            'groups_completed_at' => now(),
-        ]);
-
-        return $tournament->fresh();
-    }
-
-    /**
-     * Calculate group standings
-     */
-    private function calculateGroupStandings(Tournament $tournament): void
-    {
-        $groups = $tournament->groups;
-
-        foreach ($groups as $group) {
-            $players = $group->players;
-
-            // Calculate wins, losses, and games difference for each player
-            foreach ($players as $player) {
-                $wins = 0;
-                $losses = 0;
-                $gamesDiff = 0;
-
-                $matches = $tournament
-                    ->matches()
-                    ->where('stage', MatchStage::GROUP)
-                    ->where(function ($query) use ($player) {
-                        $query
-                            ->where('player1_id', $player->user_id)
-                            ->orWhere('player2_id', $player->user_id)
-                        ;
-                    })
-                    ->where('status', MatchStatus::COMPLETED)
-                    ->get()
-                ;
-
-                foreach ($matches as $match) {
-                    if ($match->winner_id === $player->user_id) {
-                        $wins++;
-                        if ($match->player1_id === $player->user_id) {
-                            $gamesDiff += $match->player1_score - $match->player2_score;
-                        } else {
-                            $gamesDiff += $match->player2_score - $match->player1_score;
-                        }
-                    } else {
-                        $losses++;
-                        if ($match->player1_id === $player->user_id) {
-                            $gamesDiff += $match->player1_score - $match->player2_score;
-                        } else {
-                            $gamesDiff += $match->player2_score - $match->player1_score;
-                        }
-                    }
-                }
-
-                $player->update([
-                    'group_wins'       => $wins,
-                    'group_losses'     => $losses,
-                    'group_games_diff' => $gamesDiff,
-                ]);
-            }
-
-            // Sort players by wins, then by games difference
-            $sortedPlayers = $players
-                ->sortByDesc('group_wins')
-                ->sortByDesc('group_games_diff')
-                ->values()
-            ;
-
-            // Update group positions
-            foreach ($sortedPlayers as $index => $player) {
-                $player->update(['group_position' => $index + 1]);
-            }
-        }
-    }
-
-    /**
      * Get tournament stage transition options
+     * @throws Exception
      */
     public function getStageTransitions(Tournament $tournament): array
     {
@@ -736,6 +570,8 @@ class TournamentService
                     ];
                 }
                 break;
+            case TournamentStage::COMPLETED:
+                throw new RuntimeException('Already last stage');
         }
 
         return $transitions;
