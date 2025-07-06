@@ -1,3 +1,4 @@
+<!-- resources/js/Pages/OfficialRatings/Index.vue -->
 <script lang="ts" setup>
 import {Button, Card, CardContent, CardHeader, CardTitle} from '@/Components/ui';
 import DataTable from '@/Components/ui/data-table/DataTable.vue';
@@ -283,6 +284,7 @@ const setupTableClickHandlers = () => {
     if (activeTab.value !== 'ratings') return;
 
     nextTick(() => {
+        // Setup desktop table row handlers
         const tableContainer = document.querySelector('[data-rating-table]');
         if (tableContainer) {
             const rows = tableContainer.querySelectorAll('tbody tr[data-rating-slug]');
@@ -306,6 +308,33 @@ const setupTableClickHandlers = () => {
                 }
             });
         }
+
+        // Setup mobile card handlers
+        const mobileCards = document.querySelectorAll('.mobile-card[data-rating-slug]');
+        mobileCards.forEach(card => {
+            const ratingId = card.getAttribute('data-rating-slug');
+            if (ratingId) {
+                // Remove existing listeners to prevent duplicates
+                const newCard = card.cloneNode(true) as HTMLElement;
+                card.parentNode?.replaceChild(newCard, card);
+
+                // Add new listeners to the entire card
+                newCard.addEventListener('click', (e) => {
+                    // Prevent click if clicking on interactive elements
+                    const target = e.target as HTMLElement;
+                    if (target.closest('button, a, input, select, textarea')) {
+                        return;
+                    }
+                    router.visit(`/official-ratings/${ratingId}`);
+                });
+                newCard.addEventListener('keydown', (e: KeyboardEvent) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        router.visit(`/official-ratings/${ratingId}`);
+                    }
+                });
+            }
+        });
     });
 };
 
@@ -532,7 +561,9 @@ watch(showInactiveRatings, () => {
 
                                 <!-- Mobile card primary info -->
                                 <template #mobile-primary="{ item }">
-                                    <div class="flex items-center justify-between mb-3">
+                                    <div
+                                        class="flex items-center justify-between mb-3"
+                                    >
                                         <div class="flex items-center">
                                             <div
                                                 class="h-12 w-12 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center shadow-md">
