@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import RegisterModal from '@/Components/Auth/RegisterModal.vue';
 import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/Components/ui';
-import ApplicationLogo from '@/Components/ui/ApplicationLogo.vue';
 import {Head, Link} from '@inertiajs/vue3';
 import {
     CalendarIcon,
@@ -15,7 +14,7 @@ import {
 } from 'lucide-vue-next';
 import {onMounted, ref} from 'vue';
 import {useSeo} from '@/composables/useSeo';
-import MonoDonate from '@/Components/ui/MonoDonate.vue';
+import AuthenticatedLayout from "@/layouts/AuthenticatedLayout.vue";
 
 // State for modal visibility
 const showRegisterModal = ref(false);
@@ -33,6 +32,10 @@ const handleRegisterSuccess = () => {
     // Registration already redirects to dashboard in RegisterForm component
     closeRegisterModal();
 };
+
+defineOptions({
+    layout: AuthenticatedLayout,
+});
 
 const handleRegisterError = (error: any) => {
     console.error('Registration failed:', error);
@@ -119,68 +122,6 @@ onMounted(() => {
     <Head title="Professional Billiard League Platform"/>
 
     <div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
-        <!-- Navigation Header -->
-        <header
-            class="relative z-10 bg-white/80 backdrop-blur-sm border-b border-gray-200 dark:bg-gray-900/80 dark:border-gray-700"
-            role="banner">
-            <nav class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8" role="navigation" aria-label="Main navigation">
-                <div class="flex h-16 items-center justify-between">
-                    <!-- Logo -->
-                    <div class="flex items-center space-x-3">
-                        <ApplicationLogo
-                            class="block h-9 w-auto fill-current text-gray-800 dark:text-gray-200"
-                            aria-label="WinnerBreak Logo"/>
-                    </div>
-
-                    <!-- Navigation Links -->
-                    <div class="hidden md:flex items-center space-x-8">
-                        <Link
-                            class="text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors"
-                            href="/leagues"
-                            aria-label="Browse competitive billiard leagues">
-                            Leagues
-                        </Link>
-                        <Link
-                            class="text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors"
-                            href="/tournaments"
-                            aria-label="View billiard tournaments">
-                            Tournaments
-                        </Link>
-                        <Link
-                            class="text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors"
-                            href="/official-ratings"
-                            aria-label="Check official player rankings">
-                            Rankings
-                        </Link>
-                    </div>
-
-                    <!-- Auth Links -->
-                    <div class="flex items-center space-x-4">
-                        <MonoDonate :show-card="false" :show-qr="false" aria-label="Support WinnerBreak"/>
-                        <template v-if="$page.props.auth && $page.props.auth.user">
-                            <Link :href="route('dashboard')"
-                                  class="text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors"
-                                  aria-label="Go to your dashboard">
-                                Dashboard
-                            </Link>
-                        </template>
-                        <template v-else>
-                            <Link :href="route('login')"
-                                  class="text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors"
-                                  aria-label="Login to your account">
-                                <LogInIcon class="mr-1 inline h-4 w-4" aria-hidden="true"/>
-                                Login
-                            </Link>
-                            <Button @click="openRegisterModal" aria-label="Create new account">
-                                <UserIcon class="mr-2 h-4 w-4" aria-hidden="true"/>
-                                Register
-                            </Button>
-                        </template>
-                    </div>
-                </div>
-            </nav>
-        </header>
-
         <!-- Hero Section -->
         <main>
             <section class="relative px-4 py-20 sm:px-6 lg:px-8" aria-labelledby="hero-heading">
