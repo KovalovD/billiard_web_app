@@ -134,7 +134,7 @@ defineExpose({
                     <!-- Other columns as key-value pairs -->
                     <div class="space-y-2 text-sm">
                         <div
-                            v-for="(column, colIndex) in mobileColumns.slice(1)"
+                            v-for="(column) in mobileColumns.slice(1)"
                             :key="column.key"
                             class="flex items-center justify-between"
                         >
