@@ -23,6 +23,7 @@ import {
 import {computed, nextTick, onMounted, ref, watch} from 'vue';
 import {scrollToUserElement} from '@/utils/scrollToUser';
 import {useToastStore} from '@/stores/toast';
+import UserAvatar from "@/Components/ui/UserAvatar.vue";
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -569,6 +570,12 @@ watch(showInactiveRatings, () => {
                                                 class="h-12 w-12 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center shadow-md">
                                                 <StarIcon class="h-6 w-6 text-white"/>
                                             </div>
+                                            <UserAvatar
+                                                :user="item.user"
+                                                size="md"
+                                                priority="tournament_picture"
+                                                :exclusive-priority="true"
+                                            />
                                             <div class="ml-3">
                                                 <h3 class="text-base font-semibold text-gray-900 dark:text-white">
                                                     {{ item.name }}
@@ -656,8 +663,14 @@ watch(showInactiveRatings, () => {
                                 </div>
                             </template>
 
-                            <template #cell-player="{ value }">
+                            <template #cell-player="{ value, item }">
                                 <div class="flex items-center gap-2">
+                                    <UserAvatar
+                                        :user="item.user"
+                                        size="sm"
+                                        priority="tournament_picture"
+                                        :exclusive-priority="true"
+                                    />
                                     <div>
                                         <p :class="[
                                             'font-medium',

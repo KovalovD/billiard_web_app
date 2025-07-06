@@ -9,7 +9,7 @@ use App\Auth\Http\Requests\LoginRequest;
 use App\Auth\Http\Requests\LogoutRequest;
 use App\Auth\Http\Requests\RegisterRequest;
 use App\Auth\Services\AuthService;
-use App\Core\Http\Resources\UserResource;
+use App\User\Http\Resources\UserResource;
 use Auth;
 use Exception;
 use Illuminate\Http\JsonResponse;

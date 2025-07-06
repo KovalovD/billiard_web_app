@@ -5,9 +5,11 @@ use App\User\Http\Controllers\UserStatsController;
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::group(['prefix' => 'profile'], static function () {
-        Route::put('/', [ProfileController::class, 'update'])->name('profile.update');
+        Route::match(['put', 'post'], '/', [ProfileController::class, 'update']);
         Route::put('/password', [ProfileController::class, 'updatePassword'])->name('profile.update-password');
+        Route::put('/equipment', [ProfileController::class, 'updateEquipment']);
         Route::delete('/', [ProfileController::class, 'destroy'])->name('profile.destroy');
+        Route::delete('/picture', [ProfileController::class, 'deletePicture'])->name('profile.delete-picture');
     });
     Route::group(['prefix' => 'user'], static function () {
         Route::get('ratings', [UserStatsController::class, 'ratings'])->name('user.ratings');

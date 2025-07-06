@@ -2,8 +2,8 @@
 
 namespace App\Leagues\Http\Resources;
 
-use App\Core\Http\Resources\UserResource;
 use App\Matches\Models\MatchGame;
+use App\User\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 

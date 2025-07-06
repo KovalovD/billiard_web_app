@@ -35,6 +35,7 @@ import {computed, onMounted, ref} from 'vue';
 import DataTable from '@/Components/ui/data-table/DataTable.vue';
 import StageTransition from "@/Components/Tournament/StageTransition.vue";
 import {useSeo} from "@/composables/useSeo";
+import UserAvatar from "@/Components/ui/UserAvatar.vue";
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -977,265 +978,121 @@ onMounted(() => {
                 <main role="tabpanel">
                     <!-- Tournament Information Tab -->
                     <div v-if="activeTab === 'info'" class="space-y-6">
-                    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                        <!-- Details Card -->
-                        <Card class="shadow-lg">
-                            <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
-                                <CardTitle>{{ t('Tournament Details') }}</CardTitle>
-                            </CardHeader>
-                            <CardContent class="p-6">
-                                <div class="space-y-4">
-                                    <div>
-                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">{{
-                                                t('Tournament Type')
-                                            }}</h4>
-                                        <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                                            {{ tournament.tournament_type_display }}
-                                            <span v-if="tournament.races_to">
-                                                ({{ t('Race to') }} {{ tournament.races_to }})
-                                            </span>
-                                        </p>
-                                    </div>
-
-                                    <div v-if="tournament.details">
-                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">{{
-                                                t('Description')
-                                            }}</h4>
-                                        <p class="mt-1 text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
-                                            {{ tournament.details }}</p>
-                                    </div>
-
-                                    <div v-if="tournament.regulation">
-                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">{{
-                                                t('Regulation')
-                                            }}</h4>
-                                        <p class="mt-1 text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
-                                            {{ tournament.regulation }}</p>
-                                    </div>
-
-                                    <div v-if="tournament.format">
-                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">
-                                            {{ t('Format') }}</h4>
-                                        <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                                            {{ tournament.format }}</p>
-                                    </div>
-
-                                    <div v-if="tournament.organizer">
-                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">{{
-                                                t('Organizer')
-                                            }}</h4>
-                                        <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                                            {{ tournament.organizer }}</p>
-                                    </div>
-
-                                    <div v-if="tournament.application_deadline">
-                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">
-                                            {{ t('Application Deadline') }}</h4>
-                                        <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                                            {{ formatDateTime(tournament.application_deadline) }}</p>
-                                    </div>
-
-                                    <div v-if="tournament.official_ratings && tournament.official_ratings.length > 0">
-                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">
-                                            {{ t('Official Rating') }}</h4>
-                                        <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                                            {{ tournament.official_ratings[0].name }}
-                                            <span class="text-xs text-gray-500">(×{{
-                                                    tournament.official_ratings[0].rating_coefficient
-                                                }})</span>
-                                        </p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <!-- Stats Card -->
-                        <Card class="shadow-lg">
-                            <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
-                                <CardTitle>{{ t('Tournament Stats') }}</CardTitle>
-                            </CardHeader>
-                            <CardContent class="p-6">
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div class="text-center p-4 bg-gray-50 rounded-lg dark:bg-gray-800">
-                                        <div class="text-2xl font-bold text-green-600 dark:text-green-400">
-                                            {{ tournament.confirmed_players_count }}
-                                        </div>
-                                        <div class="text-sm text-gray-600 dark:text-gray-400">
-                                            {{ t('Confirmed Players') }}
-                                        </div>
-                                    </div>
-
-                                    <div v-if="tournament.pending_applications_count > 0"
-                                         class="text-center p-4 bg-gray-50 rounded-lg dark:bg-gray-800">
-                                        <div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
-                                            {{ tournament.pending_applications_count }}
-                                        </div>
-                                        <div class="text-sm text-gray-600 dark:text-gray-400">
-                                            {{ t('Pending Applications') }}
-                                        </div>
-                                    </div>
-
-                                    <div class="text-center p-4 bg-gray-50 rounded-lg dark:bg-gray-800">
-                                        <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                                            {{ tournament.max_participants || '∞' }}
-                                        </div>
-                                        <div class="text-sm text-gray-600 dark:text-gray-400">
-                                            {{ t('Max Participants') }}
-                                        </div>
-                                    </div>
-
-                                    <div v-if="tournament.entry_fee > 0"
-                                         class="text-center p-4 bg-gray-50 rounded-lg dark:bg-gray-800">
-                                        <div class="text-2xl font-bold text-green-600 dark:text-green-400">
-                                            {{ formatCurrency(tournament.entry_fee) }}
-                                        </div>
-                                        <div class="text-sm text-gray-600 dark:text-gray-400">
-                                            {{ t('Entry Fee') }}
-                                        </div>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-                </div>
-
-                <!-- Players Tab -->
-                <div v-if="activeTab === 'players'">
-                    <Card class="shadow-lg">
-                        <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
-                            <CardTitle class="flex items-center gap-2">
-                                <UsersIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400"/>
-                                {{ t('Confirmed Players') }}
-                            </CardTitle>
-                            <CardDescription>
-                                {{ tournament.confirmed_players_count }} {{ t('confirmed players') }}
-                                <span v-if="tournament.max_participants">
-                                   {{ t('out of') }} {{ tournament.max_participants }} {{ t('maximum') }}
-                               </span>
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent class="p-6">
-                            <div v-if="isLoadingPlayers" class="flex justify-center py-8">
-                                <Spinner class="h-6 w-6 text-indigo-600"/>
-                            </div>
-                            <div v-else-if="confirmedPlayers.length === 0"
-                                 class="py-8 text-center text-gray-500">
-                                {{ t('No confirmed players yet.') }}
-                            </div>
-                            <div v-else class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                                <div
-                                    v-for="player in confirmedPlayers"
-                                    :key="player.id"
-                                    class="flex items-center justify-between p-3 bg-gray-50 rounded-lg dark:bg-gray-800"
-                                >
-                                    <div>
-                                        <p class="font-medium">
-                                            <span v-if="player.seed_number"
-                                                  class="text-gray-500 mr-2 text-sm">#{{
-                                                    player.seed_number
-                                                }}</span>
-                                            {{ player.user?.firstname }} {{ player.user?.lastname }}
-                                        </p>
-                                        <p class="text-sm text-gray-600 dark:text-gray-400">
-                                            {{ player.status_display }}
-                                        </p>
-                                        <p v-if="player.confirmed_at" class="text-xs text-gray-500">
-                                            {{ t('Confirmed:') }} {{ formatDate(player.confirmed_at) }}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                <!-- Groups Tab -->
-                <div v-if="activeTab === 'groups' && canViewGroups">
-                    <div class="space-y-6">
-                        <Card v-if="isLoadingGroups" class="shadow-lg">
-                            <CardContent class="py-10">
-                                <div class="flex justify-center">
-                                    <Spinner class="h-8 w-8 text-indigo-600"/>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <div v-else-if="groups.length > 0"
-                             class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                            <Card v-for="group in groups" :key="group.id" class="shadow-lg">
+                        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                            <!-- Details Card -->
+                            <Card class="shadow-lg">
                                 <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
-                                    <CardTitle>
-                                        {{ t('Group :code', {code: group.group_code}) }}
-                                    </CardTitle>
-                                    <CardDescription>
-                                        {{ t(':count players', {count: group.group_size}) }}
-                                        <span v-if="group.advance_count"> • {{
-                                                t(':count advance', {count: group.advance_count})
-                                            }}</span>
-                                    </CardDescription>
+                                    <CardTitle>{{ t('Tournament Details') }}</CardTitle>
                                 </CardHeader>
                                 <CardContent class="p-6">
-                                    <div class="space-y-2">
+                                    <div class="space-y-4">
+                                        <div>
+                                            <h4 class="font-medium text-gray-900 dark:text-gray-100">{{
+                                                    t('Tournament Type')
+                                                }}</h4>
+                                            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                                                {{ tournament.tournament_type_display }}
+                                                <span v-if="tournament.races_to">
+                                                ({{ t('Race to') }} {{ tournament.races_to }})
+                                            </span>
+                                            </p>
+                                        </div>
+
+                                        <div v-if="tournament.details">
+                                            <h4 class="font-medium text-gray-900 dark:text-gray-100">{{
+                                                    t('Description')
+                                                }}</h4>
+                                            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
+                                                {{ tournament.details }}</p>
+                                        </div>
+
+                                        <div v-if="tournament.regulation">
+                                            <h4 class="font-medium text-gray-900 dark:text-gray-100">{{
+                                                    t('Regulation')
+                                                }}</h4>
+                                            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
+                                                {{ tournament.regulation }}</p>
+                                        </div>
+
+                                        <div v-if="tournament.format">
+                                            <h4 class="font-medium text-gray-900 dark:text-gray-100">
+                                                {{ t('Format') }}</h4>
+                                            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                                                {{ tournament.format }}</p>
+                                        </div>
+
+                                        <div v-if="tournament.organizer">
+                                            <h4 class="font-medium text-gray-900 dark:text-gray-100">{{
+                                                    t('Organizer')
+                                                }}</h4>
+                                            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                                                {{ tournament.organizer }}</p>
+                                        </div>
+
+                                        <div v-if="tournament.application_deadline">
+                                            <h4 class="font-medium text-gray-900 dark:text-gray-100">
+                                                {{ t('Application Deadline') }}</h4>
+                                            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                                                {{ formatDateTime(tournament.application_deadline) }}</p>
+                                        </div>
+
                                         <div
-                                            v-for="(player, index) in getPlayersInGroup(group.group_code)"
-                                            :key="player.id"
-                                            :class="[
-                                                'flex items-center justify-between p-2 rounded text-sm',
-                                                index < group.advance_count ? 'bg-green-50 dark:bg-green-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-800'
-                                            ]"
-                                        >
-                                            <div class="flex items-center gap-2">
-                                                <span class="font-medium text-gray-500">
-                                                    {{ index + 1 }}
-                                                </span>
-                                                <span>{{
-                                                        player.user?.firstname
-                                                    }} {{ player.user?.lastname }}</span>
-                                            </div>
-                                            <div class="text-gray-600 dark:text-gray-400">
-                                                <span v-if="player.group_wins > 0 || player.group_losses > 0">
-                                                    {{ player.group_wins }}W - {{ player.group_losses }}L
-                                                </span>
-                                                <span v-else>{{ t('Not played') }}</span>
-                                            </div>
+                                            v-if="tournament.official_ratings && tournament.official_ratings.length > 0">
+                                            <h4 class="font-medium text-gray-900 dark:text-gray-100">
+                                                {{ t('Official Rating') }}</h4>
+                                            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                                                {{ tournament.official_ratings[0].name }}
+                                                <span class="text-xs text-gray-500">(×{{
+                                                        tournament.official_ratings[0].rating_coefficient
+                                                    }})</span>
+                                            </p>
                                         </div>
                                     </div>
+                                </CardContent>
+                            </Card>
 
-                                    <!-- Group Matches -->
-                                    <div v-if="matchesByGroup[group.group_code]?.length > 0" class="mt-4 pt-4 border-t">
-                                        <h4 class="font-medium mb-2">{{ t('Matches') }}</h4>
-                                        <div class="space-y-2">
-                                            <div
-                                                v-for="match in matchesByGroup[group.group_code]"
-                                                :key="match.id"
-                                                class="text-sm"
-                                            >
-                                                <div class="flex items-center justify-between">
-                                                    <div class="flex-1">
-                                                        <span
-                                                            :class="{'font-bold': match.winner_id === match.player1_id}">
-                                                            {{
-                                                                match.player1?.firstname?.substring(0, 1)
-                                                            }}. {{ match.player1?.lastname }}
-                                                        </span>
-                                                        <span class="mx-2">vs</span>
-                                                        <span
-                                                            :class="{'font-bold': match.winner_id === match.player2_id}">
-                                                            {{
-                                                                match.player2?.firstname?.substring(0, 1)
-                                                            }}. {{ match.player2?.lastname }}
-                                                        </span>
-                                                    </div>
-                                                    <div class="ml-2">
-                                                        <span v-if="match.status === 'completed'" class="font-medium">
-                                                            {{ match.player1_score }} - {{ match.player2_score }}
-                                                        </span>
-                                                        <span v-else
-                                                              :class="['px-2 py-1 text-xs rounded-full', getMatchStatusBadgeClass(match.status)]">
-                                                            {{ match.status_display }}
-                                                        </span>
-                                                    </div>
-                                                </div>
+                            <!-- Stats Card -->
+                            <Card class="shadow-lg">
+                                <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
+                                    <CardTitle>{{ t('Tournament Stats') }}</CardTitle>
+                                </CardHeader>
+                                <CardContent class="p-6">
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div class="text-center p-4 bg-gray-50 rounded-lg dark:bg-gray-800">
+                                            <div class="text-2xl font-bold text-green-600 dark:text-green-400">
+                                                {{ tournament.confirmed_players_count }}
+                                            </div>
+                                            <div class="text-sm text-gray-600 dark:text-gray-400">
+                                                {{ t('Confirmed Players') }}
+                                            </div>
+                                        </div>
+
+                                        <div v-if="tournament.pending_applications_count > 0"
+                                             class="text-center p-4 bg-gray-50 rounded-lg dark:bg-gray-800">
+                                            <div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                                                {{ tournament.pending_applications_count }}
+                                            </div>
+                                            <div class="text-sm text-gray-600 dark:text-gray-400">
+                                                {{ t('Pending Applications') }}
+                                            </div>
+                                        </div>
+
+                                        <div class="text-center p-4 bg-gray-50 rounded-lg dark:bg-gray-800">
+                                            <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                                                {{ tournament.max_participants || '∞' }}
+                                            </div>
+                                            <div class="text-sm text-gray-600 dark:text-gray-400">
+                                                {{ t('Max Participants') }}
+                                            </div>
+                                        </div>
+
+                                        <div v-if="tournament.entry_fee > 0"
+                                             class="text-center p-4 bg-gray-50 rounded-lg dark:bg-gray-800">
+                                            <div class="text-2xl font-bold text-green-600 dark:text-green-400">
+                                                {{ formatCurrency(tournament.entry_fee) }}
+                                            </div>
+                                            <div class="text-sm text-gray-600 dark:text-gray-400">
+                                                {{ t('Entry Fee') }}
                                             </div>
                                         </div>
                                     </div>
@@ -1243,319 +1100,524 @@ onMounted(() => {
                             </Card>
                         </div>
                     </div>
-                </div>
 
-                <!-- Bracket Tab -->
-                <div v-if="activeTab === 'bracket' && canViewBracket">
-                    <div v-if="isLoadingMatches" class="flex justify-center py-12">
-                        <Spinner class="h-8 w-8 text-indigo-600"/>
-                    </div>
-                    <div v-else-if="matches.length === 0" class="text-center py-12">
-                        <p class="text-gray-500">{{ t('Bracket has not been generated yet.') }}</p>
-                    </div>
-                    <template v-else>
-                        <SingleEliminationBracket
-                            v-if="!isDoubleElimination"
-                            :can-edit="false"
-                            :current-user-id="currentUserId"
-                            :matches="matches"
-                            :tournament="tournament!"
-                        />
-
-                        <DoubleEliminationBracket
-                            v-else
-                            :can-edit="false"
-                            :current-user-id="currentUserId"
-                            :matches="matches"
-                            :tournament="tournament!"
-                        />
-                    </template>
-                </div>
-
-                <!-- Matches Tab -->
-                <div v-if="activeTab === 'matches' && canViewMatches">
-                    <Card class="shadow-lg">
-                        <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
-                            <CardTitle class="flex items-center gap-2">
-                                <PlayIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400"/>
-                                {{ t('Tournament Matches') }}
-                            </CardTitle>
-                            <CardDescription>
-                                {{ t('All tournament matches and results') }}
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent class="p-6">
-                            <div v-if="isLoadingMatches" class="flex justify-center py-8">
-                                <Spinner class="h-6 w-6 text-indigo-600"/>
-                            </div>
-                            <div v-else-if="displayMatches.length === 0" class="py-8 text-center text-gray-500">
-                                {{ t('No matches scheduled yet.') }}
-                            </div>
-                            <div v-else class="space-y-4">
-                                <div
-                                    v-for="match in displayMatches"
-                                    :key="match.id"
-                                    class="flex flex-col sm:flex-row sm:items-center sm:justify-between rounded-lg border p-4 gap-4"
-                                >
-                                    <!-- Match Info -->
-                                    <div class="flex-1">
-                                        <div class="flex flex-col sm:flex-row sm:items-center gap-4">
-                                            <!-- Match Code & Stage -->
-                                            <div class="min-w-[120px]">
+                    <!-- Players Tab -->
+                    <div v-if="activeTab === 'players'">
+                        <Card class="shadow-lg">
+                            <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
+                                <CardTitle class="flex items-center gap-2">
+                                    <UsersIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400"/>
+                                    {{ t('Confirmed Players') }}
+                                </CardTitle>
+                                <CardDescription>
+                                    {{ tournament.confirmed_players_count }} {{ t('confirmed players') }}
+                                    <span v-if="tournament.max_participants">
+                       {{ t('out of') }} {{ tournament.max_participants }} {{ t('maximum') }}
+                   </span>
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent class="p-6">
+                                <div v-if="isLoadingPlayers" class="flex justify-center py-8">
+                                    <Spinner class="h-6 w-6 text-indigo-600"/>
+                                </div>
+                                <div v-else-if="confirmedPlayers.length === 0"
+                                     class="py-8 text-center text-gray-500">
+                                    {{ t('No confirmed players yet.') }}
+                                </div>
+                                <div v-else class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                    <div
+                                        v-for="player in confirmedPlayers"
+                                        :key="player.id"
+                                        class="flex items-center justify-between p-3 bg-gray-50 rounded-lg dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                    >
+                                        <div class="flex items-center gap-3">
+                                            <UserAvatar
+                                                :user="player.user"
+                                                size="sm"
+                                                priority="tournament_picture"
+                                                :exclusive-priority="true"
+                                            />
+                                            <div>
                                                 <p class="font-medium">
-                                                    {{ match.match_code || `#${match.id}` }}
+                                    <span v-if="player.seed_number"
+                                          class="text-gray-500 mr-2 text-sm">#{{
+                                            player.seed_number
+                                        }}</span>
+                                                    {{ player.user?.firstname }} {{ player.user?.lastname }}
                                                 </p>
-                                                <p class="text-sm text-gray-500">
-                                                    {{ match.stage_display }}
-                                                    <span v-if="match.round_display"> - {{ match.round_display }}</span>
+                                                <p class="text-sm text-gray-600 dark:text-gray-400">
+                                                    {{ player.status_display }}
+                                                </p>
+                                                <p v-if="player.confirmed_at" class="text-xs text-gray-500">
+                                                    {{ t('Confirmed:') }} {{ formatDate(player.confirmed_at) }}
                                                 </p>
                                             </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                    <!-- Groups Tab -->
+                    <div v-if="activeTab === 'groups' && canViewGroups">
+                        <div class="space-y-6">
+                            <Card v-if="isLoadingGroups" class="shadow-lg">
+                                <CardContent class="py-10">
+                                    <div class="flex justify-center">
+                                        <Spinner class="h-8 w-8 text-indigo-600"/>
+                                    </div>
+                                </CardContent>
+                            </Card>
 
-                                            <!-- Players -->
-                                            <div class="flex-1">
-                                                <div class="flex items-center justify-between">
-                                                    <div class="flex-1">
-                                                        <p class="text-sm"
-                                                           :class="{'text-green-600 font-bold': match.winner_id === match.player1_id}">
-                                                            {{ match.player1?.firstname }} {{ match.player1?.lastname }}
-                                                            <span v-if="!match.player1"
-                                                                  class="text-gray-400">{{ t('TBD') }}</span>
-                                                        </p>
-                                                        <p class="text-sm"
-                                                           :class="{'text-green-600 font-bold': match.winner_id === match.player2_id}">
-                                                            {{ match.player2?.firstname }} {{ match.player2?.lastname }}
-                                                            <span v-if="!match.player2"
-                                                                  class="text-gray-400">{{ t('TBD') }}</span>
-                                                        </p>
-                                                    </div>
+                            <div v-else-if="groups.length > 0"
+                                 class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                                <Card v-for="group in groups" :key="group.id" class="shadow-lg">
+                                    <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
+                                        <CardTitle>
+                                            {{ t('Group :code', {code: group.group_code}) }}
+                                        </CardTitle>
+                                        <CardDescription>
+                                            {{ t(':count players', {count: group.group_size}) }}
+                                            <span v-if="group.advance_count"> • {{
+                                                    t(':count advance', {count: group.advance_count})
+                                                }}</span>
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent class="p-6">
+                                        <div class="space-y-2">
+                                            <div
+                                                v-for="(player, index) in getPlayersInGroup(group.group_code)"
+                                                :key="player.id"
+                                                :class="[
+                                                'flex items-center justify-between p-2 rounded text-sm',
+                                                index < group.advance_count ? 'bg-green-50 dark:bg-green-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                                            ]"
+                                            >
+                                                <div class="flex items-center gap-2">
+                                                <span class="font-medium text-gray-500">
+                                                    {{ index + 1 }}
+                                                </span>
+                                                    <span>{{
+                                                            player.user?.firstname
+                                                        }} {{ player.user?.lastname }}</span>
+                                                </div>
+                                                <div class="text-gray-600 dark:text-gray-400">
+                                                <span v-if="player.group_wins > 0 || player.group_losses > 0">
+                                                    {{ player.group_wins }}W - {{ player.group_losses }}L
+                                                </span>
+                                                    <span v-else>{{ t('Not played') }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
 
-                                                    <!-- Scores -->
-                                                    <div class="mx-4 text-center">
-                                                        <p class="text-xl font-bold">
-                                                            {{ match.player1_score ?? '-' }}
-                                                        </p>
-                                                        <p class="text-xl font-bold">
-                                                            {{ match.player2_score ?? '-' }}
-                                                        </p>
+                                        <!-- Group Matches -->
+                                        <div v-if="matchesByGroup[group.group_code]?.length > 0"
+                                             class="mt-4 pt-4 border-t">
+                                            <h4 class="font-medium mb-2">{{ t('Matches') }}</h4>
+                                            <div class="space-y-2">
+                                                <div
+                                                    v-for="match in matchesByGroup[group.group_code]"
+                                                    :key="match.id"
+                                                    class="text-sm"
+                                                >
+                                                    <div class="flex items-center justify-between">
+                                                        <div class="flex-1">
+                                                        <span
+                                                            :class="{'font-bold': match.winner_id === match.player1_id}">
+                                                            {{
+                                                                match.player1?.firstname?.substring(0, 1)
+                                                            }}. {{ match.player1?.lastname }}
+                                                        </span>
+                                                            <span class="mx-2">vs</span>
+                                                            <span
+                                                                :class="{'font-bold': match.winner_id === match.player2_id}">
+                                                            {{
+                                                                    match.player2?.firstname?.substring(0, 1)
+                                                                }}. {{ match.player2?.lastname }}
+                                                        </span>
+                                                        </div>
+                                                        <div class="ml-2">
+                                                        <span v-if="match.status === 'completed'" class="font-medium">
+                                                            {{ match.player1_score }} - {{ match.player2_score }}
+                                                        </span>
+                                                            <span v-else
+                                                                  :class="['px-2 py-1 text-xs rounded-full', getMatchStatusBadgeClass(match.status)]">
+                                                            {{ match.status_display }}
+                                                        </span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    </CardContent>
+                                </Card>
+                            </div>
+                        </div>
+                    </div>
 
-                                    <!-- Status & Table -->
+                    <!-- Bracket Tab -->
+                    <div v-if="activeTab === 'bracket' && canViewBracket">
+                        <div v-if="isLoadingMatches" class="flex justify-center py-12">
+                            <Spinner class="h-8 w-8 text-indigo-600"/>
+                        </div>
+                        <div v-else-if="matches.length === 0" class="text-center py-12">
+                            <p class="text-gray-500">{{ t('Bracket has not been generated yet.') }}</p>
+                        </div>
+                        <template v-else>
+                            <SingleEliminationBracket
+                                v-if="!isDoubleElimination"
+                                :can-edit="false"
+                                :current-user-id="currentUserId"
+                                :matches="matches"
+                                :tournament="tournament!"
+                            />
+
+                            <DoubleEliminationBracket
+                                v-else
+                                :can-edit="false"
+                                :current-user-id="currentUserId"
+                                :matches="matches"
+                                :tournament="tournament!"
+                            />
+                        </template>
+                    </div>
+
+                    <!-- Matches Tab -->
+                    <div v-if="activeTab === 'matches' && canViewMatches">
+                        <Card class="shadow-lg">
+                            <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
+                                <CardTitle class="flex items-center gap-2">
+                                    <PlayIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400"/>
+                                    {{ t('Tournament Matches') }}
+                                </CardTitle>
+                                <CardDescription>
+                                    {{ t('All tournament matches and results') }}
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent class="p-6">
+                                <div v-if="isLoadingMatches" class="flex justify-center py-8">
+                                    <Spinner class="h-6 w-6 text-indigo-600"/>
+                                </div>
+                                <div v-else-if="displayMatches.length === 0" class="py-8 text-center text-gray-500">
+                                    {{ t('No matches scheduled yet.') }}
+                                </div>
+                                <div v-else class="space-y-4">
                                     <div
-                                        class="flex flex-row sm:flex-col justify-between sm:justify-start items-center sm:items-end gap-2 sm:text-right">
+                                        v-for="match in displayMatches"
+                                        :key="match.id"
+                                        class="flex flex-col sm:flex-row sm:items-center sm:justify-between rounded-lg border p-4 gap-4"
+                                    >
+                                        <!-- Match Info -->
+                                        <div class="flex-1">
+                                            <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                                                <!-- Match Code & Stage -->
+                                                <div class="min-w-[120px]">
+                                                    <p class="font-medium">
+                                                        {{ match.match_code || `#${match.id}` }}
+                                                    </p>
+                                                    <p class="text-sm text-gray-500">
+                                                        {{ match.stage_display }}
+                                                        <span v-if="match.round_display"> - {{
+                                                                match.round_display
+                                                            }}</span>
+                                                    </p>
+                                                </div>
+
+                                                <!-- Players -->
+                                                <div class="flex-1">
+                                                    <div class="flex items-center justify-between">
+                                                        <div class="flex-1">
+                                                            <p class="text-sm"
+                                                               :class="{'text-green-600 font-bold': match.winner_id === match.player1_id}">
+                                                                {{ match.player1?.firstname }}
+                                                                {{ match.player1?.lastname }}
+                                                                <span v-if="!match.player1"
+                                                                      class="text-gray-400">{{ t('TBD') }}</span>
+                                                            </p>
+                                                            <p class="text-sm"
+                                                               :class="{'text-green-600 font-bold': match.winner_id === match.player2_id}">
+                                                                {{ match.player2?.firstname }}
+                                                                {{ match.player2?.lastname }}
+                                                                <span v-if="!match.player2"
+                                                                      class="text-gray-400">{{ t('TBD') }}</span>
+                                                            </p>
+                                                        </div>
+
+                                                        <!-- Scores -->
+                                                        <div class="mx-4 text-center">
+                                                            <p class="text-xl font-bold">
+                                                                {{ match.player1_score ?? '-' }}
+                                                            </p>
+                                                            <p class="text-xl font-bold">
+                                                                {{ match.player2_score ?? '-' }}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Status & Table -->
+                                        <div
+                                            class="flex flex-row sm:flex-col justify-between sm:justify-start items-center sm:items-end gap-2 sm:text-right">
                                         <span :class="[
                                             'inline-flex px-2 py-1 text-xs font-medium rounded-full',
                                             getMatchStatusBadgeClass(match.status)
                                         ]">
                                             {{ match.status_display }}
                                         </span>
-                                        <div class="text-right">
-                                            <p v-if="match.club_table" class="text-sm text-gray-500">
-                                                {{ match.club_table.name }}
-                                            </p>
-                                            <p v-if="match.scheduled_at" class="text-sm text-gray-500">
-                                                <ClockIcon class="inline h-3 w-3"/>
-                                                {{ formatDateTime(match.scheduled_at) }}
-                                            </p>
-                                            <p v-if="match.completed_at && match.status === 'completed'"
-                                               class="text-sm text-gray-500">
-                                                <CheckCircleIcon class="inline h-3 w-3"/>
-                                                {{ formatDateTime(match.completed_at) }}
-                                            </p>
+                                            <div class="text-right">
+                                                <p v-if="match.club_table" class="text-sm text-gray-500">
+                                                    {{ match.club_table.name }}
+                                                </p>
+                                                <p v-if="match.scheduled_at" class="text-sm text-gray-500">
+                                                    <ClockIcon class="inline h-3 w-3"/>
+                                                    {{ formatDateTime(match.scheduled_at) }}
+                                                </p>
+                                                <p v-if="match.completed_at && match.status === 'completed'"
+                                                   class="text-sm text-gray-500">
+                                                    <CheckCircleIcon class="inline h-3 w-3"/>
+                                                    {{ formatDateTime(match.completed_at) }}
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                <!-- Applications Tab -->
-                <div v-if="activeTab === 'applications'">
-                    <div class="space-y-6">
-                        <!-- Pending Applications -->
-                        <Card v-if="pendingApplications.length > 0" class="shadow-lg">
-                            <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
-                                <CardTitle class="flex items-center gap-2">
-                                    <ClipboardListIcon class="h-5 w-5 text-yellow-600"/>
-                                    {{ t('Pending Applications') }} ({{ pendingApplications.length }})
-                                </CardTitle>
-                                <CardDescription>{{
-                                        t('Applications waiting for approval')
-                                    }}
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent class="p-6">
-                                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                                    <div
-                                        v-for="application in pendingApplications"
-                                        :key="application.id"
-                                        class="flex items-center justify-between p-3 bg-yellow-50 rounded-lg dark:bg-yellow-900/20"
-                                    >
-                                        <div>
-                                            <p class="font-medium">{{
-                                                    application.user?.firstname
-                                                }}
-                                                {{ application.user?.lastname }}</p>
-                                            <p class="text-sm text-gray-600 dark:text-gray-400">
-                                                {{ t('Applied:') }} {{ formatDate(application.applied_at) }}
-                                            </p>
-                                        </div>
-                                        <span
-                                            :class="['px-2 py-1 text-xs font-semibold rounded-full', getPlayerStatusBadgeClass(application.status)]">
-                                           {{ application.status_display }}
-                                       </span>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <!-- Rejected Applications -->
-                        <Card v-if="rejectedApplications.length > 0" class="shadow-lg">
-                            <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
-                                <CardTitle class="flex items-center gap-2">
-                                    <UserCheckIcon class="h-5 w-5 text-red-600"/>
-                                    {{ t('Rejected Applications') }} ({{ rejectedApplications.length }})
-                                </CardTitle>
-                                <CardDescription>{{
-                                        t('Applications that were not accepted')
-                                    }}
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent class="p-6">
-                                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                                    <div
-                                        v-for="application in rejectedApplications"
-                                        :key="application.id"
-                                        class="flex items-center justify-between p-3 bg-red-50 rounded-lg dark:bg-red-900/20"
-                                    >
-                                        <div>
-                                            <p class="font-medium">{{
-                                                    application.user?.firstname
-                                                }}
-                                                {{ application.user?.lastname }}</p>
-                                            <p class="text-sm text-gray-600 dark:text-gray-400">
-                                                {{ t('Rejected:') }} {{ formatDate(application.rejected_at) }}
-                                            </p>
-                                        </div>
-                                        <span
-                                            :class="['px-2 py-1 text-xs font-semibold rounded-full', getPlayerStatusBadgeClass(application.status)]">
-                                           {{ application.status_display }}
-                                       </span>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <!-- Empty State -->
-                        <Card v-if="pendingApplications.length === 0 && rejectedApplications.length === 0"
-                              class="shadow-lg">
-                            <CardContent class="py-10 text-center">
-                                <ClipboardListIcon class="mx-auto h-12 w-12 text-gray-400"/>
-                                <p class="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">
-                                    {{ t('No Applications') }}</p>
-                                <p class="mt-2 text-gray-600 dark:text-gray-400">
-                                    {{ t('There are no applications to display.') }}
-                                </p>
                             </CardContent>
                         </Card>
                     </div>
-                </div>
 
-                <!-- Results Tab -->
-                <div v-if="activeTab === 'results' && tournament.status === 'completed'">
-                    <Card class="shadow-lg">
-                        <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
-                            <CardTitle class="flex items-center gap-2">
-                                <TrophyIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400"/>
-                                {{ t('Tournament Results') }}
-                            </CardTitle>
-                            <CardDescription>{{
-                                    t('Final standings and prizes')
-                                }}
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent class="p-6">
-                            <div v-if="completedPlayers.length === 0" class="py-8 text-center text-gray-500">
-                                {{ t('No results available yet.') }}
-                            </div>
-                            <div v-else>
-                                <DataTable
-                                    :columns="columns"
-                                    :compact-mode="true"
-                                    :data="completedPlayers"
-                                    :empty-message="t('No results available yet.')"
-                                >
-                                    <template #cell-position="{ value }">
-                                        <span
-                                            :class="[
-                                                'inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium',
-                                                getPositionBadgeClass(value.position)
-                                            ]"
+                    <!-- Applications Tab -->
+                    <div v-if="activeTab === 'applications'">
+                        <div class="space-y-6">
+                            <!-- Pending Applications -->
+                            <Card v-if="pendingApplications.length > 0" class="shadow-lg">
+                                <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
+                                    <CardTitle class="flex items-center gap-2">
+                                        <ClipboardListIcon class="h-5 w-5 text-yellow-600"/>
+                                        {{ t('Pending Applications') }} ({{ pendingApplications.length }})
+                                    </CardTitle>
+                                    <CardDescription>{{
+                                            t('Applications waiting for approval')
+                                        }}
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent class="p-6">
+                                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                        <div
+                                            v-for="application in pendingApplications"
+                                            :key="application.id"
+                                            class="flex items-center justify-between p-3 bg-yellow-50 rounded-lg dark:bg-yellow-900/20"
                                         >
-                                            {{ value.position }}
-                                        </span>
-                                    </template>
-
-                                    <template #cell-player="{ value }">
-                                        <div>
-                                            <p class="font-medium">{{ value.name }}</p>
-                                            <p v-if="value.isWinner"
-                                               class="text-sm text-yellow-600 dark:text-yellow-400">🏆 {{
-                                                    t('Winner')
-                                                }}</p>
+                                            <div>
+                                                <p class="font-medium">{{
+                                                        application.user?.firstname
+                                                    }}
+                                                    {{ application.user?.lastname }}</p>
+                                                <p class="text-sm text-gray-600 dark:text-gray-400">
+                                                    {{ t('Applied:') }} {{ formatDate(application.applied_at) }}
+                                                </p>
+                                            </div>
+                                            <span
+                                                :class="['px-2 py-1 text-xs font-semibold rounded-full', getPlayerStatusBadgeClass(application.status)]">
+                                           {{ application.status_display }}
+                                       </span>
                                         </div>
-                                    </template>
+                                    </div>
+                                </CardContent>
+                            </Card>
 
-                                    <template #cell-rating="{ value }">
-                                        <span
-                                            v-if="value.points > 0"
-                                            class="rounded-full bg-blue-100 px-2 py-1 text-sm text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+                            <!-- Rejected Applications -->
+                            <Card v-if="rejectedApplications.length > 0" class="shadow-lg">
+                                <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
+                                    <CardTitle class="flex items-center gap-2">
+                                        <UserCheckIcon class="h-5 w-5 text-red-600"/>
+                                        {{ t('Rejected Applications') }} ({{ rejectedApplications.length }})
+                                    </CardTitle>
+                                    <CardDescription>{{
+                                            t('Applications that were not accepted')
+                                        }}
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent class="p-6">
+                                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                        <div
+                                            v-for="application in rejectedApplications"
+                                            :key="application.id"
+                                            class="flex items-center justify-between p-3 bg-red-50 rounded-lg dark:bg-red-900/20"
                                         >
-                                            +{{ value.points }}
-                                        </span>
-                                        <span v-else class="text-gray-400">—</span>
-                                    </template>
+                                            <div>
+                                                <p class="font-medium">{{
+                                                        application.user?.firstname
+                                                    }}
+                                                    {{ application.user?.lastname }}</p>
+                                                <p class="text-sm text-gray-600 dark:text-gray-400">
+                                                    {{ t('Rejected:') }} {{ formatDate(application.rejected_at) }}
+                                                </p>
+                                            </div>
+                                            <span
+                                                :class="['px-2 py-1 text-xs font-semibold rounded-full', getPlayerStatusBadgeClass(application.status)]">
+                                           {{ application.status_display }}
+                                       </span>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
 
-                                    <template #cell-bonus="{ value }">
-                                        <span v-if="value.amount > 0"
-                                              class="font-medium text-orange-600 dark:text-orange-400">
-                                            {{ value.amount }}
-                                        </span>
-                                        <span v-else class="text-gray-400">—</span>
-                                    </template>
+                            <!-- Empty State -->
+                            <Card v-if="pendingApplications.length === 0 && rejectedApplications.length === 0"
+                                  class="shadow-lg">
+                                <CardContent class="py-10 text-center">
+                                    <ClipboardListIcon class="mx-auto h-12 w-12 text-gray-400"/>
+                                    <p class="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">
+                                        {{ t('No Applications') }}</p>
+                                    <p class="mt-2 text-gray-600 dark:text-gray-400">
+                                        {{ t('There are no applications to display.') }}
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
 
-                                    <template #cell-prize="{ value }">
-                                        <span v-if="value.amount > 0"
-                                              class="font-medium text-green-600 dark:text-green-400">
-                                            {{ formatCurrency(value.amount) }}
-                                        </span>
-                                        <span v-else class="text-gray-400">—</span>
-                                    </template>
+                    <!-- Results Tab -->
+                    <div v-if="activeTab === 'results' && tournament.status === 'completed'">
+                        <Card class="shadow-lg">
+                            <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
+                                <CardTitle class="flex items-center gap-2">
+                                    <TrophyIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400"/>
+                                    {{ t('Tournament Results') }}
+                                </CardTitle>
+                                <CardDescription>{{
+                                        t('Final standings and prizes')
+                                    }}
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent class="p-6">
+                                <div v-if="completedPlayers.length === 0" class="py-8 text-center text-gray-500">
+                                    {{ t('No results available yet.') }}
+                                </div>
+                                <div v-else>
+                                    <DataTable
+                                        :columns="columns"
+                                        :compact-mode="true"
+                                        :data="completedPlayers"
+                                        :empty-message="t('No results available yet.')"
+                                        :mobile-card-mode="true"
+                                    >
+                                        <template #cell-position="{ value }">
+                            <span
+                                :class="[
+                                    'inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium',
+                                    getPositionBadgeClass(value.position)
+                                ]"
+                            >
+                                {{ value.position }}
+                            </span>
+                                        </template>
 
-                                    <template #cell-achievement="{ value }">
-                                        <span v-if="value.amount > 0"
-                                              class="font-medium text-purple-600 dark:text-purple-400">
-                                            {{ formatCurrency(value.amount) }}
-                                        </span>
-                                        <span v-else class="text-gray-400">—</span>
-                                    </template>
+                                        <template #cell-player="{ value, item }">
+                                            <div class="flex items-center gap-3">
+                                                <UserAvatar
+                                                    :user="item.user"
+                                                    size="sm"
+                                                    priority="tournament_picture"
+                                                    :exclusive-priority="true"
+                                                />
+                                                <div>
+                                                    <p class="font-medium">{{ value.name }}</p>
+                                                    <p v-if="value.isWinner"
+                                                       class="text-sm text-yellow-600 dark:text-yellow-400">🏆 {{
+                                                            t('Winner')
+                                                        }}</p>
+                                                </div>
+                                            </div>
+                                        </template>
 
-                                    <template #cell-total="{ value }">
-                                        <span v-if="value.amount > 0"
-                                              class="font-bold text-indigo-600 dark:text-indigo-400">
-                                            {{ formatCurrency(value.amount) }}
-                                        </span>
-                                        <span v-else class="text-gray-400">—</span>
-                                    </template>
-                                </DataTable>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
+                                        <template #cell-rating="{ value }">
+                            <span
+                                v-if="value.points > 0"
+                                class="rounded-full bg-blue-100 px-2 py-1 text-sm text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+                            >
+                                +{{ value.points }}
+                            </span>
+                                            <span v-else class="text-gray-400">—</span>
+                                        </template>
+
+                                        <template #cell-bonus="{ value }">
+                            <span v-if="value.amount > 0"
+                                  class="font-medium text-orange-600 dark:text-orange-400">
+                                {{ value.amount }}
+                            </span>
+                                            <span v-else class="text-gray-400">—</span>
+                                        </template>
+
+                                        <template #cell-prize="{ value }">
+                            <span v-if="value.amount > 0"
+                                  class="font-medium text-green-600 dark:text-green-400">
+                                {{ formatCurrency(value.amount) }}
+                            </span>
+                                            <span v-else class="text-gray-400">—</span>
+                                        </template>
+
+                                        <template #cell-achievement="{ value }">
+                            <span v-if="value.amount > 0"
+                                  class="font-medium text-purple-600 dark:text-purple-400">
+                                {{ formatCurrency(value.amount) }}
+                            </span>
+                                            <span v-else class="text-gray-400">—</span>
+                                        </template>
+
+                                        <template #cell-total="{ value }">
+                            <span v-if="value.amount > 0"
+                                  class="font-bold text-indigo-600 dark:text-indigo-400">
+                                {{ formatCurrency(value.amount) }}
+                            </span>
+                                            <span v-else class="text-gray-400">—</span>
+                                        </template>
+
+                                        <!-- Mobile card primary info -->
+                                        <template #mobile-primary="{ item }">
+                                            <div class="flex items-center justify-between mb-3">
+                                                <div class="flex items-center gap-3">
+                                    <span :class="[
+                                        'inline-flex h-10 w-10 items-center justify-center rounded-full text-base font-bold',
+                                        getPositionBadgeClass(item.position)
+                                    ]">
+                                        {{ item.position }}
+                                    </span>
+                                                    <UserAvatar
+                                                        :user="item.user"
+                                                        size="md"
+                                                        priority="tournament_picture"
+                                                        :exclusive-priority="true"
+                                                    />
+                                                    <div>
+                                                        <h3 class="text-base font-semibold text-gray-900 dark:text-white">
+                                                            {{ item.user?.firstname }} {{ item.user?.lastname }}
+                                                        </h3>
+                                                        <p v-if="item.is_winner"
+                                                           class="text-sm text-yellow-600 dark:text-yellow-400">
+                                                            🏆 {{ t('Winner') }}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div class="text-right">
+                                                    <p v-if="item.total_amount > 0"
+                                                       class="text-lg font-bold text-green-600 dark:text-green-400">
+                                                        {{ formatCurrency(item.total_amount) }}
+                                                    </p>
+                                                    <p v-if="item.rating_points > 0"
+                                                       class="text-xs text-gray-500 dark:text-gray-400">
+                                                        +{{ item.rating_points }} {{ t('pts') }}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </DataTable>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
                 </main>
             </template>
         </div>

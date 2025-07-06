@@ -3,8 +3,8 @@
 
 namespace App\Tournaments\Http\Resources;
 
-use App\Core\Http\Resources\UserResource;
 use App\Tournaments\Models\TournamentPlayer;
+use App\User\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 

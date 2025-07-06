@@ -8,6 +8,19 @@ export interface User {
     name?: string;
     email: string;
     phone?: string;
+    sex?: 'M' | 'F' | 'N' | null;
+    sex_value?: string | null;
+    birthdate?: string | null;
+    picture?: string | null;
+    tournament_picture?: string | null;
+    description?: string | null;
+    equipment?: Array<{
+        id?: string;
+        type: 'cue' | 'case' | 'chalk' | 'glove' | 'other';
+        brand: string;
+        model?: string;
+        description?: string;
+    }>;
     is_admin: boolean;
     avatar?: string;
     home_city?: City | null;

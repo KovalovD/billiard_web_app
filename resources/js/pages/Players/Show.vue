@@ -1,3 +1,5 @@
+// resources/js/Pages/Players/Show.vue
+
 <script lang="ts" setup>
 import {
     Button,
@@ -14,6 +16,7 @@ import {
     Spinner,
 } from '@/Components/ui';
 import DataTable from '@/Components/ui/data-table/DataTable.vue';
+import UserAvatar from '@/Components/ui/UserAvatar.vue';
 import {useAuth} from '@/composables/useAuth';
 import {useLocale} from '@/composables/useLocale';
 import {useSeo} from '@/composables/useSeo';
@@ -23,13 +26,16 @@ import {Head, router} from '@inertiajs/vue3';
 import {
     ArrowLeftIcon,
     AwardIcon,
+    CakeIcon,
     CalendarIcon,
     ChartBarIcon,
     ChevronRightIcon,
     ClockIcon,
     GamepadIcon,
+    InfoIcon,
     MapPinIcon,
     MedalIcon,
+    PackageIcon,
     SearchIcon,
     StarIcon,
     SwordsIcon,
@@ -41,6 +47,14 @@ import {
 import {computed, onMounted, ref} from 'vue';
 import DetailedMatchStats from "@/Components/Players/DetailedMatchStats.vue";
 
+interface Equipment {
+    id?: string;
+    type: 'cue' | 'case' | 'chalk' | 'glove' | 'other';
+    brand: string;
+    model?: string;
+    description?: string;
+}
+
 interface PlayerDetail {
     id: number;
     slug: string;
@@ -50,6 +64,13 @@ interface PlayerDetail {
     email: string;
     phone: string;
     sex: string;
+    sex_value?: string;
+    birthdate?: string;
+    description?: string;
+    equipment?: Equipment[];
+    picture?: string;
+    tournament_picture?: string;
+    avatar?: string;
     created_at: string;
     home_city?: {
         id: number;
@@ -158,10 +179,16 @@ interface HeadToHeadStats {
         player1: {
             id: number;
             full_name: string;
+            picture?: string;
+            tournament_picture?: string;
+            avatar?: string;
         };
         player2: {
             id: number;
             full_name: string;
+            picture?: string;
+            tournament_picture?: string;
+            avatar?: string;
         };
     };
     match_history: Array<{
@@ -189,6 +216,11 @@ interface HeadToHeadStats {
 interface PlayerSearchResult {
     id: number;
     full_name: string;
+    firstname?: string;
+    lastname?: string;
+    picture?: string;
+    tournament_picture?: string;
+    avatar?: string;
     home_city?: { name: string };
     home_club?: { name: string };
 }
@@ -262,6 +294,19 @@ const formatDateTime = (dateString: string): string => {
     });
 };
 
+const calculateAge = (birthdate: string): number => {
+    const today = new Date();
+    const birth = new Date(birthdate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+        age--;
+    }
+
+    return age;
+};
+
 const getPositionBadgeClass = (position: number | null): string => {
     if (!position) return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
     if (position === 1) return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
@@ -275,6 +320,22 @@ const getWinRateClass = (rate: number): string => {
     if (rate >= 50) return 'text-blue-600 dark:text-blue-400';
     if (rate >= 30) return 'text-orange-600 dark:text-orange-400';
     return 'text-red-600 dark:text-red-400';
+};
+
+const equipmentTypes = [
+    {value: 'cue', label: t('Cue'), icon: '🎱'},
+    {value: 'case', label: t('Case'), icon: '💼'},
+    {value: 'chalk', label: t('Chalk'), icon: '🟦'},
+    {value: 'glove', label: t('Glove'), icon: '🧤'},
+    {value: 'other', label: t('Other'), icon: '📦'}
+];
+
+const getEquipmentIcon = (type: string) => {
+    return equipmentTypes.find(t => t.value === type)?.icon || '📦';
+};
+
+const getEquipmentLabel = (type: string) => {
+    return equipmentTypes.find(t => t.value === type)?.label || type;
 };
 
 // Methods
@@ -513,10 +574,11 @@ onMounted(() => {
                         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                             <div class="flex-1">
                                 <div class="flex items-center gap-3 mb-3">
-                                    <div
-                                        class="h-12 w-12 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shadow-md">
-                                        <UserIcon class="h-6 w-6 text-white"/>
-                                    </div>
+                                    <UserAvatar
+                                        :user="player"
+                                        size="lg"
+                                        priority="tournament_picture"
+                                    />
                                     <div>
                                         <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
                                             {{ player.full_name }}
@@ -597,42 +659,121 @@ onMounted(() => {
                     </div>
 
                     <CardContent class="p-6 sm:p-8">
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <div>
-                                <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                                    {{ t('Player Statistics') }}</h4>
-                                <div class="space-y-2">
-                                    <div class="flex justify-between text-sm sm:text-base">
-                                        <span class="text-gray-600 dark:text-gray-400">{{ t('Top 3 Finishes') }}:</span>
-                                        <span class="font-medium">{{ player.tournament_stats.tournaments_top3 }}</span>
+                        <!-- Player Info Section -->
+                        <div class="space-y-6">
+                            <!-- Personal Information -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <div v-if="player.birthdate" class="flex items-center gap-3">
+                                    <CakeIcon class="h-5 w-5 text-gray-400"/>
+                                    <div>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('Age') }}</p>
+                                        <p class="font-medium">
+                                            {{ calculateAge(player.birthdate) }} {{ t('years') }}
+                                            <span class="text-sm text-gray-500 ml-1">({{
+                                                    formatDate(player.birthdate)
+                                                }})</span>
+                                        </p>
                                     </div>
-                                    <div class="flex justify-between text-sm sm:text-base">
-                                        <span class="text-gray-600 dark:text-gray-400">{{ t('Top 3 Rate') }}:</span>
-                                        <span class="font-medium">{{
-                                                Math.round(player.tournament_stats.top3_rate)
-                                            }}%</span>
-                                    </div>
-                                    <div class="flex justify-between text-sm sm:text-base">
-                                        <span class="text-gray-600 dark:text-gray-400">{{ t('Rating Points') }}:</span>
-                                        <span class="font-medium">{{
-                                                player.tournament_stats.total_rating_points
-                                            }}</span>
+                                </div>
+
+                                <div v-if="player.sex_value" class="flex items-center gap-3">
+                                    <UserIcon class="h-5 w-5 text-gray-400"/>
+                                    <div>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('Gender') }}</p>
+                                        <p class="font-medium">{{ player.sex_value }}</p>
                                     </div>
                                 </div>
                             </div>
-                            <div>
-                                <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">{{
-                                        t('Active Leagues')
-                                    }}</h4>
-                                <div v-if="player.league_stats.filter(l => l.is_active).length > 0" class="space-y-2">
-                                    <div v-for="league in player.league_stats.filter(l => l.is_active).slice(0, 3)"
-                                         :key="league.league_id" class="flex justify-between text-sm sm:text-base">
-                                        <span class="text-gray-600 dark:text-gray-400">{{ league.league_name }}:</span>
-                                        <span class="font-medium">#{{ league.position }}</span>
+
+                            <!-- Description -->
+                            <div v-if="player.description" class="border-t pt-6">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <InfoIcon class="h-5 w-5 text-gray-400"/>
+                                    <h4 class="font-semibold text-gray-900 dark:text-gray-100">{{ t('About') }}</h4>
+                                </div>
+                                <p class="text-gray-600 dark:text-gray-400 whitespace-pre-line">{{
+                                        player.description
+                                    }}</p>
+                            </div>
+
+                            <!-- Equipment -->
+                            <div v-if="player.equipment && player.equipment.length > 0" class="border-t pt-6">
+                                <div class="flex items-center gap-2 mb-4">
+                                    <PackageIcon class="h-5 w-5 text-gray-400"/>
+                                    <h4 class="font-semibold text-gray-900 dark:text-gray-100">{{ t('Equipment') }}</h4>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div
+                                        v-for="(item, index) in player.equipment"
+                                        :key="item.id || index"
+                                        class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg"
+                                    >
+                                        <span class="text-2xl">{{ getEquipmentIcon(item.type) }}</span>
+                                        <div class="flex-1">
+                                            <div class="font-medium text-gray-900 dark:text-white">
+                                                {{ item.brand }}
+                                                <span v-if="item.model" class="text-gray-600 dark:text-gray-400">
+                                                    - {{ item.model }}
+                                                </span>
+                                            </div>
+                                            <div class="text-sm text-gray-500 dark:text-gray-400">
+                                                {{ getEquipmentLabel(item.type) }}
+                                                <span v-if="item.description" class="ml-2">
+                                                    • {{ item.description }}
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div v-else class="text-sm text-gray-500 dark:text-gray-400">
-                                    {{ t('No active leagues') }}
+                            </div>
+
+                            <!-- Statistics Summary -->
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 border-t pt-6">
+                                <div>
+                                    <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                                        {{ t('Player Statistics') }}</h4>
+                                    <div class="space-y-2">
+                                        <div class="flex justify-between text-sm sm:text-base">
+                                            <span class="text-gray-600 dark:text-gray-400">{{
+                                                    t('Top 3 Finishes')
+                                                }}:</span>
+                                            <span class="font-medium">{{
+                                                    player.tournament_stats.tournaments_top3
+                                                }}</span>
+                                        </div>
+                                        <div class="flex justify-between text-sm sm:text-base">
+                                            <span class="text-gray-600 dark:text-gray-400">{{ t('Top 3 Rate') }}:</span>
+                                            <span class="font-medium">{{
+                                                    Math.round(player.tournament_stats.top3_rate)
+                                                }}%</span>
+                                        </div>
+                                        <div class="flex justify-between text-sm sm:text-base">
+                                            <span class="text-gray-600 dark:text-gray-400">{{
+                                                    t('Rating Points')
+                                                }}:</span>
+                                            <span class="font-medium">{{
+                                                    player.tournament_stats.total_rating_points
+                                                }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">{{
+                                            t('Active Leagues')
+                                        }}</h4>
+                                    <div v-if="player.league_stats.filter(l => l.is_active).length > 0"
+                                         class="space-y-2">
+                                        <div v-for="league in player.league_stats.filter(l => l.is_active).slice(0, 3)"
+                                             :key="league.league_id" class="flex justify-between text-sm sm:text-base">
+                                            <span class="text-gray-600 dark:text-gray-400">{{
+                                                    league.league_name
+                                                }}:</span>
+                                            <span class="font-medium">#{{ league.position }}</span>
+                                        </div>
+                                    </div>
+                                    <div v-else class="text-sm text-gray-500 dark:text-gray-400">
+                                        {{ t('No active leagues') }}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1114,10 +1255,17 @@ onMounted(() => {
                         class="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
                         @click="selectOpponent(result)"
                     >
-                        <div>
-                            <div class="font-medium">{{ result.full_name }}</div>
-                            <div v-if="result.home_city || result.home_club" class="text-sm text-gray-500">
-                                {{ [result.home_city?.name, result.home_club?.name].filter(Boolean).join(', ') }}
+                        <div class="flex items-center gap-3">
+                            <UserAvatar
+                                :user="result"
+                                size="sm"
+                                priority="picture"
+                            />
+                            <div>
+                                <div class="font-medium">{{ result.full_name }}</div>
+                                <div v-if="result.home_city || result.home_club" class="text-sm text-gray-500">
+                                    {{ [result.home_city?.name, result.home_club?.name].filter(Boolean).join(', ') }}
+                                </div>
                             </div>
                         </div>
                         <ChevronRightIcon class="h-4 w-4 text-gray-400"/>
@@ -1153,6 +1301,14 @@ onMounted(() => {
                                 <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('Total Matches') }}</div>
                             </div>
                             <div class="text-center">
+                                <div class="mb-2">
+                                    <UserAvatar
+                                        :user="headToHeadStats.players.player1"
+                                        size="md"
+                                        priority="tournament_picture"
+                                        className="mx-auto"
+                                    />
+                                </div>
                                 <div class="text-2xl font-bold text-green-600 dark:text-green-400">
                                     {{ headToHeadStats.summary.player1_wins }}
                                 </div>
@@ -1161,6 +1317,14 @@ onMounted(() => {
                                 </div>
                             </div>
                             <div class="text-center">
+                                <div class="mb-2">
+                                    <UserAvatar
+                                        :user="headToHeadStats.players.player2"
+                                        size="md"
+                                        priority="tournament_picture"
+                                        className="mx-auto"
+                                    />
+                                </div>
                                 <div class="text-2xl font-bold text-red-600 dark:text-red-400">
                                     {{ headToHeadStats.summary.player2_wins }}
                                 </div>

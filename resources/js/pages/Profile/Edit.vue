@@ -1,4 +1,4 @@
-//resources/js/pages/Profile/Edit.vue
+// resources/js/Pages/Profile/Edit.vue
 <script lang="ts" setup>
 import InputError from '@/Components/ui/form/InputError.vue';
 import {
@@ -17,20 +17,26 @@ import {
     SelectTrigger,
     SelectValue,
     Spinner,
+    Textarea,
 } from '@/Components/ui';
+import PictureUpload from '@/Components/profile/PictureUpload.vue';
+import EquipmentManager from '@/Components/profile/EquipmentManager.vue';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
 import type {ApiError, City, Club, User} from '@/types/api';
 import {Head, Link} from '@inertiajs/vue3';
-import {onMounted, ref} from 'vue';
+import {computed, onMounted, ref, watch} from 'vue';
 import {useLocale} from '@/composables/useLocale';
 import {
     ArrowLeftIcon,
+    CalendarIcon,
     CheckCircleIcon,
     EditIcon,
     KeyIcon,
     MapPinIcon,
+    PackageIcon,
     PhoneIcon,
+    SaveIcon,
     Trash2Icon,
     UserIcon,
     UsersIcon,
@@ -49,18 +55,26 @@ const isLoadingUser = ref(true);
 const isLoadingCities = ref(false);
 const isLoadingClubs = ref(false);
 
-const isPhoneValid = ref(true);
-
 const {t} = useLocale();
 
+// Separate forms for profile and equipment
 const profileForm = ref({
     firstname: '',
     lastname: '',
     email: '',
     phone: '',
+    sex: null as string | null,
+    birthdate: null as string | null,
     home_city_id: null as number | string | null,
     home_club_id: null as number | string | null,
+    description: '',
 });
+
+const equipment = ref<any[]>([]);
+const hasEquipmentChanges = ref(false);
+
+const pictureFile = ref<File | null>(null);
+const tournamentPictureFile = ref<File | null>(null);
 
 const passwordForm = ref({
     current_password: '',
@@ -77,27 +91,90 @@ const passwordErrors = ref<Record<string, string[]>>({});
 const deleteErrors = ref<Record<string, string[]>>({});
 
 const profileSuccess = ref(false);
+const equipmentSuccess = ref(false);
 const passwordSuccess = ref(false);
 const isProcessingProfile = ref(false);
+const isProcessingEquipment = ref(false);
 const isProcessingPassword = ref(false);
 const isProcessingDelete = ref(false);
 const showDeleteModal = ref(false);
+
+const sexOptions = [
+    {value: 'M', label: t('Male'), icon: '👨'},
+    {value: 'F', label: t('Female'), icon: '👩'},
+    {value: 'N', label: t('Non-binary'), icon: '🧑'},
+];
+
+// Compute maximum birthdate (must be at least 5 years old)
+const maxBirthdate = computed(() => {
+    const date = new Date();
+    date.setFullYear(date.getFullYear() - 5);
+    return date.toISOString().split('T')[0];
+});
+
+// Compute minimum birthdate (not older than 120 years)
+const minBirthdate = computed(() => {
+    const date = new Date();
+    date.setFullYear(date.getFullYear() - 120);
+    return date.toISOString().split('T')[0];
+});
+
+// Track if profile form has changes
+const hasProfileChanges = computed(() => {
+    if (!user.value) return false;
+
+    return (
+        profileForm.value.firstname !== user.value.firstname ||
+        profileForm.value.lastname !== user.value.lastname ||
+        profileForm.value.email !== user.value.email ||
+        profileForm.value.phone !== (user.value.phone || '') ||
+        profileForm.value.sex !== user.value.sex ||
+        profileForm.value.birthdate !== (user.value.birthdate ? new Date(user.value.birthdate).toISOString().split('T')[0] : null) ||
+        profileForm.value.home_city_id !== (user.value.home_city?.id || null) ||
+        profileForm.value.home_club_id !== (user.value.home_club?.id || null) ||
+        profileForm.value.description !== (user.value.description || '') ||
+        pictureFile.value !== null ||
+        tournamentPictureFile.value !== null
+    );
+});
+
+// Phone validation state
+const phoneValidationState = computed(() => {
+    if (!profileForm.value.phone) return {valid: true, message: ''};
+
+    const isValid = phonePattern.test(profileForm.value.phone);
+    return {
+        valid: isValid,
+        message: isValid ? '' : t('Please enter a valid phone number format (e.g., +1234567890, 123-456-7890)')
+    };
+});
+
+// Watch equipment changes
+watch(equipment, (newVal) => {
+    if (user.value && user.value.equipment) {
+        hasEquipmentChanges.value = JSON.stringify(newVal) !== JSON.stringify(user.value.equipment);
+    }
+}, {deep: true});
 
 const loadUser = async () => {
     try {
         const response = await apiClient<User>('/api/auth/user');
         user.value = response;
+
+        // Initialize forms with user data
         profileForm.value = {
             firstname: response.firstname,
             lastname: response.lastname,
             email: response.email,
             phone: response.phone || '',
+            sex: response.sex || null,
+            birthdate: response.birthdate ? new Date(response.birthdate).toISOString().split('T')[0] : null,
             home_city_id: response.home_city?.id || null,
             home_club_id: response.home_club?.id || null,
+            description: response.description || '',
         };
 
-        // Validate the phone number from the data
-        isPhoneValid.value = !profileForm.value.phone || phonePattern.test(profileForm.value.phone);
+        equipment.value = response.equipment || [];
 
         // Load clubs if initial city is set
         if (response.home_city?.id) {
@@ -155,37 +232,60 @@ const onClubChange = (value: string | number | null) => {
     profileForm.value.home_club_id = value ? Number(value) : null;
 };
 
-const validatePhone = () => {
-    isPhoneValid.value = !profileForm.value.phone || phonePattern.test(profileForm.value.phone);
-
-    // Add validation error if phone is invalid
-    if (!isPhoneValid.value) {
-        profileErrors.value.phone = [t('Please enter a valid phone number format (e.g., +1234567890, 123-456-7890)')];
-    } else {
-        // Remove phone error if it exists
-        if (profileErrors.value.phone) {
-            delete profileErrors.value.phone;
-        }
+const clearFieldError = (field: string) => {
+    if (profileErrors.value[field]) {
+        delete profileErrors.value[field];
     }
-
-    return isPhoneValid.value;
 };
 
 const updateProfile = async () => {
-    // Validate phone number first
-    if (!validatePhone()) {
+    // Clear previous errors
+    profileErrors.value = {};
+    profileSuccess.value = false;
+
+    // Validate phone on submit
+    if (!phoneValidationState.value.valid) {
+        profileErrors.value.phone = [phoneValidationState.value.message];
         return;
     }
 
-    profileSuccess.value = false;
-    profileErrors.value = {};
     isProcessingProfile.value = true;
 
     try {
-        user.value = await apiClient<User>('/api/profile', {
-            method: 'put',
-            data: profileForm.value,
+        // Create FormData for file uploads
+        const formData = new FormData();
+
+        // Add method spoofing for Laravel
+        formData.append('_method', 'PUT');
+
+        // Add all text fields
+        Object.entries(profileForm.value).forEach(([key, value]) => {
+            if (value !== null && value !== undefined && value !== '') {
+                formData.append(key, value.toString());
+            }
         });
+
+        // Add picture files if selected
+        if (pictureFile.value) {
+            formData.append('picture', pictureFile.value);
+        }
+        if (tournamentPictureFile.value) {
+            formData.append('tournament_picture', tournamentPictureFile.value);
+        }
+
+        // Update user data
+        user.value = await apiClient<User>('/api/profile', {
+            method: 'post', // Use POST with _method field for Laravel
+            data: formData,
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+
+        // Clear file selections after successful upload
+        pictureFile.value = null;
+        tournamentPictureFile.value = null;
+
         profileSuccess.value = true;
         setTimeout(() => {
             profileSuccess.value = false;
@@ -197,6 +297,28 @@ const updateProfile = async () => {
         }
     } finally {
         isProcessingProfile.value = false;
+    }
+};
+
+const updateEquipment = async () => {
+    equipmentSuccess.value = false;
+    isProcessingEquipment.value = true;
+
+    try {
+        user.value = await apiClient<User>('/api/profile/equipment', {
+            method: 'put',
+            data: {equipment: equipment.value},
+        });
+        hasEquipmentChanges.value = false;
+        equipmentSuccess.value = true;
+
+        setTimeout(() => {
+            equipmentSuccess.value = false;
+        }, 3000);
+    } catch (error: any) {
+        console.error('Failed to update equipment:', error);
+    } finally {
+        isProcessingEquipment.value = false;
     }
 };
 
@@ -249,6 +371,23 @@ const deleteAccount = async () => {
     } finally {
         isProcessingDelete.value = false;
         showDeleteModal.value = false;
+    }
+};
+
+const deletePicture = async (type: string) => {
+    try {
+        await apiClient('/api/profile/picture', {
+            method: 'delete',
+            params: {type}
+        });
+
+        if (type === 'profile') {
+            user.value!.picture = null;
+        } else {
+            user.value!.tournament_picture = null;
+        }
+    } catch (error) {
+        console.error('Failed to delete picture:', error);
     }
 };
 
@@ -337,6 +476,25 @@ onMounted(() => {
                                 </div>
                             </div>
 
+                            <!-- Profile Pictures Section -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <PictureUpload
+                                    v-model="pictureFile"
+                                    :current-picture="user?.picture"
+                                    :label="t('Profile Picture')"
+                                    :disabled="isProcessingProfile"
+                                    @delete="deletePicture('profile')"
+                                />
+
+                                <PictureUpload
+                                    v-model="tournamentPictureFile"
+                                    :current-picture="user?.tournament_picture"
+                                    :label="t('Tournament Picture')"
+                                    :disabled="isProcessingProfile"
+                                    @delete="deletePicture('tournament')"
+                                />
+                            </div>
+
                             <!-- Personal Information -->
                             <div class="space-y-6">
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -352,6 +510,7 @@ onMounted(() => {
                                             class="h-11"
                                             required
                                             type="text"
+                                            @input="clearFieldError('firstname')"
                                         />
                                         <InputError :message="profileErrors.firstname?.join(', ')"/>
                                     </div>
@@ -368,8 +527,54 @@ onMounted(() => {
                                             class="h-11"
                                             required
                                             type="text"
+                                            @input="clearFieldError('lastname')"
                                         />
                                         <InputError :message="profileErrors.lastname?.join(', ')"/>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    <div class="space-y-2">
+                                        <Label for="sex" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            {{ t('Sex') }}
+                                        </Label>
+                                        <Select
+                                            :disabled="isProcessingProfile"
+                                            :modelValue="profileForm.sex"
+                                            @update:modelValue="profileForm.sex = $event; clearFieldError('sex')"
+                                        >
+                                            <SelectTrigger id="sex" class="h-11">
+                                                <SelectValue :placeholder="user?.sex_value || t('Select sex')"/>
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem v-for="option in sexOptions" :key="option.value"
+                                                            :value="option.value">
+                                                    <span class="flex items-center gap-2">
+                                                        {{ option.label }}
+                                                    </span>
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <InputError :message="profileErrors.sex?.join(', ')"/>
+                                    </div>
+
+                                    <div class="space-y-2">
+                                        <Label for="birthdate"
+                                               class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            <CalendarIcon class="inline h-4 w-4 mr-1"/>
+                                            {{ t('Birthdate') }}
+                                        </Label>
+                                        <Input
+                                            id="birthdate"
+                                            v-model="profileForm.birthdate"
+                                            :disabled="isProcessingProfile"
+                                            :max="maxBirthdate"
+                                            :min="minBirthdate"
+                                            class="h-11"
+                                            type="date"
+                                            @input="clearFieldError('birthdate')"
+                                        />
+                                        <InputError :message="profileErrors.birthdate?.join(', ')"/>
                                     </div>
                                 </div>
 
@@ -384,6 +589,7 @@ onMounted(() => {
                                         class="h-11"
                                         required
                                         type="email"
+                                        @input="clearFieldError('email')"
                                     />
                                     <InputError :message="profileErrors.email?.join(', ')"/>
                                 </div>
@@ -396,15 +602,18 @@ onMounted(() => {
                                     <Input
                                         id="phone"
                                         v-model="profileForm.phone"
-                                        :class="{ 'border-red-300 focus:border-red-300 focus:ring-red-300': !isPhoneValid }"
+                                        :class="{ 'border-red-300 focus:border-red-300 focus:ring-red-300': !phoneValidationState.valid && profileForm.phone }"
                                         :disabled="isProcessingProfile"
                                         :placeholder="t('e.g., (123) 456-7890')"
                                         class="h-11"
                                         required
                                         type="tel"
-                                        @blur="validatePhone"
-                                        @input="validatePhone"
+                                        @input="clearFieldError('phone')"
                                     />
+                                    <p v-if="!phoneValidationState.valid && profileForm.phone"
+                                       class="text-xs text-red-600 dark:text-red-400 mt-1">
+                                        {{ phoneValidationState.message }}
+                                    </p>
                                     <InputError :message="profileErrors.phone?.join(', ')"/>
                                 </div>
 
@@ -459,20 +668,85 @@ onMounted(() => {
                                         <InputError :message="profileErrors.home_club_id?.join(', ')"/>
                                     </div>
                                 </div>
+
+                                <div class="space-y-2">
+                                    <Label for="description"
+                                           class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        {{ t('About Me') }}
+                                    </Label>
+                                    <Textarea
+                                        id="description"
+                                        v-model="profileForm.description"
+                                        :disabled="isProcessingProfile"
+                                        :placeholder="t('Tell us about yourself, your playing style, achievements...')"
+                                        rows="4"
+                                        maxlength="1000"
+                                        @input="clearFieldError('description')"
+                                    />
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 text-right">
+                                        {{ profileForm.description.length }}/1000
+                                    </p>
+                                    <InputError :message="profileErrors.description?.join(', ')"/>
+                                </div>
                             </div>
 
                             <div class="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
                                 <Button
-                                    :disabled="isProcessingProfile || !isPhoneValid"
+                                    :disabled="isProcessingProfile || !phoneValidationState.valid || !hasProfileChanges"
                                     class="px-6 h-11"
                                     type="submit"
                                 >
                                     <Spinner v-if="isProcessingProfile" class="mr-2 h-4 w-4"/>
+                                    <SaveIcon v-else class="mr-2 h-4 w-4"/>
                                     <span v-if="isProcessingProfile">{{ t('Saving...') }}</span>
                                     <span v-else>{{ t('Save Changes') }}</span>
                                 </Button>
                             </div>
                         </form>
+                    </CardContent>
+                </Card>
+
+                <!-- Equipment Card -->
+                <Card class="shadow-lg">
+                    <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
+                        <CardTitle class="flex items-center gap-2">
+                            <PackageIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400"/>
+                            {{ t('My Equipment') }}
+                        </CardTitle>
+                        <CardDescription>{{
+                                t('Manage your cues, cases, and other billiard equipment')
+                            }}
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent class="p-6 sm:p-8">
+                        <!-- Success message -->
+                        <div v-if="equipmentSuccess"
+                             class="rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-4 mb-4">
+                            <div class="flex items-center">
+                                <CheckCircleIcon class="h-5 w-5 text-green-600 dark:text-green-400 mr-2"/>
+                                <p class="text-green-800 dark:text-green-300 font-medium">
+                                    {{ t('Equipment updated successfully.') }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <EquipmentManager
+                            v-model="equipment"
+                            :disabled="isProcessingEquipment"
+                        />
+
+                        <div class="flex justify-end pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
+                            <Button
+                                :disabled="isProcessingEquipment"
+                                class="px-6 h-11"
+                                @click="updateEquipment"
+                            >
+                                <Spinner v-if="isProcessingEquipment" class="mr-2 h-4 w-4"/>
+                                <SaveIcon v-else class="mr-2 h-4 w-4"/>
+                                <span v-if="isProcessingEquipment">{{ t('Saving...') }}</span>
+                                <span v-else>{{ t('Save Equipment') }}</span>
+                            </Button>
+                        </div>
                     </CardContent>
                 </Card>
 

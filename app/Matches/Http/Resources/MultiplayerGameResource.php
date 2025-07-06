@@ -2,9 +2,9 @@
 
 namespace App\Matches\Http\Resources;
 
-use App\Core\Http\Resources\UserResource;
 use App\Matches\Models\MultiplayerGame;
 use App\Matches\Models\MultiplayerGamePlayer;
+use App\User\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Auth;

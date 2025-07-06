@@ -2,8 +2,8 @@
 
 namespace App\OfficialRatings\Http\Resources;
 
-use App\Core\Http\Resources\UserResource;
 use App\OfficialRatings\Models\OfficialRatingPlayer;
+use App\User\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 

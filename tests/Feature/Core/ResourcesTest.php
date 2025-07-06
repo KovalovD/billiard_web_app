@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Core;
 
-use App\Core\Http\Resources\UserResource;
 use App\Core\Models\City;
 use App\Core\Models\Club;
 use App\Core\Models\Country;
@@ -20,6 +19,7 @@ use App\Matches\Models\MatchGame;
 use App\Matches\Models\MultiplayerGame;
 use App\Matches\Models\MultiplayerGamePlayer;
 use App\User\Http\Resources\CityResource;
+use App\User\Http\Resources\UserResource;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use PHPUnit\Framework\Attributes\Test;

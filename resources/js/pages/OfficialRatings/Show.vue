@@ -25,6 +25,7 @@ import {useGameRules} from '@/composables/useGameRules';
 import {useToastStore} from '@/stores/toast';
 import {useSeo} from "@/composables/useSeo";
 import {scrollToUserElement} from '@/utils/scrollToUser';
+import UserAvatar from "@/Components/ui/UserAvatar.vue";
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -723,8 +724,14 @@ onMounted(() => {
                                         </span>
                                     </template>
 
-                                    <template #cell-player="{ value }">
+                                    <template #cell-player="{ value, item }">
                                         <div class="flex items-center gap-2">
+                                            <UserAvatar
+                                                :user="item.user"
+                                                size="sm"
+                                                priority="tournament_picture"
+                                                :exclusive-priority="true"
+                                            />
                                             <div>
                                                 <p :class="[
                                                     'font-medium',
@@ -822,6 +829,12 @@ onMounted(() => {
                                                 ]">
                                                     {{ item.position }}
                                                 </span>
+                                                <UserAvatar
+                                                    :user="item.user"
+                                                    size="md"
+                                                    priority="tournament_picture"
+                                                    :exclusive-priority="true"
+                                                />
                                                 <div>
                                                     <h3 :class="[
                                                         'text-base font-semibold',

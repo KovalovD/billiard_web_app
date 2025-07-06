@@ -16,15 +16,20 @@ class PlayerDetailResource extends JsonResource
 
         return [
             'id'                 => $this->id,
-            'slug' => $this->slug,
+            'slug'               => $this->slug,
             'firstname'          => $this->firstname,
             'lastname'           => $this->lastname,
             'full_name'          => $this->full_name,
             'email'              => $this->email,
             'phone'              => $this->phone,
-            'sex'                => $this->sex,
             'created_at'         => $this->created_at,
-
+            'sex'                => $this->sex,
+            'sex_value'          => $this->when($this->sex, fn() => $this->getSexName()),
+            'birthdate'          => $this->birthdate?->toISOString(),
+            'description'        => $this->description,
+            'equipment'          => $this->equipment ?? [],
+            'tournament_picture' => $this->tournament_picture ?? null,
+            'avatar'             => $this->when($this->picture, fn() => asset('storage/'.$this->picture)),
             // Location
             'home_city'          => $this->whenLoaded('homeCity', fn() => [
                 'id'      => $this->homeCity->id,

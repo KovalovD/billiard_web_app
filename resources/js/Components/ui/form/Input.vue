@@ -7,7 +7,7 @@ defineOptions({
 })
 
 // Используем v-model для двусторонней привязки
-const modelValue = defineModel<string | number>()
+const modelValue = defineModel<string | number | null>()
 
 const {class: className, ...restAttrs} = useAttrs()
 </script>

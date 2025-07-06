@@ -4,7 +4,6 @@ namespace App\Tournaments\Http\Controllers;
 
 use App\Admin\Http\Requests\AddPlayerRequest;
 use App\Auth\DataTransferObjects\RegisterDTO;
-use App\Core\Http\Resources\UserResource;
 use App\OfficialRatings\Services\OfficialRatingService;
 use App\Tournaments\Http\Requests\AddTournamentPlayerRequest;
 use App\Tournaments\Http\Requests\CreateTournamentRequest;
@@ -16,6 +15,7 @@ use App\Tournaments\Models\Tournament;
 use App\Tournaments\Models\TournamentPlayer;
 use App\Tournaments\Services\TournamentBracketService;
 use App\Tournaments\Services\TournamentService;
+use App\User\Http\Resources\UserResource;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

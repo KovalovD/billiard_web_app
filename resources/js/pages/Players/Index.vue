@@ -1,3 +1,5 @@
+// resources/js/Pages/Players/Index.vue
+
 <script lang="ts" setup>
 import {
     Button,
@@ -15,6 +17,7 @@ import {
     SelectValue,
 } from '@/Components/ui';
 import DataTable from '@/Components/ui/data-table/DataTable.vue';
+import UserAvatar from '@/Components/ui/UserAvatar.vue';
 import {useAuth} from '@/composables/useAuth';
 import {useLocale} from '@/composables/useLocale';
 import {useSeo} from '@/composables/useSeo';
@@ -29,7 +32,6 @@ import {
     MapPinIcon,
     SearchIcon,
     TrophyIcon,
-    UserIcon,
     UsersIcon,
 } from 'lucide-vue-next';
 import {computed, onMounted, onUnmounted, ref, watch} from 'vue';
@@ -43,6 +45,9 @@ interface Player {
     email: string;
     phone: string;
     sex: string;
+    picture?: string;
+    tournament_picture?: string;
+    avatar?: string;
     home_city?: {
         id: number;
         name: string;
@@ -115,7 +120,8 @@ const columns = computed(() => [
         align: 'left' as const,
         render: (player: Player) => ({
             name: player.full_name,
-            isCurrentUser: isAuthenticated.value && user.value?.id === player.id
+            isCurrentUser: isAuthenticated.value && user.value?.id === player.id,
+            player: player
         })
     },
     {
@@ -607,10 +613,11 @@ onUnmounted(() => {
                             <template #cell-player="{ value }">
                                 <div class="flex items-center">
                                     <div class="flex-shrink-0 h-10 w-10">
-                                        <div
-                                            class="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                                            <UserIcon class="h-5 w-5 text-gray-500 dark:text-gray-400"/>
-                                        </div>
+                                        <UserAvatar
+                                            :user="value.player"
+                                            size="sm"
+                                            priority="picture"
+                                        />
                                     </div>
                                     <div class="ml-4">
                                         <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -693,10 +700,11 @@ onUnmounted(() => {
                                     <div class="flex-1 min-w-0">
                                         <div class="flex items-center gap-3">
                                             <div class="flex-shrink-0 h-10 w-10">
-                                                <div
-                                                    class="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                                                    <UserIcon class="h-5 w-5 text-gray-500 dark:text-gray-400"/>
-                                                </div>
+                                                <UserAvatar
+                                                    :user="item"
+                                                    size="sm"
+                                                    priority="picture"
+                                                />
                                             </div>
                                             <div class="flex-1 min-w-0">
                                                 <p class="font-medium truncate">

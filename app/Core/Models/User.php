@@ -41,6 +41,11 @@ class User extends Authenticatable
         'is_active',
         'is_changed_once',
         'sex',
+        'birthdate',
+        'picture',
+        'tournament_picture',
+        'description',
+        'equipment',
     ];
 
     /**
@@ -84,6 +89,15 @@ class User extends Authenticatable
         };
     }
 
+    public function getAge(): ?int
+    {
+        if (!$this->birthdate) {
+            return null;
+        }
+
+        return now()->diffInYears($this->birthdate);
+    }
+
     public function tournamentPlayers(): HasMany
     {
         return $this->hasMany(TournamentPlayer::class);
@@ -102,6 +116,8 @@ class User extends Authenticatable
             'is_admin'          => 'boolean',
             'is_active'         => 'boolean',
             'is_changed_once'   => 'boolean',
+            'birthdate' => 'date',
+            'equipment' => 'array',
         ];
     }
 

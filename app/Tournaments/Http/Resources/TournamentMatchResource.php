@@ -4,8 +4,8 @@
 namespace App\Tournaments\Http\Resources;
 
 use App\Core\Http\Resources\ClubTableResource;
-use App\Core\Http\Resources\UserResource;
 use App\Tournaments\Models\TournamentMatch;
+use App\User\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 

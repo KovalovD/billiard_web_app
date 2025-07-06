@@ -1,9 +1,12 @@
+resources/js/Layouts/AuthenticatedLayout.vue
+
 <script lang="ts" setup>
 import ApplicationLogo from '@/Components/ui/ApplicationLogo.vue';
 import RegisterModal from '@/Components/Auth/RegisterModal.vue';
 import Dropdown from '@/Components/ui/dropdown/Dropdown.vue';
 import DropdownLink from '@/Components/ui/dropdown/DropdownLink.vue';
 import NavLink from '@/Components/ui/NavLink.vue';
+import UserAvatar from '@/Components/ui/UserAvatar.vue';
 import {useAuth} from '@/composables/useAuth';
 import {Head, Link} from '@inertiajs/vue3';
 import axios from 'axios';
@@ -187,10 +190,7 @@ onMounted(() => {
                                     <template #trigger>
                                         <button
                                             class="flex items-center space-x-3 rounded-lg bg-gray-100 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 transition-colors dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600">
-                                            <div
-                                                class="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
-                                                {{ (user.firstname || user.name || 'U')[0].toUpperCase() }}
-                                            </div>
+                                            <UserAvatar :user="user" size="sm"/>
                                             <span class="hidden sm:block">{{
                                                     user.firstname || user.name || t('User')
                                                 }}</span>
@@ -324,10 +324,7 @@ onMounted(() => {
                             <div class="mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
                                 <div v-if="user">
                                     <div class="mb-4 flex items-center gap-3 px-3">
-                                        <div
-                                            class="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold">
-                                            {{ (user.firstname || user.name || 'U')[0].toUpperCase() }}
-                                        </div>
+                                        <UserAvatar :user="user" size="md"/>
                                         <div>
                                             <p class="text-base font-medium text-gray-900 dark:text-white">
                                                 {{ user.firstname || user.name || t('User') }}

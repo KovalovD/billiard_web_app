@@ -2,8 +2,8 @@
 
 namespace App\Admin\Http\Controllers;
 
-use App\Core\Http\Resources\UserResource;
 use App\Core\Models\User;
+use App\User\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
