@@ -537,7 +537,7 @@ export interface TournamentPlayer {
 export interface TournamentMatch {
     id: number;
     tournament_id: number;
-    match_code?: string;
+    match_code: string;
     stage: MatchStage;
     stage_display: string;
     round?: EliminationRound;
@@ -555,6 +555,7 @@ export interface TournamentMatch {
     previous_match2_id?: number;
     next_match_id?: number;
     loser_next_match_id?: number;
+    loser_next_match_position?: number;
     club_table_id?: number;
     stream_url?: string;
     status: MatchStatus;

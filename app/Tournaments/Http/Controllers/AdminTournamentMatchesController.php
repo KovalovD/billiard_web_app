@@ -63,6 +63,7 @@ readonly class AdminTournamentMatchesController
         $validated = $request->validate([
             'club_table_id' => ['nullable', 'integer', 'exists:club_tables,id'],
             'stream_url'    => ['nullable', 'string', 'url'],
+            'admin_notes' => ['nullable', 'string'],
         ]);
 
         try {

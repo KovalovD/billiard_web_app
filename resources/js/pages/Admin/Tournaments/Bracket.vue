@@ -1,24 +1,8 @@
 <script lang="ts" setup>
-import {
-    Button,
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-    Input,
-    Label,
-    Modal,
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-    Spinner,
-    Textarea
-} from '@/Components/ui';
+import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Spinner} from '@/Components/ui';
 import SingleEliminationBracket from '@/Components/Tournament/SingleEliminationBracket.vue';
 import DoubleEliminationBracket from '@/Components/Tournament/DoubleEliminationBracket.vue';
+import MatchManagementModal from '@/Components/Tournament/MatchManagementModal.vue';
 import {useLocale} from '@/composables/useLocale';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
@@ -26,19 +10,8 @@ import {useAuth} from "@/composables/useAuth";
 
 import type {ClubTable, Tournament, TournamentBracket, TournamentMatch} from '@/types/api';
 import {Head, router} from '@inertiajs/vue3';
-import {
-    AlertCircleIcon,
-    ArrowLeftIcon,
-    CalendarIcon,
-    CheckCircleIcon,
-    PlayIcon,
-    RefreshCwIcon,
-    SaveIcon,
-    TrophyIcon,
-    UserXIcon
-} from 'lucide-vue-next';
-import {computed, onMounted, ref, watch} from 'vue';
-
+import {AlertCircleIcon, ArrowLeftIcon, PlayIcon, RefreshCwIcon, TrophyIcon} from 'lucide-vue-next';
+import {computed, onMounted, ref} from 'vue';
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -62,26 +35,16 @@ const availableTables = ref<ClubTable[]>([]);
 // Loading states
 const isLoading = ref(true);
 const isGenerating = ref(false);
-const isUpdatingMatch = ref(false);
 const isLoadingTables = ref(false);
 
 // Error handling
 const error = ref<string | null>(null);
 const successMessage = ref<string | null>(null);
-const matchError = ref<string | null>(null);
 
 // Match modal state
 const showMatchModal = ref(false);
 const selectedMatch = ref<TournamentMatch | null>(null);
-const matchForm = ref({
-    player1_score: 0,
-    player2_score: 0,
-    club_table_id: null as number | null,
-    stream_url: '',
-    status: 'pending' as string,
-    scheduled_at: '',
-    admin_notes: ''
-});
+const matchModalRef = ref<InstanceType<typeof MatchManagementModal> | null>(null);
 
 // Check if tournament can be edited
 const canEditTournament = computed(() => {
@@ -95,36 +58,6 @@ const isDoubleElimination = computed(() => {
 });
 
 const hasGeneratedBracket = computed(() => matches.value.length > 0);
-
-// Match modal computed
-const canStartMatch = computed(() => {
-    if (!selectedMatch.value || !canEditTournament.value) return false;
-    return selectedMatch.value.status === 'ready' &&
-        selectedMatch.value.player1_id &&
-        selectedMatch.value.player2_id &&
-        matchForm.value.club_table_id !== null;
-});
-
-const canFinishMatch = computed(() => {
-    if (!selectedMatch.value || !canEditTournament.value) return false;
-    if (selectedMatch.value.status !== 'in_progress' && selectedMatch.value.status !== 'verification') return false;
-    const racesTo = tournament.value?.races_to || 7;
-    return matchForm.value.player1_score >= racesTo || matchForm.value.player2_score >= racesTo;
-});
-
-const matchWinner = computed(() => {
-    if (!canFinishMatch.value) return null;
-    const racesTo = tournament.value?.races_to || 7;
-    if (matchForm.value.player1_score >= racesTo) return selectedMatch.value?.player1_id;
-    if (matchForm.value.player2_score >= racesTo) return selectedMatch.value?.player2_id;
-    return null;
-});
-
-const isWalkoverMatch = computed(() => {
-    if (!selectedMatch.value) return false;
-    return (selectedMatch.value.player1_id && !selectedMatch.value.player2_id) ||
-        (!selectedMatch.value.player1_id && selectedMatch.value.player2_id);
-});
 
 // Methods
 const loadData = async () => {
@@ -237,82 +170,87 @@ const openMatchModal = async (matchId: number) => {
         return;
     }
 
-    const match = matches.value.find(m => m.id === matchId);
-    if (!match) return;
-
-    selectedMatch.value = match;
-    matchForm.value = {
-        player1_score: match.player1_score || 0,
-        player2_score: match.player2_score || 0,
-        club_table_id: match.club_table_id || null,
-        stream_url: match.stream_url || '',
-        status: match.status,
-        scheduled_at: match.scheduled_at ? new Date(match.scheduled_at).toISOString().slice(0, 16) : '',
-        admin_notes: match.admin_notes || ''
-    };
-
+    // Show loading state
     showMatchModal.value = true;
-    await loadAvailableTables();
+    selectedMatch.value = null;
+
+    try {
+        // Load fresh match data from the server
+        const match = await apiClient<TournamentMatch>(`/api/admin/tournaments/${props.tournamentId}/matches/${matchId}`);
+
+        if (!match) {
+            throw new Error('Match not found');
+        }
+
+        selectedMatch.value = match;
+
+        // Update the match in the local matches array as well
+        const index = matches.value.findIndex(m => m.id === matchId);
+        if (index !== -1) {
+            matches.value[index] = match;
+        } else {
+            matches.value.push(match);
+        }
+
+        // Load available tables
+        await loadAvailableTables();
+    } catch (err: any) {
+        error.value = err.message || t('Failed to load match details');
+        showMatchModal.value = false;
+        selectedMatch.value = null;
+    }
 };
 
 const closeMatchModal = () => {
     showMatchModal.value = false;
     selectedMatch.value = null;
-    matchError.value = null;
 };
 
-const startMatch = async () => {
-    if (!canStartMatch.value || !selectedMatch.value) return;
-
-    isUpdatingMatch.value = true;
-    matchError.value = null;
+// Handle match modal events
+const handleStartMatch = async (data: {
+    club_table_id: number | null;
+    stream_url: string;
+    admin_notes: string | null
+}) => {
+    if (!selectedMatch.value) return;
 
     try {
         const response = await apiClient<TournamentMatch>(`/api/admin/tournaments/${props.tournamentId}/matches/${selectedMatch.value.id}/start`, {
             method: 'POST',
-            data: {
-                club_table_id: matchForm.value.club_table_id,
-                stream_url: matchForm.value.stream_url
-            }
+            data
         });
 
         updateMatchesInBracket([response]);
         closeMatchModal();
         successMessage.value = t('Match started successfully');
     } catch (err: any) {
-        matchError.value = err.message || t('Failed to start match');
-    } finally {
-        isUpdatingMatch.value = false;
+        matchModalRef.value?.setError(err.message || t('Failed to start match'));
     }
 };
 
-const updateMatch = async () => {
-    if (!selectedMatch.value || !canEditTournament.value) return;
-
-    isUpdatingMatch.value = true;
-    matchError.value = null;
+const handleUpdateMatch = async (data: any) => {
+    if (!selectedMatch.value) return;
 
     try {
         const response = await apiClient<TournamentMatch>(`/api/admin/tournaments/${props.tournamentId}/matches/${selectedMatch.value.id}`, {
             method: 'PUT',
-            data: matchForm.value
+            data
         });
 
         updateMatchesInBracket([response]);
         closeMatchModal();
         successMessage.value = t('Match updated successfully');
     } catch (err: any) {
-        matchError.value = err.message || t('Failed to update match');
-    } finally {
-        isUpdatingMatch.value = false;
+        matchModalRef.value?.setError(err.message || t('Failed to update match'));
     }
 };
 
-const finishMatch = async () => {
-    if (!canFinishMatch.value || !selectedMatch.value) return;
-
-    isUpdatingMatch.value = true;
-    matchError.value = null;
+const handleFinishMatch = async (data: {
+    player1_score: number;
+    player2_score: number;
+    admin_notes: string | null
+}) => {
+    if (!selectedMatch.value) return;
 
     try {
         const response = await apiClient<{
@@ -320,10 +258,7 @@ const finishMatch = async () => {
             affected_matches: number[];
         }>(`/api/admin/tournaments/${props.tournamentId}/matches/${selectedMatch.value.id}/finish`, {
             method: 'POST',
-            data: {
-                player1_score: matchForm.value.player1_score,
-                player2_score: matchForm.value.player2_score
-            }
+            data
         });
 
         updateMatchesInBracket([response.match]);
@@ -335,20 +270,15 @@ const finishMatch = async () => {
         closeMatchModal();
         successMessage.value = t('Match finished successfully');
     } catch (err: any) {
-        matchError.value = err.message || t('Failed to finish match');
-    } finally {
-        isUpdatingMatch.value = false;
+        matchModalRef.value?.setError(err.message || t('Failed to finish match'));
     }
 };
 
-const processWalkover = async () => {
-    if (!selectedMatch.value || !isWalkoverMatch.value) return;
-
-    isUpdatingMatch.value = true;
-    matchError.value = null;
+const handleProcessWalkover = async () => {
+    if (!selectedMatch.value || !tournament.value) return;
 
     try {
-        const racesTo = tournament.value?.races_to || 7;
+        const racesTo = tournament.value.races_to || 7;
 
         const response = await apiClient<{
             match: TournamentMatch;
@@ -371,32 +301,9 @@ const processWalkover = async () => {
         closeMatchModal();
         successMessage.value = t('Walkover processed successfully');
     } catch (err: any) {
-        matchError.value = err.message || t('Failed to process walkover');
-    } finally {
-        isUpdatingMatch.value = false;
+        matchModalRef.value?.setError(err.message || t('Failed to process walkover'));
     }
 };
-
-const formatDateTime = (dateString: string | undefined): string => {
-    if (!dateString) return '';
-    return new Date(dateString).toLocaleString('uk-UK', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-};
-
-// Watch for club table selection to update stream URL
-watch(() => matchForm.value.club_table_id, (newTableId) => {
-    if (newTableId) {
-        const table = availableTables.value.find(t => t.id === newTableId);
-        if (table?.stream_url) {
-            matchForm.value.stream_url = table.stream_url;
-        }
-    }
-});
 
 onMounted(() => {
     loadData();
@@ -554,236 +461,18 @@ onMounted(() => {
     </div>
 
     <!-- Match Management Modal -->
-    <Modal :show="showMatchModal" :title="selectedMatch ? `${t('Match')} #${selectedMatch.match_code}` : ''"
-           max-width="2xl" @close="closeMatchModal">
-        <div v-if="selectedMatch" class="space-y-6">
-            <!-- Match Header -->
-            <div class="border-b pb-4">
-                <div class="flex items-center justify-between mb-2">
-                    <h3 class="text-lg font-semibold">
-                        {{ selectedMatch.round_display }}
-                        <span v-if="selectedMatch.bracket_side" class="text-gray-500">
-                            ({{ selectedMatch.bracket_side === 'upper' ? t('Upper Bracket') : t('Lower Bracket') }})
-                        </span>
-                    </h3>
-                    <div class="flex items-center gap-2">
-                        <span v-if="isWalkoverMatch"
-                              class="px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">
-                            <UserXIcon class="inline h-4 w-4 mr-1"/>
-                            {{ t('Walkover') }}
-                        </span>
-                        <span :class="[
-                            'px-3 py-1 rounded-full text-sm font-medium',
-                            selectedMatch.status === 'completed' ? 'bg-blue-100 text-blue-800 dark:bg-green-900/30 dark:text-green-300' :
-                            selectedMatch.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' :
-                            selectedMatch.status === 'verification' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' :
-                            selectedMatch.status === 'ready' ? 'bg-green-100 text-green-800 dark:bg-blue-900/30 dark:text-blue-300' :
-                            'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                        ]">
-                            {{ selectedMatch.status_display }}
-                        </span>
-                    </div>
-                </div>
-                <p class="text-sm text-gray-600 dark:text-gray-400">
-                    {{ t('Race to') }} {{ tournament?.races_to || 7 }}
-                </p>
-            </div>
-
-            <!-- Walkover Notice -->
-            <div v-if="isWalkoverMatch && selectedMatch.status === 'pending'"
-                 class="rounded bg-yellow-100 p-4 dark:bg-yellow-900/30">
-                <div class="flex items-center gap-2">
-                    <UserXIcon class="h-5 w-5 text-yellow-600"/>
-                    <p class="font-medium text-yellow-800 dark:text-yellow-300">{{ t('This is a walkover match') }}</p>
-                </div>
-                <p class="mt-2 text-sm text-yellow-700 dark:text-yellow-400">
-                    {{ t('One player is missing. Click "Process Walkover" to advance the present player.') }}
-                </p>
-            </div>
-
-            <!-- Players and Scores -->
-            <div class="grid grid-cols-2 gap-4">
-                <div class="space-y-2">
-                    <Label>
-                        {{ selectedMatch.player1?.firstname }} {{ selectedMatch.player1?.lastname }}
-                        <span v-if="!selectedMatch.player1" class="text-gray-500">{{ t('TBD') }}</span>
-                    </Label>
-                    <Input
-                        v-model.number="matchForm.player1_score"
-                        :disabled="selectedMatch.status === 'completed' || isWalkoverMatch"
-                        :max="tournament?.races_to || 7"
-                        min="0"
-                        type="number"
-                    />
-                </div>
-                <div class="space-y-2">
-                    <Label>
-                        {{ selectedMatch.player2?.firstname }} {{ selectedMatch.player2?.lastname }}
-                        <span v-if="!selectedMatch.player2" class="text-gray-500">{{ t('TBD') }}</span>
-                    </Label>
-                    <Input
-                        v-model.number="matchForm.player2_score"
-                        :disabled="selectedMatch.status === 'completed' || isWalkoverMatch"
-                        :max="tournament?.races_to || 7"
-                        min="0"
-                        type="number"
-                    />
-                </div>
-            </div>
-
-            <!-- Table Assignment -->
-            <div v-if="!isWalkoverMatch" class="space-y-2">
-                <Label for="table">{{ t('Table Assignment') }} *</Label>
-                <Select v-model="matchForm.club_table_id" :disabled="selectedMatch.status !== 'ready'">
-                    <SelectTrigger>
-                        <SelectValue :placeholder="t('Select a table')"/>
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem v-if="isLoadingTables" :value="0">
-                            {{ t('Loading tables...') }}
-                        </SelectItem>
-                        <SelectItem
-                            v-for="table in availableTables"
-                            v-else
-                            :key="table.id"
-                            :value="table.id"
-                        >
-                            {{ table.name }}
-                        </SelectItem>
-                    </SelectContent>
-                </Select>
-                <p v-if="selectedMatch.status === 'ready'" class="text-sm text-gray-500">
-                    {{ t('Table assignment is required to start the match') }}
-                </p>
-            </div>
-
-            <!-- Stream URL -->
-            <div v-if="!isWalkoverMatch" class="space-y-2">
-                <Label for="stream">{{ t('Stream URL') }}</Label>
-                <Input
-                    v-model="matchForm.stream_url"
-                    :placeholder="t('https://youtube.com/watch?v=...')"
-                    type="url"
-                />
-            </div>
-
-            <!-- Scheduled Time -->
-            <div class="space-y-2">
-                <Label for="scheduled">{{ t('Scheduled At') }}</Label>
-                <Input
-                    v-model="matchForm.scheduled_at"
-                    type="datetime-local"
-                />
-            </div>
-
-            <!-- Admin Notes -->
-            <div class="space-y-2">
-                <Label for="notes">{{ t('Admin Notes') }}</Label>
-                <Textarea
-                    v-model="matchForm.admin_notes"
-                    :placeholder="t('Internal notes about this match...')"
-                    rows="3"
-                />
-            </div>
-
-            <!-- Match Timeline -->
-            <div v-if="selectedMatch.started_at || selectedMatch.completed_at" class="border-t pt-4">
-                <h4 class="font-medium mb-2">{{ t('Timeline') }}</h4>
-                <div class="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                    <div v-if="selectedMatch.scheduled_at" class="flex items-center gap-2">
-                        <CalendarIcon class="h-4 w-4"/>
-                        {{ t('Scheduled') }}: {{ formatDateTime(selectedMatch.scheduled_at) }}
-                    </div>
-                    <div v-if="selectedMatch.started_at" class="flex items-center gap-2">
-                        <PlayIcon class="h-4 w-4"/>
-                        {{ t('Started') }}: {{ formatDateTime(selectedMatch.started_at) }}
-                    </div>
-                    <div v-if="selectedMatch.completed_at" class="flex items-center gap-2">
-                        <CheckCircleIcon class="h-4 w-4"/>
-                        {{ t('Completed') }}: {{ formatDateTime(selectedMatch.completed_at) }}
-                    </div>
-                </div>
-            </div>
-
-            <!-- Status Note for Verification -->
-            <div v-if="selectedMatch.status === 'verification'" class="rounded bg-purple-100 p-3 dark:bg-purple-900/30">
-                <div class="flex items-center gap-2">
-                    <AlertCircleIcon class="h-5 w-5 text-purple-600"/>
-                    <p class="font-medium text-purple-800 dark:text-purple-300">{{ t('Match needs verification') }}</p>
-                </div>
-                <p class="mt-2 text-sm text-purple-700 dark:text-purple-400">
-                    {{ t('Players have submitted the result. Please verify and finish the match.') }}
-                </p>
-            </div>
-
-            <!-- Error Display -->
-            <div v-if="matchError" class="rounded bg-red-100 p-3 text-red-600 dark:bg-red-900/30 dark:text-red-400">
-                {{ matchError }}
-            </div>
-
-            <!-- Winner Display -->
-            <div v-if="canFinishMatch && !isWalkoverMatch" class="rounded bg-blue-100 p-3 dark:bg-blue-900/30">
-                <p class="text-sm">
-                    <span class="font-medium">{{ t('Winner') }}:</span>
-                    <span v-if="matchWinner === selectedMatch.player1_id" class="ml-2">
-                        {{ selectedMatch.player1?.firstname }} {{ selectedMatch.player1?.lastname }}
-                    </span>
-                    <span v-else-if="matchWinner === selectedMatch.player2_id" class="ml-2">
-                        {{ selectedMatch.player2?.firstname }} {{ selectedMatch.player2?.lastname }}
-                    </span>
-                </p>
-            </div>
-        </div>
-
-        <template #footer>
-            <div class="flex justify-between">
-                <Button variant="outline" @click="closeMatchModal">
-                    {{ t('Cancel') }}
-                </Button>
-
-                <div class="flex gap-2">
-                    <!-- Process Walkover Button -->
-                    <Button
-                        v-if="isWalkoverMatch && selectedMatch?.status === 'pending'"
-                        :disabled="isUpdatingMatch"
-                        @click="processWalkover"
-                    >
-                        <UserXIcon class="mr-2 h-4 w-4"/>
-                        {{ t('Process Walkover') }}
-                    </Button>
-
-                    <!-- Start Match Button -->
-                    <Button
-                        v-if="selectedMatch?.status === 'ready' && !isWalkoverMatch"
-                        :disabled="!canStartMatch || isUpdatingMatch"
-                        @click="startMatch"
-                    >
-                        <PlayIcon class="mr-2 h-4 w-4"/>
-                        {{ t('Start Match') }}
-                    </Button>
-
-                    <!-- Update Match Button -->
-                    <Button
-                        v-if="selectedMatch?.status === 'in_progress'"
-                        :disabled="isUpdatingMatch"
-                        variant="outline"
-                        @click="updateMatch"
-                    >
-                        <SaveIcon class="mr-2 h-4 w-4"/>
-                        {{ t('Save Changes') }}
-                    </Button>
-
-                    <!-- Finish Match Button -->
-                    <Button
-                        v-if="selectedMatch?.status === 'in_progress' || selectedMatch?.status === 'verification'"
-                        :disabled="!canFinishMatch || isUpdatingMatch"
-                        @click="finishMatch"
-                    >
-                        <CheckCircleIcon class="mr-2 h-4 w-4"/>
-                        {{ t('Finish Match') }}
-                    </Button>
-                </div>
-            </div>
-        </template>
-    </Modal>
+    <MatchManagementModal
+        ref="matchModalRef"
+        :show="showMatchModal"
+        :match="selectedMatch"
+        :tournament="tournament"
+        :available-tables="availableTables"
+        :is-loading-tables="isLoadingTables"
+        :can-edit-tournament="canEditTournament"
+        @close="closeMatchModal"
+        @start-match="handleStartMatch"
+        @update-match="handleUpdateMatch"
+        @finish-match="handleFinishMatch"
+        @process-walkover="handleProcessWalkover"
+    />
 </template>

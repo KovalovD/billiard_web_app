@@ -35,6 +35,7 @@ class TournamentMatchService
                 'started_at'    => now(),
                 'club_table_id' => $data['club_table_id'] ?? null,
                 'stream_url'    => $data['stream_url'] ?? null,
+                'admin_notes' => $data['admin_notes'] ?? $match->admin_notes,
             ]);
 
             return $match->fresh(['player1', 'player2', 'clubTable']);
