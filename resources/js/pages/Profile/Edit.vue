@@ -10,6 +10,7 @@ import {
     CardTitle,
     Input,
     Label,
+    Modal,
     Select,
     SelectContent,
     SelectItem,
@@ -23,6 +24,17 @@ import type {ApiError, City, Club, User} from '@/types/api';
 import {Head, Link} from '@inertiajs/vue3';
 import {onMounted, ref} from 'vue';
 import {useLocale} from '@/composables/useLocale';
+import {
+    ArrowLeftIcon,
+    CheckCircleIcon,
+    EditIcon,
+    KeyIcon,
+    MapPinIcon,
+    PhoneIcon,
+    Trash2Icon,
+    UserIcon,
+    UsersIcon,
+} from 'lucide-vue-next';
 
 // Phone validation regex - matches formats like +1234567890, (123) 456-7890, 123-456-7890
 const phonePattern = /^(\+?\d{1,3}[-\s]?)?\(?(\d{3})\)?[-\s]?(\d{3})[-\s]?(\d{4})$/;
@@ -127,7 +139,7 @@ const loadClubs = async (cityId?: number) => {
     }
 };
 
-const onCityChange = (value: string | number) => {
+const onCityChange = (value: string | number | null) => {
     const cityId = value ? Number(value) : null;
     profileForm.value.home_city_id = cityId;
     profileForm.value.home_club_id = null;
@@ -139,7 +151,7 @@ const onCityChange = (value: string | number) => {
     }
 };
 
-const onClubChange = (value: string | number) => {
+const onClubChange = (value: string | number | null) => {
     profileForm.value.home_club_id = value ? Number(value) : null;
 };
 
@@ -249,248 +261,409 @@ onMounted(() => {
 <template>
     <Head :title="t('Profile Settings')"/>
 
-    <div class="py-12">
-        <div class="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
-            <!-- Profile Navigation -->
-            <div class="mb-6 flex space-x-4">
-                <Link :href="route('profile.edit')">
-                    <Button class="bg-primary text-primary-foreground" variant="outline">{{
-                            t('Edit Profile')
-                        }}
-                    </Button>
-                </Link>
-                <Link :href="route('profile.stats')">
-                    <Button class="bg-gray-100 dark:bg-gray-800" variant="outline">{{ t('Statistics') }}</Button>
-                </Link>
+    <div class="py-6 sm:py-8 lg:py-12">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <!-- Header with navigation -->
+            <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <Link :href="route('dashboard')">
+                        <Button variant="outline" size="sm">
+                            <ArrowLeftIcon class="mr-2 h-4 w-4"/>
+                            <span class="hidden sm:inline">{{ t('Back to Dashboard') }}</span>
+                            <span class="sm:hidden">{{ t('Back') }}</span>
+                        </Button>
+                    </Link>
+                </div>
+
+                <!-- Profile Navigation -->
+                <div class="flex space-x-2">
+                    <Link :href="route('profile.edit')">
+                        <Button class="bg-indigo-600 text-white hover:bg-indigo-700" variant="outline">
+                            <EditIcon class="mr-2 h-4 w-4"/>
+                            <span class="hidden sm:inline">{{ t('Edit Profile') }}</span>
+                            <span class="sm:hidden">{{ t('Edit') }}</span>
+                        </Button>
+                    </Link>
+                    <Link :href="route('profile.stats')">
+                        <Button class="bg-gray-100 dark:bg-gray-800" variant="outline">
+                            <UsersIcon class="mr-2 h-4 w-4"/>
+                            <span class="hidden sm:inline">{{ t('Statistics') }}</span>
+                            <span class="sm:hidden">{{ t('Stats') }}</span>
+                        </Button>
+                    </Link>
+                </div>
             </div>
 
             <!-- Loading state -->
-            <div v-if="isLoadingUser" class="flex justify-center py-8">
-                <Spinner class="text-primary h-8 w-8"/>
+            <div v-if="isLoadingUser" class="flex justify-center items-center py-12">
+                <div class="text-center">
+                    <Spinner class="mx-auto h-8 w-8 text-indigo-600"/>
+                    <p class="mt-2 text-gray-500">{{ t('Loading profile information...') }}</p>
+                </div>
             </div>
 
-            <!-- Update Profile Information -->
-            <Card v-else>
-                <CardHeader>
-                    <CardTitle>{{ t('Profile Information') }}</CardTitle>
-                    <CardDescription>{{
-                            t("Update your account's profile information and email address.")
-                        }}
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <form class="space-y-4" @submit.prevent="updateProfile">
-                        <div v-if="profileSuccess"
-                             class="rounded-md bg-green-50 p-3 text-sm text-green-600 dark:bg-green-900/30 dark:text-green-400">
-                            {{ t('Profile updated successfully.') }}
-                        </div>
-
-                        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                            <div class="space-y-2">
-                                <Label for="firstname">{{ t('First Name') }}</Label>
-                                <Input id="firstname" v-model="profileForm.firstname" :disabled="isProcessingProfile"
-                                       required
-                                       type="text"/>
-                                <InputError :message="profileErrors.firstname?.join(', ')"/>
+            <!-- Profile Content -->
+            <div v-else class="space-y-8">
+                <!-- Profile Information Card -->
+                <Card class="shadow-lg overflow-hidden">
+                    <div
+                        class="bg-gradient-to-r from-gray-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 p-6 sm:p-8">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div
+                                class="h-12 w-12 rounded-full bg-indigo-600 flex items-center justify-center shadow-md">
+                                <UserIcon class="h-6 w-6 text-white"/>
                             </div>
-
-                            <div class="space-y-2">
-                                <Label for="lastname">{{ t('Last Name') }}</Label>
-                                <Input id="lastname" v-model="profileForm.lastname" :disabled="isProcessingProfile"
-                                       required
-                                       type="text"/>
-                                <InputError :message="profileErrors.lastname?.join(', ')"/>
+                            <div>
+                                <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+                                    {{ t('Profile Information') }}
+                                </h1>
+                                <p class="text-gray-600 dark:text-gray-400 mt-1">
+                                    {{ t("Update your account's profile information and email address.") }}
+                                </p>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="space-y-2">
-                            <Label for="email">{{ t('Email') }}</Label>
-                            <Input id="email" v-model="profileForm.email" :disabled="isProcessingProfile" required
-                                   type="email"/>
-                            <InputError :message="profileErrors.email?.join(', ')"/>
-                        </div>
+                    <CardContent class="p-6 sm:p-8">
+                        <form class="space-y-6" @submit.prevent="updateProfile">
+                            <!-- Success message -->
+                            <div v-if="profileSuccess"
+                                 class="rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-4">
+                                <div class="flex items-center">
+                                    <CheckCircleIcon class="h-5 w-5 text-green-600 dark:text-green-400 mr-2"/>
+                                    <p class="text-green-800 dark:text-green-300 font-medium">
+                                        {{ t('Profile updated successfully.') }}
+                                    </p>
+                                </div>
+                            </div>
 
-                        <div class="space-y-2">
-                            <Label for="phone">{{ t('Phone Number') }}</Label>
-                            <Input
-                                id="phone"
-                                v-model="profileForm.phone"
-                                :class="{ 'border-red-300 focus:border-red-300 focus:ring-red-300': !isPhoneValid }"
-                                :disabled="isProcessingProfile"
-                                :placeholder="t('e.g., (123) 456-7890')"
-                                required
-                                type="tel"
-                                @blur="validatePhone"
-                                @input="validatePhone"
-                            />
-                            <InputError :message="profileErrors.phone?.join(', ')"/>
-                        </div>
+                            <!-- Personal Information -->
+                            <div class="space-y-6">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    <div class="space-y-2">
+                                        <Label for="firstname"
+                                               class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            {{ t('First Name') }}
+                                        </Label>
+                                        <Input
+                                            id="firstname"
+                                            v-model="profileForm.firstname"
+                                            :disabled="isProcessingProfile"
+                                            class="h-11"
+                                            required
+                                            type="text"
+                                        />
+                                        <InputError :message="profileErrors.firstname?.join(', ')"/>
+                                    </div>
 
-                        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                            <div class="space-y-2">
-                                <Label for="home_city">{{ t('Hometown') }}</Label>
-                                <Select
-                                    :disabled="isProcessingProfile || isLoadingCities"
-                                    :modelValue="profileForm.home_city_id"
-                                    @update:modelValue="onCityChange"
+                                    <div class="space-y-2">
+                                        <Label for="lastname"
+                                               class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            {{ t('Last Name') }}
+                                        </Label>
+                                        <Input
+                                            id="lastname"
+                                            v-model="profileForm.lastname"
+                                            :disabled="isProcessingProfile"
+                                            class="h-11"
+                                            required
+                                            type="text"
+                                        />
+                                        <InputError :message="profileErrors.lastname?.join(', ')"/>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-2">
+                                    <Label for="email" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        {{ t('Email Address') }}
+                                    </Label>
+                                    <Input
+                                        id="email"
+                                        v-model="profileForm.email"
+                                        :disabled="isProcessingProfile"
+                                        class="h-11"
+                                        required
+                                        type="email"
+                                    />
+                                    <InputError :message="profileErrors.email?.join(', ')"/>
+                                </div>
+
+                                <div class="space-y-2">
+                                    <Label for="phone" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        <PhoneIcon class="inline h-4 w-4 mr-1"/>
+                                        {{ t('Phone Number') }}
+                                    </Label>
+                                    <Input
+                                        id="phone"
+                                        v-model="profileForm.phone"
+                                        :class="{ 'border-red-300 focus:border-red-300 focus:ring-red-300': !isPhoneValid }"
+                                        :disabled="isProcessingProfile"
+                                        :placeholder="t('e.g., (123) 456-7890')"
+                                        class="h-11"
+                                        required
+                                        type="tel"
+                                        @blur="validatePhone"
+                                        @input="validatePhone"
+                                    />
+                                    <InputError :message="profileErrors.phone?.join(', ')"/>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    <div class="space-y-2">
+                                        <Label for="home_city"
+                                               class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            <MapPinIcon class="inline h-4 w-4 mr-1"/>
+                                            {{ t('Hometown') }}
+                                        </Label>
+                                        <Select
+                                            :disabled="isProcessingProfile || isLoadingCities"
+                                            :modelValue="profileForm.home_city_id"
+                                            @update:modelValue="onCityChange"
+                                        >
+                                            <SelectTrigger id="home_city" class="h-11">
+                                                <SelectValue
+                                                    :placeholder="isLoadingCities ? t('Loading cities...') : user?.home_city?.name || t('Select city')"/>
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="">{{ t('None') }}</SelectItem>
+                                                <SelectItem v-for="city in cities" :key="city.id" :value="city.id">
+                                                    {{ city.name }} ({{ city.country.name }})
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <InputError :message="profileErrors.home_city_id?.join(', ')"/>
+                                    </div>
+
+                                    <div class="space-y-2">
+                                        <Label for="home_club"
+                                               class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            <UsersIcon class="inline h-4 w-4 mr-1"/>
+                                            {{ t('Home Club') }}
+                                        </Label>
+                                        <Select
+                                            :disabled="isProcessingProfile || isLoadingClubs || !profileForm.home_city_id"
+                                            :modelValue="profileForm.home_club_id"
+                                            @update:modelValue="onClubChange"
+                                        >
+                                            <SelectTrigger id="home_club" class="h-11">
+                                                <SelectValue
+                                                    :placeholder="isLoadingClubs ? t('Loading clubs...') : user?.home_club?.name || t('Select club')"/>
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="">{{ t('None') }}</SelectItem>
+                                                <SelectItem v-for="club in clubs" :key="club.id" :value="club.id">
+                                                    {{ club.name }}
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <InputError :message="profileErrors.home_club_id?.join(', ')"/>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+                                <Button
+                                    :disabled="isProcessingProfile || !isPhoneValid"
+                                    class="px-6 h-11"
+                                    type="submit"
                                 >
-                                    <SelectTrigger id="home_city">
-                                        <SelectValue
-                                            :placeholder="isLoadingCities ? t('Loading cities...') : user?.home_city?.name || t('Select city')"/>
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="">{{ t('None') }}</SelectItem>
-                                        <SelectItem v-for="city in cities" :key="city.id" :value="city.id">
-                                            {{ city.name }} ({{ city.country.name }})
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <InputError :message="profileErrors.home_city_id?.join(', ')"/>
+                                    <Spinner v-if="isProcessingProfile" class="mr-2 h-4 w-4"/>
+                                    <span v-if="isProcessingProfile">{{ t('Saving...') }}</span>
+                                    <span v-else>{{ t('Save Changes') }}</span>
+                                </Button>
+                            </div>
+                        </form>
+                    </CardContent>
+                </Card>
+
+                <!-- Update Password Card -->
+                <Card class="shadow-lg">
+                    <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
+                        <CardTitle class="flex items-center gap-2">
+                            <KeyIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400"/>
+                            {{ t('Update Password') }}
+                        </CardTitle>
+                        <CardDescription>{{ t('Ensure your account is using a secure password.') }}</CardDescription>
+                    </CardHeader>
+                    <CardContent class="p-6 sm:p-8">
+                        <form class="space-y-6" @submit.prevent="updatePassword">
+                            <!-- Success message -->
+                            <div v-if="passwordSuccess"
+                                 class="rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-4">
+                                <div class="flex items-center">
+                                    <CheckCircleIcon class="h-5 w-5 text-green-600 dark:text-green-400 mr-2"/>
+                                    <p class="text-green-800 dark:text-green-300 font-medium">
+                                        {{ t('Password updated successfully.') }}
+                                    </p>
+                                </div>
                             </div>
 
-                            <div class="space-y-2">
-                                <Label for="home_club">{{ t('Home Club') }}</Label>
-                                <Select
-                                    :disabled="isProcessingProfile || isLoadingClubs || !profileForm.home_city_id"
-                                    :modelValue="profileForm.home_club_id"
-                                    @update:modelValue="onClubChange"
+                            <div class="space-y-4">
+                                <div class="space-y-2">
+                                    <Label for="current_password"
+                                           class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        {{ t('Current Password') }}
+                                    </Label>
+                                    <Input
+                                        id="current_password"
+                                        v-model="passwordForm.current_password"
+                                        :disabled="isProcessingPassword"
+                                        class="h-11"
+                                        autocomplete="current-password"
+                                        required
+                                        type="password"
+                                    />
+                                    <InputError :message="passwordErrors.current_password?.join(', ')"/>
+                                </div>
+
+                                <div class="space-y-2">
+                                    <Label for="password" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        {{ t('New Password') }}
+                                    </Label>
+                                    <Input
+                                        id="password"
+                                        v-model="passwordForm.password"
+                                        :disabled="isProcessingPassword"
+                                        class="h-11"
+                                        autocomplete="new-password"
+                                        required
+                                        type="password"
+                                    />
+                                    <InputError :message="passwordErrors.password?.join(', ')"/>
+                                </div>
+
+                                <div class="space-y-2">
+                                    <Label for="password_confirmation"
+                                           class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        {{ t('Confirm Password') }}
+                                    </Label>
+                                    <Input
+                                        id="password_confirmation"
+                                        v-model="passwordForm.password_confirmation"
+                                        :disabled="isProcessingPassword"
+                                        class="h-11"
+                                        autocomplete="new-password"
+                                        required
+                                        type="password"
+                                    />
+                                    <InputError :message="passwordErrors.password_confirmation?.join(', ')"/>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+                                <Button
+                                    :disabled="isProcessingPassword"
+                                    class="px-6 h-11"
+                                    type="submit"
                                 >
-                                    <SelectTrigger id="home_club">
-                                        <SelectValue
-                                            :placeholder="isLoadingClubs ? t('Loading clubs...') : user?.home_club?.name || t('Select club')"/>
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="">{{ t('None') }}</SelectItem>
-                                        <SelectItem v-for="club in clubs" :key="club.id" :value="club.id">
-                                            {{ club.name }}
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <InputError :message="profileErrors.home_club_id?.join(', ')"/>
+                                    <Spinner v-if="isProcessingPassword" class="mr-2 h-4 w-4"/>
+                                    <span v-if="isProcessingPassword">{{ t('Updating...') }}</span>
+                                    <span v-else>{{ t('Update Password') }}</span>
+                                </Button>
                             </div>
-                        </div>
+                        </form>
+                    </CardContent>
+                </Card>
 
-                        <div class="flex justify-end">
-                            <Button :disabled="isProcessingProfile || !isPhoneValid" type="submit">
-                                <span v-if="isProcessingProfile">{{ t('Saving...') }}</span>
-                                <span v-else>{{ t('Save') }}</span>
+                <!-- Delete Account Card -->
+                <Card class="shadow-lg border-red-200 dark:border-red-800">
+                    <CardHeader class="bg-red-50 dark:bg-red-900/20">
+                        <CardTitle class="flex items-center gap-2 text-red-800 dark:text-red-300">
+                            <Trash2Icon class="h-5 w-5"/>
+                            {{ t('Delete Account') }}
+                        </CardTitle>
+                        <CardDescription class="text-red-600 dark:text-red-400">
+                            {{
+                                t('Once your account is deleted, all of its resources and data will be permanently deleted.')
+                            }}
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent class="p-6 sm:p-8">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div class="flex-1">
+                                <p class="text-sm text-gray-600 dark:text-gray-400">
+                                    {{ t('This action cannot be undone. Please be certain.') }}
+                                </p>
+                            </div>
+                            <Button
+                                variant="destructive"
+                                class="px-6 h-11"
+                                @click="showDeleteModal = true"
+                            >
+                                <Trash2Icon class="mr-2 h-4 w-4"/>
+                                {{ t('Delete Account') }}
                             </Button>
                         </div>
-                    </form>
-                </CardContent>
-            </Card>
-
-            <!-- Update Password -->
-            <Card>
-                <CardHeader>
-                    <CardTitle>{{ t('Update Password') }}</CardTitle>
-                    <CardDescription>{{ t('Ensure your account is using a secure password.') }}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <form class="space-y-4" @submit.prevent="updatePassword">
-                        <div
-                            v-if="passwordSuccess"
-                            class="rounded-md bg-green-50 p-3 text-sm text-green-600 dark:bg-green-900/30 dark:text-green-400"
-                        >
-                            {{ t('Password updated successfully.') }}
-                        </div>
-
-                        <div class="space-y-2">
-                            <Label for="current_password">{{ t('Current Password') }}</Label>
-                            <Input
-                                id="current_password"
-                                v-model="passwordForm.current_password"
-                                :disabled="isProcessingPassword"
-                                autocomplete="current-password"
-                                required
-                                type="password"
-                            />
-                            <InputError :message="passwordErrors.current_password?.join(', ')"/>
-                        </div>
-
-                        <div class="space-y-2">
-                            <Label for="password">{{ t('New Password') }}</Label>
-                            <Input
-                                id="password"
-                                v-model="passwordForm.password"
-                                :disabled="isProcessingPassword"
-                                autocomplete="new-password"
-                                required
-                                type="password"
-                            />
-                            <InputError :message="passwordErrors.password?.join(', ')"/>
-                        </div>
-
-                        <div class="space-y-2">
-                            <Label for="password_confirmation">{{ t('Confirm Password') }}</Label>
-                            <Input
-                                id="password_confirmation"
-                                v-model="passwordForm.password_confirmation"
-                                :disabled="isProcessingPassword"
-                                autocomplete="new-password"
-                                required
-                                type="password"
-                            />
-                            <InputError :message="passwordErrors.password_confirmation?.join(', ')"/>
-                        </div>
-
-                        <div class="flex justify-end">
-                            <Button :disabled="isProcessingPassword" type="submit">
-                                <span v-if="isProcessingPassword">{{ t('Updating...') }}</span>
-                                <span v-else>{{ t('Update Password') }}</span>
-                            </Button>
-                        </div>
-                    </form>
-                </CardContent>
-            </Card>
-
-            <!-- Delete Account -->
-            <Card>
-                <CardHeader>
-                    <CardTitle>{{ t('Delete Account') }}</CardTitle>
-                    <CardDescription class="text-red-500">
-                        {{
-                            t('Once your account is deleted, all of its resources and data will be permanently deleted.')
-                        }}
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Button variant="destructive" @click="showDeleteModal = true">{{ t('Delete Account') }}</Button>
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     </div>
 
     <!-- Delete Account Modal -->
-    <div v-if="showDeleteModal" class="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4">
-        <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-lg dark:bg-gray-800">
-            <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
-                {{ t('Are you sure you want to delete your account?') }}</h3>
-            <p class="mb-4 text-gray-600 dark:text-gray-400">
-                {{
-                    t('Once your account is deleted, all of its resources and data will be permanently deleted. Please enter your password to confirm you would like to permanently delete your account.')
-                }}
-            </p>
+    <Modal :show="showDeleteModal" @close="showDeleteModal = false">
+        <div class="p-6 sm:p-8">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="h-10 w-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                    <Trash2Icon class="h-5 w-5 text-red-600 dark:text-red-400"/>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                        {{ t('Delete Account') }}
+                    </h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                        {{ t('This action cannot be undone.') }}
+                    </p>
+                </div>
+            </div>
+
+            <div class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                <p class="text-sm text-red-800 dark:text-red-300">
+                    {{
+                        t('Once your account is deleted, all of its resources and data will be permanently deleted. Please enter your password to confirm you would like to permanently delete your account.')
+                    }}
+                </p>
+            </div>
 
             <form @submit.prevent="deleteAccount">
-                <div class="mb-4">
-                    <Label for="delete_password">{{ t('Password') }}</Label>
-                    <Input id="delete_password" v-model="deleteForm.password" :disabled="isProcessingDelete"
-                           class="mt-1"
-                           required type="password"/>
-                    <InputError :message="deleteErrors.password?.join(', ')" class="mt-1"/>
+                <div class="space-y-4">
+                    <div class="space-y-2">
+                        <Label for="delete_password" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            {{ t('Password') }}
+                        </Label>
+                        <Input
+                            id="delete_password"
+                            v-model="deleteForm.password"
+                            :disabled="isProcessingDelete"
+                            class="h-11"
+                            required
+                            type="password"
+                        />
+                        <InputError :message="deleteErrors.password?.join(', ')"/>
+                    </div>
                 </div>
 
-                <div class="flex justify-end space-x-3">
-                    <Button :disabled="isProcessingDelete" variant="outline" @click="showDeleteModal = false">
+                <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <Button
+                        :disabled="isProcessingDelete"
+                        variant="outline"
+                        class="px-6 h-11"
+                        @click="showDeleteModal = false"
+                    >
                         {{ t('Cancel') }}
                     </Button>
-                    <Button :disabled="isProcessingDelete" type="submit" variant="destructive">
+                    <Button
+                        :disabled="isProcessingDelete"
+                        type="submit"
+                        variant="destructive"
+                        class="px-6 h-11"
+                    >
+                        <Spinner v-if="isProcessingDelete" class="mr-2 h-4 w-4"/>
                         <span v-if="isProcessingDelete">{{ t('Deleting...') }}</span>
                         <span v-else>{{ t('Delete Account') }}</span>
                     </Button>
                 </div>
             </form>
         </div>
-    </div>
+    </Modal>
 </template>

@@ -10,12 +10,16 @@ import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Spinn
 import type {GameTypeStats, MatchGame, Rating, User, UserStats} from '@/types/api';
 import {
     ActivityIcon,
+    ArrowLeftIcon,
     AwardIcon,
     BarChart4Icon,
+    ChartBarIcon,
+    EditIcon,
     PercentIcon,
     SwordIcon,
     TrendingUpIcon,
-    TrophyIcon
+    TrophyIcon,
+    UsersIcon
 } from 'lucide-vue-next';
 import DataTable from '@/Components/ui/data-table/DataTable.vue';
 
@@ -312,7 +316,7 @@ const gameTypeColumns = computed(() => [
         key: 'game_type',
         label: t('Game Type'),
         align: 'left' as const,
-        render: (stats: any, type: string) => getGameTypeDisplayName(type)
+        render: (stats: any) => getGameTypeDisplayName(stats.type)
     },
     {
         key: 'matches',
@@ -431,140 +435,203 @@ const recentMatchesColumns = computed(() => [
 <template>
     <Head :title="t('Profile Statistics')"/>
 
-    <div class="py-12">
-        <div class="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
-            <!-- Profile Navigation -->
-            <div class="mb-6 flex space-x-4">
-                <Link :href="route('profile.edit')">
-                    <Button class="bg-gray-100 dark:bg-gray-800" variant="outline">{{ t('Edit Profile') }}</Button>
-                </Link>
-                <Link :href="route('profile.stats')">
-                    <Button class="bg-primary text-primary-foreground" variant="outline">{{ t('Statistics') }}</Button>
-                </Link>
+    <div class="py-6 sm:py-8 lg:py-12">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <!-- Header with navigation -->
+            <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <Link :href="route('dashboard')">
+                        <Button variant="outline" size="sm">
+                            <ArrowLeftIcon class="mr-2 h-4 w-4"/>
+                            <span class="hidden sm:inline">{{ t('Back to Dashboard') }}</span>
+                            <span class="sm:hidden">{{ t('Back') }}</span>
+                        </Button>
+                    </Link>
+                </div>
+
+                <!-- Profile Navigation -->
+                <div class="flex space-x-2">
+                    <Link :href="route('profile.edit')">
+                        <Button class="bg-gray-100 dark:bg-gray-800" variant="outline">
+                            <EditIcon class="mr-2 h-4 w-4"/>
+                            <span class="hidden sm:inline">{{ t('Edit Profile') }}</span>
+                            <span class="sm:hidden">{{ t('Edit') }}</span>
+                        </Button>
+                    </Link>
+                    <Link :href="route('profile.stats')">
+                        <Button class="bg-indigo-600 text-white hover:bg-indigo-700" variant="outline">
+                            <ChartBarIcon class="mr-2 h-4 w-4"/>
+                            <span class="hidden sm:inline">{{ t('Statistics') }}</span>
+                            <span class="sm:hidden">{{ t('Stats') }}</span>
+                        </Button>
+                    </Link>
+                </div>
             </div>
 
-            <!-- Error message section, keep it as is -->
+            <!-- Error message section -->
             <div
                 v-if="errorMessage"
-                class="relative rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700 dark:border-red-600 dark:bg-red-900/30 dark:text-red-400"
+                class="mb-6 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4"
                 role="alert"
             >
-                <strong class="font-bold">Error!</strong>
-                <span class="block sm:inline"> {{ errorMessage }}</span>
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                  clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-red-800 dark:text-red-300">
+                            {{ errorMessage }}
+                        </p>
+                    </div>
+                </div>
             </div>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>{{ t('Statistics Overview') }}</CardTitle>
-                    <CardDescription>{{ t('Your performance across all leagues') }}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div v-if="isLoadingStats" class="flex min-h-[100px] items-center justify-center py-8">
-                        <Spinner class="text-primary h-8 w-8"/>
+            <!-- Statistics Overview Card -->
+            <Card class="mb-8 shadow-lg overflow-hidden">
+                <div class="bg-gradient-to-r from-gray-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 p-6 sm:p-8">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="h-12 w-12 rounded-full bg-indigo-600 flex items-center justify-center shadow-md">
+                            <ChartBarIcon class="h-6 w-6 text-white"/>
+                        </div>
+                        <div>
+                            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+                                {{ t('Statistics Overview') }}
+                            </h1>
+                            <p class="text-gray-600 dark:text-gray-400 mt-1">
+                                {{ t('Your performance across all leagues') }}
+                            </p>
+                        </div>
                     </div>
-                    <div v-else-if="overallStats" class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
-                        <div class="rounded-md bg-blue-50 p-4 dark:bg-blue-900/20">
-                            <div class="mb-2 flex items-center space-x-2 text-blue-600 dark:text-blue-400">
-                                <SwordIcon class="h-5 w-5"/>
-                                <h3 class="text-sm font-medium text-blue-800 dark:text-blue-300">{{
-                                        t('Total Matches')
-                                    }}</h3>
+                </div>
+
+                <CardContent class="p-6 sm:p-8">
+                    <div v-if="isLoadingStats" class="flex justify-center items-center py-12">
+                        <div class="text-center">
+                            <Spinner class="mx-auto h-8 w-8 text-indigo-600"/>
+                            <p class="mt-2 text-gray-500">{{ t('Loading statistics...') }}</p>
+                        </div>
+                    </div>
+                    <div v-else-if="overallStats" class="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
+                        <div class="text-center sm:text-left">
+                            <div class="flex items-center gap-2 justify-center sm:justify-start mb-2">
+                                <SwordIcon class="h-5 w-5 text-blue-600 dark:text-blue-400"/>
+                                <span class="text-sm font-medium text-blue-800 dark:text-blue-300">
+                                    {{ t('Total Matches') }}
+                                </span>
                             </div>
-                            <p class="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                            <p class="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400">
                                 {{ overallStats.total_matches ?? 0 }}
                             </p>
                         </div>
-                        <div class="rounded-md bg-green-50 p-4 dark:bg-green-900/20">
-                            <div class="mb-2 flex items-center space-x-2 text-green-600 dark:text-green-400">
-                                <TrophyIcon class="h-5 w-5"/>
-                                <h3 class="text-sm font-medium text-green-800 dark:text-green-300">{{ t('Wins') }}</h3>
+                        <div class="text-center sm:text-left">
+                            <div class="flex items-center gap-2 justify-center sm:justify-start mb-2">
+                                <TrophyIcon class="h-5 w-5 text-green-600 dark:text-green-400"/>
+                                <span class="text-sm font-medium text-green-800 dark:text-green-300">
+                                    {{ t('Wins') }}
+                                </span>
                             </div>
-                            <p class="text-3xl font-bold text-green-600 dark:text-green-400">{{
-                                    overallStats.wins ?? 0
-                                }}</p>
+                            <p class="text-2xl sm:text-3xl font-bold text-green-600 dark:text-green-400">
+                                {{ overallStats.wins ?? 0 }}
+                            </p>
                         </div>
-                        <div class="rounded-md bg-amber-50 p-4 dark:bg-amber-900/20">
-                            <div class="mb-2 flex items-center space-x-2 text-amber-600 dark:text-amber-400">
-                                <PercentIcon class="h-5 w-5"/>
-                                <h3 class="text-sm font-medium text-amber-800 dark:text-amber-300">{{
-                                        t('Win Rate')
-                                    }}</h3>
+                        <div class="text-center sm:text-left">
+                            <div class="flex items-center gap-2 justify-center sm:justify-start mb-2">
+                                <PercentIcon class="h-5 w-5 text-amber-600 dark:text-amber-400"/>
+                                <span class="text-sm font-medium text-amber-800 dark:text-amber-300">
+                                    {{ t('Win Rate') }}
+                                </span>
                             </div>
-                            <p class="text-3xl font-bold text-amber-600 dark:text-amber-400">
-                                {{ overallStats.win_rate ?? 0 }}%</p>
+                            <p class="text-2xl sm:text-3xl font-bold text-amber-600 dark:text-amber-400">
+                                {{ overallStats.win_rate ?? 0 }}%
+                            </p>
                         </div>
-                        <div class="rounded-md bg-purple-50 p-4 dark:bg-purple-900/20">
-                            <div class="mb-2 flex items-center space-x-2 text-purple-600 dark:text-purple-400">
-                                <BarChart4Icon class="h-5 w-5"/>
-                                <h3 class="text-sm font-medium text-purple-800 dark:text-purple-300">
-                                    {{ t('League Memberships') }}</h3>
+                        <div class="text-center sm:text-left">
+                            <div class="flex items-center gap-2 justify-center sm:justify-start mb-2">
+                                <BarChart4Icon class="h-5 w-5 text-purple-600 dark:text-purple-400"/>
+                                <span class="text-sm font-medium text-purple-800 dark:text-purple-300">
+                                    {{ t('League Memberships') }}
+                                </span>
                             </div>
-                            <p class="text-3xl font-bold text-purple-600 dark:text-purple-400">
+                            <p class="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">
                                 {{ overallStats.leagues_count ?? 0 }}
                             </p>
                         </div>
                     </div>
-                    <div v-else class="py-6 text-center text-gray-500 dark:text-gray-400">
+                    <div v-else class="py-8 text-center text-gray-500 dark:text-gray-400">
                         {{ t('No overall statistics available.') }}
                     </div>
                 </CardContent>
             </Card>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>{{ t('Rating Analytics') }}</CardTitle>
+            <!-- Rating Analytics Card -->
+            <Card class="mb-8 shadow-lg">
+                <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
+                    <CardTitle class="flex items-center gap-2">
+                        <TrendingUpIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400"/>
+                        {{ t('Rating Analytics') }}
+                    </CardTitle>
                     <CardDescription>{{ t('Your rating performance metrics') }}</CardDescription>
                 </CardHeader>
-                <CardContent>
-                    <div v-if="isLoadingStats" class="flex min-h-[100px] items-center justify-center py-8">
-                        <Spinner class="text-primary h-8 w-8"/>
+                <CardContent class="p-6 sm:p-8">
+                    <div v-if="isLoadingStats" class="flex justify-center items-center py-8">
+                        <Spinner class="h-6 w-6 text-indigo-600"/>
                     </div>
-                    <div v-else-if="overallStats" class="grid grid-cols-1 gap-4 md:grid-cols-3">
-                        <div class="rounded-md bg-gray-50 p-4 dark:bg-gray-800/50">
-                            <div class="mb-2 flex items-center space-x-2 text-indigo-600 dark:text-indigo-400">
-                                <AwardIcon class="h-5 w-5"/>
-                                <h3 class="text-sm font-medium text-indigo-800 dark:text-indigo-300">
-                                    {{ t('Highest Rating') }}</h3>
+                    <div v-else-if="overallStats" class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+                        <div class="text-center sm:text-left p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                            <div class="flex items-center gap-2 justify-center sm:justify-start mb-2">
+                                <AwardIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400"/>
+                                <span class="text-sm font-medium text-indigo-800 dark:text-indigo-300">
+                                    {{ t('Highest Rating') }}
+                                </span>
                             </div>
-                            <p class="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
+                            <p class="text-2xl sm:text-3xl font-bold text-indigo-600 dark:text-indigo-400">
                                 {{ overallStats.highest_rating ?? 0 }}
                             </p>
                         </div>
-                        <div class="rounded-md bg-gray-50 p-4 dark:bg-gray-800/50">
-                            <div class="mb-2 flex items-center space-x-2 text-teal-600 dark:text-teal-400">
-                                <TrendingUpIcon class="h-5 w-5"/>
-                                <h3 class="text-sm font-medium text-teal-800 dark:text-teal-300">{{
-                                        t('Average Rating')
-                                    }}</h3>
+                        <div class="text-center sm:text-left p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                            <div class="flex items-center gap-2 justify-center sm:justify-start mb-2">
+                                <TrendingUpIcon class="h-5 w-5 text-teal-600 dark:text-teal-400"/>
+                                <span class="text-sm font-medium text-teal-800 dark:text-teal-300">
+                                    {{ t('Average Rating') }}
+                                </span>
                             </div>
-                            <p class="text-3xl font-bold text-teal-600 dark:text-teal-400">
+                            <p class="text-2xl sm:text-3xl font-bold text-teal-600 dark:text-teal-400">
                                 {{ overallStats.average_rating ?? 0 }}
                             </p>
                         </div>
-                        <div class="rounded-md bg-gray-50 p-4 dark:bg-gray-800/50">
-                            <div class="mb-2 flex items-center space-x-2 text-pink-600 dark:text-pink-400">
-                                <ActivityIcon class="h-5 w-5"/>
-                                <h3 class="text-sm font-medium text-pink-800 dark:text-pink-300">{{
-                                        t('Win/Loss Ratio')
-                                    }}</h3>
+                        <div class="text-center sm:text-left p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                            <div class="flex items-center gap-2 justify-center sm:justify-start mb-2">
+                                <ActivityIcon class="h-5 w-5 text-pink-600 dark:text-pink-400"/>
+                                <span class="text-sm font-medium text-pink-800 dark:text-pink-300">
+                                    {{ t('Win/Loss Ratio') }}
+                                </span>
                             </div>
-                            <p class="text-3xl font-bold text-pink-600 dark:text-pink-400">
+                            <p class="text-2xl sm:text-3xl font-bold text-pink-600 dark:text-pink-400">
                                 {{ winLossRatio }}
                             </p>
                         </div>
                     </div>
-                    <div v-else class="py-6 text-center text-gray-500 dark:text-gray-400">
+                    <div v-else class="py-8 text-center text-gray-500 dark:text-gray-400">
                         {{ t('No rating analytics available.') }}
                     </div>
                 </CardContent>
             </Card>
 
-            <Card v-if="!isLoadingGameTypeStats && gameTypeStats && Object.keys(gameTypeStats).length > 0">
-                <CardHeader>
-                    <CardTitle>{{ t('Game Type Performance') }}</CardTitle>
+            <!-- Game Type Performance Card -->
+            <Card v-if="!isLoadingGameTypeStats && gameTypeStats && Object.keys(gameTypeStats).length > 0"
+                  class="mb-8 shadow-lg">
+                <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
+                    <CardTitle class="flex items-center gap-2">
+                        <TrophyIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400"/>
+                        {{ t('Game Type Performance') }}
+                    </CardTitle>
                     <CardDescription>{{ t('Your statistics by game type') }}</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent class="p-6 sm:p-8">
                     <DataTable
                         :columns="gameTypeColumns"
                         :compact-mode="true"
@@ -573,11 +640,11 @@ const recentMatchesColumns = computed(() => [
                         :loading="isLoadingGameTypeStats"
                     >
                         <template #cell-wins="{ value }">
-                            <span class="text-green-600 dark:text-green-400">{{ value }}</span>
+                            <span class="text-green-600 dark:text-green-400 font-medium">{{ value }}</span>
                         </template>
 
                         <template #cell-losses="{ value }">
-                            <span class="text-red-600 dark:text-red-400">{{ value }}</span>
+                            <span class="text-red-600 dark:text-red-400 font-medium">{{ value }}</span>
                         </template>
 
                         <template #cell-win_rate="{ value }">
@@ -586,21 +653,31 @@ const recentMatchesColumns = computed(() => [
                     </DataTable>
                 </CardContent>
             </Card>
-            <Card v-else-if="isLoadingGameTypeStats">
-                <CardHeader>
-                    <CardTitle>{{ t('Game Type Performance') }}</CardTitle>
+
+            <!-- Loading Game Type Performance Card -->
+            <Card v-else-if="isLoadingGameTypeStats" class="mb-8 shadow-lg">
+                <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
+                    <CardTitle class="flex items-center gap-2">
+                        <TrophyIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400"/>
+                        {{ t('Game Type Performance') }}
+                    </CardTitle>
                     <CardDescription>{{ t('Loading game type statistics...') }}</CardDescription>
                 </CardHeader>
-                <CardContent class="flex min-h-[100px] items-center justify-center py-8">
-                    <Spinner class="text-primary h-8 w-8"/>
+                <CardContent class="flex justify-center items-center py-8">
+                    <Spinner class="h-6 w-6 text-indigo-600"/>
                 </CardContent>
             </Card>
-            <Card>
-                <CardHeader>
-                    <CardTitle>{{ t('League Ratings') }}</CardTitle>
+
+            <!-- League Ratings Card -->
+            <Card class="mb-8 shadow-lg">
+                <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
+                    <CardTitle class="flex items-center gap-2">
+                        <UsersIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400"/>
+                        {{ t('League Ratings') }}
+                    </CardTitle>
                     <CardDescription>{{ t('Your current ratings across different leagues') }}</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent class="p-6 sm:p-8">
                     <DataTable
                         :columns="leagueRatingsColumns"
                         :compact-mode="true"
@@ -609,7 +686,7 @@ const recentMatchesColumns = computed(() => [
                         :loading="isLoadingRatings"
                     >
                         <template #cell-position="{ value }">
-                            #{{ value ?? t('N/A') }}
+                            <span class="font-medium">#{{ value ?? t('N/A') }}</span>
                         </template>
 
                         <template #cell-status="{ value }">
@@ -624,12 +701,16 @@ const recentMatchesColumns = computed(() => [
                 </CardContent>
             </Card>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>{{ t('Recent Matches') }}</CardTitle>
+            <!-- Recent Matches Card -->
+            <Card class="shadow-lg">
+                <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
+                    <CardTitle class="flex items-center gap-2">
+                        <SwordIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400"/>
+                        {{ t('Recent Matches') }}
+                    </CardTitle>
                     <CardDescription>{{ t('Your most recent match results (up to 15)') }}</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent class="p-6 sm:p-8">
                     <DataTable
                         :columns="recentMatchesColumns"
                         :compact-mode="true"
