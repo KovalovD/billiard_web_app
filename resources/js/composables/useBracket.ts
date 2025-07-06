@@ -188,6 +188,27 @@ export function useBracket(
         isFullscreen.value = !!document.fullscreenElement;
     };
 
+    // Generic scroll to match function
+    const scrollToMatch = (targetMatch: BracketMatch & { x: number; y: number }) => {
+        if (!targetMatch) return;
+
+        // Set zoom to comfortable level
+        setZoom(1.2);
+
+        // Scroll to match position
+        nextTick(() => {
+            if (bracketScrollContainerRef.value) {
+                const container = bracketScrollContainerRef.value;
+                const matchX = targetMatch.x * zoomLevel.value;
+                const matchY = targetMatch.y * zoomLevel.value;
+
+                // Center the match in viewport
+                container.scrollLeft = matchX - container.clientWidth / 2 + (nodeWidth * zoomLevel.value) / 2;
+                container.scrollTop = matchY - container.clientHeight / 2 + (nodeHeight * zoomLevel.value) / 2;
+            }
+        });
+    };
+
     // Find and focus on user's match
     const findMyMatch = (positionedMatches: Array<BracketMatch & { x: number; y: number }>) => {
         if (!currentUserId) return;
@@ -208,23 +229,9 @@ export function useBracket(
         });
 
         const targetMatch = sortedMatches[0];
-        if (!targetMatch) return;
-
-        // Set zoom to comfortable level
-        setZoom(1.2);
-
-        // Scroll to match position
-        nextTick(() => {
-            if (bracketScrollContainerRef.value) {
-                const container = bracketScrollContainerRef.value;
-                const matchX = targetMatch.x * zoomLevel.value;
-                const matchY = targetMatch.y * zoomLevel.value;
-
-                // Center the match in viewport
-                container.scrollLeft = matchX - container.clientWidth / 2 + (nodeWidth * zoomLevel.value) / 2;
-                container.scrollTop = matchY - container.clientHeight / 2 + (nodeHeight * zoomLevel.value) / 2;
-            }
-        });
+        if (targetMatch) {
+            scrollToMatch(targetMatch);
+        }
     };
 
     // Scroll to center
@@ -303,6 +310,7 @@ export function useBracket(
         handleKeyboard,
         handleFullscreenChange,
         findMyMatch,
+        scrollToMatch,
         scrollToCenter,
         getMatchClass,
         isCurrentUserMatch,

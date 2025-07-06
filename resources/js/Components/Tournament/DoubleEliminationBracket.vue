@@ -39,6 +39,7 @@ const {
     handleWheel,
     toggleFullscreen,
     findMyMatch,
+    scrollToMatch,
     getMatchClass,
     isCurrentUserMatch,
     getPlayerDisplay,
@@ -59,6 +60,7 @@ provide('handleTouchStart', handleTouchStart);
 provide('handleTouchMove', handleTouchMove);
 provide('handleTouchEnd', handleTouchEnd);
 provide('handleWheel', handleWheel);
+provide('scrollToMatch', scrollToMatch);
 
 // Separate upper and lower bracket matches
 const upperBracketMatches = computed(() => {
@@ -111,6 +113,15 @@ const lowerRounds = computed(() => {
     return [...map.entries()]
         .sort(([a], [b]) => a - b)
         .map(([, ms]) => ms.sort((a, b) => a.slot - b.slot));
+});
+
+// Create a map of all matches by ID for quick lookup
+const matchesById = computed(() => {
+    const map = new Map<number, TournamentMatch>();
+    props.matches.forEach(match => {
+        map.set(match.id, match);
+    });
+    return map;
 });
 
 // Calculate upper bracket height
@@ -340,6 +351,14 @@ const handleFindMyMatch = () => {
     findMyMatch(allPositionedMatches.value);
 };
 
+// Handle click on loser drop indication
+const handleLoserDropClick = (targetMatchId: number) => {
+    const targetMatch = allPositionedMatches.value.find(m => m.id === targetMatchId);
+    if (targetMatch) {
+        scrollToMatch(targetMatch);
+    }
+};
+
 // Set refs from BaseBracket
 const baseBracketRef = ref<InstanceType<typeof BaseBracket>>();
 watch(baseBracketRef, (newRef) => {
@@ -487,9 +506,50 @@ watch(baseBracketRef, (newRef) => {
                             class="status-in-progress"
                             r="4"
                         />
+
+                        <!-- Loser Drop Indication -->
+                        <g v-if="m.loser_next_match_id && matchesById.get(m.loser_next_match_id)">
+                            <rect
+                                :x="m.x"
+                                :y="m.y + nodeHeight + 5"
+                                :width="nodeWidth"
+                                height="20"
+                                fill="#f3f4f6"
+                                stroke="#e5e7eb"
+                                stroke-width="1"
+                                rx="4"
+                                class="cursor-pointer hover:fill-gray-300 transition-colors"
+                                @click.stop="handleLoserDropClick(m.loser_next_match_id)"
+                            />
+                            <text
+                                :x="m.x + nodeWidth / 2"
+                                :y="m.y + nodeHeight + 18"
+                                text-anchor="middle"
+                                class="text-xs fill-gray-600 pointer-events-none"
+                                font-size="11"
+                            >
+                                {{ t('Drops to') }} {{ matchesById.get(m.loser_next_match_id)?.match_code }}
+                            </text>
+                        </g>
                     </g>
                 </g>
             </svg>
         </div>
     </BaseBracket>
 </template>
+
+<style scoped>
+.hover\:fill-gray-300:hover {
+    fill: #d1d5db;
+}
+
+.transition-colors {
+    transition-property: fill;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+}
+
+.pointer-events-none {
+    pointer-events: none;
+}
+</style>
