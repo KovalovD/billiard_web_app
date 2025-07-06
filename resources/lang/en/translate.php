@@ -101,4 +101,5 @@ return [
     'Confirmed Players (:count)'                        => 'Confirmed Players (:count)',
     'Manage Players: :name'                             => 'Manage Players: :name',
     'Current standings in the :rating rating' => 'Current standings in the :rating rating',
+    'Showing :count players' => 'Showing :count players',
 ];

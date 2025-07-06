@@ -111,8 +111,8 @@ const sortedPlayers = computed(() => {
         if (a.position !== null) return -1;
         if (b.position !== null) return 1;
 
-        return new Date(a.applied_at || a.registered_at).getTime() -
-            new Date(b.applied_at || b.registered_at).getTime();
+        return new Date(a.applied_at || a.registered_at || 0).getTime() -
+            new Date(b.applied_at || b.registered_at || 0).getTime();
     });
 });
 
@@ -569,6 +569,10 @@ onMounted(() => {
                         <Button size="sm" variant="secondary">
                             <UserPlusIcon class="mr-2 h-4 w-4"/>
                             {{ t('Players') }}
+                            <span v-if="tournament.pending_applications_count > 0"
+                                  class="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                                {{ tournament.pending_applications_count }}
+                            </span>
                         </Button>
                     </Link>
 
@@ -598,25 +602,6 @@ onMounted(() => {
                         <Button size="sm" variant="secondary">
                             <PlayIcon class="mr-2 h-4 w-4"/>
                             {{ t('Matches') }}
-                        </Button>
-                    </Link>
-
-                    <Link v-if="tournament.pending_applications_count > 0"
-                          :href="`/admin/tournaments/${tournament.slug}/applications`">
-                        <Button class="relative" size="sm" variant="secondary">
-                            <ClipboardListIcon class="mr-2 h-4 w-4"/>
-                            {{ t('Applications') }}
-                            <span
-                                class="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
-                                {{ tournament.pending_applications_count }}
-                            </span>
-                        </Button>
-                    </Link>
-                    <Link v-else-if="tournament.requires_application"
-                          :href="`/admin/tournaments/${tournament.slug}/applications`">
-                        <Button size="sm" variant="secondary">
-                            <ClipboardListIcon class="mr-2 h-4 w-4"/>
-                            {{ t('Applications') }}
                         </Button>
                     </Link>
 
@@ -675,7 +660,11 @@ onMounted(() => {
                     <Link :href="`/admin/tournaments/${tournament.slug}/players`">
                         <Button size="sm" variant="secondary" class="w-full">
                             <UserPlusIcon class="mr-1 h-3 w-3"/>
-                            {{ t('Players') }} ({{ tournament.pending_applications_count }})
+                            {{ t('Players') }}
+                            <span v-if="tournament.pending_applications_count > 0"
+                                  class="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                                {{ tournament.pending_applications_count }}
+                            </span>
                         </Button>
                     </Link>
 
@@ -860,83 +849,134 @@ onMounted(() => {
                 </div>
 
                 <!-- Tab Navigation -->
-                <div class="mb-6 border-b border-gray-200 dark:border-gray-700">
-                    <nav class="-mb-px flex space-x-8 overflow-x-auto">
+                <nav class="mb-6 border-b border-gray-200 dark:border-gray-700 overflow-x-auto" role="navigation"
+                     aria-label="Tournament tabs">
+                    <div class="-mb-px flex space-x-6 sm:space-x-8 min-w-max">
                         <button
+                            id="tab-info"
                             :class="[
-                                'py-4 px-1 text-sm font-medium border-b-2 whitespace-nowrap',
+                                'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
                                 activeTab === 'info'
-                                    ? 'border-indigo-500 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                                    ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                             ]"
+                            :aria-selected="activeTab === 'info'"
+                            role="tab"
                             @click="switchTab('info')"
                         >
-                            {{ t('Info') }}
+                            <span class="flex items-center gap-2">
+                                <ClipboardListIcon class="h-4 w-4"/>
+                                {{ t('Info') }}
+                            </span>
                         </button>
                         <button
+                            id="tab-players"
                             :class="[
-                                'py-4 px-1 text-sm font-medium border-b-2 whitespace-nowrap',
+                                'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
                                 activeTab === 'players'
-                                    ? 'border-indigo-500 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                                    ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                             ]"
+                            :aria-selected="activeTab === 'players'"
+                            role="tab"
                             @click="switchTab('players')"
                         >
-                            {{ t('Players') }} ({{ tournament.confirmed_players_count }})
+                            <span class="flex items-center gap-2">
+                                <UsersIcon class="h-4 w-4"/>
+                                {{ t('Players') }}
+                                <span class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+                                    {{ tournament.confirmed_players_count }}
+                                </span>
+                            </span>
                         </button>
                         <button
                             v-if="canViewGroups"
+                            id="tab-groups"
                             :class="[
-                                'py-4 px-1 text-sm font-medium border-b-2 whitespace-nowrap',
+                                'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
                                 activeTab === 'groups'
-                                    ? 'border-indigo-500 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                                    ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                             ]"
+                            :aria-selected="activeTab === 'groups'"
+                            role="tab"
                             @click="switchTab('groups')"
                         >
-                            {{ t('Groups') }}
+                            <span class="flex items-center gap-2">
+                                <LayersIcon class="h-4 w-4"/>
+                                {{ t('Groups') }}
+                                <span class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+                                    {{ groups.length }}
+                                </span>
+                            </span>
                         </button>
                         <button
                             v-if="canViewBracket"
+                            id="tab-bracket"
                             :class="[
-                                'py-4 px-1 text-sm font-medium border-b-2 whitespace-nowrap',
+                                'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
                                 activeTab === 'bracket'
-                                    ? 'border-indigo-500 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                                    ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                             ]"
+                            :aria-selected="activeTab === 'bracket'"
+                            role="tab"
                             @click="switchTab('bracket')"
                         >
-                            {{ t('Bracket') }}
+                            <span class="flex items-center gap-2">
+                                <GitBranchIcon class="h-4 w-4"/>
+                                {{ t('Bracket') }}
+                            </span>
                         </button>
                         <button
                             v-if="canViewMatches"
+                            id="tab-matches"
                             :class="[
-                                'py-4 px-1 text-sm font-medium border-b-2 whitespace-nowrap',
+                                'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
                                 activeTab === 'matches'
-                                    ? 'border-indigo-500 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                                    ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                             ]"
+                            :aria-selected="activeTab === 'matches'"
+                            role="tab"
                             @click="switchTab('matches')"
                         >
-                            {{ t('Matches') }}
+                            <span class="flex items-center gap-2">
+                                <PlayIcon class="h-4 w-4"/>
+                                {{ t('Matches') }}
+                                <span class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+                                    {{ matches.length }}
+                                </span>
+                            </span>
                         </button>
                         <button
                             v-if="tournament.status === 'completed'"
+                            id="tab-results"
                             :class="[
-                                'py-4 px-1 text-sm font-medium border-b-2 whitespace-nowrap',
+                                'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
                                 activeTab === 'results'
-                                    ? 'border-indigo-500 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                                    ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                             ]"
+                            :aria-selected="activeTab === 'results'"
+                            role="tab"
                             @click="switchTab('results')"
                         >
-                            {{ t('Results') }}
+                            <span class="flex items-center gap-2">
+                                <TrophyIcon class="h-4 w-4"/>
+                                {{ t('Results') }}
+                                <span class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+                                    {{ completedPlayers.length }}
+                                </span>
+                            </span>
                         </button>
-                    </nav>
-                </div>
+                    </div>
+                </nav>
 
-                <!-- Tournament Information Tab -->
-                <div v-if="activeTab === 'info'" class="space-y-6">
+                <!-- Tab Content -->
+                <main role="tabpanel">
+                    <!-- Tournament Information Tab -->
+                    <div v-if="activeTab === 'info'" class="space-y-6">
                     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
                         <!-- Details Card -->
                         <Card class="shadow-lg">
@@ -1516,6 +1556,7 @@ onMounted(() => {
                         </CardContent>
                     </Card>
                 </div>
+                </main>
             </template>
         </div>
         <TablesManager
