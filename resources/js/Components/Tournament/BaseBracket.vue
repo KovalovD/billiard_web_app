@@ -105,7 +105,7 @@
 
             <div
                 ref="bracketScrollContainerRef"
-                class="bracket-container overflow-auto bg-gray-50 dark:bg-gray-900/50 touch-pan-x touch-pan-y"
+                class="bracket-container overflow-auto bg-gray-50 dark:bg-gray-900/50"
                 @touchend="handleTouchEnd"
                 @touchmove="handleTouchMove"
                 @touchstart="handleTouchStart"
@@ -175,6 +175,8 @@ const handleWheel = inject<(e: WheelEvent) => void>('handleWheel')!;
 .bracket-container {
     max-height: calc(100vh - 200px);
     min-height: 400px;
+    /* Remove touch-action to allow custom touch handling */
+    touch-action: none;
 }
 
 /* Mobile adjustments */
@@ -200,15 +202,6 @@ const handleWheel = inject<(e: WheelEvent) => void>('handleWheel')!;
     transition: transform 0.2s ease-out;
     /* Add minimum size to ensure scrollability on mobile */
     min-width: max-content;
-}
-
-/* Prevent text selection on touch devices but allow touch scrolling */
-.touch-pan-x {
-    touch-action: pan-x;
-}
-
-.touch-pan-y {
-    touch-action: pan-y;
 }
 
 /* Custom scrollbar styling - thinner on mobile */
@@ -241,5 +234,13 @@ const handleWheel = inject<(e: WheelEvent) => void>('handleWheel')!;
 /* Ensure smooth scrolling on iOS */
 .bracket-container {
     -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent text selection on touch devices */
+.bracket-container {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 </style>

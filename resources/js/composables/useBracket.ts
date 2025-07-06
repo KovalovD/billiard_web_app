@@ -50,9 +50,16 @@ export function useBracket(
     const bracketScrollContainerRef = ref<HTMLDivElement | null | undefined>(null);
 
     // Touch gesture states
-    const touchStartDistance = ref(0);
-    const touchStartZoom = ref(1);
-    const isTouching = ref(false);
+    const touchState = ref({
+        isPinching: false,
+        isPanning: false,
+        touchStartDistance: 0,
+        touchStartZoom: 1,
+        lastTouchX: 0,
+        lastTouchY: 0,
+        startScrollLeft: 0,
+        startScrollTop: 0
+    });
 
     // Transform match data
     const transformMatch = (
@@ -106,25 +113,49 @@ export function useBracket(
     };
 
     const handleTouchStart = (e: TouchEvent) => {
+        if (!bracketScrollContainerRef.value) return;
+
         if (e.touches.length === 2) {
-            isTouching.value = true;
-            touchStartDistance.value = getTouchDistance(e.touches);
-            touchStartZoom.value = zoomLevel.value;
+            // Pinch zoom start
+            touchState.value.isPinching = true;
+            touchState.value.isPanning = false;
+            touchState.value.touchStartDistance = getTouchDistance(e.touches);
+            touchState.value.touchStartZoom = zoomLevel.value;
             e.preventDefault();
+        } else if (e.touches.length === 1) {
+            // Pan start
+            touchState.value.isPanning = true;
+            touchState.value.isPinching = false;
+            touchState.value.lastTouchX = e.touches[0].clientX;
+            touchState.value.lastTouchY = e.touches[0].clientY;
+            touchState.value.startScrollLeft = bracketScrollContainerRef.value.scrollLeft;
+            touchState.value.startScrollTop = bracketScrollContainerRef.value.scrollTop;
         }
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-        if (e.touches.length === 2 && isTouching.value) {
-            const currentDistance = getTouchDistance(e.touches);
-            const scale = currentDistance / touchStartDistance.value;
-            setZoom(touchStartZoom.value * scale);
+        if (!bracketScrollContainerRef.value) return;
+
+        if (e.touches.length === 2 && touchState.value.isPinching) {
+            // Pinch zoom
             e.preventDefault();
+            const currentDistance = getTouchDistance(e.touches);
+            const scale = currentDistance / touchState.value.touchStartDistance;
+            setZoom(touchState.value.touchStartZoom * scale);
+        } else if (e.touches.length === 1 && touchState.value.isPanning && !touchState.value.isPinching) {
+            // Single finger pan
+            const touch = e.touches[0];
+            const deltaX = touchState.value.lastTouchX - touch.clientX;
+            const deltaY = touchState.value.lastTouchY - touch.clientY;
+
+            bracketScrollContainerRef.value.scrollLeft = touchState.value.startScrollLeft + deltaX;
+            bracketScrollContainerRef.value.scrollTop = touchState.value.startScrollTop + deltaY;
         }
     };
 
     const handleTouchEnd = () => {
-        isTouching.value = false;
+        touchState.value.isPinching = false;
+        touchState.value.isPanning = false;
     };
 
     // Mouse wheel zoom
@@ -291,9 +322,6 @@ export function useBracket(
         isFullscreen,
         bracketContainerRef,
         bracketScrollContainerRef,
-        touchStartDistance,
-        touchStartZoom,
-        isTouching,
 
         // Methods
         transformMatch,
