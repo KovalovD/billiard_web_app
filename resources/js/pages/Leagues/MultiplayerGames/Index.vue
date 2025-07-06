@@ -261,7 +261,7 @@ const getActions = (game: MultiplayerGame): ActionItem[] => {
 };
 
 // Event delegation handler
-const handleTableClick = (event: MouseEvent) => {
+const handleTableClick = (event: Event) => {
     const target = event.target as HTMLElement;
 
     // Don't navigate if clicking on action buttons or their children
@@ -279,8 +279,9 @@ const handleTableClick = (event: MouseEvent) => {
     }
 };
 
-const handleTableKeydown = (event: KeyboardEvent) => {
-    if (event.key === 'Enter' || event.key === ' ') {
+const handleTableKeydown = (event: Event) => {
+    const keyboardEvent = event as KeyboardEvent;
+    if (keyboardEvent.key === 'Enter' || keyboardEvent.key === ' ') {
         const target = event.target as HTMLElement;
 
         // Don't navigate if focus is on action buttons
@@ -355,53 +356,58 @@ onUnmounted(() => {
 
 <template>
     <Head :title="league ? t('Multiplayer Games - :league', { league: league.name }) : t('Multiplayer Games')"/>
-    <div class="py-12">
-        <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
+    <div class="py-6 sm:py-8 lg:py-12">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <!-- Header with back button -->
-            <header class="mb-6 flex items-center justify-between">
-                <div class="flex items-center gap-4">
-                    <Link :href="`/leagues/${league?.slug}`" aria-label="Navigate back to league page">
-                        <Button variant="outline">
-                            <ArrowLeftIcon class="mr-2 h-4 w-4" aria-hidden="true"/>
-                            {{ t('Back to League') }}
-                        </Button>
-                    </Link>
-                    <div>
-                        <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">
-                            {{ t('Multiplayer Games') }}
-                        </h1>
-                        <p v-if="league" class="text-gray-600 dark:text-gray-400">
-                            {{ league.name }}
-                        </p>
-                    </div>
+            <header class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <!-- Left: Title and subtitle -->
+                <div class="flex-1 flex flex-col items-start justify-center">
+                    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+                        {{ t('Multiplayer Games') }}
+                    </h1>
+                    <p v-if="league" class="text-gray-600 dark:text-gray-400 mt-1">
+                        {{ league.name }}
+                    </p>
                 </div>
 
-                <!-- Admin create button -->
-                <Button v-if="isAuthenticated && isAdmin && league?.game_multiplayer" @click="openCreateModal"
-                        aria-label="Create new multiplayer game">
-                    <PlusIcon class="mr-2 h-4 w-4" aria-hidden="true"/>
-                    {{ t('Create Game') }}
-                </Button>
+                <!-- Right: Back to League and Create Game buttons -->
+                <div class="flex flex-col sm:flex-row items-center justify-end gap-2 flex-1">
+                    <Link :href="`/leagues/${league?.slug}`" aria-label="Navigate back to league page">
+                        <Button variant="outline" size="sm">
+                            <ArrowLeftIcon class="mr-2 h-4 w-4" aria-hidden="true"/>
+                            <span class="hidden sm:inline">{{ t('Back to League') }}</span>
+                            <span class="sm:hidden">{{ t('Back') }}</span>
+                        </Button>
+                    </Link>
+                    <Link v-if="isAuthenticated && isAdmin && league?.game_multiplayer"
+                          href="#"
+                          @click.prevent="openCreateModal"
+                          aria-label="Create new multiplayer game"
+                          class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
+                        <PlusIcon class="mr-2 h-4 w-4" aria-hidden="true"/>
+                        {{ t('Create Game') }}
+                    </Link>
+                </div>
             </header>
 
             <!-- Error message -->
-            <div v-if="error" class="mb-6 rounded bg-red-100 p-4 text-red-600 dark:bg-red-900/30 dark:text-red-400"
+            <div v-if="error"
+                 class="mb-6 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4"
                  role="alert" aria-live="polite">
-                {{ error }}
+                <p class="text-red-600 dark:text-red-400">{{ error }}</p>
             </div>
 
             <!-- Filters -->
-            <nav class="mb-6 flex flex-wrap gap-2" role="navigation" aria-label="Game status filter">
+            <nav class="mb-6 flex flex-wrap gap-2">
                 <button
                     v-for="option in statusOptions"
                     :key="option.value"
                     :class="[
-                        'px-4 py-2 rounded-md text-sm font-medium transition-colors',
+                        'px-3 py-2 rounded-md text-sm font-medium transition-colors',
                         selectedStatus === option.value
-                            ? 'bg-blue-600 text-white'
+                            ? 'bg-indigo-600 text-white'
                             : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
                     ]"
-                    :aria-pressed="selectedStatus === option.value"
                     @click="selectedStatus = option.value"
                 >
                     {{ option.label }}
@@ -409,10 +415,10 @@ onUnmounted(() => {
             </nav>
 
             <main>
-                <Card>
-                    <CardHeader>
+                <Card class="shadow-lg">
+                    <CardHeader class="bg-gradient-to-r from-gray-50 to-purple-50 dark:from-gray-800 dark:to-gray-700">
                         <CardTitle class="flex items-center gap-2">
-                            <GamepadIcon class="h-5 w-5" aria-hidden="true"/>
+                            <GamepadIcon class="h-5 w-5 text-purple-600 dark:text-purple-400" aria-hidden="true"/>
                             {{ t('Multiplayer Games') }}
                         </CardTitle>
                     </CardHeader>
@@ -425,8 +431,96 @@ onUnmounted(() => {
                             <p class="text-sm">{{ t('This league does not support multiplayer games.') }}</p>
                         </div>
 
-                        <!-- Data Table -->
-                        <div v-else data-multiplayer-games-table>
+                        <!-- Loading State -->
+                        <div v-else-if="isLoadingGames" class="flex justify-center py-12">
+                            <div class="text-center">
+                                <div
+                                    class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+                                <p class="mt-2 text-gray-500">{{ t('Loading games...') }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Empty State -->
+                        <div v-else-if="filteredGames.length === 0" class="p-6 text-center text-gray-500">
+                            {{
+                                selectedStatus === 'all' ? t('No multiplayer games for this league.') : t('No :status games.', {status: selectedStatus})
+                            }}
+                        </div>
+
+                        <!-- Mobile Cards View -->
+                        <div v-else class="block lg:hidden space-y-4 p-4">
+                            <div
+                                v-for="game in filteredGames"
+                                :key="game.id"
+                                class="relative rounded-lg border p-4 cursor-pointer transition-colors bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
+                                @click="router.visit(`/leagues/${league?.slug}/multiplayer-games/${game.slug}`)"
+                            >
+                                <!-- Game Header -->
+                                <div class="flex items-start justify-between mb-3">
+                                    <div class="flex-1 min-w-0">
+                                        <h3 class="font-semibold text-gray-900 dark:text-gray-100 truncate">
+                                            {{ game.name }}
+                                        </h3>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                                            ID: {{ game.id }}
+                                        </p>
+                                    </div>
+                                    <span
+                                        :class="[
+                                            'inline-flex px-2 py-1 text-xs font-medium rounded-full flex-shrink-0',
+                                            getStatusBadgeClass(game.status)
+                                        ]"
+                                    >
+                                        {{ game.status.replace('_', ' ').toUpperCase() }}
+                                    </span>
+                                </div>
+
+                                <!-- Game Info Grid -->
+                                <div class="grid grid-cols-2 gap-3 text-sm">
+                                    <!-- Players & Entry Fee -->
+                                    <div>
+                                        <div class="flex items-center text-gray-600 dark:text-gray-400 mb-1">
+                                            <UsersIcon class="h-4 w-4 mr-1 flex-shrink-0"/>
+                                            <span class="truncate">{{ game.total_players_count }} {{
+                                                    t('Players')
+                                                }}</span>
+                                        </div>
+                                        <div class="flex items-center text-gray-600 dark:text-gray-400">
+                                            <span class="text-green-600 dark:text-green-400 font-medium">
+                                                {{ formatPrizePool(game.entrance_fee || 0) }}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Date & Registration -->
+                                    <div>
+                                        <div class="flex items-center text-gray-600 dark:text-gray-400 mb-1">
+                                            <CalendarIcon class="h-4 w-4 mr-1 flex-shrink-0"/>
+                                            <span class="truncate">{{ getGameDateInfo(game) }}</span>
+                                        </div>
+                                        <div class="flex items-center text-gray-600 dark:text-gray-400">
+                                            <div v-if="game.is_registration_open" class="flex items-center">
+                                                <div class="h-2 w-2 bg-green-400 rounded-full mr-2"
+                                                     aria-hidden="true"></div>
+                                                <span class="text-sm text-green-600 dark:text-green-400">{{
+                                                        t('Open')
+                                                    }}</span>
+                                            </div>
+                                            <div v-else class="flex items-center">
+                                                <div class="h-2 w-2 bg-red-400 rounded-full mr-2"
+                                                     aria-hidden="true"></div>
+                                                <span class="text-sm text-red-600 dark:text-red-400">{{
+                                                        t('Closed')
+                                                    }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Desktop Table View -->
+                        <div class="hidden lg:block" data-multiplayer-games-table>
                             <DataTable
                                 :columns="columns"
                                 :compact-mode="true"
@@ -446,8 +540,8 @@ onUnmounted(() => {
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0 h-8 w-8">
                                             <div
-                                                class="h-8 w-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                                                <GamepadIcon class="h-4 w-4 text-purple-600 dark:text-purple-400"
+                                                class="h-8 w-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center shadow-md">
+                                                <GamepadIcon class="h-4 w-4 text-white"
                                                              aria-hidden="true"/>
                                             </div>
                                         </div>

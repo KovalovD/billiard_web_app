@@ -11,14 +11,19 @@ import MultiplayerGameSummary from '@/Components/League/MultiplayerGame/Multipla
 import {
     ArrowLeftIcon,
     CheckIcon,
+    ClockIcon,
     CopyIcon,
+    GamepadIcon,
     LogInIcon,
     MonitorIcon,
+    SmileIcon,
     TrophyIcon,
     UserIcon,
-    UserPlusIcon
+    UserPlusIcon,
+    UsersIcon,
+    WalletIcon
 } from 'lucide-vue-next';
-import {Button, Card, CardContent, CardHeader, CardTitle} from '@/Components/ui';
+import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Spinner} from '@/Components/ui';
 import {useAuth} from '@/composables/useAuth';
 import {useMultiplayerGames} from '@/composables/useMultiplayerGames';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
@@ -60,6 +65,7 @@ const selectedTargetPlayer = ref<MultiplayerGamePlayer | null>(null);
 const selectedActingPlayer = ref<MultiplayerGamePlayer | null>(null);
 const showFinishModal = ref(false);
 const showModeratorModal = ref(false);
+const showMobileAdminMenu = ref(false);
 const actionFeedback = ref<{ type: 'success' | 'error', message: string } | null>(null);
 const copiedWidgetId = ref<string | null>(null);
 const {setSeoMeta, generateBreadcrumbJsonLd} = useSeo();
@@ -276,7 +282,7 @@ const resultsColumns = computed(() => [
         align: 'left' as const,
         render: (player: any) => ({
             name: `${player.user.firstname} ${player.user.lastname}`,
-            isYou: isAuthenticated && player.user.id === user?.id
+            isYou: isAuthenticated.value && player.user.id === user.value?.id
         })
     },
     {
@@ -561,6 +567,7 @@ const formatCurrency = (amount: number) => {
         .replace('UAH', '₴');
 };
 
+
 // Lifecycle hooks
 onMounted(() => {
     fetchLeague();
@@ -622,22 +629,23 @@ onMounted(() => {
 
 <template>
     <Head :title="game ? `${game.name} - ${league?.name || t('Multiplayer Game')}` : t('Multiplayer Game')"/>
-    <div class="py-12">
-        <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
-            <!-- Header with back button -->
-            <div class="mb-6 flex items-center justify-between">
-              <Link :href="`/leagues/${league?.slug}/multiplayer-games`">
-                    <Button variant="outline">
-                        <ArrowLeftIcon class="mr-2 h-4 w-4"/>
-                        {{ t('Back to Games') }}
-                    </Button>
-                </Link>
 
-                <h1 class="text-2xl font-semibold">
-                    {{ game ? game.name : t('Multiplayer Game') }}
-                </h1>
+    <div class="py-6 sm:py-8 lg:py-12">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <!-- Header with actions -->
+            <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <Link :href="`/leagues/${league?.slug}/multiplayer-games`">
+                        <Button variant="outline" size="sm">
+                            <ArrowLeftIcon class="mr-2 h-4 w-4"/>
+                            <span class="hidden sm:inline">{{ t('Back to Games') }}</span>
+                            <span class="sm:hidden">{{ t('Back') }}</span>
+                        </Button>
+                    </Link>
+                </div>
 
-                <div class="flex space-x-2">
+                <!-- Admin controls - Desktop -->
+                <div v-if="isAuthenticated && (isAdmin || isModerator)" class="hidden sm:flex flex-wrap gap-2">
                     <span
                         v-if="game"
                         :class="['rounded-full px-3 py-1 text-sm font-semibold', statusBadgeClass]"
@@ -645,41 +653,173 @@ onMounted(() => {
                         {{ statusText }}
                     </span>
 
-                    <!-- Authenticated admin actions -->
-                    <template v-if="isAuthenticated && (isAdmin || isModerator)">
-                        <Button
-                            v-if="game?.status === 'completed'"
-                            variant="outline"
-                            @click="showFinishModal = true"
-                        >
-                            <TrophyIcon class="mr-2 h-4 w-4"/>
-                            {{ t('Finish Game') }}
-                        </Button>
-                        <Button
-                            v-if="game?.status === 'registration'"
-                            variant="outline"
-                            @click="handleStart"
-                        >
-                            <TrophyIcon class="mr-2 h-4 w-4"/>
-                            {{ t('Start Game') }}
-                        </Button>
-                        <Button
-                            v-if="game?.status === 'in_progress'"
-                            variant="outline"
-                            @click="showModeratorModal = true"
-                        >
-                            <UserIcon class="mr-2 h-4 w-4"/>
-                            {{ t('Change Moderator') }}
-                        </Button>
-                        <Button
-                            v-if="isAdmin && game?.status === 'registration'"
-                            variant="outline"
-                            @click="showAddPlayerModal = true"
-                        >
-                            <UserPlusIcon class="mr-2 h-4 w-4"/>
-                            {{ t('Add Player') }}
-                        </Button>
-                    </template>
+                    <Button
+                        v-if="game?.status === 'completed'"
+                        variant="secondary"
+                        size="sm"
+                        @click="showFinishModal = true"
+                    >
+                        <TrophyIcon class="mr-2 h-4 w-4"/>
+                        {{ t('Finish Game') }}
+                    </Button>
+                    <Button
+                        v-if="game?.status === 'registration'"
+                        variant="secondary"
+                        size="sm"
+                        @click="handleStart"
+                    >
+                        <TrophyIcon class="mr-2 h-4 w-4"/>
+                        {{ t('Start Game') }}
+                    </Button>
+                    <Button
+                        v-if="game?.status === 'in_progress'"
+                        variant="secondary"
+                        size="sm"
+                        @click="showModeratorModal = true"
+                    >
+                        <UserIcon class="mr-2 h-4 w-4"/>
+                        {{ t('Change Moderator') }}
+                    </Button>
+                    <Button
+                        v-if="isAdmin && game?.status === 'registration'"
+                        variant="secondary"
+                        size="sm"
+                        @click="showAddPlayerModal = true"
+                    >
+                        <UserPlusIcon class="mr-2 h-4 w-4"/>
+                        {{ t('Add Player') }}
+                    </Button>
+                </div>
+
+                <!-- Admin controls - Mobile Menu Button -->
+                <Button
+                    v-if="isAuthenticated && (isAdmin || isModerator)"
+                    size="sm"
+                    variant="secondary"
+                    class="sm:hidden"
+                    @click="showMobileAdminMenu = !showMobileAdminMenu"
+                >
+                    <UserIcon class="h-4 w-4"/>
+                </Button>
+
+                <!-- Status badge for mobile -->
+                <span
+                    v-if="game && !isAuthenticated"
+                    :class="['rounded-full px-3 py-1 text-sm font-semibold', statusBadgeClass]"
+                >
+                    {{ statusText }}
+                </span>
+            </div>
+
+            <!-- Mobile Admin Menu -->
+            <div
+                v-if="isAuthenticated && (isAdmin || isModerator) && showMobileAdminMenu"
+                class="sm:hidden mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+            >
+                <div class="grid grid-cols-2 gap-2">
+                    <Button
+                        v-if="game?.status === 'completed'"
+                        size="sm"
+                        variant="secondary"
+                        class="w-full"
+                        @click="showFinishModal = true; showMobileAdminMenu = false"
+                    >
+                        <TrophyIcon class="mr-1 h-3 w-3"/>
+                        {{ t('Finish') }}
+                    </Button>
+                    <Button
+                        v-if="game?.status === 'registration'"
+                        size="sm"
+                        variant="secondary"
+                        class="w-full"
+                        @click="handleStart; showMobileAdminMenu = false"
+                    >
+                        <TrophyIcon class="mr-1 h-3 w-3"/>
+                        {{ t('Start') }}
+                    </Button>
+                    <Button
+                        v-if="game?.status === 'in_progress'"
+                        size="sm"
+                        variant="secondary"
+                        class="w-full"
+                        @click="showModeratorModal = true; showMobileAdminMenu = false"
+                    >
+                        <UserIcon class="mr-1 h-3 w-3"/>
+                        {{ t('Moderator') }}
+                    </Button>
+                    <Button
+                        v-if="isAdmin && game?.status === 'registration'"
+                        size="sm"
+                        variant="secondary"
+                        class="w-full"
+                        @click="showAddPlayerModal = true; showMobileAdminMenu = false"
+                    >
+                        <UserPlusIcon class="mr-1 h-3 w-3"/>
+                        {{ t('Add') }}
+                    </Button>
+                </div>
+            </div>
+
+            <!-- Page Title -->
+            <div class="mb-8">
+                <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div
+                                class="h-12 w-12 rounded-full bg-indigo-600 flex items-center justify-center shadow-md">
+                                <GamepadIcon class="h-6 w-6 text-white"/>
+                            </div>
+                            <div>
+                                <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                                    {{ game ? game.name : t('Multiplayer Game') }}
+                                    <span v-if="game"
+                                          :class="['rounded-full px-3 py-1 text-sm font-semibold', statusBadgeClass]">
+                                        {{ statusText }}
+                                    </span>
+                                </h1>
+                                <p v-if="league" class="text-gray-600 dark:text-gray-400 mt-1">
+                                    {{ league.name }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Game Stats -->
+                        <div v-if="game" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
+                            <div class="text-center sm:text-left">
+                                <div class="flex items-center gap-2 justify-center sm:justify-start">
+                                    <UsersIcon class="h-4 w-4 text-gray-400"/>
+                                    <span class="text-2xl font-bold text-gray-900 dark:text-white">
+                                        {{ game.total_players_count }}
+                                    </span>
+                                </div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('Total Players') }}</p>
+                            </div>
+                            <div class="text-center sm:text-left">
+                                <div class="flex items-center gap-2 justify-center sm:justify-start">
+                                    <TrophyIcon class="h-4 w-4 text-gray-400"/>
+                                    <span class="text-2xl font-bold text-gray-900 dark:text-white">
+                                        {{ formatCurrency(game.entrance_fee * game.total_players_count) }}
+                                    </span>
+                                </div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('Prize Pool') }}</p>
+                            </div>
+                            <div v-if="game.initial_lives" class="text-center sm:text-left">
+                                <div class="flex items-center gap-2 justify-center sm:justify-start">
+                                    <WalletIcon class="h-4 w-4 text-gray-400"/>
+                                    <span class="text-2xl font-bold text-gray-900 dark:text-white">
+                                        {{ game.initial_lives }}
+                                    </span>
+                                </div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('Initial Lives') }}</p>
+                            </div>
+                            <div v-if="game.started_at" class="text-center sm:text-left">
+                                <div class="text-lg font-semibold text-gray-900 dark:text-white">
+                                    {{ new Date(game.started_at).toLocaleDateString() }}
+                                </div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('Start Date') }}</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -687,33 +827,42 @@ onMounted(() => {
             <div
                 v-if="formattedStatusMessage"
                 :class="[
-                    'mb-6 rounded-md border p-4',
+                    'mb-6 rounded-lg border p-4',
                     !isAuthenticated
-                        ? 'border-yellow-100 bg-yellow-50 text-yellow-800 dark:border-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300'
-                        : 'border-blue-100 bg-blue-50 text-blue-800 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300'
+                        ? 'border-yellow-200 bg-yellow-50 text-yellow-800 dark:border-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300'
+                        : 'border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300'
                 ]"
             >
-                {{ formattedStatusMessage }}
+                <p class="text-sm sm:text-base">{{ formattedStatusMessage }}</p>
             </div>
 
             <!-- Action Feedback Message -->
             <div
                 v-if="actionFeedback"
                 :class="actionFeedback.type === 'success'
-                    ? 'border-green-100 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-900/20 dark:text-green-300'
-                    : 'border-red-100 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300'"
-                class="mb-6 rounded-md border p-4"
+                    ? 'border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-900/20 dark:text-green-300'
+                    : 'border-red-200 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300'"
+                class="mb-6 rounded-lg border p-4"
             >
-                {{ actionFeedback.message }}
+                <p class="text-sm sm:text-base">{{ actionFeedback.message }}</p>
             </div>
 
             <!-- Error message from composable -->
-            <div v-if="error" class="mb-6 rounded bg-red-100 p-4 text-red-600">
-                {{ error }}
+            <div v-if="error"
+                 class="mb-6 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
+                <p class="text-red-600 dark:text-red-400">{{ error }}</p>
             </div>
 
-            <!-- Loading state -->
-            <div v-if="game">
+            <!-- Loading State -->
+            <div v-if="isLoadingLeague || isLoadingGame" class="flex justify-center items-center py-12">
+                <div class="text-center">
+                    <Spinner class="mx-auto h-8 w-8 text-indigo-600"/>
+                    <p class="mt-2 text-gray-500">{{ t('Loading game information...') }}</p>
+                </div>
+            </div>
+
+            <!-- Game Content -->
+            <div v-else-if="game">
                 <!-- Registration phase -->
                 <div v-if="game.status === 'registration'">
                     <GameRegistry :game="game" :league-id="leagueId" @updated="fetchGame"/>
@@ -724,79 +873,110 @@ onMounted(() => {
                     <!-- Game summary -->
                     <MultiplayerGameSummary :game="game"/>
 
-                    <!-- Tab navigation -->
-                    <div class="border-b border-gray-200 dark:border-gray-700">
-                        <nav class="-mb-px flex space-x-8">
+                    <!-- Tab Navigation -->
+                    <nav class="mb-6 border-b border-gray-200 dark:border-gray-700 overflow-x-auto" role="navigation"
+                         aria-label="Game tabs">
+                        <div class="-mb-px flex space-x-6 sm:space-x-8 min-w-max">
                             <button
                                 :class="[
-                                    'py-4 px-1 text-sm font-medium border-b-2',
+                                    'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
                                     activeTab === 'game'
-                                        ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:border-gray-600'
+                                        ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                                 ]"
+                                :aria-selected="activeTab === 'game'"
+                                role="tab"
                                 @click="switchTab('game')"
                             >
-                                {{ t('Game') }}
+                                <span class="flex items-center gap-2">
+                                    <GamepadIcon class="h-4 w-4"/>
+                                    {{ t('Game') }}
+                                </span>
                             </button>
                             <button
                                 :class="[
-                                    'py-4 px-1 text-sm font-medium border-b-2',
+                                    'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
                                     activeTab === 'prizes'
-                                        ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:border-gray-600'
+                                        ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                                 ]"
+                                :aria-selected="activeTab === 'prizes'"
+                                role="tab"
                                 @click="switchTab('prizes')"
                             >
-                                {{ t('Prizes') }}
+                                <span class="flex items-center gap-2">
+                                    <TrophyIcon class="h-4 w-4"/>
+                                    {{ t('Prizes') }}
+                                </span>
                             </button>
                             <button
                                 :class="[
-                                    'py-4 px-1 text-sm font-medium border-b-2',
+                                    'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
                                     activeTab === 'ratings'
-                                        ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:border-gray-600'
+                                        ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                                 ]"
+                                :aria-selected="activeTab === 'ratings'"
+                                role="tab"
                                 @click="switchTab('ratings')"
                             >
-                                {{ t('Rating Points') }}
+                                <span class="flex items-center gap-2">
+                                    <SmileIcon class="h-4 w-4"/>
+                                    {{ t('Rating Points') }}
+                                </span>
                             </button>
                             <button
                                 :class="[
-                                    'py-4 px-1 text-sm font-medium border-b-2',
+                                    'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
                                     activeTab === 'timefund'
-                                        ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:border-gray-600'
+                                        ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                                 ]"
+                                :aria-selected="activeTab === 'timefund'"
+                                role="tab"
                                 @click="switchTab('timefund')"
                             >
-                                {{ t('Time Fund') }}
+                                <span class="flex items-center gap-2">
+                                    <ClockIcon class="h-4 w-4"/>
+                                    {{ t('Time Fund') }}
+                                </span>
                             </button>
                             <button
                                 v-if="isAuthenticated && (isAdmin || isModerator)"
                                 :class="[
-                                    'py-4 px-1 text-sm font-medium border-b-2',
+                                    'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
                                     activeTab === 'widget'
-                                        ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:border-gray-600'
+                                        ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                                 ]"
+                                :aria-selected="activeTab === 'widget'"
+                                role="tab"
                                 @click="switchTab('widget')"
                             >
-                                {{ t('OBS Widget') }}
+                                <span class="flex items-center gap-2">
+                                    <MonitorIcon class="h-4 w-4"/>
+                                    {{ t('OBS Widget') }}
+                                </span>
                             </button>
-                        </nav>
-                    </div>
+                        </div>
+                    </nav>
 
-                    <!-- Game tab -->
-                    <div v-if="activeTab === 'game'">
-                        <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                            <!-- Active Players Panel -->
-                            <div class="order-2 lg:order-1 lg:col-span-1">
-                                <Card v-if="game.active_players.length > 0">
-                                    <CardHeader>
-                                        <CardTitle>{{ t('Active Players') }}</CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <PlayersList
+                    <!-- Tab Content -->
+                    <main role="tabpanel">
+                        <!-- Game tab -->
+                        <div v-if="activeTab === 'game'" class="space-y-6">
+                            <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                                <!-- Active Players Panel -->
+                                <div class="order-2 lg:order-1 lg:col-span-1">
+                                    <Card class="shadow-lg" v-if="game.active_players.length > 0">
+                                        <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
+                                            <CardTitle class="flex items-center gap-2">
+                                                <UsersIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400"/>
+                                                {{ t('Active Players') }}
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent class="p-6">
+                                            <PlayersList
                                             :highlight-current-turn="true"
                                             :max-lives="game.initial_lives"
                                             :players="game.active_players"
@@ -974,130 +1154,150 @@ onMounted(() => {
                         <TimeFundCard :game="game"/>
                     </div>
 
-                    <!-- Widget tab -->
-                    <div v-if="activeTab === 'widget' && isAuthenticated && (isAdmin || isModerator)" class="space-y-6">
-                        <!-- Instructions -->
-                        <div class="rounded-lg bg-blue-50 dark:bg-blue-900/20 p-4">
-                            <h3 class="font-semibold text-blue-900 dark:text-blue-100 mb-2">
-                                {{ t('OBS Stream Widget Setup') }}</h3>
-                            <div class="text-sm text-blue-700 dark:text-blue-300">
-                                <p class="mb-2">{{
-                                        t('Display live game information in your stream with customizable widgets.')
-                                    }}</p>
-                                <ol class="list-decimal list-inside space-y-1">
-                                    <li>{{ t('Choose a widget preset below or customize parameters') }}</li>
-                                    <li>{{ t('Copy the widget URL') }}</li>
-                                    <li>{{ t('Add Browser Source in OBS') }}</li>
-                                    <li>{{ t('Set size: 1000x100px (width x height)') }}</li>
-                                </ol>
-                            </div>
-                        </div>
+                        <!-- Widget tab -->
+                        <div v-if="activeTab === 'widget' && isAuthenticated && (isAdmin || isModerator)"
+                             class="space-y-6">
+                            <!-- Instructions -->
+                            <Card class="shadow-lg">
+                                <CardHeader class="bg-blue-50 dark:bg-blue-900/20">
+                                    <CardTitle class="flex items-center gap-2">
+                                        <MonitorIcon class="h-5 w-5 text-blue-600 dark:text-blue-400"/>
+                                        {{ t('OBS Stream Widget Setup') }}
+                                    </CardTitle>
+                                    <CardDescription>
+                                        {{
+                                            t('Display live game information in your stream with customizable widgets.')
+                                        }}
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent class="p-6">
+                                    <ol class="list-decimal list-inside space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                                        <li>{{ t('Choose a widget preset below or customize parameters') }}</li>
+                                        <li>{{ t('Copy the widget URL') }}</li>
+                                        <li>{{ t('Add Browser Source in OBS') }}</li>
+                                        <li>{{ t('Set size: 1000x100px (width x height)') }}</li>
+                                    </ol>
+                                </CardContent>
+                            </Card>
 
-                        <!-- Widget Presets -->
-                        <div class="grid gap-4 md:grid-cols-2">
-                            <Card v-for="preset in widgetPresets" :key="preset.id">
-                                <CardHeader>
-                                    <CardTitle class="flex items-center justify-between">
-                                        <span class="flex items-center gap-2">
-                                            <MonitorIcon class="h-5 w-5"/>
+                            <!-- Widget Presets -->
+                            <div class="grid gap-6 md:grid-cols-2">
+                                <Card v-for="preset in widgetPresets" :key="preset.id" class="shadow-lg">
+                                    <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
+                                        <CardTitle class="flex items-center gap-2">
+                                            <MonitorIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400"/>
                                             {{ preset.name }}
-                                        </span>
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent class="p-6">
+                                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">{{
+                                                preset.description
+                                            }}</p>
+
+                                        <!-- Preview details -->
+                                        <div class="mb-4 space-y-2 text-sm">
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-gray-600 dark:text-gray-400">{{ t('Theme:') }}</span>
+                                                <span class="font-medium">{{ preset.preview.theme }}</span>
+                                            </div>
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-gray-600 dark:text-gray-400">{{
+                                                        t('Refresh:')
+                                                    }}</span>
+                                                <span class="font-medium">{{ preset.preview.refresh }}</span>
+                                            </div>
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-gray-600 dark:text-gray-400">{{
+                                                        t('Features:')
+                                                    }}</span>
+                                                <span class="text-xs font-medium">{{
+                                                        preset.preview.features.join(', ')
+                                                    }}</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Copy button -->
+                                        <Button
+                                            class="w-full"
+                                            size="sm"
+                                            variant="outline"
+                                            @click="copyWidgetUrl(preset.id, preset.url)"
+                                        >
+                                            <template v-if="copiedWidgetId === preset.id">
+                                                <CheckIcon class="mr-2 h-4 w-4 text-green-600"/>
+                                                {{ t('Copied!') }}
+                                            </template>
+                                            <template v-else>
+                                                <CopyIcon class="mr-2 h-4 w-4"/>
+                                                {{ t('Copy Widget URL') }}
+                                            </template>
+                                        </Button>
+
+                                        <!-- URL Preview -->
+                                        <details class="mt-3 cursor-pointer">
+                                            <summary
+                                                class="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200">
+                                                {{ t('View URL') }}
+                                            </summary>
+                                            <div class="mt-2 rounded bg-gray-100 p-2 dark:bg-gray-800">
+                                                <code class="text-xs break-all">{{ preset.url }}</code>
+                                            </div>
+                                        </details>
+                                    </CardContent>
+                                </Card>
+                            </div>
+
+                            <!-- Custom URL Builder Info -->
+                            <Card class="shadow-lg">
+                                <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
+                                    <CardTitle class="flex items-center gap-2">
+                                        <MonitorIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400"/>
+                                        {{ t('Custom Widget Parameters') }}
                                     </CardTitle>
                                 </CardHeader>
-                                <CardContent>
-                                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">{{
-                                            preset.description
-                                        }}</p>
-
-                                    <!-- Preview details -->
-                                    <div class="mb-4 space-y-1 text-sm">
-                                        <div class="flex items-center justify-between">
-                                            <span class="text-gray-600 dark:text-gray-400">{{ t('Theme:') }}</span>
-                                            <span>{{ preset.preview.theme }}</span>
+                                <CardContent class="p-6">
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                        {{ t('You can customize the widget by adding parameters to the URL:') }}
+                                    </p>
+                                    <div class="space-y-3 text-sm">
+                                        <div class="grid grid-cols-3 gap-4">
+                                            <span
+                                                class="font-mono text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">theme</span>
+                                            <span class="col-span-2 text-gray-600 dark:text-gray-400">dark, light, transparent</span>
                                         </div>
-                                        <div class="flex items-center justify-between">
-                                            <span class="text-gray-600 dark:text-gray-400">{{ t('Refresh:') }}</span>
-                                            <span>{{ preset.preview.refresh }}</span>
+                                        <div class="grid grid-cols-3 gap-4">
+                                            <span
+                                                class="font-mono text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">refresh</span>
+                                            <span class="col-span-2 text-gray-600 dark:text-gray-400">{{
+                                                    t('Update interval in milliseconds (1000-10000)')
+                                                }}</span>
                                         </div>
-                                        <div class="flex items-center justify-between">
-                                            <span class="text-gray-600 dark:text-gray-400">{{ t('Features:') }}</span>
-                                            <span class="text-xs">{{ preset.preview.features.join(', ') }}</span>
+                                        <div class="grid grid-cols-3 gap-4">
+                                            <span
+                                                class="font-mono text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">show_league</span>
+                                            <span class="col-span-2 text-gray-600 dark:text-gray-400">{{
+                                                    t('true/false - Show league information')
+                                                }}</span>
+                                        </div>
+                                        <div class="grid grid-cols-3 gap-4">
+                                            <span
+                                                class="font-mono text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">show_next</span>
+                                            <span class="col-span-2 text-gray-600 dark:text-gray-400">{{
+                                                    t('true/false - Show next players')
+                                                }}</span>
+                                        </div>
+                                        <div class="grid grid-cols-3 gap-4">
+                                            <span
+                                                class="font-mono text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">show_cards</span>
+                                            <span class="col-span-2 text-gray-600 dark:text-gray-400">{{
+                                                    t('true/false - Show available cards')
+                                                }}</span>
                                         </div>
                                     </div>
-
-                                    <!-- Copy button -->
-                                    <Button
-                                        class="w-full"
-                                        size="sm"
-                                        variant="outline"
-                                        @click="copyWidgetUrl(preset.id, preset.url)"
-                                    >
-                                        <template v-if="copiedWidgetId === preset.id">
-                                            <CheckIcon class="mr-2 h-4 w-4 text-green-600"/>
-                                            {{ t('Copied!') }}
-                                        </template>
-                                        <template v-else>
-                                            <CopyIcon class="mr-2 h-4 w-4"/>
-                                            {{ t('Copy Widget URL') }}
-                                        </template>
-                                    </Button>
-
-                                    <!-- URL Preview -->
-                                    <details class="mt-3 cursor-pointer">
-                                        <summary
-                                            class="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200">
-                                            {{ t('View URL') }}
-                                        </summary>
-                                        <div class="mt-2 rounded bg-gray-100 p-2 dark:bg-gray-800">
-                                            <code class="text-xs break-all">{{ preset.url }}</code>
-                                        </div>
-                                    </details>
                                 </CardContent>
                             </Card>
                         </div>
-
-                        <!-- Custom URL Builder Info -->
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>{{ t('Custom Widget Parameters') }}</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                                    {{ t('You can customize the widget by adding parameters to the URL:') }}
-                                </p>
-                                <div class="space-y-2 text-sm">
-                                    <div class="grid grid-cols-3 gap-2">
-                                        <span class="font-mono text-xs">theme</span>
-                                        <span class="col-span-2 text-gray-600 dark:text-gray-400">dark, light, transparent</span>
-                                    </div>
-                                    <div class="grid grid-cols-3 gap-2">
-                                        <span class="font-mono text-xs">refresh</span>
-                                        <span class="col-span-2 text-gray-600 dark:text-gray-400">{{
-                                                t('Update interval in milliseconds (1000-10000)')
-                                            }}</span>
-                                    </div>
-                                    <div class="grid grid-cols-3 gap-2">
-                                        <span class="font-mono text-xs">show_league</span>
-                                        <span class="col-span-2 text-gray-600 dark:text-gray-400">{{
-                                                t('true/false - Show league information')
-                                            }}</span>
-                                    </div>
-                                    <div class="grid grid-cols-3 gap-2">
-                                        <span class="font-mono text-xs">show_next</span>
-                                        <span class="col-span-2 text-gray-600 dark:text-gray-400">{{
-                                                t('true/false - Show next players')
-                                            }}</span>
-                                    </div>
-                                    <div class="grid grid-cols-3 gap-2">
-                                        <span class="font-mono text-xs">show_cards</span>
-                                        <span class="col-span-2 text-gray-600 dark:text-gray-400">{{
-                                                t('true/false - Show available cards')
-                                            }}</span>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
+                    </main>
                 </div>
             </div>
         </div>

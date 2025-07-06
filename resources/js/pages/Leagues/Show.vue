@@ -22,8 +22,7 @@ import {
     SmileIcon,
     TrophyIcon,
     UserPlusIcon,
-    UsersIcon,
-    WalletIcon
+    UsersIcon
 } from 'lucide-vue-next';
 import {computed, onMounted, ref, watch} from 'vue';
 import AddPlayerModal from "@/Components/League/MultiplayerGame/AddPlayerModal.vue";
@@ -367,7 +366,7 @@ onMounted(() => {
     routeMatchId.value = url.searchParams.get('matchId');
 
     document.addEventListener('click', (event) => {
-        if (adminDropdownRef.value && !adminDropdownRef.value.contains(event.target)) {
+        if (adminDropdownRef.value && !(adminDropdownRef.value as HTMLElement).contains(event.target as Node)) {
             adminDropdownOpen.value = false;
         }
     });
@@ -396,27 +395,31 @@ watch(
 <template>
     <Head :title="pageTitle"/>
 
-    <div class="py-12">
-        <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
+    <div class="py-6 sm:py-8 lg:py-12">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <!-- Header with actions -->
-            <div class="mb-6 flex items-center justify-between">
-                <Link :href="route('leagues.index.page')">
-                    <Button variant="outline">
-                        <ArrowLeftIcon class="mr-2 h-4 w-4"/>
-                        {{ t('Back to Leagues') }}
-                    </Button>
-                </Link>
+            <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <Link :href="route('leagues.index.page')">
+                        <Button variant="outline" size="sm">
+                            <ArrowLeftIcon class="mr-2 h-4 w-4"/>
+                            <span class="hidden sm:inline">{{ t('Back to Leagues') }}</span>
+                            <span class="sm:hidden">{{ t('Back') }}</span>
+                        </Button>
+                    </Link>
+                </div>
 
-                <div v-if="isAuthenticated && isAdmin && league" class="flex space-x-2">
+                <!-- Admin controls - Desktop -->
+                <div v-if="isAuthenticated && isAdmin && league" class="hidden sm:flex flex-wrap gap-2">
                     <Link :href="route('leagues.edit', { league: league.slug })">
-                        <Button variant="secondary">
+                        <Button variant="secondary" size="sm">
                             <PencilIcon class="mr-2 h-4 w-4"/>
                             {{ t('Edit League') }}
                         </Button>
                     </Link>
 
                     <div ref="adminDropdownRef" class="relative">
-                        <Button variant="secondary" @click="adminDropdownOpen = !adminDropdownOpen">
+                        <Button variant="secondary" size="sm" @click="adminDropdownOpen = !adminDropdownOpen">
                             <UsersIcon class="mr-2 h-4 w-4"/>
                             {{ t('Manage Players') }}
                             <ChevronDownIcon class="ml-1 h-4 w-4"/>
@@ -447,11 +450,43 @@ watch(
                     </div>
                 </div>
 
+                <!-- Admin controls - Mobile Menu Button -->
+                <Button
+                    v-if="isAuthenticated && isAdmin && league"
+                    size="sm"
+                    variant="secondary"
+                    class="sm:hidden"
+                    @click="adminDropdownOpen = !adminDropdownOpen"
+                >
+                    <UsersIcon class="h-4 w-4"/>
+                </Button>
+
                 <!-- Login prompt for guests -->
                 <div v-else-if="!isAuthenticated" class="text-center">
                     <Link :href="route('login')" class="text-sm text-blue-600 hover:underline dark:text-blue-400">
                         <LogInIcon class="mr-1 inline h-4 w-4"/>
                         {{ t('Login to participate') }}
+                    </Link>
+                </div>
+            </div>
+
+            <!-- Mobile Admin Menu -->
+            <div
+                v-if="isAuthenticated && isAdmin && league && adminDropdownOpen"
+                class="sm:hidden mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+            >
+                <div class="grid grid-cols-2 gap-2">
+                    <Link :href="route('leagues.edit', { league: league.slug })">
+                        <Button size="sm" variant="secondary" class="w-full">
+                            <PencilIcon class="mr-1 h-3 w-3"/>
+                            {{ t('Edit') }}
+                        </Button>
+                    </Link>
+                    <Link :href="`/admin/leagues/${league.slug}/pending-players`">
+                        <Button size="sm" variant="secondary" class="w-full">
+                            <UsersIcon class="mr-1 h-3 w-3"/>
+                            {{ t('Pending') }}
+                        </Button>
                     </Link>
                 </div>
             </div>
@@ -464,60 +499,107 @@ watch(
             />
 
             <!-- League Loading State -->
-            <div v-if="isLoadingLeague" class="p-10 text-center">
-                <Spinner class="text-primary mx-auto h-8 w-8"/>
-                <p class="mt-2 text-gray-500">{{ t('Loading league information...') }}</p>
+            <div v-if="isLoadingLeague" class="flex justify-center items-center py-12">
+                <div class="text-center">
+                    <Spinner class="mx-auto h-8 w-8 text-indigo-600"/>
+                    <p class="mt-2 text-gray-500">{{ t('Loading league information...') }}</p>
+                </div>
             </div>
 
             <!-- League Error State -->
-            <div v-else-if="leagueError" class="mb-6 rounded bg-red-100 p-4 text-red-500">
-                {{ t('Error loading league: :error', {error: leagueError.message}) }}
+            <div v-else-if="leagueError"
+                 class="mb-6 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
+                <p class="text-red-600 dark:text-red-400">
+                    {{ t('Error loading league: :error', {error: leagueError.message}) }}</p>
             </div>
 
             <!-- League Content -->
             <template v-else-if="league">
                 <!-- League Info Card -->
-                <Card class="mb-8">
-                    <CardHeader>
-                        <div class="flex items-start justify-between">
-                            <div>
-                                <CardTitle class="flex items-center gap-2">
-                                    {{ league.name }}
-                                    <span v-if="leagueStatus"
-                                          :class="['rounded-full px-2 py-1 text-xs font-semibold', leagueStatus.class]">
-                                       <component :is="leagueStatus.icon" class="mr-1 inline h-3 w-3"/>
-                                       {{ leagueStatus.text }}
-                                   </span>
-                                </CardTitle>
-                                <CardDescription class="mt-2">
-                                    <div class="mt-2 flex flex-wrap gap-4">
-                                       <span class="flex items-center gap-1">
-                                           <TrophyIcon class="h-4 w-4"/>
-                                           {{ t('Game') }}: {{ league.game ?? t('N/A') }}
-                                       </span>
-                                        <span class="flex items-center gap-1">
-                                           <UsersIcon class="h-4 w-4"/>
-                                           {{ t('Players') }}: {{
-                                                league.active_players ?? 0
-                                            }}{{ league.max_players ? `/${league.max_players}` : '' }}
-                                       </span>
-                                        <span class="flex items-center gap-1">
-                                           <SmileIcon class="h-4 w-4"/>
-                                           {{ t('Rating') }}: {{
-                                                league.has_rating ? `Enabled (${league.start_rating})` : 'Disabled'
-                                            }}
-                                       </span>
+                <Card class="mb-8 shadow-lg overflow-hidden">
+                    <div
+                        class="bg-gradient-to-r from-gray-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 p-6 sm:p-8">
+                        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <div
+                                        class="h-12 w-12 rounded-full bg-indigo-600 flex items-center justify-center shadow-md">
+                                        <TrophyIcon class="h-6 w-6 text-white"/>
                                     </div>
-                                </CardDescription>
+                                    <div>
+                                        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                                            {{ league.name }}
+                                            <span v-if="leagueStatus"
+                                                  :class="['rounded-full px-2 py-1 text-xs font-semibold', leagueStatus.class]">
+                                               <component :is="leagueStatus.icon" class="mr-1 inline h-3 w-3"/>
+                                               {{ leagueStatus.text }}
+                                           </span>
+                                        </h1>
+                                        <p class="text-gray-600 dark:text-gray-400 mt-1">
+                                            {{ league.game ?? t('N/A') }}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- League Info -->
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                                    <div class="flex items-center text-gray-600 dark:text-gray-400">
+                                        <UsersIcon class="h-4 w-4 mr-2"/>
+                                        <span>{{
+                                                league.active_players ?? 0
+                                            }}{{ league.max_players ? `/${league.max_players}` : '' }} {{
+                                                t('Players')
+                                            }}</span>
+                                    </div>
+                                    <div class="flex items-center text-gray-600 dark:text-gray-400">
+                                        <SmileIcon class="h-4 w-4 mr-2"/>
+                                        <span>{{ league.has_rating ? `Enabled (${league.start_rating})` : 'Disabled' }} {{
+                                                t('Rating')
+                                            }}</span>
+                                    </div>
+                                </div>
+
+                                <!-- Stats Grid -->
+                                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-6">
+                                    <div class="text-center sm:text-left">
+                                        <div class="flex items-center gap-2 justify-center sm:justify-start">
+                                            <UsersIcon class="h-4 w-4 text-gray-400"/>
+                                            <span class="text-2xl font-bold text-gray-900 dark:text-white">{{
+                                                    league.active_players ?? 0
+                                                }}</span>
+                                        </div>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">{{
+                                                t('Active Players')
+                                            }}</p>
+                                    </div>
+                                    <div
+                                        v-if="league.game_multiplayer && league.grand_final_fund_accumulated !== undefined"
+                                        class="text-center sm:text-left">
+                                        <div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                                            {{ formatCurrency(league.grand_final_fund_accumulated) }}
+                                        </div>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">{{
+                                                t('Grand Final Fund')
+                                            }}</p>
+                                    </div>
+                                    <div v-if="league.started_at" class="text-center sm:text-left">
+                                        <div class="text-lg font-semibold text-gray-900 dark:text-white">
+                                            {{ new Date(league.started_at!).toLocaleDateString() }}
+                                        </div>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('Start Date') }}</p>
+                                    </div>
+                                </div>
                             </div>
                             <div v-if="league.picture" class="hidden sm:block">
                                 <img :alt="league.name" :src="league.picture"
                                      class="h-24 w-24 rounded-lg object-cover"/>
                             </div>
                         </div>
-                    </CardHeader>
-                    <CardContent>
-                        <p v-if="league.details" class="mb-4 whitespace-pre-wrap">{{ league.details }}</p>
+                    </div>
+
+                    <CardContent class="p-6 sm:p-8">
+                        <p v-if="league.details" class="mb-4 whitespace-pre-wrap text-gray-700 dark:text-gray-300">
+                            {{ league.details }}</p>
                         <p v-else class="mb-4 text-gray-500 italic">{{ t('No details provided for this league.') }}</p>
 
                         <div class="mt-4 grid grid-cols-1 gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
@@ -543,20 +625,6 @@ watch(
                                     }}</span>
                                 <p class="text-gray-900 dark:text-gray-200">{{ league.invite_days_expire || 'N/A' }}
                                     days</p>
-                            </div>
-                            <!-- Grand Final Fund accumulated - only for multiplayer games -->
-                            <div v-if="league.game_multiplayer && league.grand_final_fund_accumulated !== undefined"
-                                 class="rounded-lg bg-yellow-50 p-3 dark:bg-yellow-900/20">
-                                <span class="flex items-center gap-1 font-medium text-yellow-800 dark:text-yellow-300">
-                                    <WalletIcon class="h-4 w-4"/>
-                                    {{ t('Grand Final Fund') }}
-                                </span>
-                                <p class="text-lg font-bold text-yellow-800 dark:text-yellow-300">
-                                    {{ formatCurrency(league.grand_final_fund_accumulated) }}
-                                </p>
-                                <p class="text-xs text-yellow-700 dark:text-yellow-400">
-                                    {{ t('Accumulated from finished games') }}
-                                </p>
                             </div>
                         </div>
 
@@ -606,19 +674,22 @@ watch(
                 </Card>
 
                 <!-- Players & Ratings Card -->
-                <Card class="mb-8">
-                    <CardHeader>
+                <Card class="mb-8 shadow-lg">
+                    <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
                         <div class="flex items-center justify-between w-full">
-                            <CardTitle>{{ t('Players & Ratings') }}</CardTitle>
+                            <CardTitle class="flex items-center gap-2">
+                                <UsersIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400"/>
+                                {{ t('Players & Ratings') }}
+                            </CardTitle>
                             <!-- Only show add player button to authenticated admins -->
-                            <Button v-if="isAuthenticated && isAdmin" variant="outline"
+                            <Button v-if="isAuthenticated && isAdmin" variant="outline" size="sm"
                                     @click="showAddPlayerModal = true">
                                 <UserPlusIcon class="mr-2 h-4 w-4"/>
                                 {{ t('Add Player') }}
                             </Button>
                         </div>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent class="p-6">
                         <div v-if="isLoadingPlayers" class="py-4 text-center">
                             <Spinner class="text-primary mx-auto h-6 w-6"/>
                             <p class="mt-2 text-gray-500">{{ t('Loading players...') }}</p>
@@ -644,12 +715,15 @@ watch(
                 </Card>
 
                 <!-- Matches Card - Show to everyone but limit actions for guests -->
-                <Card v-if="!league.game_multiplayer">
-                    <CardHeader>
-                        <CardTitle>{{ t('Matches') }}</CardTitle>
+                <Card v-if="!league.game_multiplayer" class="shadow-lg">
+                    <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
+                        <CardTitle class="flex items-center gap-2">
+                            <GamepadIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400"/>
+                            {{ t('Matches') }}
+                        </CardTitle>
                         <CardDescription>{{ t('Recent challenges and games.') }}</CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent class="p-6">
                         <div v-if="isLoadingMatches">
                             <Spinner class="text-primary mx-auto h-6 w-6"/>
                             <p class="mt-2 text-center text-gray-500">{{ t('Loading matches...') }}</p>
@@ -674,7 +748,7 @@ watch(
                                     <div>
                                         <div class="flex items-center space-x-2">
                                             <span class="text-sm text-gray-500">{{
-                                                    new Date(match.created_at).toLocaleDateString()
+                                                    match.created_at ? new Date(match.created_at).toLocaleDateString() : ''
                                                 }}</span>
                                             <span :class="getMatchStatusClass(match.status)"
                                                   class="rounded-full px-2 py-0.5 text-xs">

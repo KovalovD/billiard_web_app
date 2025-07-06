@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {Button, Card, CardContent, CardHeader, CardTitle} from '@/Components/ui';
+import {Card, CardContent, CardHeader, CardTitle} from '@/Components/ui';
 import DataTable from '@/Components/ui/data-table/DataTable.vue';
 import {useAuth} from '@/composables/useAuth';
 import {useLeagues} from '@/composables/useLeagues';
@@ -24,39 +24,10 @@ const {getLeagueStatus, getPlayersText} = useLeagueStatus();
 const leaguesData = ref<League[]>([]);
 const isLoading = ref(false);
 const loadingError = ref<ApiError | null>(null);
-const selectedStatus = ref<string>('all');
-
-const statusOptions = [
-    {value: 'all', label: t('All Leagues')},
-    {value: 'active', label: t('Active')},
-    {value: 'upcoming', label: t('Upcoming')},
-    {value: 'ended', label: t('Ended')}
-];
-
-// Sort leagues by status and filter
-const filteredAndSortedLeagues = computed(() => {
+// Sort leagues alphabetically
+const sortedLeagues = computed(() => {
     if (!leaguesData.value) return [];
-
-    let filtered = [...leaguesData.value];
-
-    if (selectedStatus.value !== 'all') {
-        filtered = filtered.filter(league => {
-            const status = getLeagueStatus(league);
-            return status?.text.toLowerCase() === selectedStatus.value;
-        });
-    }
-
-    return filtered.sort((a, b) => {
-        const statusA = getLeagueStatus(a);
-        const statusB = getLeagueStatus(b);
-
-        if (statusA?.text === 'Active' && statusB?.text !== 'Active') return -1;
-        if (statusB?.text === 'Active' && statusA?.text !== 'Active') return 1;
-        if (statusA?.text === 'Upcoming' && statusB?.text !== 'Upcoming') return -1;
-        if (statusB?.text === 'Upcoming' && statusA?.text !== 'Upcoming') return 1;
-
-        return a.name.localeCompare(b.name);
-    });
+    return [...leaguesData.value].sort((a, b) => a.name.localeCompare(b.name));
 });
 
 // Define table columns (removed actions column)
@@ -129,7 +100,7 @@ const getRowClass = (): string => {
 };
 
 // Event delegation handler
-const handleTableClick = (event: MouseEvent) => {
+const handleTableClick = (event: Event) => {
     const target = event.target as HTMLElement;
     const row = target.closest('tr[data-league-slug]');
 
@@ -141,8 +112,9 @@ const handleTableClick = (event: MouseEvent) => {
     }
 };
 
-const handleTableKeydown = (event: KeyboardEvent) => {
-    if (event.key === 'Enter' || event.key === ' ') {
+const handleTableKeydown = (event: Event) => {
+    const keyboardEvent = event as KeyboardEvent;
+    if (keyboardEvent.key === 'Enter' || keyboardEvent.key === ' ') {
         const target = event.target as HTMLElement;
         const row = target.closest('tr[data-league-slug]');
 
@@ -197,61 +169,127 @@ onUnmounted(() => {
 
 <template>
     <Head :title="t('Billiard Leagues - Join Competitive Pool Leagues')"/>
-    <div class="py-12">
-        <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
+    <div class="py-6 sm:py-8 lg:py-12">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <!-- Header -->
-            <header class="mb-6 flex items-center justify-between">
+            <header class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">{{
-                            t('Available Leagues')
-                        }}</h1>
-                    <p class="text-gray-600 dark:text-gray-400">{{
-                            t('Manage and participate in competitive leagues')
-                        }}</p>
+                    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+                        {{ t('Leagues') }}
+                    </h1>
+                    <p class="text-gray-600 dark:text-gray-400 mt-1">
+                        {{ t('Discover and join competitive billiard leagues') }}
+                    </p>
                 </div>
+
                 <!-- Only show create button to authenticated admins -->
-                <Link v-if="isAuthenticated && isAdmin" :href="route('leagues.create')"
-                      aria-label="Create new billiard league">
-                    <Button>
-                        <PlusIcon class="mr-2 h-4 w-4" aria-hidden="true"/>
-                        {{ t('Create New League') }}
-                    </Button>
+                <Link v-if="isAuthenticated && isAdmin"
+                      href="/admin/leagues/create"
+                      aria-label="Create new billiard league"
+                      class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
+                    <PlusIcon class="mr-2 h-4 w-4" aria-hidden="true"/>
+                    {{ t('Create League') }}
                 </Link>
             </header>
 
-            <!-- Filters -->
-            <nav class="mb-6 flex flex-wrap gap-2" role="navigation" aria-label="League status filter">
-                <button
-                    v-for="option in statusOptions"
-                    :key="option.value"
-                    :class="[
-                        'px-4 py-2 rounded-md text-sm font-medium transition-colors',
-                        selectedStatus === option.value
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-                    ]"
-                    :aria-pressed="selectedStatus === option.value"
-                    @click="selectedStatus = option.value"
-                >
-                    {{ option.label }}
-                </button>
-            </nav>
+
 
             <main>
-                <Card>
-                    <CardHeader>
+                <Card class="shadow-lg">
+                    <CardHeader class="bg-gradient-to-r from-gray-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700">
                         <CardTitle class="flex items-center gap-2">
-                            <TrophyIcon class="h-5 w-5" aria-hidden="true"/>
+                            <TrophyIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400" aria-hidden="true"/>
                             {{ t('Leagues Directory') }}
                         </CardTitle>
                     </CardHeader>
                     <CardContent class="p-0">
-                        <div data-league-table>
+                        <!-- Loading State -->
+                        <div v-if="isLoading" class="flex justify-center py-12">
+                            <div class="text-center">
+                                <div
+                                    class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+                                <p class="mt-2 text-gray-500">{{ t('Loading leagues...') }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Error State -->
+                        <div v-else-if="loadingError" class="p-6 text-center text-red-600">
+                            {{ loadingError.message }}
+                        </div>
+
+                        <!-- Empty State -->
+                        <div v-else-if="sortedLeagues.length === 0" class="p-6 text-center text-gray-500">
+                            {{ t('No leagues have been created yet.') }}
+                        </div>
+
+                        <!-- Mobile Cards View -->
+                        <div v-else class="block lg:hidden space-y-4 p-4">
+                            <div
+                                v-for="league in sortedLeagues"
+                                :key="league.id"
+                                class="relative rounded-lg border p-4 cursor-pointer transition-colors bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
+                                @click="router.visit(`/leagues/${league.slug}`)"
+                            >
+                                <!-- League Header -->
+                                <div class="flex items-start justify-between mb-3">
+                                    <div class="flex-1 min-w-0">
+                                        <h3 class="font-semibold text-gray-900 dark:text-gray-100 truncate">
+                                            {{ league.name }}
+                                        </h3>
+                                        <p v-if="league.details"
+                                           class="text-sm text-gray-600 dark:text-gray-400 truncate">
+                                            {{ league.details }}
+                                        </p>
+                                    </div>
+                                    <span
+                                        v-if="getLeagueStatus(league)"
+                                        :class="[
+                                            'inline-flex px-2 py-1 text-xs font-medium rounded-full flex-shrink-0',
+                                            getLeagueStatus(league)?.class
+                                        ]"
+                                    >
+                                        {{ getLeagueStatus(league)?.text }}
+                                    </span>
+                                </div>
+
+                                <!-- League Info Grid -->
+                                <div class="grid grid-cols-2 gap-3 text-sm">
+                                    <!-- Game & Players -->
+                                    <div>
+                                        <div class="flex items-center text-gray-600 dark:text-gray-400 mb-1">
+                                            <GamepadIcon class="h-4 w-4 mr-1 flex-shrink-0"/>
+                                            <span class="truncate">{{ league.game || t('N/A') }}</span>
+                                        </div>
+                                        <div class="flex items-center text-gray-600 dark:text-gray-400">
+                                            <UsersIcon class="h-4 w-4 mr-1 flex-shrink-0"/>
+                                            <span class="truncate">{{ getPlayersText(league) }}</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Matches & Date -->
+                                    <div>
+                                        <div class="flex items-center text-gray-600 dark:text-gray-400 mb-1">
+                                            <TrophyIcon class="h-4 w-4 mr-1 flex-shrink-0"/>
+                                            <span class="truncate">{{ league.matches_count || 0 }} {{
+                                                    t('Matches')
+                                                }}</span>
+                                        </div>
+                                        <div class="flex items-center text-gray-600 dark:text-gray-400">
+                                            <CalendarIcon class="h-4 w-4 mr-1 flex-shrink-0"/>
+                                            <span class="truncate">{{ formatDate(league.started_at) }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Desktop Table View -->
+                        <div class="hidden lg:block" data-league-table>
                             <DataTable
                                 :columns="columns"
                                 :compact-mode="true"
-                                :data="filteredAndSortedLeagues"
-                                :empty-message="selectedStatus === 'all' ? t('No leagues have been created yet.') : t('No :status leagues available.', {status: selectedStatus})"
+                                :data="sortedLeagues"
+                                :empty-message="t('No leagues have been created yet.')"
                                 :loading="isLoading"
                                 :row-class="getRowClass"
                                 :row-attributes="(league) => ({
@@ -266,8 +304,8 @@ onUnmounted(() => {
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0 h-8 w-8">
                                             <div
-                                                class="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                                                <TrophyIcon class="h-4 w-4 text-blue-600 dark:text-blue-400"
+                                                class="h-8 w-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shadow-md">
+                                                <TrophyIcon class="h-4 w-4 text-white"
                                                             aria-hidden="true"/>
                                             </div>
                                         </div>
