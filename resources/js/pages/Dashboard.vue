@@ -11,7 +11,7 @@ import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import type {League, MatchGame, TournamentPlayer} from '@/types/api';
 import {Head, Link} from '@inertiajs/vue3';
 import {useLocale} from '@/composables/useLocale';
-import {LogInIcon} from 'lucide-vue-next';
+import {ArrowRightIcon, LogInIcon, StarIcon, TrophyIcon, UsersIcon} from 'lucide-vue-next';
 import {onMounted, ref} from 'vue';
 
 interface TournamentWithParticipation {
@@ -36,7 +36,7 @@ const activeMatches = ref<MatchGame[]>([]);
 const userLeaguesRef = ref<InstanceType<typeof UserLeaguesCard> | null>(null);
 const userTournamentsRef = ref<InstanceType<typeof UserTournamentsCard> | null>(null);
 
-// Pending applications modal state (for tournaments)
+// Pending applications modal state
 const pendingApplications = ref<TournamentWithParticipation[]>([]);
 
 // Handle active matches found in user leagues (authenticated users only)
@@ -52,7 +52,6 @@ const handleActiveMatchesFound = (matches: MatchGame[]) => {
 const handlePendingApplicationsFound = (applications: TournamentWithParticipation[]) => {
     if (!isAuthenticated.value) return;
     pendingApplications.value = applications;
-    // You could show a modal or notification here if needed
 };
 
 // Handle match declined - simply refresh the leagues card (authenticated users only)
@@ -78,9 +77,9 @@ onMounted(async () => {
         await execute();
 
         if (data.value) {
-            recentLeagues.value = data.value.slice(0, 5); // Get 5 most recent leagues
+            recentLeagues.value = data.value.slice(0, 5);
         }
-// eslint-disable-next-line
+        // eslint-disable-next-line
     } catch (error) {
         // Silent error handling for better UX
     } finally {
@@ -93,84 +92,117 @@ onMounted(async () => {
     <Head
         :title="isAuthenticated ? t('Dashboard - Your Billiard Statistics') : t('Dashboard - Billiard League Platform')"/>
 
-    <div class="py-12">
-        <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
+    <div class="py-6 sm:py-8 lg:py-12">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <!-- Welcome Section -->
-            <header class="mb-6 overflow-hidden rounded-lg bg-white shadow-sm dark:bg-gray-800">
-                <div class="p-6 text-gray-900 dark:text-gray-100">
-                    <h1 class="mb-4 text-2xl font-semibold">
-                        {{
-                            isAuthenticated
-                                ? t('welcome_back', {name: user?.firstname || t('User')})
-                                : t('Welcome to WinnerBreak!')
-                        }}
-                    </h1>
-
-                    <div class="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
-                        <article class="rounded-lg bg-indigo-50 p-6 dark:bg-indigo-900/30">
-                            <h3 class="mb-2 text-lg font-medium text-indigo-800 dark:text-indigo-300">
-                                {{ t('Join Leagues') }}</h3>
-                            <p class="mb-4 text-indigo-600 dark:text-indigo-400">
-                                {{ t('find_leagues_text') }}
-                            </p>
-                            <Link class="font-medium text-indigo-700 hover:underline dark:text-indigo-300"
-                                  href="/leagues" aria-label="Browse available billiard leagues">{{ t('Browse') }}
-                                {{ t('Leagues') }} →
-                            </Link>
-                        </article>
-                        <article class="rounded-lg bg-emerald-50 p-6 dark:bg-emerald-900/30">
-                            <h3 class="mb-2 text-lg font-medium text-emerald-800 dark:text-emerald-300">
-                                {{ t('Join Tournaments') }}</h3>
-                            <p class="mb-4 text-emerald-600 dark:text-emerald-400">
-                                {{ t('find_tournaments_text') }}
-                            </p>
-                            <Link class="font-medium text-emerald-700 hover:underline dark:text-emerald-300"
-                                  href="/tournaments" aria-label="Browse billiard tournaments">{{ t('Browse') }}
-                                {{ t('Tournaments') }} →
-                            </Link>
-                        </article>
-                        <article class="rounded-lg bg-amber-50 p-6 dark:bg-amber-900/30">
-                            <h3 class="mb-2 text-lg font-medium text-amber-800 dark:text-amber-300">
-                                {{ isAuthenticated ? t('Track Progress') : t('View Ratings') }}
-                            </h3>
-                            <p class="mb-4 text-amber-600 dark:text-amber-400">
-                                {{
-                                    isAuthenticated
-                                        ? t('monitor_performance_text')
-                                        : t('explore_tournaments_text')
-                                }}
-                            </p>
-                            <Link class="font-medium text-amber-700 hover:underline dark:text-amber-300"
-                                  href="/official-ratings" aria-label="View official player ratings">
-                                {{ t('View Ratings') }} →
-                            </Link>
-                        </article>
+            <header class="mb-8">
+                <div class="bg-white shadow-lg rounded-lg overflow-hidden dark:bg-gray-800">
+                    <div
+                        class="bg-gradient-to-r from-gray-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 p-6 sm:p-8">
+                        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                            {{
+                                isAuthenticated
+                                    ? t('welcome_back', {name: user?.firstname || t('User')})
+                                    : t('Welcome to WinnerBreak!')
+                            }}
+                        </h1>
+                        <p class="text-gray-600 dark:text-gray-400">
+                            {{
+                                isAuthenticated ? t('Track your progress and manage your games') : t('Join the professional billiard community')
+                            }}
+                        </p>
                     </div>
 
-                    <!-- Guest login prompt -->
-                    <div v-if="!isAuthenticated" class="mt-6 rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <h3 class="text-lg font-medium text-blue-800 dark:text-blue-300">
-                                    {{ t('Ready to compete?') }}</h3>
-                                <p class="text-blue-600 dark:text-blue-400">{{
-                                        t('Join WinnerBreak to participate in leagues, tournaments, and track your progress.')
-                                    }}</p>
-                            </div>
-                            <div class="flex space-x-2">
-                                <Link :href="route('login')" aria-label="Login to your account">
-                                    <button
-                                        class="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                                        <LogInIcon class="mr-2 h-4 w-4" aria-hidden="true"/>
+                    <div class="p-6 sm:p-8 pt-0">
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            <Link href="/leagues" class="group">
+                                <article
+                                    class="relative overflow-hidden rounded-lg border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50 p-6 transition-all hover:border-indigo-300 hover:shadow-lg dark:border-gray-700 dark:from-gray-800 dark:to-gray-700 dark:hover:border-indigo-600">
+                                    <div
+                                        class="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-indigo-100 opacity-20 dark:bg-indigo-900/30"></div>
+                                    <UsersIcon class="h-8 w-8 text-indigo-600 mb-3 dark:text-indigo-400"/>
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                                        {{ t('Join Leagues') }}</h3>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">{{
+                                            t('find_leagues_text')
+                                        }}</p>
+                                    <div
+                                        class="flex items-center text-sm font-medium text-indigo-600 dark:text-indigo-400 group-hover:text-indigo-700 dark:group-hover:text-indigo-300">
+                                        {{ t('Browse Leagues') }}
+                                        <ArrowRightIcon
+                                            class="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1"/>
+                                    </div>
+                                </article>
+                            </Link>
+
+                            <Link href="/tournaments" class="group">
+                                <article
+                                    class="relative overflow-hidden rounded-lg border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50 p-6 transition-all hover:border-emerald-300 hover:shadow-lg dark:border-gray-700 dark:from-gray-800 dark:to-gray-700 dark:hover:border-emerald-600">
+                                    <div
+                                        class="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-emerald-100 opacity-20 dark:bg-emerald-900/30"></div>
+                                    <TrophyIcon class="h-8 w-8 text-emerald-600 mb-3 dark:text-emerald-400"/>
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                                        {{ t('Join Tournaments') }}</h3>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                        {{ t('find_tournaments_text') }}</p>
+                                    <div
+                                        class="flex items-center text-sm font-medium text-emerald-600 dark:text-emerald-400 group-hover:text-emerald-700 dark:group-hover:text-emerald-300">
+                                        {{ t('Browse Tournaments') }}
+                                        <ArrowRightIcon
+                                            class="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1"/>
+                                    </div>
+                                </article>
+                            </Link>
+
+                            <Link href="/official-ratings" class="group sm:col-span-2 lg:col-span-1">
+                                <article
+                                    class="relative overflow-hidden rounded-lg border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50 p-6 transition-all hover:border-amber-300 hover:shadow-lg dark:border-gray-700 dark:from-gray-800 dark:to-gray-700 dark:hover:border-amber-600">
+                                    <div
+                                        class="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-amber-100 opacity-20 dark:bg-amber-900/30"></div>
+                                    <StarIcon class="h-8 w-8 text-amber-600 mb-3 dark:text-amber-400"/>
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                                        {{ isAuthenticated ? t('Track Progress') : t('View Ratings') }}
+                                    </h3>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                        {{
+                                            isAuthenticated ? t('monitor_performance_text') : t('explore_tournaments_text')
+                                        }}
+                                    </p>
+                                    <div
+                                        class="flex items-center text-sm font-medium text-amber-600 dark:text-amber-400 group-hover:text-amber-700 dark:group-hover:text-amber-300">
+                                        {{ t('View Ratings') }}
+                                        <ArrowRightIcon
+                                            class="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1"/>
+                                    </div>
+                                </article>
+                            </Link>
+                        </div>
+
+                        <!-- Guest login prompt -->
+                        <div v-if="!isAuthenticated"
+                             class="mt-6 rounded-lg bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 p-6 border border-indigo-200 dark:border-indigo-800">
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                                        {{ t('Ready to compete?') }}
+                                    </h3>
+                                    <p class="text-gray-600 dark:text-gray-400 mt-1">
+                                        {{
+                                            t('Join WinnerBreak to participate in leagues, tournaments, and track your progress.')
+                                        }}
+                                    </p>
+                                </div>
+                                <div class="flex flex-col sm:flex-row gap-3">
+                                    <Link :href="route('login')"
+                                          class="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
+                                        <LogInIcon class="mr-2 h-4 w-4"/>
                                         {{ t('Login') }}
-                                    </button>
-                                </Link>
-                                <Link :href="route('register')" aria-label="Create new account">
-                                    <button
-                                        class="inline-flex items-center rounded-md border border-blue-300 bg-white px-4 py-2 text-sm font-medium text-blue-700 shadow-sm hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-blue-600 dark:bg-gray-800 dark:text-blue-400 dark:hover:bg-gray-700">
+                                    </Link>
+                                    <Link :href="route('register')"
+                                          class="inline-flex items-center justify-center px-4 py-2 border border-indigo-300 rounded-lg shadow-sm text-sm font-medium text-indigo-700 bg-white hover:bg-indigo-50 dark:border-indigo-600 dark:text-indigo-300 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors">
                                         {{ t('Register') }}
-                                    </button>
-                                </Link>
+                                    </Link>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -179,11 +211,8 @@ onMounted(async () => {
 
             <main>
                 <!-- User Activity Cards - Only for authenticated users -->
-                <div v-if="isAuthenticated" class="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <!-- Your Leagues - Now emits event when active matches are found -->
+                <div v-if="isAuthenticated" class="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
                     <UserLeaguesCard ref="userLeaguesRef" @active-matches-found="handleActiveMatchesFound"/>
-
-                    <!-- Your Tournaments - Now emits event when pending applications are found -->
                     <UserTournamentsCard ref="userTournamentsRef"
                                          @pending-applications-found="handlePendingApplicationsFound"/>
                 </div>
@@ -194,29 +223,30 @@ onMounted(async () => {
                     <RecentTournamentsCard/>
                 </section>
 
-                <!-- Recent Leagues (available to everyone) -->
+                <!-- Recent Leagues -->
                 <section class="mb-6" aria-labelledby="recent-leagues-heading">
-                    <Card>
-                        <CardHeader>
+                    <Card class="shadow-lg">
+                        <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
                             <CardTitle id="recent-leagues-heading">{{ t('Recent Leagues') }}</CardTitle>
                             <CardDescription>
                                 {{
-                                    isAuthenticated
-                                        ? t('New and active leagues you might be interested in')
-                                        : t('Explore active billiard leagues')
+                                    isAuthenticated ? t('New and active leagues you might be interested in') : t('Explore active billiard leagues')
                                 }}
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <div v-if="isLoadingLeagues" class="py-4 text-center text-gray-500 dark:text-gray-400">
-                                {{ t('Loading leagues...') }}
+                            <div v-if="isLoadingLeagues" class="py-8 text-center">
+                                <div
+                                    class="animate-spin h-8 w-8 border-4 border-gray-200 border-t-indigo-600 rounded-full mx-auto"></div>
+                                <p class="mt-2 text-gray-500">{{ t('Loading leagues...') }}</p>
                             </div>
                             <div v-else-if="recentLeagues.length === 0"
-                                 class="py-4 text-center text-gray-500 dark:text-gray-400">
+                                 class="py-8 text-center text-gray-500 dark:text-gray-400">
                                 {{ t('No leagues found. Check back later.') }}
                             </div>
                             <ul v-else class="divide-y divide-gray-200 dark:divide-gray-700">
-                                <li v-for="league in recentLeagues" :key="league.id" class="py-3">
+                                <li v-for="league in recentLeagues" :key="league.id"
+                                    class="py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors rounded-lg px-3 -mx-3">
                                     <div class="flex items-center justify-between">
                                         <div>
                                             <h4 class="font-medium text-gray-900 dark:text-white">{{ league.name }}</h4>
@@ -225,9 +255,8 @@ onMounted(async () => {
                                                 }}</p>
                                         </div>
                                         <Link :href="`/leagues/${league.id}`"
-                                              class="text-sm text-blue-600 hover:underline dark:text-blue-400"
-                                              :aria-label="`View ${league.name} league details`">
-                                            {{ t('View') }}
+                                              class="text-sm text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium">
+                                            {{ t('View') }} →
                                         </Link>
                                     </div>
                                 </li>
@@ -236,33 +265,29 @@ onMounted(async () => {
                     </Card>
                 </section>
 
-                <!-- Admin Actions (if admin and authenticated) -->
-                <Card v-if="isAuthenticated && user?.is_admin">
-                    <CardHeader>
-                        <CardTitle>{{ t('Admin Actions') }}</CardTitle>
+                <!-- Admin Actions -->
+                <Card v-if="isAuthenticated && user?.is_admin"
+                      class="shadow-lg border-2 border-purple-200 dark:border-purple-800">
+                    <CardHeader
+                        class="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20">
+                        <CardTitle class="text-purple-900 dark:text-purple-100">{{ t('Admin Actions') }}</CardTitle>
                         <CardDescription>{{ t('Manage leagues, tournaments and system settings') }}</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <nav class="flex flex-wrap gap-4" aria-label="Admin actions">
-                            <Link
-                                class="inline-flex items-center rounded-md border border-transparent bg-purple-600 px-4 py-2 text-xs font-semibold tracking-widest text-white uppercase ring-purple-300 transition hover:bg-purple-700 focus:border-purple-800 focus:ring focus:outline-none active:bg-purple-800 disabled:opacity-25"
-                                href="admin/leagues/create"
-                                aria-label="Create new billiard league"
-                            >
+                        <nav class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <Link href="admin/leagues/create"
+                                  class="inline-flex items-center justify-center px-4 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 transition-colors">
+                                <UsersIcon class="mr-2 h-4 w-4"/>
                                 {{ t('Create New League') }}
                             </Link>
-                            <Link
-                                class="inline-flex items-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-xs font-semibold tracking-widest text-white uppercase ring-green-300 transition hover:bg-green-700 focus:border-green-800 focus:ring focus:outline-none active:bg-green-800 disabled:opacity-25"
-                                href="/admin/tournaments/create"
-                                aria-label="Create new tournament"
-                            >
+                            <Link href="/admin/tournaments/create"
+                                  class="inline-flex items-center justify-center px-4 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 transition-colors">
+                                <TrophyIcon class="mr-2 h-4 w-4"/>
                                 {{ t('Create New Tournament') }}
                             </Link>
-                            <Link
-                                class="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-xs font-semibold tracking-widest text-white uppercase ring-blue-300 transition hover:bg-blue-700 focus:border-blue-800 focus:ring focus:outline-none active:bg-blue-800 disabled:opacity-25"
-                                href="/admin/official-ratings/create"
-                                aria-label="Create official rating system"
-                            >
+                            <Link href="/admin/official-ratings/create"
+                                  class="inline-flex items-center justify-center px-4 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 transition-colors sm:col-span-2 lg:col-span-1">
+                                <StarIcon class="mr-2 h-4 w-4"/>
                                 {{ t('Create Official Rating') }}
                             </Link>
                         </nav>
@@ -272,7 +297,7 @@ onMounted(async () => {
         </div>
     </div>
 
-    <!-- Active Matches Modal - Only for authenticated users -->
+    <!-- Active Matches Modal -->
     <ActiveMatchesModal
         v-if="isAuthenticated"
         :active-matches="activeMatches"

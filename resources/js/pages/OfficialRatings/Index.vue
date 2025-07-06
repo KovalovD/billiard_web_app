@@ -20,12 +20,15 @@ import {
     XCircleIcon
 } from 'lucide-vue-next';
 import {computed, nextTick, onMounted, ref, watch} from 'vue';
+import {scrollToUserElement} from '@/utils/scrollToUser';
+import {useToastStore} from '@/stores/toast';
 
 defineOptions({layout: AuthenticatedLayout});
 
 const {isAdmin, isAuthenticated, user} = useAuth();
 const {t} = useLocale();
 const {setSeoMeta, generateBreadcrumbJsonLd} = useSeo();
+const toastStore = useToastStore();
 
 // State
 const ratings = ref<OfficialRating[]>([]);
@@ -138,6 +141,7 @@ const oneYearColumns = computed(() => [
         key: 'rating',
         label: t('Rating'),
         align: 'center' as const,
+        hideOnMobile: true,
         render: (player: any) => ({
             points: player.rating,
             isCurrentUser: isCurrentUserInOneYear(player)
@@ -145,8 +149,9 @@ const oneYearColumns = computed(() => [
     },
     {
         key: 'earned_money',
-        label: t('Earned Money'),
+        label: t('Earned'),
         align: 'center' as const,
+        mobileLabel: t('₴'),
         render: (player: any) => ({
             amount: player.prize_amount || 0,
             isCurrentUser: isCurrentUserInOneYear(player)
@@ -156,6 +161,7 @@ const oneYearColumns = computed(() => [
         key: 'bonus',
         label: t('Bonus'),
         align: 'center' as const,
+        hideOnMobile: true,
         render: (player: any) => ({
             amount: player.bonus_amount || 0,
             isCurrentUser: isCurrentUserInOneYear(player)
@@ -165,6 +171,7 @@ const oneYearColumns = computed(() => [
         key: 'killer_pool_amount',
         label: t('Killer Pool'),
         align: 'center' as const,
+        hideOnTablet: true,
         render: (player: any) => ({
             amount: player.killer_pool_amount || 0,
             isCurrentUser: isCurrentUserInOneYear(player)
@@ -174,6 +181,7 @@ const oneYearColumns = computed(() => [
         key: 'total',
         label: t('Total'),
         align: 'center' as const,
+        hideOnMobile: true,
         render: (player: any) => ({
             amount: (player.prize_amount || 0) + (player.achievement_amount || 0) + (player.killer_pool_amount || 0),
             isCurrentUser: isCurrentUserInOneYear(player)
@@ -211,37 +219,27 @@ const fetchOneYearRating = async () => {
 };
 
 const scrollToUser = async () => {
-    if (!currentUserInOneYear.value) return;
+    if (!currentUserInOneYear.value || !user.value) return;
 
     await nextTick();
 
-    // Find the user's row element
-    const userRow = document.querySelector(`[data-user-id="${user.value?.id}"]`);
-    if (!userRow) return;
+    const success = await scrollToUserElement(user.value.id);
 
-    // Scroll the row into view with smooth behavior
-    userRow.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center'
-    });
-
-    // Add highlight effect
-    userRow.classList.add('animate-pulse', 'bg-blue-100', 'dark:bg-blue-900/30');
-    setTimeout(() => {
-        userRow.classList.remove('animate-pulse', 'bg-blue-100', 'dark:bg-blue-900/30');
-    }, 2000);
+    if (!success) {
+        toastStore.error(t('Could not find your position in the list'));
+    }
 };
 
 const getPositionBadgeClass = (position: number): string => {
     switch (position) {
         case 1:
-            return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
+            return 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white shadow-md';
         case 2:
-            return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+            return 'bg-gradient-to-r from-gray-400 to-gray-500 text-white shadow-md';
         case 3:
-            return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300';
+            return 'bg-gradient-to-r from-orange-600 to-orange-700 text-white shadow-md';
         default:
-            return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
+            return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
     }
 };
 
@@ -255,13 +253,13 @@ const formatCurrency = (amount: number): string => {
 const getRowClass = (player: any): string => {
     const baseClass = 'transition-colors duration-200';
     if (isCurrentUserInOneYear(player)) {
-        return `${baseClass} bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 border-l-4 border-blue-300`;
+        return `${baseClass} bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/20 dark:hover:bg-indigo-900/30 border-l-4 border-indigo-500`;
     }
     return baseClass;
 };
 
 const getRatingRowClass = (): string => {
-    return 'cursor-pointer transition-colors duration-200';
+    return 'cursor-pointer transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-700/50';
 };
 
 // Handle tab change and update URL
@@ -279,7 +277,7 @@ const switchTab = (tab: 'ratings' | 'one-year') => {
     window.history.replaceState({}, '', url.toString());
 };
 
-// Handle table click events
+// Handle table click handlers
 const setupTableClickHandlers = () => {
     // Only setup handlers for ratings tab
     if (activeTab.value !== 'ratings') return;
@@ -378,35 +376,38 @@ watch(showInactiveRatings, () => {
     <Head
         :title="activeTab === 'one-year' ? t('One Year Billiard Player Rankings') : t('Official Billiard Rating Systems')"/>
 
-    <div class="py-12">
-        <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
+    <div class="py-6 sm:py-8 lg:py-12">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <!-- Header -->
-            <header class="mb-6 flex items-center justify-between">
+            <header class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">{{ t('Official Ratings') }}</h1>
-                    <p class="text-gray-600 dark:text-gray-400">{{ t('Professional billiard player rankings') }}</p>
+                    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{{
+                            t('Official Ratings')
+                        }}</h1>
+                    <p class="text-gray-600 dark:text-gray-400 mt-1">{{
+                            t('Professional billiard player rankings')
+                        }}</p>
                 </div>
 
                 <!-- Only show create button to authenticated admins -->
                 <Link v-if="isAuthenticated && isAdmin && activeTab === 'ratings'"
                       href="/admin/official-ratings/create"
-                      aria-label="Create new rating system">
-                    <Button>
-                        <PlusIcon class="mr-2 h-4 w-4" aria-hidden="true"/>
-                        {{ t('Create Rating') }}
-                    </Button>
+                      aria-label="Create new rating system"
+                      class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
+                    <PlusIcon class="mr-2 h-4 w-4" aria-hidden="true"/>
+                    {{ t('Create Rating') }}
                 </Link>
             </header>
 
             <!-- Tab Navigation -->
-            <nav class="mb-6 border-b border-gray-200 dark:border-gray-700" role="navigation"
+            <nav class="mb-6 border-b border-gray-200 dark:border-gray-700 overflow-x-auto" role="navigation"
                  aria-label="Rating tabs">
-                <div class="-mb-px flex space-x-8">
+                <div class="-mb-px flex space-x-6 sm:space-x-8 min-w-max">
                     <button
                         :class="[
-                            'py-4 px-1 text-sm font-medium border-b-2',
+                            'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
                             activeTab === 'ratings'
-                                ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+                                ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                         ]"
                         :aria-selected="activeTab === 'ratings'"
@@ -417,9 +418,9 @@ watch(showInactiveRatings, () => {
                     </button>
                     <button
                         :class="[
-                            'py-4 px-1 text-sm font-medium border-b-2',
+                            'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
                             activeTab === 'one-year'
-                                ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+                                ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                         ]"
                         :aria-selected="activeTab === 'one-year'"
@@ -435,10 +436,10 @@ watch(showInactiveRatings, () => {
             <main v-if="activeTab === 'ratings'" role="tabpanel">
                 <!-- Filters -->
                 <div class="mb-6 flex items-center gap-4">
-                    <label class="flex items-center gap-2">
+                    <label class="flex items-center gap-2 cursor-pointer">
                         <input
                             v-model="showInactiveRatings"
-                            class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                             type="checkbox"
                             aria-label="Show inactive rating systems"
                         />
@@ -446,10 +447,10 @@ watch(showInactiveRatings, () => {
                     </label>
                 </div>
 
-                <Card>
-                    <CardHeader>
+                <Card class="shadow-lg">
+                    <CardHeader class="bg-gradient-to-r from-gray-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700">
                         <CardTitle class="flex items-center gap-2">
-                            <StarIcon class="h-5 w-5" aria-hidden="true"/>
+                            <StarIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400" aria-hidden="true"/>
                             {{ t('Rating Systems') }}
                         </CardTitle>
                     </CardHeader>
@@ -468,14 +469,15 @@ watch(showInactiveRatings, () => {
                                     'tabindex': '0',
                                     'aria-label': `View ${rating.name} rating details`
                                 })"
+                                :mobile-card-mode="true"
                             >
                                 <!-- Custom cell renderers -->
                                 <template #cell-name="{ value, item }">
                                     <div class="flex items-center">
-                                        <div class="flex-shrink-0 h-8 w-8">
+                                        <div class="flex-shrink-0 h-10 w-10 sm:h-8 sm:w-8">
                                             <div
-                                                class="h-8 w-8 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
-                                                <StarIcon class="h-4 w-4 text-yellow-600 dark:text-yellow-400"
+                                                class="h-10 w-10 sm:h-8 sm:w-8 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center shadow-md">
+                                                <StarIcon class="h-5 w-5 sm:h-4 sm:w-4 text-white"
                                                           aria-hidden="true"/>
                                             </div>
                                         </div>
@@ -503,11 +505,12 @@ watch(showInactiveRatings, () => {
 
                                 <template #cell-status="{ value }">
                                     <div class="flex items-center">
-                                        <CheckCircleIcon v-if="value" class="h-4 w-4 text-green-500 mr-2"
+                                        <CheckCircleIcon v-if="value" class="h-4 w-4 text-emerald-500 mr-2"
                                                          aria-hidden="true"/>
                                         <XCircleIcon v-else class="h-4 w-4 text-red-500 mr-2" aria-hidden="true"/>
                                         <span
-                                            :class="value ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+                                            :class="value ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'"
+                                            class="text-sm">
                                             {{ value ? t('Active') : t('Inactive') }}
                                         </span>
                                     </div>
@@ -526,6 +529,33 @@ watch(showInactiveRatings, () => {
                                         {{ value }}
                                     </div>
                                 </template>
+
+                                <!-- Mobile card primary info -->
+                                <template #mobile-primary="{ item }">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div class="flex items-center">
+                                            <div
+                                                class="h-12 w-12 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center shadow-md">
+                                                <StarIcon class="h-6 w-6 text-white"/>
+                                            </div>
+                                            <div class="ml-3">
+                                                <h3 class="text-base font-semibold text-gray-900 dark:text-white">
+                                                    {{ item.name }}
+                                                </h3>
+                                                <p class="text-sm text-gray-500 dark:text-gray-400">
+                                                    {{ item.game_type_name }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div v-if="item.is_active"
+                                             class="flex items-center text-emerald-600 dark:text-emerald-400">
+                                            <CheckCircleIcon class="h-5 w-5"/>
+                                        </div>
+                                        <div v-else class="flex items-center text-red-600 dark:text-red-400">
+                                            <XCircleIcon class="h-5 w-5"/>
+                                        </div>
+                                    </div>
+                                </template>
                             </DataTable>
                         </div>
                     </CardContent>
@@ -534,12 +564,13 @@ watch(showInactiveRatings, () => {
 
             <!-- One Year Rating Tab -->
             <main v-if="activeTab === 'one-year'" role="tabpanel">
-                <Card>
-                    <CardHeader>
-                        <div class="flex items-center justify-between">
+                <Card class="shadow-lg">
+                    <CardHeader class="bg-gradient-to-r from-gray-50 to-amber-50 dark:from-gray-800 dark:to-gray-700">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                             <div>
                                 <CardTitle class="flex items-center gap-2">
-                                    <CalendarIcon class="h-5 w-5" aria-hidden="true"/>
+                                    <CalendarIcon class="h-5 w-5 text-amber-600 dark:text-amber-400"
+                                                  aria-hidden="true"/>
                                     {{ t('One Year Rating') }}
                                 </CardTitle>
                                 <div class="mt-2 text-sm text-gray-600 dark:text-gray-400">
@@ -550,9 +581,8 @@ watch(showInactiveRatings, () => {
                             <!-- Find Me Button -->
                             <Button
                                 v-if="showScrollToUserButton"
-                                class="flex items-center gap-2"
+                                class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white"
                                 size="sm"
-                                variant="outline"
                                 @click="scrollToUser"
                                 aria-label="Find my position in rankings"
                             >
@@ -574,12 +604,13 @@ watch(showInactiveRatings, () => {
                                 'data-user-id': player.user?.id?.toString()
                             })"
                             :row-class="getRowClass"
+                            :mobile-card-mode="true"
                         >
                             <template #cell-position="{ value }">
                                 <div class="flex items-center gap-2">
                                     <span
                                         :class="[
-                                            'inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium',
+                                            'inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold',
                                             getPositionBadgeClass(value.position)
                                         ]"
                                     >
@@ -587,7 +618,7 @@ watch(showInactiveRatings, () => {
                                     </span>
                                     <UserIcon
                                         v-if="value.isCurrentUser"
-                                        class="h-4 w-4 text-blue-600 dark:text-blue-400"
+                                        class="h-4 w-4 text-indigo-600 dark:text-indigo-400"
                                         title="This is you!"
                                         aria-label="Your position"
                                     />
@@ -600,16 +631,18 @@ watch(showInactiveRatings, () => {
                                         <p :class="[
                                             'font-medium',
                                             value.isCurrentUser
-                                                ? 'text-blue-900 dark:text-blue-100'
+                                                ? 'text-indigo-900 dark:text-indigo-100'
                                                 : 'text-gray-900 dark:text-gray-100'
                                         ]">
                                             {{ value.name }}
                                             <span v-if="value.isCurrentUser"
-                                                  class="text-xs text-blue-600 dark:text-blue-400 ml-1">(You)</span>
+                                                  class="text-xs text-indigo-600 dark:text-indigo-400 ml-1">({{
+                                                    t('You')
+                                                }})</span>
                                         </p>
                                         <p v-if="value.isChampion"
-                                           class="text-sm text-yellow-600 dark:text-yellow-400">
-                                            👑 Champion
+                                           class="text-sm text-amber-600 dark:text-amber-400">
+                                            👑 {{ t('Champion') }}
                                         </p>
                                     </div>
                                 </div>
@@ -619,7 +652,7 @@ watch(showInactiveRatings, () => {
                                 <span :class="[
                                     'font-bold text-lg',
                                     value.isCurrentUser
-                                        ? 'text-blue-900 dark:text-blue-100'
+                                        ? 'text-indigo-900 dark:text-indigo-100'
                                         : 'text-gray-900 dark:text-gray-100'
                                 ]">
                                     {{ value.points }}
@@ -628,7 +661,7 @@ watch(showInactiveRatings, () => {
 
                             <template #cell-earned_money="{ value }">
                                 <span v-if="value.amount > 0" :class="[
-                                    'font-medium text-green-600 dark:text-green-400',
+                                    'font-medium text-emerald-600 dark:text-emerald-400',
                                     value.isCurrentUser ? 'font-bold' : ''
                                 ]">
                                     {{ formatCurrency(value.amount) }}
@@ -658,11 +691,51 @@ watch(showInactiveRatings, () => {
 
                             <template #cell-total="{ value }">
                                 <span :class="[
-                                    'font-bold text-blue-600 dark:text-blue-400',
+                                    'font-bold text-indigo-600 dark:text-indigo-400',
                                     value.isCurrentUser ? 'text-lg' : ''
                                 ]">
                                     {{ formatCurrency(value.amount) }}
                                 </span>
+                            </template>
+
+                            <!-- Mobile card primary info -->
+                            <template #mobile-primary="{ item }">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="flex items-center gap-3">
+                                        <span :class="[
+                                            'inline-flex h-10 w-10 items-center justify-center rounded-full text-base font-bold',
+                                            getPositionBadgeClass(item.position)
+                                        ]">
+                                            {{ item.position }}
+                                        </span>
+                                        <div>
+                                            <h3 :class="[
+                                                'text-base font-semibold',
+                                                isCurrentUserInOneYear(item)
+                                                    ? 'text-indigo-900 dark:text-indigo-100'
+                                                    : 'text-gray-900 dark:text-white'
+                                            ]">
+                                                {{ item.user?.firstname }} {{ item.user?.lastname }}
+                                                <span v-if="isCurrentUserInOneYear(item)"
+                                                      class="text-xs text-indigo-600 dark:text-indigo-400 ml-1">({{
+                                                        t('You')
+                                                    }})</span>
+                                            </h3>
+                                            <p v-if="item.position === 1"
+                                               class="text-sm text-amber-600 dark:text-amber-400">
+                                                👑 {{ t('Champion') }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                                            {{ formatCurrency(item.prize_amount || 0) }}
+                                        </p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                                            {{ item.rating }} {{ t('pts') }}
+                                        </p>
+                                    </div>
+                                </div>
                             </template>
                         </DataTable>
                     </CardContent>

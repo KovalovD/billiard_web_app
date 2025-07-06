@@ -24,6 +24,7 @@ import DataTable from '@/Components/ui/data-table/DataTable.vue';
 import {useGameRules} from '@/composables/useGameRules';
 import {useToastStore} from '@/stores/toast';
 import {useSeo} from "@/composables/useSeo";
+import {scrollToUserElement} from '@/utils/scrollToUser';
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -104,33 +105,24 @@ const scrollToUser = async () => {
 
     await nextTick();
 
-    // Find the user's row element
-    const userRow = document.querySelector(`[data-user-id="${currentUserPlayer.value.user?.id}"]`);
-    if (!userRow) return;
+    const userId = currentUserPlayer.value.user?.id;
+    const success = await scrollToUserElement(userId);
 
-    // Scroll the row into view with smooth behavior
-    userRow.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center'
-    });
-
-    // Add highlight effect
-    userRow.classList.add('animate-pulse', 'bg-blue-100', 'dark:bg-blue-900/30');
-    setTimeout(() => {
-        userRow.classList.remove('animate-pulse', 'bg-blue-100', 'dark:bg-blue-900/30');
-    }, 2000);
+    if (!success) {
+        toastStore.error(t('Could not find your position in the list'));
+    }
 };
 
 const getPositionBadgeClass = (position: number): string => {
     switch (position) {
         case 1:
-            return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
+            return 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white shadow-md';
         case 2:
-            return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+            return 'bg-gradient-to-r from-gray-400 to-gray-500 text-white shadow-md';
         case 3:
-            return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300';
+            return 'bg-gradient-to-r from-orange-600 to-orange-700 text-white shadow-md';
         default:
-            return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
+            return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
     }
 };
 
@@ -292,6 +284,7 @@ const columns = computed(() => [
         key: 'division',
         label: t('Division'),
         align: 'left' as const,
+        hideOnMobile: true,
         render: (player: OfficialRatingPlayer) => ({
             division: player.division,
             isCurrentUser: isCurrentUser(player)
@@ -311,6 +304,7 @@ const columns = computed(() => [
         key: 'rating',
         label: t('Rating'),
         align: 'center' as const,
+        hideOnMobile: true,
         render: (player: OfficialRatingPlayer) => ({
             points: player.rating_points,
             isCurrentUser: isCurrentUser(player)
@@ -320,6 +314,7 @@ const columns = computed(() => [
         key: 'tournaments',
         label: t('Tournaments'),
         align: 'center' as const,
+        hideOnTablet: true,
         render: (player: OfficialRatingPlayer) => ({
             played: player.tournaments_played,
             isCurrentUser: isCurrentUser(player)
@@ -327,8 +322,9 @@ const columns = computed(() => [
     },
     {
         key: 'earned_money',
-        label: t('Earned Money'),
+        label: t('Earned'),
         align: 'center' as const,
+        mobileLabel: t('₴'),
         render: (player: OfficialRatingPlayer) => ({
             amount: player.total_prize_amount,
             isCurrentUser: isCurrentUser(player)
@@ -338,6 +334,7 @@ const columns = computed(() => [
         key: 'killerPoolPrize',
         label: t('Killer Pool'),
         align: 'center' as const,
+        hideOnTablet: true,
         render: (player: OfficialRatingPlayer) => ({
             amount: player.total_killer_pool_prize_amount,
             isCurrentUser: isCurrentUser(player)
@@ -347,6 +344,7 @@ const columns = computed(() => [
         key: 'achievement',
         label: t('Achievement'),
         align: 'center' as const,
+        hideOnTablet: true,
         render: (player: OfficialRatingPlayer) => ({
             amount: player.total_achievement_amount,
             isCurrentUser: isCurrentUser(player)
@@ -356,6 +354,7 @@ const columns = computed(() => [
         key: 'bonus',
         label: t('Bonus'),
         align: 'center' as const,
+        hideOnMobile: true,
         render: (player: OfficialRatingPlayer) => ({
             amount: player.total_bonus_amount,
             isCurrentUser: isCurrentUser(player)
@@ -365,6 +364,7 @@ const columns = computed(() => [
         key: 'lastTournament',
         label: t('Last Tournament'),
         align: 'center' as const,
+        hideOnTablet: true,
         render: (player: OfficialRatingPlayer) => ({
             date: player.last_tournament_at,
             isCurrentUser: isCurrentUser(player)
@@ -375,7 +375,7 @@ const columns = computed(() => [
 const getRowClass = (player: OfficialRatingPlayer): string => {
     const baseClass = 'transition-colors duration-200';
     if (isCurrentUser(player)) {
-        return `${baseClass} bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 border-l-4 border-blue-300`;
+        return `${baseClass} bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/20 dark:hover:bg-indigo-900/30 border-l-4 border-indigo-500`;
     }
     return baseClass;
 };
@@ -419,104 +419,133 @@ onMounted(() => {
 <template>
     <Head :title="rating ? t('Rating: :name', {name: rating.name}) : t('Official Rating')"/>
 
-    <div class="py-12">
-        <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
+    <div class="py-6 sm:py-8 lg:py-12">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <!-- Header -->
-            <div class="mb-6 flex items-center justify-between">
+            <header class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <Link href="/official-ratings">
-                    <Button variant="outline">
+                    <Button variant="outline" size="sm" class="inline-flex items-center">
                         <ArrowLeftIcon class="mr-2 h-4 w-4"/>
-                        {{ t('Back to Ratings') }}
+                        <span class="hidden sm:inline">{{ t('Back to Ratings') }}</span>
+                        <span class="sm:hidden">{{ t('Back') }}</span>
                     </Button>
                 </Link>
 
-                <div v-if="isAdmin && rating" class="flex space-x-2">
+                <div v-if="isAdmin && rating" class="flex flex-wrap gap-2">
                     <Link :href="`/admin/official-ratings/${rating.slug}/edit`">
-                        <Button variant="secondary">
+                        <Button variant="secondary" size="sm">
                             <PencilIcon class="mr-2 h-4 w-4"/>
-                            {{ t('Edit Rating') }}
+                            <span class="hidden sm:inline">{{ t('Edit Rating') }}</span>
+                            <span class="sm:hidden">{{ t('Edit') }}</span>
                         </Button>
                     </Link>
                     <Link :href="`/admin/official-ratings/${rating.slug}/manage`">
-                        <Button variant="secondary">
+                        <Button variant="secondary" size="sm">
                             <UserPlusIcon class="mr-2 h-4 w-4"/>
                             {{ t('Manage') }}
                         </Button>
                     </Link>
                 </div>
-            </div>
+            </header>
 
             <!-- Loading State -->
-            <div v-if="isLoadingRating" class="p-10 text-center">
-                <Spinner class="text-primary mx-auto h-8 w-8"/>
-                <p class="mt-2 text-gray-500">{{ t('Loading rating...') }}</p>
+            <div v-if="isLoadingRating" class="flex justify-center py-12">
+                <div class="text-center">
+                    <Spinner class="text-primary mx-auto h-8 w-8 text-indigo-600"/>
+                    <p class="mt-2 text-gray-500">{{ t('Loading rating...') }}</p>
+                </div>
             </div>
 
             <!-- Error State -->
-            <div v-else-if="error" class="mb-6 rounded bg-red-100 p-4 text-red-500">
-                {{ t('Error loading rating: :error', {error}) }}
+            <div v-else-if="error"
+                 class="mb-6 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
+                <p class="text-red-600 dark:text-red-400">{{ t('Error loading rating: :error', {error}) }}</p>
             </div>
 
             <!-- Rating Content -->
             <template v-else-if="rating">
-                <!-- Rating Header -->
-                <Card class="mb-8">
-                    <CardHeader>
-                        <div class="flex items-start justify-between">
-                            <div>
-                                <CardTitle class="flex items-center gap-3 text-2xl">
-                                    <StarIcon class="h-8 w-8 text-yellow-500"/>
-                                    {{ rating.name }}
-                                    <span v-if="!rating.is_active"
-                                          class="text-sm px-3 py-1 bg-gray-100 text-gray-600 rounded-full dark:bg-gray-800 dark:text-gray-400">
-                                        {{ t('Inactive') }}
-                                    </span>
-                                </CardTitle>
-                                <CardDescription class="mt-2 text-lg">
-                                    <div class="flex flex-wrap gap-4">
-                                        <span class="flex items-center gap-1">
-                                            <TrophyIcon class="h-4 w-4"/>
-                                            {{ rating.game_type_name || 'N/A' }}
-                                        </span>
-                                        <span class="flex items-center gap-1">
-                                            <UsersIcon class="h-4 w-4"/>
-                                            {{ rating.players_count }} {{ t('players') }}
-                                        </span>
-                                        <span class="flex items-center gap-1">
-                                            <CalendarIcon class="h-4 w-4"/>
-                                            {{ rating.tournaments_count }} {{ t('tournaments') }}
-                                        </span>
-                                        <!-- User's position indicator -->
-                                        <span v-if="currentUserPlayer"
-                                              class="flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full dark:bg-blue-900/30 dark:text-blue-300">
-                                            <UserIcon class="h-3 w-3"/>
-                                            {{ t('Your position') }}: #{{ currentUserPlayer.position }}
-                                        </span>
+                <!-- Rating Header Card -->
+                <Card class="mb-8 shadow-lg overflow-hidden">
+                    <div
+                        class="bg-gradient-to-r from-gray-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 p-6 sm:p-8">
+                        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <div
+                                        class="h-12 w-12 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center shadow-md">
+                                        <StarIcon class="h-6 w-6 text-white"/>
                                     </div>
-                                </CardDescription>
+                                    <div>
+                                        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                                            {{ rating.name }}
+                                            <span v-if="!rating.is_active"
+                                                  class="text-xs sm:text-sm px-2 sm:px-3 py-1 bg-gray-100 text-gray-600 rounded-full dark:bg-gray-800 dark:text-gray-400">
+                                                {{ t('Inactive') }}
+                                            </span>
+                                        </h1>
+                                        <p class="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1">
+                                            {{ rating.game_type_name || 'N/A' }}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Stats Grid -->
+                                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6 mt-4">
+                                    <div class="text-center sm:text-left">
+                                        <div class="flex items-center gap-2 justify-center sm:justify-start">
+                                            <UsersIcon class="h-4 w-4 text-gray-400"/>
+                                            <span class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{{
+                                                    rating.players_count
+                                                }}</span>
+                                        </div>
+                                        <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{{
+                                                t('players')
+                                            }}</p>
+                                    </div>
+                                    <div class="text-center sm:text-left">
+                                        <div class="flex items-center gap-2 justify-center sm:justify-start">
+                                            <TrophyIcon class="h-4 w-4 text-gray-400"/>
+                                            <span class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{{
+                                                    rating.tournaments_count
+                                                }}</span>
+                                        </div>
+                                        <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                                            {{ t('tournaments') }}</p>
+                                    </div>
+                                    <div v-if="currentUserPlayer" class="col-span-2 sm:col-span-1">
+                                        <div
+                                            class="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-indigo-100 text-indigo-800 rounded-full dark:bg-indigo-900/30 dark:text-indigo-300">
+                                            <UserIcon class="h-4 w-4"/>
+                                            <span class="text-sm sm:text-base font-medium">{{
+                                                    t('Your position')
+                                                }}: #{{ currentUserPlayer.position }}</span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                    </div>
+
+                    <CardContent class="p-6 sm:p-8">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <div>
-                                <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-2">{{
+                                <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">{{
                                         t('Description')
                                     }}</h4>
-                                <p class="text-gray-600 dark:text-gray-400">
+                                <p class="text-sm sm:text-base text-gray-600 dark:text-gray-400">
                                     {{ rating.description || t('No description provided.') }}
                                 </p>
                             </div>
                             <div>
-                                <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-2">{{
+                                <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">{{
                                         t('Rating Details')
                                     }}</h4>
-                                <div class="space-y-2 text-sm">
-                                    <div class="flex justify-between">
+                                <div class="space-y-2">
+                                    <div class="flex justify-between text-sm sm:text-base">
                                         <span class="text-gray-600 dark:text-gray-400">{{ t('Initial Rating') }}:</span>
                                         <span class="font-medium">{{ rating.initial_rating }}</span>
                                     </div>
-                                    <div class="flex justify-between">
+                                    <div class="flex justify-between text-sm sm:text-base">
                                         <span class="text-gray-600 dark:text-gray-400">{{
                                                 t('Calculation Method')
                                             }}:</span>
@@ -531,55 +560,63 @@ onMounted(() => {
                 </Card>
 
                 <!-- Tab Navigation -->
-                <div class="mb-6 border-b border-gray-200 dark:border-gray-700">
-                    <nav class="-mb-px flex space-x-8">
+                <nav class="mb-6 border-b border-gray-200 dark:border-gray-700 overflow-x-auto" role="navigation"
+                     aria-label="Rating tabs">
+                    <div class="-mb-px flex space-x-6 sm:space-x-8 min-w-max">
                         <button
                             :class="[
-                                'py-4 px-1 text-sm font-medium border-b-2',
+                                'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
                                 activeTab === 'players'
-                                    ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+                                    ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                             ]"
+                            :aria-selected="activeTab === 'players'"
+                            role="tab"
                             @click="switchTab('players')"
                         >
                             {{ t('Players') }} ({{ rating.players_count }})
                         </button>
                         <button
                             :class="[
-                                'py-4 px-1 text-sm font-medium border-b-2',
+                                'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
                                 activeTab === 'tournaments'
-                                    ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+                                    ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                             ]"
+                            :aria-selected="activeTab === 'tournaments'"
+                            role="tab"
                             @click="switchTab('tournaments')"
                         >
                             {{ t('Tournaments') }} ({{ rating.tournaments_count }})
                         </button>
                         <button
                             :class="[
-                                'py-4 px-1 text-sm font-medium border-b-2',
+                                'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
                                 activeTab === 'rules'
-                                    ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+                                    ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                             ]"
+                            :aria-selected="activeTab === 'rules'"
+                            role="tab"
                             @click="switchTab('rules')"
                         >
                             {{ t('Rules') }}
                         </button>
-                    </nav>
-                </div>
+                    </div>
+                </nav>
 
                 <!-- Players Tab -->
-                <div v-if="activeTab === 'players'">
-                    <Card>
-                        <CardHeader>
-                            <div class="flex items-center justify-between">
+                <main v-if="activeTab === 'players'" role="tabpanel">
+                    <Card class="shadow-lg">
+                        <CardHeader
+                            class="bg-gradient-to-r from-gray-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700">
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                 <div>
                                     <CardTitle class="flex items-center gap-2">
-                                        <CrownIcon class="h-5 w-5"/>
+                                        <CrownIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400"/>
                                         {{ t('Player Rankings') }}
                                     </CardTitle>
-                                    <CardDescription>
+                                    <CardDescription class="mt-1">
                                         {{ t('Current standings in the :rating rating', {rating: rating.name}) }}
                                     </CardDescription>
                                 </div>
@@ -587,9 +624,8 @@ onMounted(() => {
                                 <!-- Find Me Button -->
                                 <Button
                                     v-if="showScrollToUser && currentUserPlayer"
-                                    class="flex items-center gap-2"
+                                    class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white"
                                     size="sm"
-                                    variant="outline"
                                     @click="scrollToUser"
                                 >
                                     <UserIcon class="h-4 w-4"/>
@@ -598,62 +634,51 @@ onMounted(() => {
                                 </Button>
                             </div>
                         </CardHeader>
-                        <CardContent>
-                            <div v-if="isAuthenticated" class="mb-4 flex flex-wrap items-center gap-2">
-                                <input v-model="deltaDate" class="rounded border px-2 py-1 text-sm dark:bg-gray-800"
-                                       type="date"/>
-                                <Button :disabled="!deltaDate || isLoadingDelta" size="sm" @click="fetchDelta">
-                                    {{ t('Load Delta') }}
-                                </Button>
-                                <Spinner v-if="isLoadingDelta" class="text-primary h-4 w-4"/>
-                                <div v-if="ratingDelta" class="text-sm ml-2">
-                                    {{ t('Change since :date:', {date: deltaDate}) }}
-                                    <span :class="ratingDelta.points_delta >= 0 ? 'text-green-600' : 'text-red-600'">
-                                        {{
-                                            ratingDelta.points_delta >= 0 ? `+${ratingDelta.points_delta}` : ratingDelta.points_delta
-                                        }} pts
-                                    </span>,
-                                    {{
-                                        t('position :before → :after', {
+                        <CardContent class="p-0">
+                            <!-- Delta Controls -->
+                            <div v-if="isAuthenticated"
+                                 class="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
+                                <div class="flex flex-col sm:flex-row gap-3 sm:items-center">
+                                    <div class="flex gap-2">
+                                        <input v-model="deltaDate"
+                                               class="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-600"
+                                               type="date"/>
+                                        <Button :disabled="!deltaDate || isLoadingDelta" size="sm" @click="fetchDelta">
+                                            {{ t('Load Delta') }}
+                                        </Button>
+                                    </div>
+                                    <Spinner v-if="isLoadingDelta" class="text-primary h-4 w-4 text-indigo-600"/>
+                                    <div v-if="ratingDelta" class="text-sm">
+                                        <span class="font-medium">{{
+                                                t('Change since :date:', {date: deltaDate})
+                                            }}</span>
+                                        <span :class="[
+                                            'ml-2 font-bold',
+                                            ratingDelta.points_delta >= 0 ? 'text-emerald-600' : 'text-red-600'
+                                        ]">
+                                            {{
+                                                ratingDelta.points_delta >= 0 ? `+${ratingDelta.points_delta}` : ratingDelta.points_delta
+                                            }} pts
+                                        </span>
+                                        <span class="ml-2 text-gray-600 dark:text-gray-400">
+                                            {{
+                                                t('position :before → :after', {
                                             before: ratingDelta.position_before,
                                             after: ratingDelta.current_position
-                                        })
-                                    }}
-                                    <span v-if="ratingDelta.prize_amount_delta !== 0" class="ml-2">
-                                        {{ t('Earned Money') }}:
-                                        <span
-                                            :class="ratingDelta.prize_amount_delta >= 0 ? 'text-green-600' : 'text-red-600'">
-                                            {{
-                                                ratingDelta.prize_amount_delta >= 0 ? `+${ratingDelta.prize_amount_delta.toFixed(2)}` : 0.00
-                                            }}₴
-                                        </span>
-                                    </span><span v-if="ratingDelta.bonus_amount_delta !== 0" class="ml-2">
-                                        {{ t('Bonus') }}:
-                                        <span
-                                            :class="ratingDelta.bonus_amount_delta >= 0 ? 'text-green-600' : 'text-red-600'">
-                                            {{
-                                                ratingDelta.bonus_amount_delta >= 0 ? `+${ratingDelta.bonus_amount_delta.toFixed(2)}` : 0.00
+                                                })
                                             }}
                                         </span>
-                                    </span>
-                                    <span v-if="ratingDelta.achievement_amount_delta !== 0" class="ml-2">
-                                        {{ t('Achievement') }}:
-                                        <span
-                                            :class="ratingDelta.achievement_amount_delta >= 0 ? 'text-green-600' : 'text-red-600'">
-                                            {{
-                                                ratingDelta.achievement_amount_delta >= 0 ? `+${ratingDelta.achievement_amount_delta.toFixed(2)}` : 0.00
-                                            }}₴
-                                        </span>
-                                    </span>
+                                    </div>
                                 </div>
                             </div>
+
                             <div v-if="isLoadingPlayers" class="flex justify-center py-8">
-                                <Spinner class="text-primary h-6 w-6"/>
+                                <Spinner class="text-primary h-6 w-6 text-indigo-600"/>
                             </div>
                             <div v-else-if="allActivePlayers.length === 0" class="py-8 text-center text-gray-500">
                                 {{ t('No active players in this rating.') }}
                             </div>
-                            <div v-else class="overflow-auto">
+                            <div v-else>
                                 <DataTable
                                     ref="tableRef"
                                     :columns="columns"
@@ -665,12 +690,13 @@ onMounted(() => {
                                         'data-user-id': player.user?.id?.toString()
                                     })"
                                     :row-class="getRowClass"
+                                    :mobile-card-mode="true"
                                 >
                                     <template #cell-position="{ value }">
                                         <div class="flex items-center gap-2">
                                             <span
                                                 :class="[
-                                                    'inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium',
+                                                    'inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold',
                                                     getPositionBadgeClass(value.position)
                                                 ]"
                                             >
@@ -678,8 +704,8 @@ onMounted(() => {
                                             </span>
                                             <UserIcon
                                                 v-if="value.isCurrentUser"
-                                                class="h-4 w-4 text-blue-600 dark:text-blue-400"
-                                                title="This is you!"
+                                                class="h-4 w-4 text-indigo-600 dark:text-indigo-400"
+                                                :title="t('This is you!')"
                                             />
                                         </div>
                                     </template>
@@ -689,7 +715,7 @@ onMounted(() => {
                                             :class="[
                                                 'inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium',
                                                 value.isCurrentUser
-                                                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                                                    ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300'
                                                     : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
                                             ]"
                                         >
@@ -703,16 +729,18 @@ onMounted(() => {
                                                 <p :class="[
                                                     'font-medium',
                                                     value.isCurrentUser
-                                                        ? 'text-blue-900 dark:text-blue-100'
+                                                        ? 'text-indigo-900 dark:text-indigo-100'
                                                         : 'text-gray-900 dark:text-gray-100'
                                                 ]">
                                                     {{ value.name }}
                                                     <span v-if="value.isCurrentUser"
-                                                          class="text-xs text-blue-600 dark:text-blue-400 ml-1">(You)</span>
+                                                          class="text-xs text-indigo-600 dark:text-indigo-400 ml-1">({{
+                                                            t('You')
+                                                        }})</span>
                                                 </p>
                                                 <p v-if="value.isChampion"
-                                                   class="text-sm text-yellow-600 dark:text-yellow-400">
-                                                    👑 Champion
+                                                   class="text-sm text-amber-600 dark:text-amber-400">
+                                                    👑 {{ t('Champion') }}
                                                 </p>
                                             </div>
                                         </div>
@@ -722,7 +750,7 @@ onMounted(() => {
                                         <span :class="[
                                             'font-bold text-lg',
                                             value.isCurrentUser
-                                                ? 'text-blue-900 dark:text-blue-100'
+                                                ? 'text-indigo-900 dark:text-indigo-100'
                                                 : 'text-gray-900 dark:text-gray-100'
                                         ]">
                                             {{ value.points }}
@@ -731,14 +759,14 @@ onMounted(() => {
 
                                     <template #cell-tournaments="{ value }">
                                         <span
-                                            :class="value.isCurrentUser ? 'font-semibold text-blue-900 dark:text-blue-100' : ''">
+                                            :class="value.isCurrentUser ? 'font-semibold text-indigo-900 dark:text-indigo-100' : ''">
                                             {{ value.played }}
                                         </span>
                                     </template>
 
                                     <template #cell-earned_money="{ value }">
                                         <span v-if="value.amount > 0" :class="[
-                                            'font-medium text-green-600 dark:text-green-400',
+                                            'font-medium text-emerald-600 dark:text-emerald-400',
                                             value.isCurrentUser ? 'font-bold' : ''
                                         ]">
                                             {{ formatCurrency(value.amount) }}
@@ -748,7 +776,7 @@ onMounted(() => {
 
                                     <template #cell-killerPoolPrize="{ value }">
                                         <span v-if="value.amount > 0" :class="[
-                                            'font-medium text-indigo-600 dark:text-indigo-400',
+                                            'font-medium text-purple-600 dark:text-purple-400',
                                             value.isCurrentUser ? 'font-bold' : ''
                                         ]">
                                             {{ formatCurrency(value.amount) }}
@@ -758,7 +786,7 @@ onMounted(() => {
 
                                     <template #cell-achievement="{ value }">
                                         <span v-if="value.amount > 0" :class="[
-                                            'font-medium text-purple-600 dark:text-purple-400',
+                                            'font-medium text-blue-600 dark:text-blue-400',
                                             value.isCurrentUser ? 'font-bold' : ''
                                         ]">
                                             {{ formatCurrency(value.amount) }}
@@ -778,106 +806,145 @@ onMounted(() => {
 
                                     <template #cell-lastTournament="{ value }">
                                         <span v-if="value.date"
-                                              :class="value.isCurrentUser ? 'font-semibold text-blue-900 dark:text-blue-100' : ''">
+                                              :class="value.isCurrentUser ? 'font-semibold text-indigo-900 dark:text-indigo-100' : ''">
                                             {{ formatDate(value.date) }}
                                         </span>
                                         <span v-else class="text-gray-400">—</span>
+                                    </template>
+
+                                    <!-- Mobile card primary info -->
+                                    <template #mobile-primary="{ item }">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <div class="flex items-center gap-3">
+                                                <span :class="[
+                                                    'inline-flex h-10 w-10 items-center justify-center rounded-full text-base font-bold',
+                                                    getPositionBadgeClass(item.position)
+                                                ]">
+                                                    {{ item.position }}
+                                                </span>
+                                                <div>
+                                                    <h3 :class="[
+                                                        'text-base font-semibold',
+                                                        isCurrentUser(item)
+                                                            ? 'text-indigo-900 dark:text-indigo-100'
+                                                            : 'text-gray-900 dark:text-white'
+                                                    ]">
+                                                        {{ item.user?.firstname }} {{ item.user?.lastname }}
+                                                        <span v-if="isCurrentUser(item)"
+                                                              class="text-xs text-indigo-600 dark:text-indigo-400 ml-1">({{
+                                                                t('You')
+                                                            }})</span>
+                                                    </h3>
+                                                    <p v-if="item.position === 1"
+                                                       class="text-sm text-amber-600 dark:text-amber-400">
+                                                        👑 {{ t('Champion') }}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div class="text-right">
+                                                <p class="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                                                    {{ formatCurrency(item.total_prize_amount || 0) }}
+                                                </p>
+                                                <p class="text-xs text-gray-500 dark:text-gray-400">
+                                                    {{ item.rating_points }} {{ t('pts') }}
+                                                </p>
+                                            </div>
+                                        </div>
                                     </template>
                                 </DataTable>
                             </div>
                         </CardContent>
                     </Card>
-                </div>
+                </main>
 
                 <!-- Tournaments Tab -->
-                <div v-if="activeTab === 'tournaments'">
-                    <Card>
-                        <CardHeader>
+                <main v-if="activeTab === 'tournaments'" role="tabpanel">
+                    <Card class="shadow-lg">
+                        <CardHeader
+                            class="bg-gradient-to-r from-gray-50 to-emerald-50 dark:from-gray-800 dark:to-gray-700">
                             <CardTitle class="flex items-center gap-2">
-                                <TrophyIcon class="h-5 w-5"/>
+                                <TrophyIcon class="h-5 w-5 text-emerald-600 dark:text-emerald-400"/>
                                 {{ t('Associated Tournaments') }}
                             </CardTitle>
                             <CardDescription>
                                 {{ t('Tournaments that count towards this rating') }}
                             </CardDescription>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent class="p-4 sm:p-6">
                             <div v-if="isLoadingTournaments" class="flex justify-center py-8">
-                                <Spinner class="text-primary h-6 w-6"/>
+                                <Spinner class="text-primary h-6 w-6 text-indigo-600"/>
                             </div>
                             <div v-else-if="tournaments.length === 0" class="py-8 text-center text-gray-500">
                                 {{ t('No tournaments associated with this rating.') }}
                             </div>
                             <div v-else class="space-y-4">
-                                <div
+                                <article
                                     v-for="tournament in tournaments"
                                     :key="tournament.id"
                                     :class="[
-                                        'p-4 border rounded-lg',
+                                        'p-4 sm:p-6 border-2 rounded-lg transition-all hover:shadow-md',
                                         tournament.is_counting
-                                            ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20'
+                                            ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/20'
                                             : 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50'
                                     ]"
                                 >
-                                    <div class="flex items-start justify-between">
-                                        <div>
-                                            <h3 class="font-medium text-gray-900 dark:text-gray-100">
+                                    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                                        <div class="flex-1">
+                                            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
                                                 {{ tournament.name }}
                                             </h3>
-                                            <div
-                                                class="mt-1 flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
+                                            <div class="flex flex-wrap gap-3 text-sm text-gray-600 dark:text-gray-400">
                                                 <span class="flex items-center gap-1">
-                                                    <CalendarIcon class="h-3 w-3"/>
+                                                    <CalendarIcon class="h-4 w-4"/>
                                                     {{ formatDate(tournament.start_date) }}
                                                     <span v-if="tournament.end_date !== tournament.start_date">
                                                         - {{ formatDate(tournament.end_date) }}
                                                     </span>
                                                 </span>
                                                 <span v-if="tournament.city" class="flex items-center gap-1">
-                                                    {{ tournament.city }}, {{ tournament.country }}
+                                                    📍 {{ tournament.city }}, {{ tournament.country }}
                                                 </span>
                                                 <span class="flex items-center gap-1">
-                                                    <UsersIcon class="h-3 w-3"/>
+                                                    <UsersIcon class="h-4 w-4"/>
                                                     {{ tournament.players_count }} {{ t('players') }}
                                                 </span>
                                             </div>
                                         </div>
-                                        <div class="text-right">
+                                        <div class="flex sm:flex-col items-center sm:items-end gap-3">
                                             <div class="text-sm">
                                                 <span class="font-medium">{{ t('Coefficient') }}: {{
                                                         tournament.rating_coefficient
                                                     }}x</span>
                                             </div>
-                                            <div class="mt-1">
-                                                <span
-                                                    :class="[
-                                                        'px-2 py-1 text-xs rounded-full',
-                                                        tournament.is_counting
-                                                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                                                            : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
-                                                    ]"
-                                                >
-                                                    {{ tournament.is_counting ? t('Counting') : t('Not Counting') }}
-                                                </span>
-                                            </div>
+                                            <span
+                                                :class="[
+                                                    'px-3 py-1 text-xs font-medium rounded-full',
+                                                    tournament.is_counting
+                                                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
+                                                        : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
+                                                ]"
+                                            >
+                                                {{ tournament.is_counting ? t('Counting') : t('Not Counting') }}
+                                            </span>
                                         </div>
                                     </div>
-                                </div>
+                                </article>
                             </div>
                         </CardContent>
                     </Card>
-                </div>
+                </main>
 
                 <!-- Rules Tab -->
-                <div v-if="activeTab === 'rules'">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle class="flex items-center justify-between">
+                <main v-if="activeTab === 'rules'" role="tabpanel">
+                    <Card class="shadow-lg">
+                        <CardHeader
+                            class="bg-gradient-to-r from-gray-50 to-purple-50 dark:from-gray-800 dark:to-gray-700">
+                            <CardTitle class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                 <span class="flex items-center gap-2">
-                                    <PencilIcon class="h-5 w-5"/>
+                                    <PencilIcon class="h-5 w-5 text-purple-600 dark:text-purple-400"/>
                                     {{ t('Game Rules') }}
                                 </span>
-                                <div v-if="isAdmin" class="flex items-center space-x-2">
+                                <div v-if="isAdmin" class="flex items-center gap-2">
                                     <Button
                                         v-if="!isEditingRules"
                                         :disabled="isLoadingRules"
@@ -920,20 +987,21 @@ onMounted(() => {
                             </CardTitle>
                             <CardDescription>{{ t('Official rating rules and regulations') }}</CardDescription>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent class="p-4 sm:p-6">
                             <div v-if="isLoadingRules" class="flex justify-center py-4">
-                                <Loader2 class="h-6 w-6 animate-spin"/>
+                                <Loader2 class="h-6 w-6 animate-spin text-indigo-600"/>
                             </div>
                             <div v-else-if="rulesError" class="text-red-500">
                                 {{ rulesError }}
                             </div>
                             <div v-else>
                                 <div v-if="!isEditingRules">
-                                    <div v-if="currentRule?.rules" class="prose max-w-none whitespace-pre-wrap">
+                                    <div v-if="currentRule?.rules"
+                                         class="prose prose-sm sm:prose max-w-none whitespace-pre-wrap text-gray-700 dark:text-gray-300">
                                         {{ currentRule.rules }}
                                     </div>
                                     <div v-else class="text-gray-500 text-center py-8">
-                                        {{ t('No rules defined yet') }}
+                                        <p class="text-lg">{{ t('No rules defined yet') }}</p>
                                         <p v-if="isAdmin" class="text-sm mt-2">
                                             {{ t('Click "Add Rules" to create game rules for this rating.') }}
                                         </p>
@@ -959,7 +1027,7 @@ onMounted(() => {
                             </div>
                         </CardContent>
                     </Card>
-                </div>
+                </main>
             </template>
         </div>
     </div>

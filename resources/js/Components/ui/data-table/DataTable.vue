@@ -76,6 +76,7 @@ const getRowClasses = (item: T, index: number) => {
 
 const getCardClasses = (item: T, index: number) => {
     return cn(
+        'mobile-card', // Add consistent class for mobile cards
         'border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors',
         typeof props.rowClass === 'function' ? props.rowClass(item, index) : props.rowClass
     );
@@ -90,7 +91,7 @@ defineExpose({
 <template>
     <div ref="tableRef" class="relative">
         <!-- Mobile Card View -->
-        <div v-if="mobileCardMode" class="sm:hidden">
+        <div v-if="mobileCardMode" class="sm:hidden mobile-cards-container">
             <!-- Loading state -->
             <div v-if="loading" class="flex items-center justify-center py-10">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
