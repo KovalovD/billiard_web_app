@@ -223,14 +223,6 @@ Route::middleware('auth')->group(function () {
                     'tournamentSlug' => $tournament->slug,
                 ]);
             })->name('admin.tournaments.results');
-
-            Route::get('/{tournament:slug}/applications', static function ($tournamentSlug) {
-                $tournament = Tournament::where('slug', $tournamentSlug)->firstOrFail();
-                return Inertia::render('Admin/Tournaments/Applications', [
-                    'tournamentId'   => $tournament->id,
-                    'tournamentSlug' => $tournament->slug,
-                ]);
-            })->name('admin.tournaments.applications');
         });
 
         Route::group(['prefix' => 'official-ratings'], static function () {

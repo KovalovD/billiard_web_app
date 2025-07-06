@@ -313,26 +313,27 @@ onMounted(() => {
 <template>
     <Head :title="tournament ? `${t('Bracket')}: ${tournament.name}` : t('Tournament Bracket')"/>
 
-    <div class="py-12">
-        <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
-            <!-- Header -->
-            <div class="mb-6 flex items-center justify-between">
+    <div class="py-6 sm:py-12">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <!-- Mobile-optimized Header -->
+            <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">
+                    <h1 class="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-200">
                         {{ t('Tournament Bracket') }}
                     </h1>
-                    <p class="text-gray-600 dark:text-gray-400">
+                    <p class="text-sm sm:text-base text-gray-600 dark:text-gray-400">
                         {{ tournament ? tournament.name : t('Loading...') }}
                     </p>
                 </div>
-                <div class="flex space-x-3">
-                    <Button :disabled="isLoading" variant="outline" @click="loadData">
+                <div class="flex flex-wrap gap-2">
+                    <Button :disabled="isLoading" variant="outline" size="sm" @click="loadData">
                         <RefreshCwIcon :class="{ 'animate-spin': isLoading }" class="mr-2 h-4 w-4"/>
-                        {{ t('Refresh') }}
+                        <span class="hidden sm:inline">{{ t('Refresh') }}</span>
                     </Button>
-                    <Button variant="outline" @click="router.visit(`/tournaments/${tournament?.slug}`)">
+                    <Button variant="outline" size="sm" @click="router.visit(`/tournaments/${tournament?.slug}`)">
                         <ArrowLeftIcon class="mr-2 h-4 w-4"/>
-                        {{ t('Back to Tournament') }}
+                        <span class="hidden sm:inline">{{ t('Back to Tournament') }}</span>
+                        <span class="sm:hidden">{{ t('Back') }}</span>
                     </Button>
                 </div>
             </div>
@@ -348,16 +349,18 @@ onMounted(() => {
 
             <!-- Tournament Status Warning -->
             <div v-if="tournament && !canEditTournament" class="mb-6 rounded bg-yellow-100 p-4 dark:bg-yellow-900/30">
-                <div class="flex items-center gap-2">
-                    <AlertCircleIcon class="h-5 w-5 text-yellow-600"/>
-                    <p class="font-medium text-yellow-800 dark:text-yellow-300">
-                        {{ t('Tournament must be active and in bracket stage to edit matches') }}
-                    </p>
+                <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                    <AlertCircleIcon class="h-5 w-5 text-yellow-600 flex-shrink-0"/>
+                    <div>
+                        <p class="font-medium text-yellow-800 dark:text-yellow-300">
+                            {{ t('Tournament must be active and in bracket stage to edit matches') }}
+                        </p>
+                        <p class="mt-1 text-sm text-yellow-700 dark:text-yellow-400">
+                            {{ t('Current status') }}: {{ tournament.status_display }} • {{ t('Current stage') }}:
+                            {{ tournament.stage_display }}
+                        </p>
+                    </div>
                 </div>
-                <p class="mt-2 text-sm text-yellow-700 dark:text-yellow-400">
-                    {{ t('Current status') }}: {{ tournament.status_display }} • {{ t('Current stage') }}:
-                    {{ tournament.stage_display }}
-                </p>
             </div>
 
             <!-- Loading -->
@@ -395,57 +398,78 @@ onMounted(() => {
 
             <!-- Bracket Display -->
             <template v-else>
-                <!-- Tournament Info -->
+                <!-- Tournament Info - Mobile optimized -->
                 <Card class="mb-6">
                     <CardContent class="pt-6">
-                        <div class="grid grid-cols-4 gap-4 text-center">
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
                             <div>
-                                <div class="text-2xl font-bold text-blue-600">
+                                <div class="text-xl sm:text-2xl font-bold text-blue-600">
                                     {{ tournament?.confirmed_players_count || 0 }}
                                 </div>
-                                <div class="text-sm text-gray-600">{{ t('Players') }}</div>
+                                <div class="text-xs sm:text-sm text-gray-600">{{ t('Players') }}</div>
                             </div>
                             <div>
-                                <div class="text-2xl font-bold text-green-600">
-                                    {{ isDoubleElimination ? t('Double Elimination') : t('Single Elimination') }}
+                                <div class="text-xl sm:text-2xl font-bold text-green-600">
+                                    <span class="hidden sm:inline">{{
+                                            isDoubleElimination ? t('Double Elimination') : t('Single Elimination')
+                                        }}</span>
+                                    <span class="sm:hidden">{{
+                                            isDoubleElimination ? t('Double Elim') : t('Single Elim')
+                                        }}</span>
                                 </div>
-                                <div class="text-sm text-gray-600">{{ t('Format') }}</div>
+                                <div class="text-xs sm:text-sm text-gray-600">{{ t('Format') }}</div>
                             </div>
                             <div>
-                                <div class="text-2xl font-bold text-yellow-600">{{ matches.length }}</div>
-                                <div class="text-sm text-gray-600">{{ t('Matches') }}</div>
+                                <div class="text-xl sm:text-2xl font-bold text-yellow-600">{{ matches.length }}</div>
+                                <div class="text-xs sm:text-sm text-gray-600">{{ t('Matches') }}</div>
                             </div>
                             <div>
-                                <div class="text-2xl font-bold text-purple-600">{{ tournament?.races_to || 7 }}</div>
-                                <div class="text-sm text-gray-600">{{ t('Races To') }}</div>
+                                <div class="text-xl sm:text-2xl font-bold text-purple-600">{{
+                                        tournament?.races_to || 7
+                                    }}
+                                </div>
+                                <div class="text-xs sm:text-sm text-gray-600">{{ t('Races To') }}</div>
                             </div>
                         </div>
                     </CardContent>
                 </Card>
 
-                <!-- Bracket Component -->
-                <SingleEliminationBracket
-                    v-if="!isDoubleElimination"
-                    :can-edit="canEditTournament"
-                    :current-user-id="currentUserId"
-                    :matches="matches"
-                    :tournament="tournament!"
-                    @open-match="openMatchModal"
-                />
+                <!-- Mobile notice for bracket viewing -->
+                <Card class="mb-6 sm:hidden">
+                    <CardContent class="pt-6">
+                        <p class="text-sm text-gray-600 dark:text-gray-400 text-center">
+                            {{ t('Rotate your device or scroll horizontally to view the full bracket') }}
+                        </p>
+                    </CardContent>
+                </Card>
 
-                <DoubleEliminationBracket
-                    v-else
-                    :can-edit="canEditTournament"
-                    :current-user-id="currentUserId"
-                    :matches="matches"
-                    :tournament="tournament!"
-                    @open-match="openMatchModal"
-                />
+                <!-- Bracket Component with overflow scroll for mobile -->
+                <div class="overflow-x-auto pb-4">
+                    <div class="min-w-[800px]">
+                        <SingleEliminationBracket
+                            v-if="!isDoubleElimination"
+                            :can-edit="canEditTournament"
+                            :current-user-id="currentUserId"
+                            :matches="matches"
+                            :tournament="tournament!"
+                            @open-match="openMatchModal"
+                        />
+
+                        <DoubleEliminationBracket
+                            v-else
+                            :can-edit="canEditTournament"
+                            :current-user-id="currentUserId"
+                            :matches="matches"
+                            :tournament="tournament!"
+                            @open-match="openMatchModal"
+                        />
+                    </div>
+                </div>
 
                 <!-- Start Tournament Button -->
                 <Card v-if="tournament?.status === 'upcoming'" class="mt-6">
                     <CardContent class="pt-6">
-                        <div class="flex items-center justify-between">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                             <p class="text-gray-600 dark:text-gray-400">
                                 {{ t('Bracket is ready. Start the tournament to begin matches.') }}
                             </p>

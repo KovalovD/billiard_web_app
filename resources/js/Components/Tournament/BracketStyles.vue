@@ -7,6 +7,13 @@
         fill: #374151;
         }
 
+        /* Mobile label adjustments */
+        @media (max-width: 640px) {
+        .bracket-label {
+        font-size: 12px;
+        }
+        }
+
         /* Match styles */
         .match-pending {
         fill: #ffffff;
@@ -40,8 +47,9 @@
 
         /* Current user match highlight */
         .user-match {
-        stroke-width: 2 !important;
-        stroke: rgba(255, 198, 109, 0.7) !important;
+        stroke-width: 3 !important;
+        stroke: #f59e0b !important;
+        filter: drop-shadow(0 2px 4px rgba(245, 158, 11, 0.3));
         }
 
         /* Lower bracket match styles */
@@ -49,12 +57,24 @@
         opacity: 0.9;
         }
 
+        /* Touch-friendly hover states */
+        @media (hover: hover) {
         .match-group:hover .match-pending,
         .match-group:hover .match-ready,
         .match-group:hover .match-active,
         .match-group:hover .match-verification,
         .match-group:hover .match-completed {
         filter: brightness(0.95);
+        }
+        }
+
+        /* Active/tap state for mobile */
+        .match-group:active .match-pending,
+        .match-group:active .match-ready,
+        .match-group:active .match-active,
+        .match-group:active .match-verification,
+        .match-group:active .match-completed {
+        filter: brightness(0.9);
         }
 
         /* Player backgrounds */
@@ -64,7 +84,7 @@
 
         .player-winner {
         fill: #2b81fd;
-        fill-opacity: 0.1;
+        fill-opacity: 0.15;
         }
 
         /* Text styles */
@@ -86,6 +106,25 @@
         text-anchor: end;
         }
 
+        /* Mobile text adjustments */
+        @media (max-width: 640px) {
+        .match-number {
+        font-size: 9px;
+        }
+
+        .player-name {
+        font-size: 11px;
+        }
+
+        .player-score {
+        font-size: 12px;
+        }
+
+        .walkover-text {
+        font-size: 8px;
+        }
+        }
+
         .walkover-text {
         font-size: 10px;
         font-weight: bold;
@@ -101,6 +140,14 @@
         .connector-line-lower {
         stroke: #a78bfa;
         stroke-dasharray: 4 2;
+        }
+
+        /* Mobile connector adjustments */
+        @media (max-width: 640px) {
+        .connector-line,
+        .connector-line-lower {
+        stroke-width: 1.5;
+        }
         }
 
         /* In-progress status indicator with breathing animation */
@@ -120,8 +167,46 @@
         }
         }
 
+        /* Mobile status indicator */
+        @media (max-width: 640px) {
+        .status-in-progress {
+        r: 3;
+        }
+
+        @keyframes breathe {
+        0%, 100% {
+        opacity: 1;
+        r: 3;
+        }
+        50% {
+        opacity: 0.6;
+        r: 4;
+        }
+        }
+        }
+
         .bracket-svg {
         font-family: system-ui, -apple-system, sans-serif;
+        }
+
+        /* Touch-friendly tap targets */
+        .match-group {
+        cursor: pointer;
+        }
+
+        /* Larger touch targets on mobile */
+        @media (max-width: 640px) {
+        .match-group rect {
+        stroke-width: 2;
+        }
+        }
+
+        /* Prevent selection on touch devices */
+        .bracket-svg {
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
         }
     </component>
 </template>

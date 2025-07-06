@@ -21,6 +21,7 @@ import {
     LayersIcon,
     LogInIcon,
     MapPinIcon,
+    MenuIcon,
     MonitorIcon,
     PencilIcon,
     PlayIcon,
@@ -40,7 +41,9 @@ defineOptions({layout: AuthenticatedLayout});
 const props = defineProps<{
     tournamentId: number | string;
 }>();
+
 const showRegistrationModal = ref(false);
+const showMobileMenu = ref(false);
 const {isAdmin, isAuthenticated, user} = useAuth();
 const {t} = useLocale();
 
@@ -69,6 +72,7 @@ const activeTab = ref<'info' | 'players' | 'bracket' | 'matches' | 'groups' | 'r
 // Handle tab change and update URL
 const switchTab = (tab: 'info' | 'players' | 'bracket' | 'matches' | 'groups' | 'results' | 'applications') => {
     activeTab.value = tab;
+    showMobileMenu.value = false;
 
     // Update URL without page reload
     const url = new URL(window.location.href);
@@ -80,11 +84,13 @@ const switchTab = (tab: 'info' | 'players' | 'bracket' | 'matches' | 'groups' | 
 
     window.history.replaceState({}, '', url.toString());
 };
+
 const handleRegistrationSuccess = () => {
     showRegistrationModal.value = false;
     fetchTournament();
     fetchPlayers();
 };
+
 // Get current user ID
 const currentUserId = user.value?.id;
 
@@ -289,7 +295,19 @@ const formatDateTime = (dateString: string | undefined): string => {
         return ''
     }
 
-    return new Date(dateString).toLocaleString('uk-UK', {
+    const date = new Date(dateString);
+    const isMobile = window.innerWidth < 640;
+
+    if (isMobile) {
+        return date.toLocaleString('uk-UK', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    return date.toLocaleString('uk-UK', {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
@@ -302,7 +320,18 @@ const formatDate = (dateString: string | undefined): string => {
     if (!dateString) {
         return ''
     }
-    return new Date(dateString).toLocaleDateString('en-US', {
+    const date = new Date(dateString);
+    const isMobile = window.innerWidth < 640;
+
+    if (isMobile) {
+        return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: '2-digit'
+        });
+    }
+
+    return date.toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
         day: 'numeric'
@@ -342,7 +371,6 @@ const fetchPlayers = async () => {
 };
 
 const fetchMatches = async () => {
-
     isLoadingMatches.value = true;
     try {
         // Use the public endpoint for non-admins
@@ -394,7 +422,6 @@ const getPlayersInGroup = (groupCode: string) => {
             return b.group_games_diff - a.group_games_diff;
         });
 };
-
 
 // Add columns definition before the template
 const columns = computed(() => [
@@ -511,25 +538,25 @@ onMounted(() => {
     fetchMatches();
     fetchGroups();
 });
-
 </script>
 
 <template>
     <Head :title="tournament ? t('Tournament: :name', {name: tournament.name}) : t('Tournament')"/>
 
-    <div class="py-12">
-        <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
+    <div class="py-6 sm:py-12">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <!-- Header -->
-            <div class="mb-6 flex items-center justify-between">
+            <div class="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <Link href="/tournaments">
-                    <Button variant="outline">
-                        <ArrowLeftIcon class="mr-2 h-4 w-4"/>
-                        {{ t('Back to Tournaments') }}
+                    <Button variant="outline" size="sm" class="text-xs sm:text-sm">
+                        <ArrowLeftIcon class="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4"/>
+                        <span class="hidden sm:inline">{{ t('Back to Tournaments') }}</span>
+                        <span class="sm:hidden">{{ t('Back') }}</span>
                     </Button>
                 </Link>
 
-                <!-- Admin controls - only for authenticated admins -->
-                <div v-if="isAuthenticated && isAdmin && tournament" class="flex flex-wrap gap-2">
+                <!-- Admin controls - Desktop -->
+                <div v-if="isAuthenticated && isAdmin && tournament" class="hidden sm:flex flex-wrap gap-2">
                     <Link :href="`/admin/tournaments/${tournament.slug}/edit`">
                         <Button size="sm" variant="secondary">
                             <PencilIcon class="mr-2 h-4 w-4"/>
@@ -599,7 +626,6 @@ onMounted(() => {
                         </Button>
                     </Link>
 
-
                     <Button
                         v-if="tournament.club"
                         size="sm"
@@ -611,12 +637,109 @@ onMounted(() => {
                     </Button>
                 </div>
 
+                <!-- Admin controls - Mobile Menu Button -->
+                <Button
+                    v-if="isAuthenticated && isAdmin && tournament"
+                    size="sm"
+                    variant="secondary"
+                    class="sm:hidden"
+                    @click="showMobileMenu = !showMobileMenu"
+                >
+                    <MenuIcon class="h-4 w-4"/>
+                </Button>
+
                 <!-- Login prompt for guests -->
                 <div v-else-if="!isAuthenticated && tournament" class="text-center">
-                    <Link :href="route('login')" class="text-sm text-blue-600 hover:underline dark:text-blue-400">
-                        <LogInIcon class="mr-1 inline h-4 w-4"/>
+                    <Link :href="route('login')"
+                          class="text-xs sm:text-sm text-blue-600 hover:underline dark:text-blue-400">
+                        <LogInIcon class="mr-1 inline h-3 w-3 sm:h-4 sm:w-4"/>
                         {{ t('Login to participate') }}
                     </Link>
+                </div>
+            </div>
+
+            <!-- Mobile Admin Menu -->
+            <div
+                v-if="isAuthenticated && isAdmin && tournament && showMobileMenu"
+                class="sm:hidden mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+            >
+                <div class="grid grid-cols-2 gap-2">
+                    <Link :href="`/admin/tournaments/${tournament.slug}/edit`">
+                        <Button size="sm" variant="secondary" class="w-full text-xs">
+                            <PencilIcon class="mr-1 h-3 w-3"/>
+                            {{ t('Edit') }}
+                        </Button>
+                    </Link>
+
+                    <Link :href="`/admin/tournaments/${tournament.slug}/players`">
+                        <Button size="sm" variant="secondary" class="w-full text-xs">
+                            <UserPlusIcon class="mr-1 h-3 w-3"/>
+                            {{ t('Players') }}
+                        </Button>
+                    </Link>
+
+                    <Link v-if="showSeedingButton" :href="`/admin/tournaments/${tournament.slug}/seeding`">
+                        <Button size="sm" variant="secondary" class="w-full text-xs">
+                            <StarIcon class="mr-1 h-3 w-3"/>
+                            {{ t('Seeding') }}
+                        </Button>
+                    </Link>
+
+                    <Link v-if="showGroupsButton" :href="`/admin/tournaments/${tournament.slug}/groups`">
+                        <Button size="sm" variant="secondary" class="w-full text-xs">
+                            <LayersIcon class="mr-1 h-3 w-3"/>
+                            {{ t('Groups') }}
+                        </Button>
+                    </Link>
+
+                    <Link v-if="showBracketButton" :href="`/admin/tournaments/${tournament.slug}/bracket`">
+                        <Button size="sm" variant="secondary" class="w-full text-xs">
+                            <GitBranchIcon class="mr-1 h-3 w-3"/>
+                            {{ t('Bracket') }}
+                        </Button>
+                    </Link>
+
+                    <Link v-if="showMatchesButton" :href="`/admin/tournaments/${tournament.slug}/matches`">
+                        <Button size="sm" variant="secondary" class="w-full text-xs">
+                            <PlayIcon class="mr-1 h-3 w-3"/>
+                            {{ t('Matches') }}
+                        </Button>
+                    </Link>
+
+                    <Link
+                        v-if="tournament.requires_application"
+                        :href="`/admin/tournaments/${tournament.slug}/applications`"
+                        class="col-span-2"
+                    >
+                        <Button class="relative w-full text-xs" size="sm" variant="secondary">
+                            <ClipboardListIcon class="mr-1 h-3 w-3"/>
+                            {{ t('Applications') }}
+                            <span
+                                v-if="tournament.pending_applications_count > 0"
+                                class="ml-1 inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full"
+                            >
+                                {{ tournament.pending_applications_count }}
+                            </span>
+                        </Button>
+                    </Link>
+
+                    <Link :href="`/admin/tournaments/${tournament.slug}/results`">
+                        <Button size="sm" variant="secondary" class="w-full text-xs">
+                            <TrophyIcon class="mr-1 h-3 w-3"/>
+                            {{ t('Results') }}
+                        </Button>
+                    </Link>
+
+                    <Button
+                        v-if="tournament.club"
+                        size="sm"
+                        variant="secondary"
+                        class="text-xs"
+                        @click="showTablesModal = true; showMobileMenu = false"
+                    >
+                        <MonitorIcon class="mr-1 h-3 w-3"/>
+                        {{ t('Tables') }}
+                    </Button>
                 </div>
             </div>
 
@@ -634,37 +757,38 @@ onMounted(() => {
             <!-- Tournament Content -->
             <template v-else-if="tournament">
                 <!-- Tournament Header -->
-                <Card class="mb-8">
-                    <CardHeader>
-                        <div class="flex items-start justify-between">
-                            <div>
-                                <CardTitle class="flex items-center gap-3 text-2xl">
-                                    {{ tournament.name }}
+                <Card class="mb-4 sm:mb-8">
+                    <CardHeader class="p-4 sm:p-6">
+                        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                            <div class="flex-1">
+                                <CardTitle class="flex flex-wrap items-center gap-2 sm:gap-3 text-lg sm:text-2xl">
+                                    <span class="break-words">{{ tournament.name }}</span>
                                     <span
-                                        :class="['rounded-full px-3 py-1 text-sm font-semibold', getStatusBadgeClass(tournament.status)]"
+                                        :class="['rounded-full px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm font-semibold whitespace-nowrap', getStatusBadgeClass(tournament.status)]"
                                     >
                                         {{ tournament.status_display }}
                                     </span>
                                 </CardTitle>
-                                <CardDescription class="mt-2 text-lg">
-                                    <div class="flex flex-wrap gap-4">
+                                <CardDescription class="mt-2 text-sm sm:text-lg">
+                                    <div class="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-4">
                                         <span class="flex items-center gap-1">
-                                            <TrophyIcon class="h-4 w-4"/>
+                                            <TrophyIcon class="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0"/>
                                             {{ tournament.game?.name || 'N/A' }}
                                         </span>
                                         <span class="flex items-center gap-1">
-                                            <CalendarIcon class="h-4 w-4"/>
-                                            {{ formatDateTime(tournament.start_date) }}
+                                            <CalendarIcon class="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0"/>
+                                            <span class="break-words">{{ formatDateTime(tournament.start_date) }}</span>
                                             <span v-if="tournament.end_date !== tournament.start_date">
                                                 - {{ formatDateTime(tournament.end_date) }}
                                             </span>
                                         </span>
                                         <span v-if="tournament.city" class="flex items-center gap-1">
-                                            <MapPinIcon class="h-4 w-4"/>
+                                            <MapPinIcon class="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0"/>
                                             {{ tournament.city.name }}, {{ tournament.city.country?.name }}
                                         </span>
                                     </div>
-                                    <div v-if="tournament.stage" class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                                    <div v-if="tournament.stage"
+                                         class="mt-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                                         {{ t('Stage') }}: <span class="font-medium">{{
                                             tournament.stage_display
                                         }}</span>
@@ -683,7 +807,7 @@ onMounted(() => {
 
                 <!-- Tournament Application Card - Only show to authenticated users -->
                 <div v-if="isAuthenticated && tournament.requires_application && tournament.status === 'upcoming'"
-                     class="mb-8">
+                     class="mb-4 sm:mb-8">
                     <TournamentApplicationCard
                         :tournament="tournament"
                         @application-updated="handleApplicationUpdated"
@@ -692,28 +816,29 @@ onMounted(() => {
 
                 <!-- Guest application prompt -->
                 <div v-else-if="!isAuthenticated && tournament.requires_application && tournament.status === 'upcoming'"
-                     class="mb-8">
+                     class="mb-4 sm:mb-8">
                     <Card class="border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-900/20">
-                        <CardContent class="p-6">
-                            <div class="flex items-center justify-between">
+                        <CardContent class="p-4 sm:p-6">
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                 <div>
-                                    <h3 class="text-lg font-medium text-blue-800 dark:text-blue-300">
+                                    <h3 class="text-base sm:text-lg font-medium text-blue-800 dark:text-blue-300">
                                         {{ t('Tournament Registration') }}
                                     </h3>
-                                    <p class="text-blue-600 dark:text-blue-400">
+                                    <p class="text-sm sm:text-base text-blue-600 dark:text-blue-400">
                                         {{ t('Register now to participate in this tournament.') }}
                                     </p>
                                 </div>
                                 <div class="flex gap-2">
                                     <Link :href="route('login')">
-                                        <Button variant="outline">
-                                            <LogInIcon class="mr-2 h-4 w-4"/>
+                                        <Button variant="outline" size="sm" class="text-xs sm:text-sm">
+                                            <LogInIcon class="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4"/>
                                             {{ t('Login') }}
                                         </Button>
                                     </Link>
-                                    <Button @click="showRegistrationModal = true">
-                                        <UserPlusIcon class="mr-2 h-4 w-4"/>
-                                        {{ t('Register & Apply') }}
+                                    <Button @click="showRegistrationModal = true" size="sm" class="text-xs sm:text-sm">
+                                        <UserPlusIcon class="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4"/>
+                                        <span class="hidden sm:inline">{{ t('Register & Apply') }}</span>
+                                        <span class="sm:hidden">{{ t('Register') }}</span>
                                     </Button>
                                 </div>
                             </div>
@@ -721,23 +846,23 @@ onMounted(() => {
                     </Card>
                 </div>
 
-                <!-- Tab Navigation -->
-                <div class="mb-6 border-b border-gray-200 dark:border-gray-700">
-                    <nav class="-mb-px flex space-x-8 overflow-x-auto">
+                <!-- Tab Navigation - Mobile optimized -->
+                <div class="mb-4 sm:mb-6 border-b border-gray-200 dark:border-gray-700">
+                    <nav class="-mb-px flex space-x-2 sm:space-x-8 overflow-x-auto scrollbar-hide">
                         <button
                             :class="[
-                                'py-4 px-1 text-sm font-medium border-b-2 whitespace-nowrap',
+                                'py-3 sm:py-4 px-2 sm:px-1 text-xs sm:text-sm font-medium border-b-2 whitespace-nowrap',
                                 activeTab === 'info'
                                     ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                             ]"
                             @click="switchTab('info')"
                         >
-                            {{ t('Information') }}
+                            {{ t('Info') }}
                         </button>
                         <button
                             :class="[
-                                'py-4 px-1 text-sm font-medium border-b-2 whitespace-nowrap',
+                                'py-3 sm:py-4 px-2 sm:px-1 text-xs sm:text-sm font-medium border-b-2 whitespace-nowrap',
                                 activeTab === 'players'
                                     ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
@@ -749,7 +874,7 @@ onMounted(() => {
                         <button
                             v-if="canViewGroups"
                             :class="[
-                                'py-4 px-1 text-sm font-medium border-b-2 whitespace-nowrap',
+                                'py-3 sm:py-4 px-2 sm:px-1 text-xs sm:text-sm font-medium border-b-2 whitespace-nowrap',
                                 activeTab === 'groups'
                                     ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
@@ -761,7 +886,7 @@ onMounted(() => {
                         <button
                             v-if="canViewBracket"
                             :class="[
-                                'py-4 px-1 text-sm font-medium border-b-2 whitespace-nowrap',
+                                'py-3 sm:py-4 px-2 sm:px-1 text-xs sm:text-sm font-medium border-b-2 whitespace-nowrap',
                                 activeTab === 'bracket'
                                     ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
@@ -773,7 +898,7 @@ onMounted(() => {
                         <button
                             v-if="canViewMatches"
                             :class="[
-                                'py-4 px-1 text-sm font-medium border-b-2 whitespace-nowrap',
+                                'py-3 sm:py-4 px-2 sm:px-1 text-xs sm:text-sm font-medium border-b-2 whitespace-nowrap',
                                 activeTab === 'matches'
                                     ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
@@ -785,19 +910,21 @@ onMounted(() => {
                         <button
                             v-if="tournament.requires_application && (isAuthenticated && isAdmin || tournament.pending_applications_count > 0)"
                             :class="[
-                                'py-4 px-1 text-sm font-medium border-b-2 whitespace-nowrap',
+                                'py-3 sm:py-4 px-2 sm:px-1 text-xs sm:text-sm font-medium border-b-2 whitespace-nowrap',
                                 activeTab === 'applications'
                                     ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
                             ]"
                             @click="switchTab('applications')"
                         >
-                            {{ t('Applications') }} ({{ tournament.pending_applications_count }})
+                            <span class="hidden sm:inline">{{ t('Applications') }}</span>
+                            <span class="sm:hidden">{{ t('Apps') }}</span>
+                            ({{ tournament.pending_applications_count }})
                         </button>
                         <button
                             v-if="tournament.status === 'completed'"
                             :class="[
-                                'py-4 px-1 text-sm font-medium border-b-2 whitespace-nowrap',
+                                'py-3 sm:py-4 px-2 sm:px-1 text-xs sm:text-sm font-medium border-b-2 whitespace-nowrap',
                                 activeTab === 'results'
                                     ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
@@ -810,69 +937,72 @@ onMounted(() => {
                 </div>
 
                 <!-- Tournament Information Tab -->
-                <div v-if="activeTab === 'info'" class="space-y-6">
-                    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <div v-if="activeTab === 'info'" class="space-y-4 sm:space-y-6">
+                    <div class="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
                         <!-- Details Card -->
                         <Card>
-                            <CardHeader>
-                                <CardTitle>{{ t('Tournament Details') }}</CardTitle>
+                            <CardHeader class="p-4 sm:p-6">
+                                <CardTitle class="text-base sm:text-lg">{{ t('Tournament Details') }}</CardTitle>
                             </CardHeader>
-                            <CardContent>
-                                <div class="space-y-4">
+                            <CardContent class="p-4 sm:p-6 pt-0 sm:pt-0">
+                                <div class="space-y-3 sm:space-y-4">
                                     <div>
-                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">{{
+                                        <h4 class="text-sm sm:text-base font-medium text-gray-900 dark:text-gray-100">{{
                                                 t('Tournament Type')
                                             }}</h4>
-                                        <p class="mt-1 text-gray-600 dark:text-gray-400">
+                                        <p class="mt-1 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                                             {{ tournament.tournament_type_display }}
-                                            <span v-if="tournament.races_to" class="text-sm">
+                                            <span v-if="tournament.races_to" class="text-xs">
                                                 ({{ t('Race to') }} {{ tournament.races_to }})
                                             </span>
                                         </p>
                                     </div>
 
                                     <div v-if="tournament.details">
-                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">{{
+                                        <h4 class="text-sm sm:text-base font-medium text-gray-900 dark:text-gray-100">{{
                                                 t('Description')
                                             }}</h4>
-                                        <p class="mt-1 text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
+                                        <p class="mt-1 text-xs sm:text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
                                             {{ tournament.details }}</p>
                                     </div>
 
                                     <div v-if="tournament.regulation">
-                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">{{
+                                        <h4 class="text-sm sm:text-base font-medium text-gray-900 dark:text-gray-100">{{
                                                 t('Regulation')
                                             }}</h4>
-                                        <p class="mt-1 text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
+                                        <p class="mt-1 text-xs sm:text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
                                             {{ tournament.regulation }}</p>
                                     </div>
 
                                     <div v-if="tournament.format">
-                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">{{ t('Format') }}</h4>
-                                        <p class="mt-1 text-gray-600 dark:text-gray-400">{{ tournament.format }}</p>
+                                        <h4 class="text-sm sm:text-base font-medium text-gray-900 dark:text-gray-100">
+                                            {{ t('Format') }}</h4>
+                                        <p class="mt-1 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                                            {{ tournament.format }}</p>
                                     </div>
 
                                     <div v-if="tournament.organizer">
-                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">{{
+                                        <h4 class="text-sm sm:text-base font-medium text-gray-900 dark:text-gray-100">{{
                                                 t('Organizer')
                                             }}</h4>
-                                        <p class="mt-1 text-gray-600 dark:text-gray-400">{{ tournament.organizer }}</p>
+                                        <p class="mt-1 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                                            {{ tournament.organizer }}</p>
                                     </div>
 
                                     <div v-if="tournament.application_deadline">
-                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">
+                                        <h4 class="text-sm sm:text-base font-medium text-gray-900 dark:text-gray-100">
                                             {{ t('Application Deadline') }}</h4>
-                                        <p class="mt-1 text-gray-600 dark:text-gray-400">
+                                        <p class="mt-1 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                                             {{ formatDateTime(tournament.application_deadline) }}</p>
                                     </div>
 
                                     <div v-if="tournament.official_ratings && tournament.official_ratings.length > 0"
                                          class="flex justify-between">
-                                        <dt class="text-gray-600 dark:text-gray-400">
-                                            <StarIcon class="h-4 w-4 inline mr-1"/>
+                                        <dt class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                                            <StarIcon class="h-3 w-3 sm:h-4 sm:w-4 inline mr-1"/>
                                             {{ t('Official Rating:') }}
                                         </dt>
-                                        <dd class="font-medium">
+                                        <dd class="text-xs sm:text-sm font-medium">
                                             {{ tournament.official_ratings[0].name }}
                                             <span class="text-xs text-gray-500">(×{{
                                                     tournament.official_ratings[0].rating_coefficient
@@ -885,53 +1015,55 @@ onMounted(() => {
 
                         <!-- Stats Card -->
                         <Card>
-                            <CardHeader>
-                                <CardTitle>{{ t('Tournament Stats') }}</CardTitle>
+                            <CardHeader class="p-4 sm:p-6">
+                                <CardTitle class="text-base sm:text-lg">{{ t('Tournament Stats') }}</CardTitle>
                             </CardHeader>
-                            <CardContent>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div class="text-center p-4 bg-gray-50 rounded-lg dark:bg-gray-800">
-                                        <div class="text-2xl font-bold text-green-600 dark:text-green-400">
+                            <CardContent class="p-4 sm:p-6 pt-0 sm:pt-0">
+                                <div class="grid grid-cols-2 gap-3 sm:gap-4">
+                                    <div class="text-center p-3 sm:p-4 bg-gray-50 rounded-lg dark:bg-gray-800">
+                                        <div class="text-lg sm:text-2xl font-bold text-green-600 dark:text-green-400">
                                             {{ tournament.confirmed_players_count }}
                                         </div>
-                                        <div class="text-sm text-gray-600 dark:text-gray-400">
+                                        <div class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                                             {{ t('Confirmed Players') }}
                                         </div>
                                     </div>
 
                                     <div v-if="tournament.pending_applications_count > 0"
-                                         class="text-center p-4 bg-gray-50 rounded-lg dark:bg-gray-800">
-                                        <div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                                         class="text-center p-3 sm:p-4 bg-gray-50 rounded-lg dark:bg-gray-800">
+                                        <div class="text-lg sm:text-2xl font-bold text-yellow-600 dark:text-yellow-400">
                                             {{ tournament.pending_applications_count }}
                                         </div>
-                                        <div class="text-sm text-gray-600 dark:text-gray-400">
+                                        <div class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                                             {{ t('Pending Applications') }}
                                         </div>
                                     </div>
 
-                                    <div class="text-center p-4 bg-gray-50 rounded-lg dark:bg-gray-800">
-                                        <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                                    <div class="text-center p-3 sm:p-4 bg-gray-50 rounded-lg dark:bg-gray-800">
+                                        <div class="text-lg sm:text-2xl font-bold text-blue-600 dark:text-blue-400">
                                             {{ tournament.max_participants || '∞' }}
                                         </div>
-                                        <div class="text-sm text-gray-600 dark:text-gray-400">
+                                        <div class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                                             {{ t('Max Participants') }}
                                         </div>
                                     </div>
 
                                     <div v-if="tournament.entry_fee > 0"
-                                         class="text-center p-4 bg-gray-50 rounded-lg dark:bg-gray-800">
-                                        <div class="text-2xl font-bold text-green-600 dark:text-green-400">
+                                         class="text-center p-3 sm:p-4 bg-gray-50 rounded-lg dark:bg-gray-800">
+                                        <div class="text-lg sm:text-2xl font-bold text-green-600 dark:text-green-400">
                                             {{ formatCurrency(tournament.entry_fee) }}
                                         </div>
-                                        <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('Entry Fee') }}</div>
+                                        <div class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                                            {{ t('Entry Fee') }}
+                                        </div>
                                     </div>
 
                                     <div v-if="tournament.prize_pool > 0"
-                                         class="text-center p-4 bg-gray-50 rounded-lg dark:bg-gray-800 col-span-2">
-                                        <div class="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
+                                         class="text-center p-3 sm:p-4 bg-gray-50 rounded-lg dark:bg-gray-800 col-span-2">
+                                        <div class="text-xl sm:text-3xl font-bold text-yellow-600 dark:text-yellow-400">
                                             {{ formatCurrency(tournament.prize_pool) }}
                                         </div>
-                                        <div class="text-sm text-gray-600 dark:text-gray-400">{{
+                                        <div class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{{
                                                 t('Total Prize Pool')
                                             }}
                                         </div>
@@ -945,38 +1077,41 @@ onMounted(() => {
                 <!-- Players Tab -->
                 <div v-if="activeTab === 'players'">
                     <Card>
-                        <CardHeader>
-                            <CardTitle class="flex items-center gap-2">
-                                <UsersIcon class="h-5 w-5"/>
+                        <CardHeader class="p-4 sm:p-6">
+                            <CardTitle class="flex items-center gap-2 text-base sm:text-lg">
+                                <UsersIcon class="h-4 w-4 sm:h-5 sm:w-5"/>
                                 {{ t('Confirmed Players') }}
                             </CardTitle>
-                            <CardDescription>
+                            <CardDescription class="text-xs sm:text-sm">
                                 {{ tournament.confirmed_players_count }} {{ t('confirmed players') }}
                                 <span v-if="tournament.max_participants">
                                    {{ t('out of') }} {{ tournament.max_participants }} {{ t('maximum') }}
                                </span>
                             </CardDescription>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent class="p-4 sm:p-6 pt-0 sm:pt-0">
                             <div v-if="isLoadingPlayers" class="flex justify-center py-8">
                                 <Spinner class="text-primary h-6 w-6"/>
                             </div>
-                            <div v-else-if="confirmedPlayers.length === 0" class="py-8 text-center text-gray-500">
+                            <div v-else-if="confirmedPlayers.length === 0"
+                                 class="py-8 text-center text-gray-500 text-sm">
                                 {{ t('No confirmed players yet.') }}
                             </div>
                             <div v-else class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                                 <div
                                     v-for="player in confirmedPlayers"
                                     :key="player.id"
-                                    class="flex items-center justify-between p-3 bg-gray-50 rounded-lg dark:bg-gray-800"
+                                    class="flex items-center justify-between p-2 sm:p-3 bg-gray-50 rounded-lg dark:bg-gray-800"
                                 >
                                     <div>
-                                        <p class="font-medium">
+                                        <p class="text-sm sm:text-base font-medium">
                                             <span v-if="player.seed_number"
-                                                  class="text-gray-500 mr-2">#{{ player.seed_number }}</span>
+                                                  class="text-gray-500 mr-2 text-xs sm:text-sm">#{{
+                                                    player.seed_number
+                                                }}</span>
                                             {{ player.user?.firstname }} {{ player.user?.lastname }}
                                         </p>
-                                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                                        <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                                             {{ player.status_display }}
                                         </p>
                                         <p v-if="player.confirmed_at" class="text-xs text-gray-500">
@@ -991,7 +1126,7 @@ onMounted(() => {
 
                 <!-- Groups Tab -->
                 <div v-if="activeTab === 'groups' && canViewGroups">
-                    <div class="space-y-6">
+                    <div class="space-y-4 sm:space-y-6">
                         <Card v-if="isLoadingGroups">
                             <CardContent class="py-10">
                                 <div class="flex justify-center">
@@ -1000,34 +1135,39 @@ onMounted(() => {
                             </CardContent>
                         </Card>
 
-                        <div v-else-if="groups.length > 0" class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        <div v-else-if="groups.length > 0"
+                             class="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
                             <Card v-for="group in groups" :key="group.id">
-                                <CardHeader>
-                                    <CardTitle>{{ t('Group :code', {code: group.group_code}) }}</CardTitle>
-                                    <CardDescription>
+                                <CardHeader class="p-4 sm:p-6">
+                                    <CardTitle class="text-base sm:text-lg">
+                                        {{ t('Group :code', {code: group.group_code}) }}
+                                    </CardTitle>
+                                    <CardDescription class="text-xs sm:text-sm">
                                         {{ t(':count players', {count: group.group_size}) }}
                                         <span v-if="group.advance_count"> • {{
                                                 t(':count advance', {count: group.advance_count})
                                             }}</span>
                                     </CardDescription>
                                 </CardHeader>
-                                <CardContent>
+                                <CardContent class="p-4 sm:p-6 pt-0 sm:pt-0">
                                     <div class="space-y-2">
                                         <div
                                             v-for="(player, index) in getPlayersInGroup(group.group_code)"
                                             :key="player.id"
                                             :class="[
-                                                'flex items-center justify-between p-2 rounded',
+                                                'flex items-center justify-between p-2 rounded text-sm',
                                                 index < group.advance_count ? 'bg-green-50 dark:bg-green-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-800'
                                             ]"
                                         >
                                             <div class="flex items-center gap-2">
-                                                <span class="text-sm font-medium text-gray-500">
+                                                <span class="text-xs sm:text-sm font-medium text-gray-500">
                                                     {{ index + 1 }}
                                                 </span>
-                                                <span>{{ player.user?.firstname }} {{ player.user?.lastname }}</span>
+                                                <span class="text-xs sm:text-sm">{{
+                                                        player.user?.firstname
+                                                    }} {{ player.user?.lastname }}</span>
                                             </div>
-                                            <div class="text-sm text-gray-600 dark:text-gray-400">
+                                            <div class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                                                 <span v-if="player.group_wins > 0 || player.group_losses > 0">
                                                     {{ player.group_wins }}W - {{ player.group_losses }}L
                                                 </span>
@@ -1038,12 +1178,12 @@ onMounted(() => {
 
                                     <!-- Group Matches -->
                                     <div v-if="matchesByGroup[group.group_code]?.length > 0" class="mt-4 pt-4 border-t">
-                                        <h4 class="text-sm font-medium mb-2">{{ t('Matches') }}</h4>
+                                        <h4 class="text-xs sm:text-sm font-medium mb-2">{{ t('Matches') }}</h4>
                                         <div class="space-y-2">
                                             <div
                                                 v-for="match in matchesByGroup[group.group_code]"
                                                 :key="match.id"
-                                                class="text-sm"
+                                                class="text-xs sm:text-sm"
                                             >
                                                 <div class="flex items-center justify-between">
                                                     <div class="flex-1">
@@ -1086,7 +1226,7 @@ onMounted(() => {
                         <Spinner class="h-8 w-8 text-primary"/>
                     </div>
                     <div v-else-if="matches.length === 0" class="text-center py-12">
-                        <p class="text-gray-500">{{ t('Bracket has not been generated yet.') }}</p>
+                        <p class="text-gray-500 text-sm sm:text-base">{{ t('Bracket has not been generated yet.') }}</p>
                     </div>
                     <template v-else>
                         <SingleEliminationBracket
@@ -1110,37 +1250,37 @@ onMounted(() => {
                 <!-- Matches Tab -->
                 <div v-if="activeTab === 'matches' && canViewMatches">
                     <Card>
-                        <CardHeader>
-                            <CardTitle class="flex items-center gap-2">
-                                <PlayIcon class="h-5 w-5"/>
+                        <CardHeader class="p-4 sm:p-6">
+                            <CardTitle class="flex items-center gap-2 text-base sm:text-lg">
+                                <PlayIcon class="h-4 w-4 sm:h-5 sm:w-5"/>
                                 {{ t('Tournament Matches') }}
                             </CardTitle>
-                            <CardDescription>
+                            <CardDescription class="text-xs sm:text-sm">
                                 {{ t('All tournament matches and results') }}
                             </CardDescription>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent class="p-4 sm:p-6 pt-0 sm:pt-0">
                             <div v-if="isLoadingMatches" class="flex justify-center py-8">
                                 <Spinner class="text-primary h-6 w-6"/>
                             </div>
-                            <div v-else-if="displayMatches.length === 0" class="py-8 text-center text-gray-500">
+                            <div v-else-if="displayMatches.length === 0" class="py-8 text-center text-gray-500 text-sm">
                                 {{ t('No matches scheduled yet.') }}
                             </div>
-                            <div v-else class="space-y-4">
+                            <div v-else class="space-y-3 sm:space-y-4">
                                 <div
                                     v-for="match in displayMatches"
                                     :key="match.id"
-                                    class="flex items-center justify-between rounded-lg border p-4"
+                                    class="flex flex-col sm:flex-row sm:items-center sm:justify-between rounded-lg border p-3 sm:p-4 gap-3"
                                 >
                                     <!-- Match Info -->
                                     <div class="flex-1">
-                                        <div class="flex items-center gap-4">
+                                        <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
                                             <!-- Match Code & Stage -->
-                                            <div class="min-w-[120px]">
-                                                <p class="font-medium">
+                                            <div class="min-w-[80px] sm:min-w-[120px]">
+                                                <p class="text-sm sm:text-base font-medium">
                                                     {{ match.match_code || `#${match.id}` }}
                                                 </p>
-                                                <p class="text-sm text-gray-500">
+                                                <p class="text-xs sm:text-sm text-gray-500">
                                                     {{ match.stage_display }}
                                                     <span v-if="match.round_display"> - {{ match.round_display }}</span>
                                                 </p>
@@ -1150,12 +1290,14 @@ onMounted(() => {
                                             <div class="flex-1">
                                                 <div class="flex items-center justify-between">
                                                     <div class="flex-1">
-                                                        <p :class="{'text-green-600 font-bold': match.winner_id === match.player1_id}">
+                                                        <p class="text-sm sm:text-base"
+                                                           :class="{'text-green-600 font-bold': match.winner_id === match.player1_id}">
                                                             {{ match.player1?.firstname }} {{ match.player1?.lastname }}
                                                             <span v-if="!match.player1"
                                                                   class="text-gray-400">{{ t('TBD') }}</span>
                                                         </p>
-                                                        <p :class="{'text-green-600 font-bold': match.winner_id === match.player2_id}">
+                                                        <p class="text-sm sm:text-base"
+                                                           :class="{'text-green-600 font-bold': match.winner_id === match.player2_id}">
                                                             {{ match.player2?.firstname }} {{ match.player2?.lastname }}
                                                             <span v-if="!match.player2"
                                                                   class="text-gray-400">{{ t('TBD') }}</span>
@@ -1163,38 +1305,41 @@ onMounted(() => {
                                                     </div>
 
                                                     <!-- Scores -->
-                                                    <div class="mx-4 text-center">
-                                                        <p class="text-xl font-bold">
+                                                    <div class="mx-3 sm:mx-4 text-center">
+                                                        <p class="text-lg sm:text-xl font-bold">
                                                             {{ match.player1_score ?? '-' }}
                                                         </p>
-                                                        <p class="text-xl font-bold">
+                                                        <p class="text-lg sm:text-xl font-bold">
                                                             {{ match.player2_score ?? '-' }}
                                                         </p>
                                                     </div>
                                                 </div>
                                             </div>
+                                        </div>
+                                    </div>
 
-                                            <!-- Status & Table -->
-                                            <div class="text-right">
-                                                <span :class="[
-                                                    'inline-flex px-2 py-1 text-xs font-medium rounded-full',
-                                                    getMatchStatusBadgeClass(match.status)
-                                                ]">
-                                                    {{ match.status_display }}
-                                                </span>
-                                                <p v-if="match.club_table" class="mt-1 text-sm text-gray-500">
-                                                    {{ match.club_table.name }}
-                                                </p>
-                                                <p v-if="match.scheduled_at" class="mt-1 text-sm text-gray-500">
-                                                    <ClockIcon class="inline h-3 w-3"/>
-                                                    {{ formatDateTime(match.scheduled_at) }}
-                                                </p>
-                                                <p v-if="match.completed_at && match.status === 'completed'"
-                                                   class="mt-1 text-sm text-gray-500">
-                                                    <CheckCircleIcon class="inline h-3 w-3"/>
-                                                    {{ formatDateTime(match.completed_at) }}
-                                                </p>
-                                            </div>
+                                    <!-- Status & Table -->
+                                    <div
+                                        class="flex flex-row sm:flex-col justify-between sm:justify-start items-center sm:items-end gap-2 sm:text-right">
+                                        <span :class="[
+                                            'inline-flex px-2 py-1 text-xs font-medium rounded-full',
+                                            getMatchStatusBadgeClass(match.status)
+                                        ]">
+                                            {{ match.status_display }}
+                                        </span>
+                                        <div class="text-right">
+                                            <p v-if="match.club_table" class="text-xs sm:text-sm text-gray-500">
+                                                {{ match.club_table.name }}
+                                            </p>
+                                            <p v-if="match.scheduled_at" class="text-xs sm:text-sm text-gray-500">
+                                                <ClockIcon class="inline h-3 w-3"/>
+                                                {{ formatDateTime(match.scheduled_at) }}
+                                            </p>
+                                            <p v-if="match.completed_at && match.status === 'completed'"
+                                               class="text-xs sm:text-sm text-gray-500">
+                                                <CheckCircleIcon class="inline h-3 w-3"/>
+                                                {{ formatDateTime(match.completed_at) }}
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
@@ -1205,27 +1350,32 @@ onMounted(() => {
 
                 <!-- Applications Tab -->
                 <div v-if="activeTab === 'applications'">
-                    <div class="space-y-6">
+                    <div class="space-y-4 sm:space-y-6">
                         <!-- Pending Applications -->
                         <Card v-if="pendingApplications.length > 0">
-                            <CardHeader>
-                                <CardTitle class="flex items-center gap-2">
-                                    <ClipboardListIcon class="h-5 w-5 text-yellow-600"/>
+                            <CardHeader class="p-4 sm:p-6">
+                                <CardTitle class="flex items-center gap-2 text-base sm:text-lg">
+                                    <ClipboardListIcon class="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600"/>
                                     {{ t('Pending Applications') }} ({{ pendingApplications.length }})
                                 </CardTitle>
-                                <CardDescription>{{ t('Applications waiting for approval') }}</CardDescription>
+                                <CardDescription class="text-xs sm:text-sm">{{
+                                        t('Applications waiting for approval')
+                                    }}
+                                </CardDescription>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent class="p-4 sm:p-6 pt-0 sm:pt-0">
                                 <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                                     <div
                                         v-for="application in pendingApplications"
                                         :key="application.id"
-                                        class="flex items-center justify-between p-3 bg-yellow-50 rounded-lg dark:bg-yellow-900/20"
+                                        class="flex items-center justify-between p-2 sm:p-3 bg-yellow-50 rounded-lg dark:bg-yellow-900/20"
                                     >
                                         <div>
-                                            <p class="font-medium">{{ application.user?.firstname }}
+                                            <p class="text-sm sm:text-base font-medium">{{
+                                                    application.user?.firstname
+                                                }}
                                                 {{ application.user?.lastname }}</p>
-                                            <p class="text-sm text-gray-600 dark:text-gray-400">
+                                            <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                                                 {{ t('Applied:') }} {{ formatDate(application.applied_at) }}
                                             </p>
                                         </div>
@@ -1240,24 +1390,29 @@ onMounted(() => {
 
                         <!-- Rejected Applications -->
                         <Card v-if="rejectedApplications.length > 0">
-                            <CardHeader>
-                                <CardTitle class="flex items-center gap-2">
-                                    <UserCheckIcon class="h-5 w-5 text-red-600"/>
+                            <CardHeader class="p-4 sm:p-6">
+                                <CardTitle class="flex items-center gap-2 text-base sm:text-lg">
+                                    <UserCheckIcon class="h-4 w-4 sm:h-5 sm:w-5 text-red-600"/>
                                     {{ t('Rejected Applications') }} ({{ rejectedApplications.length }})
                                 </CardTitle>
-                                <CardDescription>{{ t('Applications that were not accepted') }}</CardDescription>
+                                <CardDescription class="text-xs sm:text-sm">{{
+                                        t('Applications that were not accepted')
+                                    }}
+                                </CardDescription>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent class="p-4 sm:p-6 pt-0 sm:pt-0">
                                 <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                                     <div
                                         v-for="application in rejectedApplications"
                                         :key="application.id"
-                                        class="flex items-center justify-between p-3 bg-red-50 rounded-lg dark:bg-red-900/20"
+                                        class="flex items-center justify-between p-2 sm:p-3 bg-red-50 rounded-lg dark:bg-red-900/20"
                                     >
                                         <div>
-                                            <p class="font-medium">{{ application.user?.firstname }}
+                                            <p class="text-sm sm:text-base font-medium">{{
+                                                    application.user?.firstname
+                                                }}
                                                 {{ application.user?.lastname }}</p>
-                                            <p class="text-sm text-gray-600 dark:text-gray-400">
+                                            <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                                                 {{ t('Rejected:') }} {{ formatDate(application.rejected_at) }}
                                             </p>
                                         </div>
@@ -1274,9 +1429,9 @@ onMounted(() => {
                         <Card v-if="pendingApplications.length === 0 && rejectedApplications.length === 0">
                             <CardContent class="py-10 text-center">
                                 <ClipboardListIcon class="mx-auto h-12 w-12 text-gray-400"/>
-                                <p class="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">
+                                <p class="mt-4 text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100">
                                     {{ t('No Applications') }}</p>
-                                <p class="mt-2 text-gray-600 dark:text-gray-400">
+                                <p class="mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">
                                     {{ t('There are no applications to display.') }}
                                 </p>
                             </CardContent>
@@ -1287,28 +1442,32 @@ onMounted(() => {
                 <!-- Results Tab -->
                 <div v-if="activeTab === 'results' && tournament.status === 'completed'">
                     <Card>
-                        <CardHeader>
-                            <CardTitle class="flex items-center gap-2">
-                                <TrophyIcon class="h-5 w-5"/>
+                        <CardHeader class="p-4 sm:p-6">
+                            <CardTitle class="flex items-center gap-2 text-base sm:text-lg">
+                                <TrophyIcon class="h-4 w-4 sm:h-5 sm:w-5"/>
                                 {{ t('Tournament Results') }}
                             </CardTitle>
-                            <CardDescription>{{ t('Final standings and prizes') }}</CardDescription>
+                            <CardDescription class="text-xs sm:text-sm">{{
+                                    t('Final standings and prizes')
+                                }}
+                            </CardDescription>
                         </CardHeader>
-                        <CardContent>
-                            <div v-if="completedPlayers.length === 0" class="py-8 text-center text-gray-500">
+                        <CardContent class="p-4 sm:p-6 pt-0 sm:pt-0">
+                            <div v-if="completedPlayers.length === 0" class="py-8 text-center text-gray-500 text-sm">
                                 {{ t('No results available yet.') }}
                             </div>
-                            <div v-else class="overflow-auto">
+                            <div v-else class="overflow-auto -mx-4 sm:mx-0">
                                 <DataTable
                                     :columns="columns"
                                     :compact-mode="true"
                                     :data="completedPlayers"
                                     :empty-message="t('No results available yet.')"
+                                    class="min-w-[600px]"
                                 >
                                     <template #cell-position="{ value }">
                                         <span
                                             :class="[
-                                                'inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium',
+                                                'inline-flex h-6 w-6 sm:h-8 sm:w-8 items-center justify-center rounded-full text-xs sm:text-sm font-medium',
                                                 getPositionBadgeClass(value.position)
                                             ]"
                                         >
@@ -1318,9 +1477,9 @@ onMounted(() => {
 
                                     <template #cell-player="{ value }">
                                         <div>
-                                            <p class="font-medium">{{ value.name }}</p>
+                                            <p class="text-sm sm:text-base font-medium">{{ value.name }}</p>
                                             <p v-if="value.isWinner"
-                                               class="text-sm text-yellow-600 dark:text-yellow-400">🏆 {{
+                                               class="text-xs sm:text-sm text-yellow-600 dark:text-yellow-400">🏆 {{
                                                     t('Winner')
                                                 }}</p>
                                         </div>
@@ -1329,7 +1488,7 @@ onMounted(() => {
                                     <template #cell-rating="{ value }">
                                         <span
                                             v-if="value.points > 0"
-                                            class="rounded-full bg-blue-100 px-2 py-1 text-sm text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+                                            class="rounded-full bg-blue-100 px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs sm:text-sm text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
                                         >
                                             +{{ value.points }}
                                         </span>
@@ -1338,7 +1497,7 @@ onMounted(() => {
 
                                     <template #cell-bonus="{ value }">
                                         <span v-if="value.amount > 0"
-                                              class="font-medium text-orange-600 dark:text-orange-400">
+                                              class="text-sm sm:text-base font-medium text-orange-600 dark:text-orange-400">
                                             {{ value.amount }}
                                         </span>
                                         <span v-else class="text-gray-400">—</span>
@@ -1346,7 +1505,7 @@ onMounted(() => {
 
                                     <template #cell-prize="{ value }">
                                         <span v-if="value.amount > 0"
-                                              class="font-medium text-green-600 dark:text-green-400">
+                                              class="text-sm sm:text-base font-medium text-green-600 dark:text-green-400">
                                             {{ formatCurrency(value.amount) }}
                                         </span>
                                         <span v-else class="text-gray-400">—</span>
@@ -1354,7 +1513,7 @@ onMounted(() => {
 
                                     <template #cell-achievement="{ value }">
                                         <span v-if="value.amount > 0"
-                                              class="font-medium text-purple-600 dark:text-purple-400">
+                                              class="text-sm sm:text-base font-medium text-purple-600 dark:text-purple-400">
                                             {{ formatCurrency(value.amount) }}
                                         </span>
                                         <span v-else class="text-gray-400">—</span>
@@ -1362,7 +1521,7 @@ onMounted(() => {
 
                                     <template #cell-total="{ value }">
                                         <span v-if="value.amount > 0"
-                                              class="font-bold text-indigo-600 dark:text-indigo-400">
+                                              class="text-sm sm:text-base font-bold text-indigo-600 dark:text-indigo-400">
                                             {{ formatCurrency(value.amount) }}
                                         </span>
                                         <span v-else class="text-gray-400">—</span>
@@ -1389,3 +1548,15 @@ onMounted(() => {
         />
     </div>
 </template>
+
+<style scoped>
+/* Hide scrollbar for tab navigation on mobile */
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+</style>

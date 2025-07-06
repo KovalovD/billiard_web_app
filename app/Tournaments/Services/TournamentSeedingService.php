@@ -8,6 +8,7 @@ use App\Tournaments\Models\TournamentPlayer;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
+use Schema;
 use Throwable;
 
 class TournamentSeedingService
@@ -168,9 +169,11 @@ class TournamentSeedingService
                 'seeding_completed'    => true,
             ]);
 
+            Schema::disableForeignKeyConstraints();   // отключить проверки
             $tournament->matches()->forceDelete();
             $tournament->brackets()->forceDelete();
             $tournament->groups()->forceDelete();
+            Schema::enableForeignKeyConstraints();    // включить обратно
         });
     }
 }

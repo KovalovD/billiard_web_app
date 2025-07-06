@@ -94,6 +94,10 @@ return [
     'Pending Applications (:count)'                     => 'Pending Applications (:count)',
     ':selected of :total pending applications selected' => ':selected of :total pending applications selected',
     'Confirm Selected (:count)'                         => 'Confirm Selected (:count)',
+    'Confirm (:count)'                                  => 'Confirm (:count)',
     'Reject Selected (:count)'                          => 'Reject Selected (:count)',
+    'Reject (:count)'                                   => 'Reject (:count)',
     'Confirmed: :date'                                  => 'Confirmed: :date',
+    'Confirmed Players (:count)'                        => 'Confirmed Players (:count)',
+    'Manage Players: :name'                             => 'Manage Players: :name',
 ];

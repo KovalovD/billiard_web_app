@@ -104,26 +104,27 @@ onMounted(() => {
 <template>
     <Head :title="tournament ? `${t('Groups')}: ${tournament.name}` : t('Tournament Groups')"/>
 
-    <div class="py-12">
-        <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
-            <!-- Header -->
-            <div class="mb-6 flex items-center justify-between">
+    <div class="py-6 sm:py-12">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <!-- Mobile-optimized Header -->
+            <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">{{
+                    <h1 class="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-200">{{
                             t('Tournament Groups')
                         }}</h1>
-                    <p class="text-gray-600 dark:text-gray-400">
+                    <p class="text-sm sm:text-base text-gray-600 dark:text-gray-400">
                         {{ tournament ? tournament.name : t('Loading...') }}
                     </p>
                 </div>
-                <div class="flex space-x-3">
-                    <Button :disabled="isLoading" variant="outline" @click="loadData">
+                <div class="flex flex-wrap gap-2">
+                    <Button :disabled="isLoading" variant="outline" size="sm" @click="loadData">
                         <RefreshCwIcon :class="{ 'animate-spin': isLoading }" class="mr-2 h-4 w-4"/>
-                        {{ t('Refresh') }}
+                        <span class="hidden sm:inline">{{ t('Refresh') }}</span>
                     </Button>
-                    <Button variant="outline" @click="router.visit(`/tournaments/${tournament?.slug}`)">
+                    <Button variant="outline" size="sm" @click="router.visit(`/tournaments/${tournament?.slug}`)">
                         <ArrowLeftIcon class="mr-2 h-4 w-4"/>
-                        {{ t('Back to Tournament') }}
+                        <span class="hidden sm:inline">{{ t('Back to Tournament') }}</span>
+                        <span class="sm:hidden">{{ t('Back') }}</span>
                     </Button>
                 </div>
             </div>
@@ -167,13 +168,13 @@ onMounted(() => {
                 </CardContent>
             </Card>
 
-            <!-- Groups Display -->
+            <!-- Groups Display - Mobile optimized -->
             <div v-if="groups.length > 0 && !isLoading" class="space-y-6">
-                <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     <Card v-for="group in groups" :key="group.id">
                         <CardHeader>
-                            <CardTitle>{{ t('Group :code', {code: group.group_code}) }}</CardTitle>
-                            <CardDescription>
+                            <CardTitle class="text-lg">{{ t('Group :code', {code: group.group_code}) }}</CardTitle>
+                            <CardDescription class="text-sm">
                                 {{ t(':count players', {count: group.group_size}) }} •
                                 {{ t(':count advance', {count: group.advance_count}) }}
                             </CardDescription>
@@ -183,15 +184,17 @@ onMounted(() => {
                                 <div
                                     v-for="player in getPlayersInGroup(group.group_code)"
                                     :key="player.id"
-                                    class="flex items-center justify-between p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-800"
+                                    class="flex items-center justify-between p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-sm"
                                 >
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-sm font-medium text-gray-500">
+                                    <div class="flex items-center gap-2 min-w-0">
+                                        <span class="text-xs sm:text-sm font-medium text-gray-500 flex-shrink-0">
                                             {{ player.seed_number }}
                                         </span>
-                                        <span>{{ player.user?.firstname }} {{ player.user?.lastname }}</span>
+                                        <span class="truncate">{{ player.user?.firstname }} {{
+                                                player.user?.lastname
+                                            }}</span>
                                     </div>
-                                    <div class="text-sm text-gray-600 dark:text-gray-400">
+                                    <div class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 flex-shrink-0">
                                         <span v-if="player.group_wins > 0 || player.group_losses > 0">
                                             {{ player.group_wins }}W - {{ player.group_losses }}L
                                         </span>
@@ -202,10 +205,10 @@ onMounted(() => {
                     </Card>
                 </div>
 
-                <!-- Actions -->
+                <!-- Actions - Mobile optimized -->
                 <Card>
                     <CardContent class="pt-6">
-                        <div class="flex items-center justify-between">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                             <div>
                                 <p class="text-sm text-gray-600 dark:text-gray-400">
                                     {{
@@ -215,15 +218,17 @@ onMounted(() => {
                                     }}
                                 </p>
                             </div>
-                            <div class="flex space-x-3">
+                            <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
                                 <Button
                                     variant="outline"
+                                    size="sm"
                                     @click="router.visit(`/admin/tournaments/${props.tournamentId}/matches`)"
                                 >
                                     {{ t('Manage Matches') }}
                                 </Button>
                                 <Button
                                     v-if="tournament?.tournament_type === 'groups_playoff'"
+                                    size="sm"
                                     @click="proceedToBracket"
                                 >
                                     <PlayIcon class="mr-2 h-4 w-4"/>

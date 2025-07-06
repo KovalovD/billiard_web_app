@@ -79,6 +79,7 @@ const columns = computed(() => [
     {
         key: 'seed',
         label: t('Seed'),
+        mobileLabel: t('Seed'),
         align: 'center' as const,
         width: '80px',
         render: (player: TournamentPlayer) => ({
@@ -89,6 +90,7 @@ const columns = computed(() => [
     {
         key: 'player',
         label: t('Player'),
+        mobileLabel: t('Player'),
         align: 'left' as const,
         render: (player: TournamentPlayer) => ({
             name: `${player.user?.firstname} ${player.user?.lastname}`,
@@ -98,6 +100,7 @@ const columns = computed(() => [
     {
         key: 'rating',
         label: t('Rating'),
+        mobileLabel: t('Rating'),
         align: 'center' as const,
         render: (player: TournamentPlayer) => ({
             rating: player.rating
@@ -106,6 +109,7 @@ const columns = computed(() => [
     {
         key: 'status',
         label: t('Status'),
+        mobileLabel: t('Status'),
         align: 'center' as const,
         render: (player: TournamentPlayer) => ({
             status: player.status,
@@ -224,26 +228,27 @@ onMounted(() => {
 <template>
     <Head :title="tournament ? `${t('Seeding')}: ${tournament.name}` : t('Tournament Seeding')"/>
 
-    <div class="py-12">
-        <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
-            <!-- Header -->
-            <div class="mb-6 flex items-center justify-between">
+    <div class="py-6 sm:py-12">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <!-- Mobile-optimized Header -->
+            <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">{{
+                    <h1 class="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-200">{{
                             t('Tournament Seeding')
                         }}</h1>
-                    <p class="text-gray-600 dark:text-gray-400">
+                    <p class="text-sm sm:text-base text-gray-600 dark:text-gray-400">
                         {{ tournament ? tournament.name : t('Loading...') }}
                     </p>
                 </div>
-                <div class="flex space-x-3">
-                    <Button :disabled="isLoading" variant="outline" @click="loadData">
+                <div class="flex flex-wrap gap-2">
+                    <Button :disabled="isLoading" variant="outline" size="sm" @click="loadData">
                         <RefreshCwIcon :class="{ 'animate-spin': isLoading }" class="mr-2 h-4 w-4"/>
-                        {{ t('Refresh') }}
+                        <span class="hidden sm:inline">{{ t('Refresh') }}</span>
                     </Button>
-                    <Button variant="outline" @click="router.visit(`/tournaments/${tournament?.slug}`)">
+                    <Button variant="outline" size="sm" @click="router.visit(`/tournaments/${tournament?.slug}`)">
                         <ArrowLeftIcon class="mr-2 h-4 w-4"/>
-                        {{ t('Back to Tournament') }}
+                        <span class="hidden sm:inline">{{ t('Back to Tournament') }}</span>
+                        <span class="sm:hidden">{{ t('Back') }}</span>
                     </Button>
                 </div>
             </div>
@@ -259,39 +264,45 @@ onMounted(() => {
                 {{ successMessage }}
             </div>
 
-            <!-- Tournament Info -->
+            <!-- Tournament Info - Mobile optimized -->
             <Card v-if="tournament" class="mb-6">
                 <CardContent class="pt-6">
-                    <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                         <div class="text-center">
-                            <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                            <div class="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400">
                                 {{ confirmedPlayers.length }}
                             </div>
-                            <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('Confirmed Players') }}</div>
+                            <div class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{{
+                                    t('Confirmed Players')
+                                }}
+                            </div>
                         </div>
                         <div class="text-center">
-                            <div class="text-2xl font-bold text-green-600 dark:text-green-400">
+                            <div class="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">
                                 {{ seededPlayers.length }}
                             </div>
-                            <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('Seeded') }}</div>
+                            <div class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{{ t('Seeded') }}</div>
                         </div>
                         <div class="text-center">
-                            <div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                            <div class="text-xl sm:text-2xl font-bold text-yellow-600 dark:text-yellow-400">
                                 {{ unseededPlayers.length }}
                             </div>
-                            <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('Unseeded') }}</div>
+                            <div class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{{ t('Unseeded') }}</div>
                         </div>
                         <div class="text-center">
-                            <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                                {{ tournament.tournament_type_display }}
+                            <div class="text-xl sm:text-2xl font-bold text-purple-600 dark:text-purple-400">
+                                <span class="hidden sm:inline">{{ tournament.tournament_type_display }}</span>
+                                <span class="sm:hidden text-base">{{
+                                        tournament.tournament_type_display.split(' ')[0]
+                                    }}</span>
                             </div>
-                            <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('Format') }}</div>
+                            <div class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{{ t('Format') }}</div>
                         </div>
                     </div>
                 </CardContent>
             </Card>
 
-            <!-- Seeding Controls -->
+            <!-- Seeding Controls - Mobile optimized -->
             <Card class="mb-6">
                 <CardHeader>
                     <CardTitle class="flex items-center gap-2">
@@ -301,9 +312,9 @@ onMounted(() => {
                     <CardDescription>{{ t('Choose how to assign seeds to players') }}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div class="flex items-end gap-4">
+                    <div class="flex flex-col sm:flex-row sm:items-end gap-4">
                         <div class="flex-1">
-                            <Label for="seeding_method">{{ t('Method') }}</Label>
+                            <Label for="seeding_method" class="text-sm">{{ t('Method') }}</Label>
                             <Select v-model="seedingMethod">
                                 <SelectTrigger>
                                     <SelectValue/>
@@ -332,6 +343,7 @@ onMounted(() => {
                         </div>
                         <Button
                             :disabled="isGenerating || confirmedPlayers.length === 0"
+                            size="sm"
                             @click="generateSeeds"
                         >
                             <Spinner v-if="isGenerating" class="mr-2 h-4 w-4"/>
@@ -341,7 +353,7 @@ onMounted(() => {
                 </CardContent>
             </Card>
 
-            <!-- Players List -->
+            <!-- Players List - Mobile optimized -->
             <Card class="mb-6">
                 <CardHeader>
                     <CardTitle class="flex items-center gap-2">
@@ -361,18 +373,36 @@ onMounted(() => {
                     <div v-else-if="confirmedPlayers.length === 0" class="py-8 text-center text-gray-500">
                         {{ t('No confirmed players yet.') }}
                     </div>
+
+                    <!-- DataTable with mobile support -->
                     <div v-else>
                         <DataTable
                             :columns="columns"
                             :data="confirmedPlayers"
                             :empty-message="t('No players found')"
+                            :mobile-card-mode="true"
                         >
+                            <!-- Mobile primary info -->
+                            <template #mobile-primary="{ item }">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex-1 min-w-0">
+                                        <p class="font-medium truncate">
+                                            {{ item.user?.firstname }} {{ item.user?.lastname }}
+                                        </p>
+                                        <p class="text-xs text-gray-600 dark:text-gray-400 truncate">
+                                            {{ item.user?.email }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- Seed column for both desktop and mobile -->
                             <template #cell-seed="{ value }">
                                 <div v-if="seedingMethod === 'manual'" class="flex items-center justify-center">
                                     <Input
                                         v-model.number="manualSeeds[value.playerId]"
                                         :max="confirmedPlayers.length"
-                                        class="w-20 text-center"
+                                        class="w-16 sm:w-20 text-center text-sm"
                                         min="1"
                                         type="number"
                                         @change="updateManualSeed(value.playerId, $event.target.value)"
@@ -410,10 +440,10 @@ onMounted(() => {
                 </CardContent>
             </Card>
 
-            <!-- Actions -->
+            <!-- Actions - Mobile optimized -->
             <Card>
                 <CardContent class="pt-6">
-                    <div class="flex items-center justify-between">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
                             <p class="text-sm text-gray-600 dark:text-gray-400">
                                 {{
@@ -423,11 +453,12 @@ onMounted(() => {
                                 }}
                             </p>
                         </div>
-                        <div class="flex space-x-3">
+                        <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
                             <Button
                                 v-if="seedingMethod === 'manual'"
                                 :disabled="isSaving"
                                 variant="outline"
+                                size="sm"
                                 @click="saveSeeds"
                             >
                                 <SaveIcon class="mr-2 h-4 w-4"/>
@@ -435,10 +466,12 @@ onMounted(() => {
                             </Button>
                             <Button
                                 :disabled="!canProceed || isSaving"
+                                size="sm"
                                 @click="proceedToNextStage"
                             >
                                 <PlayIcon class="mr-2 h-4 w-4"/>
-                                {{ t('Complete Seeding & Proceed') }}
+                                <span class="hidden sm:inline">{{ t('Complete Seeding & Proceed') }}</span>
+                                <span class="sm:hidden">{{ t('Proceed') }}</span>
                             </Button>
                         </div>
                     </div>
