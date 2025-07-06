@@ -601,7 +601,7 @@ onMounted(() => {
                                                 <TrophyIcon class="h-4 w-4 mr-1"/>
                                                 {{ player.home_club.name }}
                                             </div>
-                                            <div class="flex items-center">
+                                            <div v-if="player.created_at" class="flex items-center">
                                                 <CalendarIcon class="h-4 w-4 mr-1"/>
                                                 {{ t('Member since') }} {{ formatDate(player.created_at) }}
                                             </div>
