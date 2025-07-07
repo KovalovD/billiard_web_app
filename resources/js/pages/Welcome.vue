@@ -356,27 +356,6 @@ onMounted(() => {
                 </div>
             </section>
         </main>
-
-        <!-- Footer -->
-        <footer class="py-12 px-4 sm:px-6 lg:px-8 bg-gray-900 text-white" role="contentinfo">
-            <div class="mx-auto max-w-7xl">
-                <div class="flex flex-col items-center justify-between md:flex-row">
-                    <div class="flex items-center space-x-3 mb-4 md:mb-0">
-                        <span class="text-xl font-bold">WinnerBreak</span>
-                    </div>
-
-                    <nav class="flex space-x-6 text-sm text-gray-400" aria-label="Footer navigation">
-                        <Link class="hover:text-white transition-colors" href="/leagues">Leagues</Link>
-                        <Link class="hover:text-white transition-colors" href="/tournaments">Tournaments</Link>
-                        <Link class="hover:text-white transition-colors" href="/official-ratings">Rankings</Link>
-                    </nav>
-                </div>
-
-                <div class="mt-8 pt-8 border-t border-gray-800 text-center text-sm text-gray-400">
-                    <p>&copy; 2025 WinnerBreak. All rights reserved.</p>
-                </div>
-            </div>
-        </footer>
     </div>
 
     <!-- Registration Modal -->

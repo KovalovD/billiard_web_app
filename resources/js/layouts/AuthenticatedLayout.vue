@@ -393,4 +393,164 @@ onMounted(() => {
             <RegisterModal :show="showRegisterModal" @close="closeRegisterModal" @success="handleRegisterSuccess"/>
         </div>
     </div>
+
+    <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700" role="contentinfo">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <!-- Main Footer Content -->
+            <div class="py-8 sm:py-12">
+                <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+                    <!-- Brand Section -->
+                    <div class="lg:col-span-1">
+                        <Link :href="'/dashboard'" class="inline-block group">
+                            <ApplicationLogo
+                                class="h-10 w-auto fill-current text-gray-800 dark:text-gray-200 transition-transform group-hover:scale-105"/>
+                        </Link>
+                        <p class="mt-4 text-sm text-gray-600 dark:text-gray-400">
+                            {{ t('Professional billiard league management platform for players and organizers.') }}
+                        </p>
+                    </div>
+
+                    <!-- Platform Links -->
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-4">
+                            {{ t('Platform') }}
+                        </h3>
+                        <nav class="space-y-2" aria-label="Platform navigation">
+                            <Link href="/dashboard"
+                                  class="block text-xs text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                                {{ t('Dashboard') }}
+                            </Link>
+                            <Link href="/leagues"
+                                  class="block text-xs text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                                {{ t('Leagues') }}
+                            </Link>
+                            <Link href="/tournaments"
+                                  class="block text-xs text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                                {{ t('Tournaments') }}
+                            </Link>
+                            <Link href="/players"
+                                  class="block text-xs text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                                {{ t('Players') }}
+                            </Link>
+                            <Link href="/official-ratings"
+                                  class="block text-xs text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                                {{ t('Official Ratings') }}
+                            </Link>
+                        </nav>
+                    </div>
+
+                    <!-- Support Section -->
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-4">
+                            {{ t('Support') }}
+                        </h3>
+                        <nav class="space-y-2" aria-label="Support links">
+                            <Link :href="route('privacy')"
+                                  class="block text-xs text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                                {{ t('Privacy Policy') }}
+                            </Link>
+                            <Link :href="route('agreement')"
+                                  class="block text-xs text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                                {{ t('Terms of Service') }}
+                            </Link>
+                            <a href="mailto:support@winnerbreak.com"
+                               class="block text-xs text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                                {{ t('Contact Us') }}
+                            </a>
+                            <a href="/help"
+                               class="block text-xs text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                                {{ t('Help Center') }}
+                            </a>
+                        </nav>
+                    </div>
+
+                    <!-- Follow Us Section -->
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-4">
+                            {{ t('Contact Us') }}
+                        </h3>
+                        <div class="space-y-3">
+                            <!-- Email -->
+                            <a href="mailto:info@winnerbreak.com"
+                               class="block text-xs text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                                info@winnerbreak.com
+                            </a>
+
+                            <!-- Social Icons -->
+                            <div class="flex items-center space-x-3">
+                                <a href="https://facebook.com/winnerbreak"
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   class="text-gray-600 dark:text-gray-400 hover:text-[#4F39F6] transition-all duration-200 hover:scale-105">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                              stroke-width="1.8"
+                                              d="M14.758 21.976v-7.234h2.77c.444 0 .843-.284.908-.71a6.082 6.082 0 0 0-.008-1.803c-.064-.418-.448-.694-.884-.694h-2.786c0-2.424.416-2.776 2.758-2.82.449-.01.852-.296.918-.728.11-.726.066-1.36-.004-1.806-.063-.413-.444-.68-.872-.677-4.14.035-6.498.51-6.498 6.031H8.916c-.417 0-.787.253-.85.653a6.001 6.001 0 0 0 .005 1.816c.065.438.472.738.929.738h2.06v7.259"/>
+                                        <rect width="20" height="20" x="2" y="2" stroke="currentColor" stroke-width="2"
+                                              rx="5"/>
+                                    </svg>
+                                </a>
+                                <a href="https://instagram.com/winnerbreak"
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   class="text-gray-600 dark:text-gray-400 hover:text-[#4F39F6] transition-all duration-200 hover:scale-105">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+                                        <path fill="currentColor" fill-rule="evenodd"
+                                              d="M7.465 1.066C8.638 1.012 9.012 1 12 1c2.988 0 3.362.013 4.534.066 1.172.053 1.972.24 2.672.511.733.277 1.398.71 1.948 1.27.56.549.992 1.213 1.268 1.947.272.7.458 1.5.512 2.67C22.988 8.639 23 9.013 23 12c0 2.987-.013 3.362-.066 4.535-.053 1.17-.24 1.97-.512 2.67a5.4 5.4 0 0 1-1.268 1.949c-.55.56-1.215.992-1.948 1.268-.7.272-1.5.458-2.67.512-1.174.054-1.548.066-4.536.066-2.988 0-3.362-.013-4.535-.066-1.17-.053-1.97-.24-2.67-.512a5.4 5.4 0 0 1-1.949-1.268 5.4 5.4 0 0 1-1.269-1.948c-.271-.7-.457-1.5-.511-2.67C1.012 15.361 1 14.987 1 12c0-2.987.013-3.362.066-4.534.053-1.172.24-1.972.511-2.672a5.4 5.4 0 0 1 1.27-1.948 5.4 5.4 0 0 1 1.947-1.269c.7-.271 1.501-.457 2.671-.511Zm8.979 1.98c-1.16-.053-1.508-.064-4.445-.064-2.937 0-3.285.011-4.445.064-1.073.049-1.655.228-2.043.379-.513.2-.88.437-1.265.822a3.4 3.4 0 0 0-.822 1.265c-.151.388-.33.97-.379 2.043-.053 1.16-.064 1.508-.064 4.445 0 2.937.011 3.285.064 4.445.049 1.073.228 1.655.379 2.043.176.477.457.91.822 1.265.355.365.788.646 1.265.822.388.151.97.33 2.043.379 1.16.053 1.507.064 4.445.064 2.938 0 3.285-.011 4.445-.064 1.073-.049 1.655-.228 2.043-.379.513-.2.88-.437 1.265-.822.365-.355.646-.788.822-1.265.151-.388.33-.97.379-2.043.053-1.16.064-1.508.064-4.445 0-2.937-.011-3.285-.064-4.445-.049-1.073-.228-1.655-.379-2.043-.2-.513-.437-.88-.822-1.265a3.4 3.4 0 0 0-1.265-.822c-.388-.151-.97-.33-2.043-.379Zm-5.85 12.345a3.67 3.67 0 1 0 2.641-6.846 3.67 3.67 0 0 0-2.641 6.846ZM8.002 8.002a5.654 5.654 0 1 1 7.996 7.996 5.654 5.654 0 0 1-7.996-7.996Zm10.906-.814a1.336 1.336 0 1 0-1.834-1.944 1.336 1.336 0 0 0 1.834 1.944Z"
+                                              clip-rule="evenodd"/>
+                                    </svg>
+                                </a>
+                                <a href="https://telegram.me/winnerbreak"
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   class="text-gray-600 dark:text-gray-400 hover:text-[#4F39F6] transition-all duration-200 hover:scale-105">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+                                        <path stroke="currentColor" stroke-linejoin="round" stroke-width="1.8"
+                                              d="m21.2 3.2-19.6 7L7.2 13l8.4-5.6-5.6 7 8.4 5.6 2.8-16.8Z"/>
+                                    </svg>
+                                </a>
+                                <a href="https://youtube.com/@winnerbreak"
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   class="text-gray-600 dark:text-gray-400 hover:text-[#4F39F6] transition-all duration-200 hover:scale-105">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                              stroke-width="1.7"
+                                              d="M12 20.5c1.81 0 3.545-.179 5.153-.507 2.01-.41 3.014-.614 3.93-1.792.917-1.179.917-2.532.917-5.238v-1.926c0-2.706 0-4.06-.917-5.238-.916-1.178-1.92-1.383-3.93-1.792A25.998 25.998 0 0 0 12 3.5c-1.81 0-3.545.179-5.153.507-2.01.41-3.014.614-3.93 1.792C2 6.978 2 8.331 2 11.037v1.926c0 2.706 0 4.06.917 5.238.916 1.178 1.92 1.383 3.93 1.792 1.608.328 3.343.507 5.153.507Z"/>
+                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                              stroke-width="1.7"
+                                              d="M15.962 12.313c-.148.606-.938 1.04-2.517 1.91-1.718.948-2.577 1.42-3.272 1.238a1.7 1.7 0 0 1-.635-.317C9 14.709 9 13.806 9 12s0-2.71.538-3.144c.182-.147.4-.256.635-.317.695-.183 1.554.29 3.272 1.237 1.58.87 2.369 1.305 2.517 1.91.05.207.05.42 0 .627Z"/>
+                                    </svg>
+                                </a>
+                            </div>
+
+                            <!-- Address -->
+                            <p class="text-xs text-gray-600 dark:text-gray-400">
+                                {{ t('Lviv, Heroiv UPA 80') }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Bar -->
+            <div class="border-t border-gray-200 dark:border-gray-700 py-6">
+                <div class="flex flex-col sm:flex-row justify-between items-center space-y-2 sm:space-y-0">
+                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                        &copy; {{ new Date().getFullYear() }} {{ t('WinnerBreak. All rights reserved.') }}
+                    </p>
+
+                    <!-- Optional: Donate and Language -->
+                    <div class="flex items-center space-x-4">
+                        <MonoDonate
+                            :show-card="false"
+                            :show-qr="false"
+                            class="text-xs px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded hover:from-amber-600 hover:to-orange-600 transition-all"
+                        />
+                        <LocaleSwitcher class="scale-90"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
 </template>

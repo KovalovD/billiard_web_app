@@ -686,7 +686,7 @@ watch(showInactiveRatings, () => {
                                         </p>
                                         <p v-if="value.isChampion"
                                            class="text-sm text-amber-600 dark:text-amber-400">
-                                            👑 {{ t('Champion') }}
+                                            👑 {{ t('Leader') }}
                                         </p>
                                     </div>
                                 </div>

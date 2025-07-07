@@ -48,6 +48,14 @@ Route::group(['prefix' => 'widgets'], static function () {
     })->name('widgets.table-match');
 });
 
+Route::get('/privacy-policy', static function () {
+    return Inertia::render('Legal/PrivacyPolicy');
+})->name('privacy');
+
+Route::get('/service-agreement', static function () {
+    return Inertia::render('Legal/ServiceAgreement');
+})->name('agreement');
+
 // Dashboard as home for authenticated users
 Route::get('/dashboard', static function () {
     return Inertia::render('Dashboard', [

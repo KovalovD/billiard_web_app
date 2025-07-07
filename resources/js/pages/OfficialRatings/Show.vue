@@ -747,7 +747,7 @@ onMounted(() => {
                                                 </p>
                                                 <p v-if="value.isChampion"
                                                    class="text-sm text-amber-600 dark:text-amber-400">
-                                                    👑 {{ t('Champion') }}
+                                                    👑 {{ t('Leader') }}
                                                 </p>
                                             </div>
                                         </div>
@@ -850,7 +850,7 @@ onMounted(() => {
                                                     </h3>
                                                     <p v-if="item.position === 1"
                                                        class="text-sm text-amber-600 dark:text-amber-400">
-                                                        👑 {{ t('Champion') }}
+                                                        👑 {{ t('Leader') }}
                                                     </p>
                                                 </div>
                                             </div>

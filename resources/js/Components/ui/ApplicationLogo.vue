@@ -7,5 +7,5 @@ defineOptions({
 </script>
 
 <template>
-    <img alt="WinnerBreak" src="/icon.png" v-bind="$attrs"/>
+    <img alt="WinnerBreak" src="/main-icon.png" v-bind="$attrs"/>
 </template>
