@@ -45,10 +45,13 @@ const closeModal = () => {
 </script>
 
 <template>
-    <!-- Use maxWidth="md" to ensure modal is visible and properly sized -->
-    <Modal :show="show" maxWidth="md" @close="closeModal">
-        <div class="p-1">
-            <RegisterForm @cancel="closeModal" @error="handleRegisterError" @success="handleRegisterSuccess"/>
-        </div>
+    <!-- Remove padding from modal wrapper and use transparent background -->
+    <Modal :show="show" maxWidth="lg" @close="closeModal" class="!p-0 !bg-transparent">
+        <!-- RegisterForm already has its own Card styling, so no additional wrapper needed -->
+        <RegisterForm
+            @cancel="closeModal"
+            @error="handleRegisterError"
+            @success="handleRegisterSuccess"
+        />
     </Modal>
 </template>
