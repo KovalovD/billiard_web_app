@@ -297,6 +297,7 @@ export interface RegisterCredentials {
     phone: string;
     password: string;
     password_confirmation: string;
+    agreeToTerms: boolean;
 }
 
 export interface GameTypeStats {

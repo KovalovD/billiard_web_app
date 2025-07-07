@@ -16,6 +16,7 @@ import type {RegisterCredentials} from '@/types/api';
 import {computed, ref} from 'vue';
 import {useLocale} from '@/composables/useLocale';
 import {LockIcon, MailIcon, PhoneIcon, UserIcon, UserPlusIcon} from 'lucide-vue-next';
+import {Link} from "@inertiajs/vue3";
 
 const phonePattern = /^(\+?\d{1,3}[-\s]?)?\(?(\d{3})\)?[-\s]?(\d{3})[-\s]?(\d{4})$/;
 
@@ -30,6 +31,7 @@ const form = ref<RegisterCredentials>({
     phone: '',
     password: '',
     password_confirmation: '',
+    agreeToTerms: false
 });
 
 const formValid = computed(() => {
@@ -39,7 +41,8 @@ const formValid = computed(() => {
         isEmailValid.value &&
         isPhoneValid.value &&
         isPasswordValid.value &&
-        form.value.password === form.value.password_confirmation
+        form.value.password === form.value.password_confirmation &&
+        form.value.agreeToTerms
     );
 });
 
@@ -235,6 +238,34 @@ const register = async () => {
                     <InputError v-else-if="!passwordsMatch && form.password_confirmation !== ''"
                                 :message="t('Passwords do not match')"/>
                 </div>
+                <div class="space-y-2">
+                    <div class="flex items-start space-x-3">
+                        <input
+                            id="agree_to_terms"
+                            v-model="form.agreeToTerms"
+                            type="checkbox"
+                            class="mt-1 w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700"
+                            :disabled="registerService.isLoading.value"
+                        />
+                        <Label for="agree_to_terms"
+                               class="text-sm font-normal text-gray-700 dark:text-gray-300 cursor-pointer">
+                            {{ t('I agree to the') }}
+                            <Link :href="route('agreement')"
+                                  target="_blank"
+                                  class="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 underline">
+                                {{ t('Terms of Service') }}
+                            </Link>
+                            {{ t('and') }}
+                            <Link :href="route('privacy')"
+                                  target="_blank"
+                                  class="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 underline">
+                                {{ t('Privacy Policy') }}
+                            </Link>
+                        </Label>
+                    </div>
+                    <InputError v-if="!form.agreeToTerms && form.email !== ''"
+                                :message="t('You must agree to the terms and conditions')"/>
+                </div>
             </form>
         </CardContent>
 
@@ -249,7 +280,7 @@ const register = async () => {
             </Button>
             <Button
                 :disabled="registerService.isLoading.value || !formValid"
-                class="w-full sm:flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg"
+                class="w-full sm:flex-1 bg-gradient-to-r from-indigo-600 to-indigo-600 hover:from-indigo-700 hover:to-indigo-700 text-white shadow-lg"
                 size="lg"
                 @click="register"
             >
