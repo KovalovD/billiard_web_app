@@ -16,7 +16,7 @@ import {
     Spinner,
 } from '@/Components/ui';
 import DataTable from '@/Components/ui/data-table/DataTable.vue';
-import UserAvatar from '@/Components/ui/UserAvatar.vue';
+import UserAvatar from '@/Components/Core/UserAvatar.vue';
 import {useAuth} from '@/composables/useAuth';
 import {useLocale} from '@/composables/useLocale';
 import {useSeo} from '@/composables/useSeo';

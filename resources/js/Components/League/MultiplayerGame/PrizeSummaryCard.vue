@@ -3,7 +3,9 @@
 import {Card, CardContent, CardHeader, CardTitle} from '@/Components/ui';
 import type {MultiplayerGame} from '@/types/api';
 import {computed} from 'vue';
+import {useLocale} from "@/composables/useLocale";
 
+const {t} = useLocale();
 interface Props {
     game: MultiplayerGame;
 }
@@ -17,9 +19,15 @@ const formatCurrency = (amount: number) => {
         .replace('UAH', '₴');
 };
 
-// Computed properties
-const totalPlayers = computed(() => props.game.total_players_count || 0);
-const totalPrizePool = computed(() => props.game.entrance_fee * totalPlayers.value);
+const totalPrizePool = computed(() => {
+    // Використовувати current_prize_pool якщо доступний
+    if (props.game.current_prize_pool) {
+        return props.game.current_prize_pool;
+    }
+    // Fallback до розрахунку
+    return props.game.entrance_fee * (props.game.total_players_count || 0);
+});
+
 
 const firstPlaceAmount = computed(() => {
     if (props.game.financial_data) {
@@ -83,8 +91,12 @@ const showWinners = computed(() => props.game.status === 'completed' || props.ga
             <div class="space-y-4">
                 <div class="rounded-md bg-blue-50 p-3 dark:bg-blue-900/20">
                     <p class="text-sm text-blue-800 dark:text-blue-300">
-                        Total Prize Pool: <span class="font-medium">{{ formatCurrency(totalPrizePool) }}</span>
-                        ({{ totalPlayers }} players × {{ formatCurrency(props.game.entrance_fee) }})
+                        {{ t('Total Prize Pool') }}: <span class="font-medium">{{
+                            formatCurrency(totalPrizePool)
+                        }}</span>
+                        <span v-if="game.rebuy_history?.length" class="text-xs ml-1">
+        ({{ t('includes :count rebuys', {count: game.rebuy_history.length}) }})
+    </span>
                     </p>
                 </div>
 

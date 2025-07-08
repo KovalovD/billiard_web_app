@@ -76,7 +76,7 @@ class MultiplayerGameService
             throw new RuntimeException('You must be an active player in this league to join.');
         }
 
-        // Create player record
+        // Create player record with total_paid set to entrance fee
         MultiplayerGamePlayer::create([
             'multiplayer_game_id' => $game->id,
             'user_id'             => $user->id,
@@ -446,8 +446,10 @@ class MultiplayerGameService
         // Update each player
         foreach ($players as $index => $player) {
             $player->update([
-                'turn_order' => $turnOrders[$index],
-                'lives'      => $initialLives,
+                'turn_order'    => $turnOrders[$index],
+                'lives'         => $initialLives,
+                'eliminated_at' => null,
+                'total_paid'    => $game->entrance_fee,
                 'cards'         => $this->getInitialCards($game, $player),
                 'rounds_played' => 1, // Starting round 1
                 'game_stats'    => [
@@ -621,9 +623,10 @@ class MultiplayerGameService
 
         $this->incrementPlayerLives($targetPlayer);
 
-        // Update game stats
+        // Update game stats - incrementing lives means player potted the 8-ball
         $this->updatePlayerStats($targetPlayer, 'lives_gained');
-        $this->updatePlayerStats($actingPlayer, 'balls_potted');
+        $this->updatePlayerStats($actingPlayer, 'balls_potted'); // Potted 8-ball
+        $this->updatePlayerStats($actingPlayer, 'shots_taken'); // Also count as a shot
 
         // Log the action
         MultiplayerGameLog::create([
@@ -649,6 +652,8 @@ class MultiplayerGameService
      */
     private function updatePlayerStats(MultiplayerGamePlayer $player, string $stat): void
     {
+        $player->refresh();
+
         $stats = $player->game_stats ?? [
             'shots_taken'  => 0,
             'balls_potted' => 0,
@@ -741,7 +746,12 @@ class MultiplayerGameService
 
         // Update game stats
         $this->updatePlayerStats($targetPlayer, 'lives_lost');
-        $this->updatePlayerStats($actingPlayer, 'shots_taken');
+
+        // Only count as shot if the acting player is decrementing their own lives (missed shot)
+        // Not when it's from a take_life card (which is handled separately)
+        if ($actingPlayer->user_id === $targetPlayer->user_id) {
+            $this->updatePlayerStats($actingPlayer, 'shots_taken');
+        }
 
         // Log the action
         MultiplayerGameLog::create([
@@ -781,10 +791,9 @@ class MultiplayerGameService
      */
     public function eliminatePlayer(MultiplayerGame $game, MultiplayerGamePlayer $player): void
     {
-        // Set finish position as the current active players count
+        // Just mark as eliminated, don't set finish position yet
         $player->update([
-            'eliminated_at'   => now(),
-            'finish_position' => $game->activePlayers()->count(),
+            'eliminated_at' => now(),
         ]);
 
         // Check if game should be completed (only one active player left)
@@ -794,8 +803,7 @@ class MultiplayerGameService
             $winner = $game->activePlayers()->first();
             if ($winner) {
                 $winner->update([
-                    'finish_position' => 1,
-                    'eliminated_at'   => now(),
+                    'eliminated_at' => now()->addSecond(),
                 ]);
             }
 
@@ -805,10 +813,45 @@ class MultiplayerGameService
                 'completed_at' => now(),
             ]);
 
+            // Recalculate all finish positions based on elimination time
+            $this->recalculateFinishPositions($game);
+
             // Calculate prizes and rating points
             $this->calculatePrizes($game);
             $this->calculateRatingPoints($game);
             $this->applyPenalties($game);
+        }
+    }
+
+    /**
+     * Recalculate finish positions based on elimination times
+     */
+    private function recalculateFinishPositions(MultiplayerGame $game): void
+    {
+        // Get all players ordered by elimination time (latest first = better position)
+        $players = $game
+            ->players()
+            ->whereNotNull('eliminated_at')
+            ->orderBy('eliminated_at', 'desc')
+            ->get()
+        ;
+
+        $position = 1;
+        foreach ($players as $player) {
+            $player->update(['finish_position' => $position]);
+            $position++;
+        }
+
+        // Handle any players who weren't eliminated (shouldn't happen, but just in case)
+        $nonEliminatedPlayers = $game
+            ->players()
+            ->whereNull('eliminated_at')
+            ->get()
+        ;
+
+        foreach ($nonEliminatedPlayers as $player) {
+            $player->update(['finish_position' => $position]);
+            $position++;
         }
     }
 
@@ -979,7 +1022,7 @@ class MultiplayerGameService
         // Apply the card effect based on card type
         switch ($cardType) {
             case 'skip_turn':
-                // Skip the next player's turn and move to the player after that
+                // Skip the next player's turn - no shot taken, just skipping
                 break;
 
             case 'pass_turn':
@@ -1049,8 +1092,8 @@ class MultiplayerGameService
                     'user_id'             => $actingPlayer->user_id,
                     'action_type'         => 'take_life',
                     'action_data'         => [
-                        'target_user_id'  => $targetPlayer->user_id,
-                        'new_lives'       => $targetPlayer->lives,
+                        'target_user_id' => $targetPlayer->user_id,
+                        'new_lives'      => $targetPlayer->lives,
                     ],
                     'created_at'          => now(),
                 ]);
@@ -1079,7 +1122,7 @@ class MultiplayerGameService
         // Handle turn progression based on handicap action
         switch ($handicapAction) {
             case 'skip_turn':
-                // Log a turn and move to next player
+                // Log a turn and move to next player - no shot taken, just skipping
                 MultiplayerGameLog::create([
                     'multiplayer_game_id' => $game->id,
                     'user_id'             => $actingPlayer->user_id,
@@ -1172,8 +1215,9 @@ class MultiplayerGameService
             throw new RuntimeException('It is not your turn.');
         }
 
-        // Update game stats
+        // Update game stats - recording turn means ending turn after potting regular balls
         $this->updatePlayerStats($actingPlayer, 'turns_played');
+        $this->updatePlayerStats($actingPlayer, 'shots_taken');
 
         // Record that this player has taken their turn
         MultiplayerGameLog::create([

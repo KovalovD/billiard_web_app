@@ -27,6 +27,146 @@ export interface User {
     home_club?: Club | null;
 }
 
+export interface CreateMultiplayerGamePayload {
+    name: string;
+    max_players?: number | null;
+    registration_ends_at?: string | null;
+    allow_player_targeting?: boolean;
+    entrance_fee?: number;
+    first_place_percent?: number;
+    second_place_percent?: number;
+    grand_final_percent?: number;
+    penalty_fee?: number;
+    allow_rebuy?: boolean;
+    rebuy_rounds?: number | null;
+    lives_per_new_player?: number;
+    enable_penalties?: boolean;
+    penalty_rounds_threshold?: number | null;
+}
+
+export interface MultiplayerGamePlayer {
+    id: number;
+    division: 'Elite' | 'S' | 'A' | 'B' | 'C' | '';
+    user: User;
+    lives: number;
+    turn_order: number | null;
+    cards: {
+        skip_turn?: boolean;
+        pass_turn?: boolean;
+        hand_shot?: boolean;
+        handicap?: boolean;
+    };
+    finish_position?: number | null;
+    eliminated_at?: string | null;
+    joined_at: string;
+    is_current_turn?: boolean;
+    rating_points?: number;
+    prize_amount?: number;
+    penalty_paid?: boolean;
+    time_fund_contribution?: number;
+    rebuy_count: number;
+    rounds_played: number;
+    total_paid: number;
+    game_stats?: {
+        shots_taken: number;
+        balls_potted: number;
+        lives_gained: number;
+        lives_lost: number;
+        cards_used: number;
+        turns_played: number;
+    };
+    is_rebuy: boolean;
+    last_rebuy_at?: string | null;
+}
+
+export interface MultiplayerGame {
+    id: number;
+    slug: string;
+    official_rating_id: number;
+    league_id: number;
+    game_id: number;
+    game_type: string;
+    name: string;
+    status: 'registration' | 'in_progress' | 'completed' | 'finished';
+    initial_lives: number;
+    max_players: number | null;
+    registration_ends_at: string | null;
+    started_at: string | null;
+    completed_at: string | null;
+    created_at: string;
+    active_players_count: number;
+    total_players_count: number;
+    current_turn_player_id: number | null;
+    is_registration_open: boolean;
+    moderator_user_id: number | null;
+    allow_player_targeting: boolean;
+    is_current_user_moderator: boolean;
+    entrance_fee: number;
+    first_place_percent: number;
+    second_place_percent: number;
+    grand_final_percent: number;
+    penalty_fee: number;
+    allow_rebuy: boolean;
+    rebuy_rounds: number | null;
+    lives_per_new_player: number;
+    enable_penalties: boolean;
+    penalty_rounds_threshold: number | null;
+    rebuy_history?: Array<{
+        user_id: number;
+        user_name: string;
+        amount: number;
+        timestamp: string;
+        round: number;
+        type: 'rebuy' | 'new_player';
+    }>;
+    current_prize_pool: number;
+    financial_data?: {
+        entrance_fee: number;
+        total_prize_pool: number;
+        first_place_prize: number;
+        second_place_prize: number;
+        grand_final_fund: number;
+        penalty_fee: number;
+        time_fund_total: number;
+    };
+    current_user_player?: {
+        id: number;
+        division: 'Elite' | 'S' | 'A' | 'B' | 'C' | '';
+        lives: number;
+        turn_order: number | null;
+        user: User;
+        cards: {
+            skip_turn?: boolean;
+            pass_turn?: boolean;
+            hand_shot?: boolean;
+            handicap?: boolean;
+        };
+        finish_position?: number | null;
+        eliminated_at?: string | null;
+        joined_at: string;
+        is_current_turn: boolean;
+        rating_points?: number;
+        prize_amount?: number;
+        penalty_paid?: boolean;
+        time_fund_contribution?: number;
+        rebuy_count: number;
+        rounds_played: number;
+        total_paid: number;
+        game_stats?: {
+            shots_taken: number;
+            balls_potted: number;
+            lives_gained: number;
+            lives_lost: number;
+            cards_used: number;
+            turns_played: number;
+        };
+        is_rebuy: boolean;
+        last_rebuy_at?: string | null;
+    };
+    active_players: MultiplayerGamePlayer[];
+    eliminated_players: MultiplayerGamePlayer[];
+}
+
 export interface City {
     id: number;
     name: string;
@@ -196,129 +336,6 @@ export interface ApiError {
         errors?: Record<string, string[]>;
         message?: string;
     };
-}
-
-export interface CreateMultiplayerGamePayload {
-    name: string;
-    max_players?: number | null;
-    registration_ends_at?: string | null;
-    allow_player_targeting?: boolean;
-    entrance_fee?: number;
-    first_place_percent?: number;
-    second_place_percent?: number;
-    grand_final_percent?: number;
-    penalty_fee?: number;
-    allow_rebuy?: boolean;
-    rebuy_rounds?: number | null;
-    lives_per_new_player?: number;
-    enable_penalties?: boolean;
-    penalty_rounds_threshold?: number | null;
-}
-
-export interface MultiplayerGamePlayer {
-    id: number;
-    division: 'Elite' | 'S' | 'A' | 'B' | 'C' | '';
-    user: User;
-    lives: number;
-    turn_order: number | null;
-    cards: {
-        skip_turn?: boolean;
-        pass_turn?: boolean;
-        hand_shot?: boolean;
-        handicap?: boolean;
-    };
-    finish_position?: number | null;
-    eliminated_at?: string | null;
-    joined_at: string;
-    is_current_turn?: boolean;
-    rating_points?: number;
-    prize_amount?: number;
-    penalty_paid?: boolean;
-    time_fund_contribution?: number;
-    rebuy_count: number;
-    rounds_played: number;
-    total_paid: number;
-    game_stats?: {
-        shots_taken: number;
-        balls_potted: number;
-        lives_gained: number;
-        lives_lost: number;
-        cards_used: number;
-        turns_played: number;
-    };
-    is_rebuy: boolean;
-    last_rebuy_at?: string | null;
-}
-
-export interface MultiplayerGame {
-    id: number;
-    slug: string;
-    official_rating_id: number;
-    league_id: number;
-    game_id: number;
-    game_type: string;
-    name: string;
-    status: 'registration' | 'in_progress' | 'completed' | 'finished';
-    initial_lives: number;
-    max_players: number | null;
-    registration_ends_at: string | null;
-    started_at: string | null;
-    completed_at: string | null;
-    created_at: string;
-    active_players_count: number;
-    total_players_count: number;
-    current_turn_player_id: number | null;
-    is_registration_open: boolean;
-    moderator_user_id: number | null;
-    allow_player_targeting: boolean;
-    is_current_user_moderator: boolean;
-    entrance_fee: number;
-    first_place_percent: number;
-    second_place_percent: number;
-    grand_final_percent: number;
-    penalty_fee: number;
-    financial_data?: {
-        entrance_fee: number;
-        total_prize_pool: number;
-        first_place_prize: number;
-        second_place_prize: number;
-        grand_final_fund: number;
-        penalty_fee: number;
-        time_fund_total: number;
-    };
-    current_user_player?: {
-        id: number;
-        lives: number;
-        turn_order: number | null;
-        user: User;
-        cards: {
-            skip_turn?: boolean;
-            pass_turn?: boolean;
-            hand_shot?: boolean;
-        };
-        finish_position?: number | null;
-        eliminated_at?: string | null;
-        joined_at: string;
-        is_current_turn: boolean;
-        rating_points?: number;
-        prize_amount?: number;
-        penalty_paid?: boolean;
-    };
-    active_players: MultiplayerGamePlayer[];
-    eliminated_players: MultiplayerGamePlayer[];
-    allow_rebuy: boolean;
-    rebuy_rounds: number | null;
-    lives_per_new_player: number;
-    enable_penalties: boolean;
-    penalty_rounds_threshold: number | null;
-    rebuy_history?: Array<{
-        user_id: number;
-        user_name: string;
-        amount: number;
-        timestamp: string;
-        round: number;
-    }>;
-    current_prize_pool: number;
 }
 
 export interface RegisterCredentials {

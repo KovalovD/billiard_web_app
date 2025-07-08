@@ -42,8 +42,8 @@
 
     <!-- Manifest and Theme -->
     <link rel="manifest" href="{{ asset('site.webmanifest') }}">
-    <meta name="theme-color" content="#33121e">
-    <meta name="msapplication-TileColor" content="#33121e">
+    <meta name="theme-color" content="##4F39F6">
+    <meta name="msapplication-TileColor" content="##4F39F6">
     <meta name="msapplication-config" content="{{ asset('browserconfig.xml') }}">
 
     <!-- Canonical URL -->

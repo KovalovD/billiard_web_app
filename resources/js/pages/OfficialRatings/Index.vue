@@ -23,7 +23,7 @@ import {
 import {computed, nextTick, onMounted, ref, watch} from 'vue';
 import {scrollToUserElement} from '@/utils/scrollToUser';
 import {useToastStore} from '@/stores/toast';
-import UserAvatar from "@/Components/ui/UserAvatar.vue";
+import UserAvatar from "@/Components/Core/UserAvatar.vue";
 
 defineOptions({layout: AuthenticatedLayout});
 

@@ -379,14 +379,15 @@ onUnmounted(() => {
                             <span class="sm:hidden">{{ t('Back') }}</span>
                         </Button>
                     </Link>
-                    <Link v-if="isAuthenticated && isAdmin && league?.game_multiplayer"
-                          href="#"
-                          @click.prevent="openCreateModal"
-                          aria-label="Create new multiplayer game"
-                          class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
+                    <button
+                        v-if="isAuthenticated && isAdmin && league?.game_multiplayer"
+                        @click="openCreateModal"
+                        aria-label="Create new multiplayer game"
+                        class="cursor-pointer inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+                    >
                         <PlusIcon class="mr-2 h-4 w-4" aria-hidden="true"/>
                         {{ t('Create Game') }}
-                    </Link>
+                    </button>
                 </div>
             </header>
 

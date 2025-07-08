@@ -170,6 +170,24 @@ const timeFundTotal = computed(() => {
                         </div>
                     </div>
                 </div>
+
+                <div v-if="props.game.allow_rebuy" class="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
+                    <h3 class="text-sm font-medium mb-2">{{ t('Rebuy Settings') }}</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
+                        <div>
+                            <span class="text-gray-500 dark:text-gray-400">{{ t('Rebuy Rounds:') }}</span>
+                            <span class="font-medium ml-1">{{ props.game.rebuy_rounds }}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-500 dark:text-gray-400">{{ t('Lives per New Player:') }}</span>
+                            <span class="font-medium ml-1">{{ props.game.lives_per_new_player }}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-500 dark:text-gray-400">{{ t('Total Rebuys:') }}</span>
+                            <span class="font-medium ml-1">{{ props.game.rebuy_history?.length || 0 }}</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </CardContent>
     </Card>

@@ -45,6 +45,13 @@ const getAvailableCardsCount = (player: MultiplayerGamePlayer): number => {
 const hasCard = (player: MultiplayerGamePlayer, cardType: 'skip_turn' | 'pass_turn' | 'hand_shot' | 'handicap'): boolean => {
     return player.cards && player.cards[cardType] === true;
 };
+
+const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('uk-UA', {style: 'currency', currency: 'UAH'})
+        .format(amount)
+        .replace('UAH', '₴');
+};
+
 </script>
 
 <template>
@@ -78,8 +85,13 @@ const hasCard = (player: MultiplayerGamePlayer, cardType: 'skip_turn' | 'pass_tu
                         {{ player.turn_order || '-' }}
                     </div>
                     <div>
-                        <p class="font-medium">{{ player.user.firstname }} {{ player.user.lastname }}
-                            ({{ player.division }})</p>
+                        <p class="font-medium">
+                            {{ player.user.firstname }} {{ player.user.lastname }}
+                            ({{ player.division }})
+                            <span v-if="player.is_rebuy" class="ml-1 text-xs text-purple-600 dark:text-purple-400">
+                                {{ t('R') }}{{ player.rebuy_count }}
+                            </span>
+                        </p>
 
                         <!-- Card indicators -->
                         <div v-if="getAvailableCardsCount(player) > 0" class="mt-1 flex items-center gap-1">
@@ -121,11 +133,25 @@ const hasCard = (player: MultiplayerGamePlayer, cardType: 'skip_turn' | 'pass_tu
                                 <HandHelpingIcon class="h-3 w-3 text-green-600 dark:text-green-400"/>
                             </div>
                         </div>
+                        <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                <span v-if="player.game_stats?.shots_taken > 0">
+                                    {{ t('Shots') }}: {{ player.game_stats.shots_taken }}
+                                </span>
+                            <span v-if="player.game_stats?.balls_potted > 0">
+                                    {{ t('Potted') }}: {{ player.game_stats.balls_potted }}
+                                </span>
+                            <span v-if="player.rounds_played">
+                                    {{ t('Rounds') }}: {{ player.rounds_played }}
+                                </span>
+                        </div>
                     </div>
                 </div>
 
                 <div class="flex items-center space-x-2">
                     <LivesTracker :lives="player.lives" :max-lives="props.maxLives" :size="'sm'"/>
+                    <div v-if="player.total_paid > 0" class="text-xs text-gray-500">
+                        {{ formatCurrency(player.total_paid) }}
+                    </div>
                 </div>
             </div>
         </div>

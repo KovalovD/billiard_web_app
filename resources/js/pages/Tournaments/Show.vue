@@ -35,7 +35,7 @@ import {computed, onMounted, ref} from 'vue';
 import DataTable from '@/Components/ui/data-table/DataTable.vue';
 import StageTransition from "@/Components/Tournament/StageTransition.vue";
 import {useSeo} from "@/composables/useSeo";
-import UserAvatar from "@/Components/ui/UserAvatar.vue";
+import UserAvatar from "@/Components/Core/UserAvatar.vue";
 
 defineOptions({layout: AuthenticatedLayout});
 

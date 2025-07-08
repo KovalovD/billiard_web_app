@@ -20,7 +20,6 @@ import Accordion from './accordion/Accordion.vue';
 import AccordionItem from './accordion/AccordionItem.vue';
 import AccordionTrigger from './accordion/AccordionTrigger.vue';
 import AccordionContent from './accordion/AccordionContent.vue';
-
 // Layout components
 import Card from './layout/Card.vue';
 import CardHeader from './layout/CardHeader.vue';
@@ -33,6 +32,8 @@ import CardFooter from './layout/CardFooter.vue';
 import Modal from './feedback/Modal.vue';
 import Toast from './feedback/Toast.vue';
 import Spinner from './feedback/Spinner.vue';
+
+export {default as Checkbox} from './checkbox/Checkbox.vue';
 
 export {default as Dialog} from './dialog/Dialog.vue';
 export {default as DialogContent} from './dialog/DialogContent.vue';

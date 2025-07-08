@@ -1,20 +1,20 @@
 resources/js/Layouts/AuthenticatedLayout.vue
 
 <script lang="ts" setup>
-import ApplicationLogo from '@/Components/ui/ApplicationLogo.vue';
+import ApplicationLogo from '@/Components/Core/ApplicationLogo.vue';
 import RegisterModal from '@/Components/Auth/RegisterModal.vue';
 import Dropdown from '@/Components/ui/dropdown/Dropdown.vue';
 import DropdownLink from '@/Components/ui/dropdown/DropdownLink.vue';
-import NavLink from '@/Components/ui/NavLink.vue';
-import UserAvatar from '@/Components/ui/UserAvatar.vue';
+import NavLink from '@/Components/Core/NavLink.vue';
+import UserAvatar from '@/Components/Core/UserAvatar.vue';
 import {useAuth} from '@/composables/useAuth';
 import {Head, Link} from '@inertiajs/vue3';
 import axios from 'axios';
 import {onMounted, ref, watch} from 'vue';
-import LocaleSwitcher from "@/Components/ui/LocaleSwitcher.vue";
+import LocaleSwitcher from "@/Components/Core/LocaleSwitcher.vue";
 import {useLocale} from '@/composables/useLocale';
-import ToastContainer from '@/Components/ui/ToastContainer.vue';
-import MonoDonate from '@/Components/ui/MonoDonate.vue';
+import ToastContainer from '@/Components/Core/ToastContainer.vue';
+import MonoDonate from '@/Components/Core/MonoDonate.vue';
 import {ChevronDownIcon, MenuIcon, XIcon} from 'lucide-vue-next';
 
 const {t} = useLocale();

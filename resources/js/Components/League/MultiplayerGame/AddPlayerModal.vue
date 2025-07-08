@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import UnifiedAddPlayerModal from '@/Components/ui/UnifiedAddPlayerModal.vue';
+import UnifiedAddPlayerModal from '@/Components/Core/UnifiedAddPlayerModal.vue';
 import type {ApiError} from '@/types/api';
 import {computed, ref} from 'vue';
 import {useLocale} from '@/composables/useLocale';

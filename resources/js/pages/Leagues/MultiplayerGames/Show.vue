@@ -8,8 +8,11 @@ import RatingSummaryCard from '@/Components/League/MultiplayerGame/RatingSummary
 import GameActionPanel from '@/Components/League/MultiplayerGame/GameActionPanel.vue';
 import TimeFundCard from '@/Components/League/MultiplayerGame/TimeFundCard.vue';
 import MultiplayerGameSummary from '@/Components/League/MultiplayerGame/MultiplayerGameSummary.vue';
+import RebuyPlayerModal from '@/Components/League/MultiplayerGame/RebuyPlayerModal.vue';
+import GameStatistics from '@/Components/League/MultiplayerGame/GameStatistics.vue';
 import {
     ArrowLeftIcon,
+    BarChart3Icon,
     CheckIcon,
     ClockIcon,
     CopyIcon,
@@ -46,7 +49,9 @@ const props = defineProps<{
 
 const {isAdmin, user, isAuthenticated} = useAuth();
 const {t} = useLocale();
-
+const showRebuyModal = ref(false);
+const gameStatistics = ref<any>(null);
+const isLoadingStatistics = ref(false);
 const {
     getMultiplayerGame,
     performGameAction,
@@ -71,18 +76,24 @@ const copiedWidgetId = ref<string | null>(null);
 const {setSeoMeta, generateBreadcrumbJsonLd} = useSeo();
 
 // Get initial tab from URL query parameter
-const getInitialTab = (): 'game' | 'prizes' | 'ratings' | 'timefund' | 'widget' => {
+const getInitialTab = (): 'game' | 'prizes' | 'ratings' | 'timefund' | 'statistics' | 'widget' => {
     const urlParams = new URLSearchParams(window.location.search);
     const tabParam = urlParams.get('tab');
-    const validTabs = ['game', 'prizes', 'ratings', 'timefund', 'widget'];
+    const validTabs = ['game', 'prizes', 'ratings', 'timefund', 'statistics', 'widget'];
     return validTabs.includes(tabParam as string) ? tabParam as any : 'game';
 };
 
-const activeTab = ref<'game' | 'prizes' | 'ratings' | 'timefund' | 'widget'>(getInitialTab());
+const activeTab = ref<'game' | 'prizes' | 'ratings' | 'timefund' | 'statistics' | 'widget'>(getInitialTab());
+
 
 // Handle tab change and update URL
-const switchTab = (tab: 'game' | 'prizes' | 'ratings' | 'timefund' | 'widget') => {
+const switchTab = (tab: 'game' | 'prizes' | 'ratings' | 'timefund' | 'statistics' | 'widget') => {
     activeTab.value = tab;
+
+    // Load statistics when switching to statistics tab
+    if (tab === 'statistics') {
+        loadStatistics();
+    }
 
     // Update URL without page reload
     const url = new URL(window.location.href);
@@ -93,6 +104,35 @@ const switchTab = (tab: 'game' | 'prizes' | 'ratings' | 'timefund' | 'widget') =
     }
 
     window.history.replaceState({}, '', url.toString());
+};
+
+const loadStatistics = async () => {
+    if (!game.value || game.value.status === 'registration') return;
+
+    isLoadingStatistics.value = true;
+    try {
+        gameStatistics.value = await apiClient<any>(
+            `/api/leagues/${props.leagueId}/multiplayer-games/${props.gameId}/statistics`
+        );
+    } catch (err) {
+        console.error('Failed to load statistics:', err);
+    } finally {
+        isLoadingStatistics.value = false;
+    }
+};
+
+const handleRebuyAdded = async () => {
+    await fetchGame();
+    showRebuyModal.value = false;
+    actionFeedback.value = {
+        type: 'success',
+        message: t('Player added successfully')
+    };
+
+    // Reload statistics if on statistics tab
+    if (activeTab.value === 'statistics') {
+        await loadStatistics();
+    }
 };
 
 // Add to existing refs
@@ -650,6 +690,16 @@ onMounted(() => {
                     </span>
 
                     <Button
+                        v-if="isAdmin && game?.status === 'in_progress' && game?.allow_rebuy"
+                        variant="secondary"
+                        size="sm"
+                        @click="showRebuyModal = true"
+                    >
+                        <UserPlusIcon class="mr-2 h-4 w-4"/>
+                        {{ t('Add/Rebuy Player') }}
+                    </Button>
+
+                    <Button
                         v-if="game?.status === 'completed'"
                         variant="secondary"
                         size="sm"
@@ -938,6 +988,22 @@ onMounted(() => {
                                 </span>
                             </button>
                             <button
+                                :class="[
+                                    'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
+                                    activeTab === 'statistics'
+                                        ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                                ]"
+                                :aria-selected="activeTab === 'statistics'"
+                                role="tab"
+                                @click="switchTab('statistics')"
+                            >
+                                <span class="flex items-center gap-2">
+                                    <BarChart3Icon class="h-4 w-4"/>
+                                    {{ t('Statistics') }}
+                                </span>
+                            </button>
+                            <button
                                 v-if="isAuthenticated && (isAdmin || isModerator)"
                                 :class="[
                                     'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
@@ -973,128 +1039,129 @@ onMounted(() => {
                                         </CardHeader>
                                         <CardContent class="p-6">
                                             <PlayersList
-                                            :highlight-current-turn="true"
-                                            :max-lives="game.initial_lives"
-                                            :players="game.active_players"
-                                            :selected-player-id="selectedActingPlayer?.id"
-                                            :show-controls="isAuthenticated && isModerator && game.status === 'in_progress'"
-                                            title=""
-                                            @select-player="selectPlayer"
-                                        />
-                                    </CardContent>
-                                </Card>
+                                                :highlight-current-turn="true"
+                                                :max-lives="game.initial_lives"
+                                                :players="game.active_players"
+                                                :selected-player-id="selectedActingPlayer?.id"
+                                                :show-controls="isAuthenticated && isModerator && game.status === 'in_progress'"
+                                                title=""
+                                                @select-player="selectPlayer"
+                                            />
+                                        </CardContent>
+                                    </Card>
 
-                                <!-- Eliminated Players if any -->
-                                <Card
-                                    v-if="game.eliminated_players.length > 0"
-                                    :class="game.active_players.length > 0 ? 'mt-6' : ''"
-                                >
-                                    <CardHeader>
-                                        <CardTitle>{{ t('Eliminated Players') }}</CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div class="divide-y">
-                                            <div
-                                                v-for="player in game.eliminated_players"
-                                                :key="player.id"
-                                                class="flex items-center justify-between py-3"
-                                            >
-                                                <div class="flex items-center space-x-3">
-                                                    <div
-                                                        class="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">
-                                                        {{ player.finish_position }}
+                                    <!-- Eliminated Players if any -->
+                                    <Card
+                                        v-if="game.eliminated_players.length > 0"
+                                        :class="game.active_players.length > 0 ? 'mt-6' : ''"
+                                    >
+                                        <CardHeader>
+                                            <CardTitle>{{ t('Eliminated Players') }}</CardTitle>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div class="divide-y">
+                                                <div
+                                                    v-for="player in game.eliminated_players"
+                                                    :key="player.id"
+                                                    class="flex items-center justify-between py-3"
+                                                >
+                                                    <div class="flex items-center space-x-3">
+                                                        <div
+                                                            class="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">
+                                                            {{ player.finish_position }}
+                                                        </div>
+                                                        <div>
+                                                            <p class="font-medium">
+                                                                {{ player.user.firstname }} {{ player.user.lastname }}
+                                                                ({{ player.division }})
+                                                            </p>
+                                                            <p v-if="isAuthenticated && player.user.id === user?.id"
+                                                               class="text-xs text-blue-600">{{ t('(You)') }}</p>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <p class="font-medium">
-                                                            {{ player.user.firstname }} {{ player.user.lastname }}
-                                                            ({{ player.division }})
-                                                        </p>
-                                                        <p v-if="isAuthenticated && player.user.id === user?.id"
-                                                           class="text-xs text-blue-600">{{ t('(You)') }}</p>
-                                                    </div>
-                                                </div>
 
-                                                <div class="text-sm text-gray-500">
-                                                    {{ t('Eliminated:') }} {{ formatDate(player?.eliminated_at) }}
+                                                    <div class="text-sm text-gray-500">
+                                                        {{ t('Eliminated:') }} {{ formatDate(player?.eliminated_at) }}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </div>
-
-                            <!-- Game Action Panel - Only for authenticated users in progress games -->
-                            <div v-if="isAuthenticated && game.status === 'in_progress'"
-                                 class="order-1 lg:order-2 lg:col-span-2">
-                                <div v-if="selectedActingPlayer" class="space-y-4">
-                                    <GameActionPanel
-                                        :is-current-turn="selectedActingPlayer.is_current_turn"
-                                        :is-loading="isActionLoading"
-                                        :max-lives="game.initial_lives"
-                                        :player="selectedActingPlayer"
-                                        :target-players="game.active_players.filter(p => p.id !== selectedActingPlayer?.id)"
-                                        @decrement-lives="() => handleAction('decrement_lives', selectedActingPlayer?.user.id, selectedActingPlayer?.user.id)"
-                                        @increment-lives="() => handleAction('increment_lives', selectedActingPlayer?.user.id, selectedActingPlayer?.user.id)"
-                                        @record-turn="() => handleAction('record_turn', undefined, selectedActingPlayer?.user.id)"
-                                        @use-card="handlePlayerAction"
-                                    />
+                                        </CardContent>
+                                    </Card>
                                 </div>
 
-                                <div v-else-if="isModerator" class="space-y-4">
-                                    <LivesEditorView
-                                        :current-turn-player-id="game.current_turn_player_id"
-                                        :is-loading="isActionLoading"
-                                        :players="game.active_players"
-                                        @decrement-lives="(userId) => handleAction('decrement_lives', userId)"
-                                        @increment-lives="(userId) => handleAction('increment_lives', userId)"
-                                        @set-turn="(userId) => handleAction('set_turn', userId)"
-                                    />
+                                <!-- Game Action Panel - Only for authenticated users in progress games -->
+                                <div v-if="isAuthenticated && game.status === 'in_progress'"
+                                     class="order-1 lg:order-2 lg:col-span-2">
+                                    <div v-if="selectedActingPlayer" class="space-y-4">
+                                        <GameActionPanel
+                                            :is-current-turn="selectedActingPlayer.is_current_turn"
+                                            :is-loading="isActionLoading"
+                                            :max-lives="game.initial_lives"
+                                            :player="selectedActingPlayer"
+                                            :target-players="game.active_players.filter(p => p.id !== selectedActingPlayer?.id)"
+                                            @decrement-lives="() => handleAction('decrement_lives', selectedActingPlayer?.user.id, selectedActingPlayer?.user.id)"
+                                            @increment-lives="() => handleAction('increment_lives', selectedActingPlayer?.user.id, selectedActingPlayer?.user.id)"
+                                            @record-turn="() => handleAction('record_turn', undefined, selectedActingPlayer?.user.id)"
+                                            @use-card="handlePlayerAction"
+                                        />
+                                    </div>
+
+                                    <div v-else-if="isModerator" class="space-y-4">
+                                        <LivesEditorView
+                                            :current-turn-player-id="game.current_turn_player_id"
+                                            :is-loading="isActionLoading"
+                                            :players="game.active_players"
+                                            @decrement-lives="(userId) => handleAction('decrement_lives', userId)"
+                                            @increment-lives="(userId) => handleAction('increment_lives', userId)"
+                                            @set-turn="(userId) => handleAction('set_turn', userId)"
+                                        />
+                                    </div>
+
+                                    <div v-else
+                                         class="rounded-lg border p-4 text-center text-gray-500 dark:text-gray-400">
+                                        <p>{{ t('Select a player to view their actions or wait for your turn.') }}</p>
+                                    </div>
                                 </div>
 
-                                <div v-else class="rounded-lg border p-4 text-center text-gray-500 dark:text-gray-400">
-                                    <p>{{ t('Select a player to view their actions or wait for your turn.') }}</p>
+                                <!-- Guest viewing message for in-progress games -->
+                                <div v-else-if="!isAuthenticated && game.status === 'in_progress'"
+                                     class="order-1 lg:order-2 lg:col-span-2">
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle>{{ t('Game in Progress') }}</CardTitle>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div class="text-center py-8">
+                                                <p class="text-gray-600 dark:text-gray-400 mb-4">
+                                                    {{
+                                                        t('This multiplayer game is currently in progress. You can watch the live action by viewing the player list on the left.')
+                                                    }}
+                                                </p>
+                                                <Link :href="route('login')">
+                                                    <Button>
+                                                        <LogInIcon class="mr-2 h-4 w-4"/>
+                                                        {{ t('Login to Participate') }}
+                                                    </Button>
+                                                </Link>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
                                 </div>
-                            </div>
 
-                            <!-- Guest viewing message for in-progress games -->
-                            <div v-else-if="!isAuthenticated && game.status === 'in_progress'"
-                                 class="order-1 lg:order-2 lg:col-span-2">
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>{{ t('Game in Progress') }}</CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div class="text-center py-8">
-                                            <p class="text-gray-600 dark:text-gray-400 mb-4">
-                                                {{
-                                                    t('This multiplayer game is currently in progress. You can watch the live action by viewing the player list on the left.')
-                                                }}
-                                            </p>
-                                            <Link :href="route('login')">
-                                                <Button>
-                                                    <LogInIcon class="mr-2 h-4 w-4"/>
-                                                    {{ t('Login to Participate') }}
-                                                </Button>
-                                            </Link>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </div>
-
-                            <!-- Game Completed Summary -->
-                            <div v-if="game.status === 'completed' || game.status === 'finished'"
-                                 class="order-1 lg:order-2 lg:col-span-2">
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>{{ t('Game Results') }}</CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <DataTable
-                                            :columns="resultsColumns"
-                                            :compact-mode="true"
-                                            :data="game.eliminated_players.sort((a, b) => (a.finish_position || 999) - (b.finish_position || 999))"
-                                        >
-                                            <template #cell-finish_position="{ value }">
+                                <!-- Game Completed Summary -->
+                                <div v-if="game.status === 'completed' || game.status === 'finished'"
+                                     class="order-1 lg:order-2 lg:col-span-2">
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle>{{ t('Game Results') }}</CardTitle>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <DataTable
+                                                :columns="resultsColumns"
+                                                :compact-mode="true"
+                                                :data="game.eliminated_players.sort((a, b) => (a.finish_position || 999) - (b.finish_position || 999))"
+                                            >
+                                                <template #cell-finish_position="{ value }">
                                                 <span
                                                     :class="{
                                                         'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300': value.isWinner,
@@ -1104,20 +1171,20 @@ onMounted(() => {
                                                 >
                                                     {{ value.position }}
                                                 </span>
-                                            </template>
-                                            <template #cell-player="{ value }">
-                                                {{ value.name }}
-                                                <span v-if="value.isYou"
-                                                      class="ml-1 text-xs text-blue-600">{{ t('(You)') }}</span>
-                                            </template>
-                                            <template #cell-rating_points="{ value }">
+                                                </template>
+                                                <template #cell-player="{ value }">
+                                                    {{ value.name }}
+                                                    <span v-if="value.isYou"
+                                                          class="ml-1 text-xs text-blue-600">{{ t('(You)') }}</span>
+                                                </template>
+                                                <template #cell-rating_points="{ value }">
                                                 <span v-if="value"
                                                       class="rounded-full bg-blue-100 px-2 py-1 text-xs text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                                                     +{{ value }}
                                                 </span>
-                                                <span v-else>—</span>
-                                            </template>
-                                            <template #cell-prize_amount="{ value }">
+                                                    <span v-else>—</span>
+                                                </template>
+                                                <template #cell-prize_amount="{ value }">
                                                 <span v-if="value && value > 0" class="font-medium">
                                                     {{
                                                         (value || 0).toLocaleString('uk-UA', {
@@ -1126,29 +1193,40 @@ onMounted(() => {
                                                         }).replace('UAH', '₴')
                                                     }}
                                                 </span>
-                                                <span v-else>—</span>
-                                            </template>
-                                        </DataTable>
-                                    </CardContent>
-                                </Card>
+                                                    <span v-else>—</span>
+                                                </template>
+                                            </DataTable>
+                                        </CardContent>
+                                    </Card>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Prizes tab -->
-                    <div v-if="activeTab === 'prizes'" class="space-y-6">
-                        <PrizeSummaryCard :game="game"/>
-                    </div>
+                        <!-- Prizes tab -->
+                        <div v-if="activeTab === 'prizes'" class="space-y-6">
+                            <PrizeSummaryCard :game="game"/>
+                        </div>
 
-                    <!-- Ratings tab -->
-                    <div v-if="activeTab === 'ratings'" class="space-y-6">
-                        <RatingSummaryCard :game="game"/>
-                    </div>
+                        <!-- Ratings tab -->
+                        <div v-if="activeTab === 'ratings'" class="space-y-6">
+                            <RatingSummaryCard :game="game"/>
+                        </div>
 
-                    <!-- Time Fund tab -->
-                    <div v-if="activeTab === 'timefund'" class="space-y-6">
-                        <TimeFundCard :game="game"/>
-                    </div>
+                        <div v-if="activeTab === 'statistics'" class="space-y-6">
+                            <div v-if="isLoadingStatistics" class="text-center py-8">
+                                <Spinner class="mx-auto h-8 w-8 text-indigo-600"/>
+                                <p class="mt-2 text-gray-500">{{ t('Loading statistics...') }}</p>
+                            </div>
+                            <GameStatistics v-else-if="gameStatistics" :statistics="gameStatistics"/>
+                            <div v-else class="text-center py-8 text-gray-500">
+                                {{ t('No statistics available') }}
+                            </div>
+                        </div>
+
+                        <!-- Time Fund tab -->
+                        <div v-if="activeTab === 'timefund'" class="space-y-6">
+                            <TimeFundCard :game="game"/>
+                        </div>
 
                         <!-- Widget tab -->
                         <div v-if="activeTab === 'widget' && isAuthenticated && (isAdmin || isModerator)"
@@ -1327,6 +1405,15 @@ onMounted(() => {
             :show="showAddPlayerModal"
             @added="handlePlayerAdded"
             @close="showAddPlayerModal = false"
+        />
+
+        <RebuyPlayerModal
+            v-if="isAdmin && game?.allow_rebuy"
+            :show="showRebuyModal"
+            :game="game"
+            :league-id="leagueId"
+            @close="showRebuyModal = false"
+            @added="handleRebuyAdded"
         />
     </template>
 </template>

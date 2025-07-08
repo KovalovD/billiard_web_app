@@ -256,6 +256,82 @@ export function useMultiplayerGames() {
         }
     };
 
+    // resources/js/composables/useMultiplayerGames.ts
+
+// Додати нові методи до існуючого composable:
+
+// Додати гравця під час гри (адмін)
+    const addPlayerDuringGame = async (
+        leagueId: number | string,
+        gameId: number | string,
+        userId: number,
+        rebuyFee: number,
+        isNewPlayer: boolean
+    ): Promise<MultiplayerGame> => {
+        isLoading.value = true;
+        error.value = null;
+
+        try {
+            const response = await apiClient<{ message: string, game: MultiplayerGame }>(
+                `/api/leagues/${leagueId}/multiplayer-games/${gameId}/add-player`,
+                {
+                    method: 'post',
+                    data: {
+                        user_id: userId,
+                        rebuy_fee: rebuyFee,
+                        is_new_player: isNewPlayer
+                    }
+                }
+            );
+            return response.game;
+        } catch (err: any) {
+            error.value = err.message || 'Failed to add player';
+            throw err;
+        } finally {
+            isLoading.value = false;
+        }
+    };
+
+// Отримати доступних гравців для додавання
+    const getAvailablePlayers = async (
+        leagueId: number | string,
+        gameId: number | string
+    ): Promise<any> => {
+        isLoading.value = true;
+        error.value = null;
+
+        try {
+            return await apiClient<any>(
+                `/api/leagues/${leagueId}/multiplayer-games/${gameId}/available-players`
+            );
+        } catch (err: any) {
+            error.value = err.message || 'Failed to get available players';
+            throw err;
+        } finally {
+            isLoading.value = false;
+        }
+    };
+
+// Отримати статистику гри
+    const getGameStatistics = async (
+        leagueId: number | string,
+        gameId: number | string
+    ): Promise<any> => {
+        isLoading.value = true;
+        error.value = null;
+
+        try {
+            return await apiClient<any>(
+                `/api/leagues/${leagueId}/multiplayer-games/${gameId}/statistics`
+            );
+        } catch (err: any) {
+            error.value = err.message || 'Failed to get game statistics';
+            throw err;
+        } finally {
+            isLoading.value = false;
+        }
+    };
+
     return {
         isLoading,
         error,
@@ -271,6 +347,9 @@ export function useMultiplayerGames() {
         finishGame,
         setGameModerator,
         getFinancialSummary,
-        getRatingSummary
+        getRatingSummary,
+        addPlayerDuringGame,
+        getAvailablePlayers,
+        getGameStatistics
     };
 }

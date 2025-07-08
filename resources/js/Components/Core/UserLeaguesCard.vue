@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {Card, CardContent, CardDescription, CardHeader, CardTitle, Spinner} from '@/Components/ui/index';
+import {Card, CardContent, CardDescription, CardHeader, CardTitle, Spinner} from '@/Components/ui';
 import {apiClient} from '@/lib/apiClient';
 import type {League, MatchGame, Rating} from '@/types/api';
 import {Link} from '@inertiajs/vue3';

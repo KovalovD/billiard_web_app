@@ -233,14 +233,14 @@ readonly class MultiplayerGamesController
             ;
 
             // Get current game players
-            $gamePlayers = $multiplayerGame->players()->with('user')->get();
+            $gamePlayers = $multiplayerGame->players()->with('user')->orderBy('eliminated_at')->get();
 
             $availablePlayers = $leaguePlayers->map(function ($user) use ($gamePlayers, $multiplayerGame) {
                 $existingPlayer = $gamePlayers->firstWhere('user_id', $user->id);
 
                 // Calculate fee
                 $baseFee = $multiplayerGame->entrance_fee;
-                $rebuyCount = $existingPlayer ? $existingPlayer->rebuy_count : 0;
+                $rebuyCount = $existingPlayer->rebuy_count ?? 0;
                 $fee = $baseFee + (100 * $rebuyCount);
 
                 $status = 'new';

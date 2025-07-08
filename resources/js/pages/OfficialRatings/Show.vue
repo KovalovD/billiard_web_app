@@ -25,7 +25,7 @@ import {useGameRules} from '@/composables/useGameRules';
 import {useToastStore} from '@/stores/toast';
 import {useSeo} from "@/composables/useSeo";
 import {scrollToUserElement} from '@/utils/scrollToUser';
-import UserAvatar from "@/Components/ui/UserAvatar.vue";
+import UserAvatar from "@/Components/Core/UserAvatar.vue";
 
 defineOptions({layout: AuthenticatedLayout});
 
