@@ -905,6 +905,7 @@ class MultiplayerGameService
         $game->players()->update(
             [
                 'prize_amount' => 0,
+                'penalty_paid' => false,
             ],
         );
 
@@ -920,6 +921,22 @@ class MultiplayerGameService
         if ($secondPlace) {
             $secondPlace->prize_amount = $secondPlacePrize;
             $secondPlace->save();
+        }
+
+        if (!$game->allow_rebuy) {
+            // Calculate penalty fees
+            $penaltyCount = (int) floor($totalPlayers / 2);
+            $penaltyPlayers = $game
+                ->players()
+                ->orderByDesc('finish_position')
+                ->limit($penaltyCount)
+                ->get()
+            ;
+
+            foreach ($penaltyPlayers as $player) {
+                $player->penalty_paid = true;
+                $player->save();
+            }
         }
     }
 

@@ -64,7 +64,7 @@ const form = ref<CreateMultiplayerGamePayload & {
     allow_rebuy: false,
     rebuy_rounds: 5,
     lives_per_new_player: 0,
-    enable_penalties: false,
+    enable_penalties: true,
     penalty_rounds_threshold: 3,
 });
 
@@ -118,7 +118,7 @@ const resetForm = () => {
         allow_rebuy: false,
         rebuy_rounds: 5,
         lives_per_new_player: 0,
-        enable_penalties: false,
+        enable_penalties: true,
         penalty_rounds_threshold: 3,
     };
     validationErrors.value = {};
