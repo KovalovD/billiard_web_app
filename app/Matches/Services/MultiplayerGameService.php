@@ -81,7 +81,7 @@ class MultiplayerGameService
             'multiplayer_game_id' => $game->id,
             'user_id'             => $user->id,
             'joined_at'           => now(),
-            'total_paid' => $game->entrance_fee,
+            'total_paid' => $game->entrance_fee ?: 0,
         ]);
 
         // Update current prize pool
@@ -449,7 +449,7 @@ class MultiplayerGameService
                 'turn_order'    => $turnOrders[$index],
                 'lives'         => $initialLives,
                 'eliminated_at' => null,
-                'total_paid'    => $game->entrance_fee,
+                'total_paid' => $game->entrance_fee ?: 0,
                 'cards'         => $this->getInitialCards($game, $player),
                 'rounds_played' => 1, // Starting round 1
                 'game_stats'    => [
