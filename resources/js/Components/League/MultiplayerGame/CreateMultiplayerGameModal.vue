@@ -29,7 +29,14 @@ const {t} = useLocale();
 
 const {createMultiplayerGame, error, isLoading} = useMultiplayerGames();
 
-const form = ref<CreateMultiplayerGamePayload & { official_rating_id?: number | null }>({
+const form = ref<CreateMultiplayerGamePayload & {
+    official_rating_id?: number | null;
+    allow_rebuy?: boolean;
+    rebuy_rounds?: number;
+    lives_per_new_player?: number;
+    enable_penalties?: boolean;
+    penalty_rounds_threshold?: number;
+}>({
     name: '',
     max_players: null as number | null,
     official_rating_id: null,
@@ -40,6 +47,11 @@ const form = ref<CreateMultiplayerGamePayload & { official_rating_id?: number | 
     second_place_percent: 20,
     grand_final_percent: 20,
     penalty_fee: 50,
+    allow_rebuy: false,
+    rebuy_rounds: 5,
+    lives_per_new_player: 0,
+    enable_penalties: false,
+    penalty_rounds_threshold: 3,
 });
 
 const validationErrors = ref<Record<string, string[]>>({});
@@ -70,13 +82,12 @@ const loadRatings = async () => {
 };
 
 // Reset form when modal opens/closes
-watch(() => props.show, (newVal) => {
-    if (newVal) {
-        console.log(newVal)
+watch(() => props.show, (newVal, oldVal) => {
+    if (newVal && !oldVal) {
         resetForm();
         loadRatings();
     }
-});
+}, {immediate: true});
 
 const resetForm = () => {
     form.value = {
@@ -90,6 +101,11 @@ const resetForm = () => {
         second_place_percent: 20,
         grand_final_percent: 20,
         penalty_fee: 50,
+        allow_rebuy: false,
+        rebuy_rounds: 5,
+        lives_per_new_player: 0,
+        enable_penalties: false,
+        penalty_rounds_threshold: 3,
     };
     validationErrors.value = {};
 };
@@ -117,6 +133,11 @@ const handleSubmit = async () => {
             second_place_percent: form.value.second_place_percent,
             grand_final_percent: form.value.grand_final_percent,
             penalty_fee: form.value.penalty_fee,
+            allow_rebuy: form.value.allow_rebuy,
+            rebuy_rounds: form.value.allow_rebuy ? form.value.rebuy_rounds : null,
+            lives_per_new_player: form.value.allow_rebuy ? form.value.lives_per_new_player : 0,
+            enable_penalties: form.value.enable_penalties,
+            penalty_rounds_threshold: form.value.enable_penalties ? form.value.penalty_rounds_threshold : null,
         };
 
         const newGame = await createMultiplayerGame(props.leagueId, gameData);
@@ -163,7 +184,7 @@ const handleSubmit = async () => {
                             :placeholder="isLoadingRatings ? t('Loading ratings...') : t('Select rating or leave empty')"/>
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem :value="null"></SelectItem>
+                        <SelectItem :value="null">{{ t('No rating') }}</SelectItem>
                         <SelectItem
                             v-for="rating in availableRatings"
                             :key="rating.id"
@@ -224,7 +245,93 @@ const handleSubmit = async () => {
                 <InputError :message="validationErrors.allow_player_targeting?.join(', ')"/>
             </div>
 
-            <h3 class="mt-4 font-medium">{{ t('Financial Settings') }}</h3>
+            <!-- New Rebuy Section -->
+            <div class="space-y-2 border-t pt-4">
+                <div class="flex items-center space-x-2">
+                    <input
+                        id="allow_rebuy"
+                        v-model="form.allow_rebuy"
+                        :disabled="isLoading"
+                        class="text-primary focus:ring-primary focus:border-primary focus:ring-opacity-50 h-4 w-4 rounded border-gray-300 shadow-sm"
+                        type="checkbox"
+                    />
+                    <Label for="allow_rebuy">{{ t('Allow Rebuy (Players can join during game)') }}</Label>
+                </div>
+                <p class="text-xs text-gray-500">
+                    {{ t('If enabled, players can join the game while it\'s in progress') }}
+                </p>
+            </div>
+
+            <div v-if="form.allow_rebuy" class="ml-6 space-y-4">
+                <div class="space-y-2">
+                    <Label for="rebuy_rounds">{{ t('Number of Rebuy Rounds') }}</Label>
+                    <Input
+                        id="rebuy_rounds"
+                        v-model.number="form.rebuy_rounds"
+                        :disabled="isLoading"
+                        class="mt-1"
+                        min="1"
+                        max="20"
+                        type="number"
+                    />
+                    <p class="text-xs text-gray-500">
+                        {{ t('How many times players can rebuy into the game') }}
+                    </p>
+                </div>
+
+                <div class="space-y-2">
+                    <Label for="lives_per_new_player">{{ t('Lives Added Per New Player') }}</Label>
+                    <Input
+                        id="lives_per_new_player"
+                        v-model.number="form.lives_per_new_player"
+                        :disabled="isLoading"
+                        class="mt-1"
+                        min="0"
+                        max="10"
+                        type="number"
+                    />
+                    <p class="text-xs text-gray-500">
+                        {{ t('Number of lives added to ALL players when someone joins (0-10)') }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Penalties Section -->
+            <div class="space-y-2 border-t pt-4">
+                <div class="flex items-center space-x-2">
+                    <input
+                        id="enable_penalties"
+                        v-model="form.enable_penalties"
+                        :disabled="isLoading"
+                        class="text-primary focus:ring-primary focus:border-primary focus:ring-opacity-50 h-4 w-4 rounded border-gray-300 shadow-sm"
+                        type="checkbox"
+                    />
+                    <Label for="enable_penalties">{{ t('Enable Penalties for Early Exit') }}</Label>
+                </div>
+                <p class="text-xs text-gray-500">
+                    {{ t('Players who play less than half the minimum rounds pay a penalty') }}
+                </p>
+            </div>
+
+            <div v-if="form.enable_penalties" class="ml-6 space-y-4">
+                <div class="space-y-2">
+                    <Label for="penalty_rounds_threshold">{{ t('Minimum Rounds for No Penalty') }}</Label>
+                    <Input
+                        id="penalty_rounds_threshold"
+                        v-model.number="form.penalty_rounds_threshold"
+                        :disabled="isLoading"
+                        class="mt-1"
+                        min="1"
+                        max="10"
+                        type="number"
+                    />
+                    <p class="text-xs text-gray-500">
+                        {{ t('Players must play at least half this many rounds to avoid penalty') }}
+                    </p>
+                </div>
+            </div>
+
+            <h3 class="mt-4 font-medium border-t pt-4">{{ t('Financial Settings') }}</h3>
 
             <div class="space-y-2">
                 <Label for="entrance_fee">{{ t('Entrance Fee') }}</Label>

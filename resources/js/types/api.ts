@@ -208,6 +208,11 @@ export interface CreateMultiplayerGamePayload {
     second_place_percent?: number;
     grand_final_percent?: number;
     penalty_fee?: number;
+    allow_rebuy?: boolean;
+    rebuy_rounds?: number | null;
+    lives_per_new_player?: number;
+    enable_penalties?: boolean;
+    penalty_rounds_threshold?: number | null;
 }
 
 export interface MultiplayerGamePlayer {
@@ -230,6 +235,19 @@ export interface MultiplayerGamePlayer {
     prize_amount?: number;
     penalty_paid?: boolean;
     time_fund_contribution?: number;
+    rebuy_count: number;
+    rounds_played: number;
+    total_paid: number;
+    game_stats?: {
+        shots_taken: number;
+        balls_potted: number;
+        lives_gained: number;
+        lives_lost: number;
+        cards_used: number;
+        turns_played: number;
+    };
+    is_rebuy: boolean;
+    last_rebuy_at?: string | null;
 }
 
 export interface MultiplayerGame {
@@ -288,6 +306,19 @@ export interface MultiplayerGame {
     };
     active_players: MultiplayerGamePlayer[];
     eliminated_players: MultiplayerGamePlayer[];
+    allow_rebuy: boolean;
+    rebuy_rounds: number | null;
+    lives_per_new_player: number;
+    enable_penalties: boolean;
+    penalty_rounds_threshold: number | null;
+    rebuy_history?: Array<{
+        user_id: number;
+        user_name: string;
+        amount: number;
+        timestamp: string;
+        round: number;
+    }>;
+    current_prize_pool: number;
 }
 
 export interface RegisterCredentials {

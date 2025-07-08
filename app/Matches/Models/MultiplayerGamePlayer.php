@@ -20,18 +20,29 @@ class MultiplayerGamePlayer extends Model
         'rating_points',
         'prize_amount',
         'penalty_paid',
-    ];
-
-    protected $with = [
-        'multiplayerGame',
+        'rebuy_count',
+        'rounds_played',
+        'total_paid',
+        'game_stats',
+        'is_rebuy',
+        'last_rebuy_at',
     ];
 
     protected $casts = [
         'cards'         => 'array',
         'joined_at'     => 'datetime',
         'eliminated_at' => 'datetime',
-        'penalty_paid' => 'boolean',
+        'penalty_paid'  => 'boolean',
+        'is_rebuy'      => 'boolean',
+        'last_rebuy_at' => 'datetime',
+        'game_stats'    => 'array',
+        'total_paid'    => 'decimal:2',
     ];
+
+    protected $with = [
+        'multiplayerGame',
+    ];
+
 
     public function multiplayerGame(): BelongsTo
     {

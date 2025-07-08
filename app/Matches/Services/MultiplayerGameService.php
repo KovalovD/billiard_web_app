@@ -15,6 +15,7 @@ use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Random\RandomException;
 use RuntimeException;
 use Throwable;
 
@@ -54,7 +55,7 @@ class MultiplayerGameService
     }
 
     /**
-     * Join a multiplayer game
+     * Join a multiplayer game (only during registration phase)
      */
     public function join(League $league, MultiplayerGame $game, User $user): MultiplayerGame
     {
@@ -80,12 +81,253 @@ class MultiplayerGameService
             'multiplayer_game_id' => $game->id,
             'user_id'             => $user->id,
             'joined_at'           => now(),
+            'total_paid' => $game->entrance_fee,
+        ]);
+
+        // Update current prize pool
+        $this->updatePrizePool($game);
+
+        $game->load(['players.user']);
+        return $game;
+    }
+
+    /**
+     * Add player during active game (admin only)
+     * Admin decides if it's a new player or rebuy
+     */
+    public function addPlayerDuringGame(
+        League $league,
+        MultiplayerGame $game,
+        User $user,
+        int $fee,
+        bool $isNewPlayer,
+        User $admin,
+    ): MultiplayerGame {
+        // Check admin permissions
+        if (!$admin->is_admin) {
+            throw new RuntimeException('Only admins can add players during active games.');
+        }
+
+        if (!$game->allow_rebuy) {
+            throw new RuntimeException('This game does not allow players to join during play.');
+        }
+
+        if ($game->status !== 'in_progress') {
+            throw new RuntimeException('Players can only be added during active games.');
+        }
+
+        $existingPlayer = $game->players()->where('user_id', $user->id)->first();
+
+        DB::transaction(function () use ($existingPlayer, $game, $user, $fee, $isNewPlayer) {
+            if ($existingPlayer && !$isNewPlayer) {
+                // Handle as rebuy
+                if ($existingPlayer->rebuy_count >= $game->rebuy_rounds) {
+                    throw new RuntimeException('Maximum rebuy limit reached for this player.');
+                }
+
+                if (!$existingPlayer->eliminated_at) {
+                    throw new RuntimeException('Player is still active in the game.');
+                }
+
+                // Rebuy existing player
+                $existingPlayer->update([
+                    'lives'           => $game->initial_lives,
+                    'eliminated_at'   => null,
+                    'finish_position' => null,
+                    'rebuy_count'     => $existingPlayer->rebuy_count + 1,
+                    'total_paid'      => $existingPlayer->total_paid + $fee,
+                    'is_rebuy'        => true,
+                    'last_rebuy_at'   => now(),
+                    'cards'           => $this->getInitialCards($game, $existingPlayer),
+                ]);
+
+                // Assign random turn order
+                $this->assignRandomTurnOrder($game, $existingPlayer);
+
+                // Add rebuy to history
+                $this->addRebuyToHistory($game, $user, $fee, $existingPlayer->rebuy_count, 'rebuy');
+
+                // Update rounds played
+                $currentRound = $this->getCurrentRound($game);
+                $existingPlayer->update(['rounds_played' => $currentRound]);
+
+            } else {
+                // Handle as new player joining
+                if ($existingPlayer) {
+                    throw new RuntimeException('Player already exists in this game. Mark as rebuy instead.');
+                }
+
+                $player = MultiplayerGamePlayer::create([
+                    'multiplayer_game_id' => $game->id,
+                    'user_id'             => $user->id,
+                    'lives'               => $game->initial_lives,
+                    'joined_at'           => now(),
+                    'total_paid'          => $fee,
+                    'is_rebuy'            => false,
+                    'rebuy_count'         => 0,
+                    'rounds_played'       => $this->getCurrentRound($game),
+                    'cards'               => $this->getInitialCards($game, null),
+                    'game_stats'          => [
+                        'shots_taken'  => 0,
+                        'balls_potted' => 0,
+                        'lives_gained' => 0,
+                        'lives_lost'   => 0,
+                        'cards_used'   => 0,
+                        'turns_played' => 0,
+                    ],
+                ]);
+
+                // Assign random turn order
+                $this->assignRandomTurnOrder($game, $player);
+
+                // Add to history as new player
+                $this->addRebuyToHistory($game, $user, $fee, 0, 'new_player');
+            }
+
+            // Add lives to all active players if configured
+            if ($game->lives_per_new_player > 0) {
+                $this->addLivesToAllPlayers($game, $game->lives_per_new_player, $user->id);
+            }
+        });
+
+        // Update current prize pool
+        $this->updatePrizePool($game);
+
+        // Log the action
+        MultiplayerGameLog::create([
+            'multiplayer_game_id' => $game->id,
+            'user_id'             => $admin->id,
+            'action_type'         => $isNewPlayer ? 'add_new_player' : 'rebuy_player',
+            'action_data'         => [
+                'target_user_id'       => $user->id,
+                'fee'                  => $fee,
+                'lives_per_new_player' => $game->lives_per_new_player,
+                'is_new_player'        => $isNewPlayer,
+            ],
+            'created_at'          => now(),
         ]);
 
         $game->load(['players.user']);
         return $game;
     }
 
+    /**
+     * Get current round based on rebuy history
+     */
+    private function getCurrentRound(MultiplayerGame $game): int
+    {
+        $rebuyHistory = collect($game->rebuy_history ?? []);
+        $uniqueRounds = $rebuyHistory->pluck('round')->unique()->count();
+        return max(1, $uniqueRounds);
+    }
+
+    /**
+     * Get initial cards for a player
+     */
+    private function getInitialCards(MultiplayerGame $game, ?MultiplayerGamePlayer $player): array
+    {
+        $cards = ['skip_turn' => true, 'pass_turn' => true, 'hand_shot' => true];
+
+        if ($player) {
+            $division = $game->getDivisionForUser($player);
+            if (in_array($division, ['B', 'C'])) {
+                $cards['handicap'] = true;
+            }
+        }
+
+        return $cards;
+    }
+
+    /**
+     * Assign random turn order to a player
+     * @throws RandomException
+     */
+    private function assignRandomTurnOrder(MultiplayerGame $game, MultiplayerGamePlayer $player): void
+    {
+        $activePlayers = $game
+            ->activePlayers()
+            ->where('id', '!=', $player->id)
+            ->orderBy('turn_order')
+            ->get()
+        ;
+
+        if ($activePlayers->isEmpty()) {
+            $player->update(['turn_order' => 1]);
+            return;
+        }
+
+        // Get all existing turn orders
+        $existingOrders = $activePlayers->pluck('turn_order')->toArray();
+
+        // Find a random position
+        $minOrder = min($existingOrders);
+        $maxOrder = max($existingOrders);
+
+        // Generate a random position between existing players
+        $randomPosition = random_int($minOrder, $maxOrder + 1);
+
+        // Shift other players if needed
+        $game
+            ->activePlayers()
+            ->where('turn_order', '>=', $randomPosition)
+            ->where('id', '!=', $player->id)
+            ->increment('turn_order')
+        ;
+
+        $player->update(['turn_order' => $randomPosition]);
+    }
+
+    /**
+     * Add rebuy/new player to game history
+     */
+    private function addRebuyToHistory(MultiplayerGame $game, User $user, int $amount, int $round, string $type): void
+    {
+        $history = $game->rebuy_history ?? [];
+
+        $history[] = [
+            'user_id'   => $user->id,
+            'user_name' => $user->firstname.' '.$user->lastname,
+            'amount'    => $amount,
+            'timestamp' => now()->toIso8601String(),
+            'round'     => $round,
+            'type'      => $type, // 'rebuy' or 'new_player'
+        ];
+
+        $game->update(['rebuy_history' => $history]);
+    }
+
+    /**
+     * Add lives to all active players
+     */
+    private function addLivesToAllPlayers(MultiplayerGame $game, int $livesToAdd, int $excludeUserId): void
+    {
+        $game
+            ->activePlayers()
+            ->where('user_id', '!=', $excludeUserId)
+            ->increment('lives', $livesToAdd)
+        ;
+
+        // Log the action
+        MultiplayerGameLog::create([
+            'multiplayer_game_id' => $game->id,
+            'user_id'             => $excludeUserId,
+            'action_type'         => 'lives_added_to_all',
+            'action_data'         => [
+                'lives_added' => $livesToAdd,
+                'reason'      => 'new_player_joined',
+            ],
+            'created_at'          => now(),
+        ]);
+    }
+
+    /**
+     * Update current prize pool
+     */
+    private function updatePrizePool(MultiplayerGame $game): void
+    {
+        $totalPaid = $game->players()->sum('total_paid');
+        $game->update(['current_prize_pool' => $totalPaid]);
+    }
 
     /**
      * Create a new multiplayer game
@@ -112,19 +354,24 @@ class MultiplayerGameService
         }
 
         return MultiplayerGame::create([
-            'league_id'              => $league->id,
-            'game_id'                => $game->id,
-            'official_rating_id' => $data['official_rating_id'] ?? null,
-            'name'                   => $data['name'],
-            'max_players'            => $data['max_players'] ?? null,
-            'registration_ends_at'   => $data['registration_ends_at'] ?? null,
-            'status'                 => 'registration',
-            'allow_player_targeting' => $data['allow_player_targeting'] ?? false,
-            'entrance_fee'           => $data['entrance_fee'] ?? 300,
-            'first_place_percent'    => $data['first_place_percent'] ?? 60,
-            'second_place_percent'   => $data['second_place_percent'] ?? 20,
-            'grand_final_percent'    => $data['grand_final_percent'] ?? 20,
-            'penalty_fee'            => $data['penalty_fee'] ?? 50,
+            'league_id'                => $league->id,
+            'game_id'                  => $game->id,
+            'official_rating_id'       => $data['official_rating_id'] ?? null,
+            'name'                     => $data['name'],
+            'max_players'              => $data['max_players'] ?? null,
+            'registration_ends_at'     => $data['registration_ends_at'] ?? null,
+            'status'                   => 'registration',
+            'allow_player_targeting'   => $data['allow_player_targeting'] ?? false,
+            'entrance_fee'             => $data['entrance_fee'] ?? 300,
+            'first_place_percent'      => $data['first_place_percent'] ?? 60,
+            'second_place_percent'     => $data['second_place_percent'] ?? 20,
+            'grand_final_percent'      => $data['grand_final_percent'] ?? 20,
+            'penalty_fee'              => $data['penalty_fee'] ?? 50,
+            'allow_rebuy'              => $data['allow_rebuy'] ?? false,
+            'rebuy_rounds'             => $data['rebuy_rounds'] ?? null,
+            'lives_per_new_player'     => $data['lives_per_new_player'] ?? 0,
+            'enable_penalties'         => $data['enable_penalties'] ?? false,
+            'penalty_rounds_threshold' => $data['penalty_rounds_threshold'] ?? null,
         ]);
     }
 
@@ -144,6 +391,9 @@ class MultiplayerGameService
         }
 
         $player->delete();
+
+        // Update current prize pool
+        $this->updatePrizePool($game);
 
         $game->load(['players.user']);
         return $game;
@@ -195,16 +445,19 @@ class MultiplayerGameService
 
         // Update each player
         foreach ($players as $index => $player) {
-            $division = $game->getDivisionForUser($player);
-            $cards = ['skip_turn' => true, 'pass_turn' => true, 'hand_shot' => true];
-            if (in_array($division, ['B', 'C'])) {
-                $cards['handicap'] = true;
-            }
-
             $player->update([
                 'turn_order' => $turnOrders[$index],
                 'lives'      => $initialLives,
-                'cards' => $cards,
+                'cards'         => $this->getInitialCards($game, $player),
+                'rounds_played' => 1, // Starting round 1
+                'game_stats'    => [
+                    'shots_taken'  => 0,
+                    'balls_potted' => 0,
+                    'lives_gained' => 0,
+                    'lives_lost'   => 0,
+                    'cards_used'   => 0,
+                    'turns_played' => 0,
+                ],
             ]);
         }
 
@@ -227,6 +480,9 @@ class MultiplayerGameService
             'current_player_id' => $firstPlayer->user_id ?? null,
             'next_turn_order'   => $secondPlayer->turn_order ?? null,
         ]);
+
+        // Update current prize pool
+        $this->updatePrizePool($game);
 
         return true;
     }
@@ -365,6 +621,10 @@ class MultiplayerGameService
 
         $this->incrementPlayerLives($targetPlayer);
 
+        // Update game stats
+        $this->updatePlayerStats($targetPlayer, 'lives_gained');
+        $this->updatePlayerStats($actingPlayer, 'balls_potted');
+
         // Log the action
         MultiplayerGameLog::create([
             'multiplayer_game_id' => $game->id,
@@ -382,6 +642,24 @@ class MultiplayerGameService
         }
 
         $game->refresh();
+    }
+
+    /**
+     * Update player statistics
+     */
+    private function updatePlayerStats(MultiplayerGamePlayer $player, string $stat): void
+    {
+        $stats = $player->game_stats ?? [
+            'shots_taken'  => 0,
+            'balls_potted' => 0,
+            'lives_gained' => 0,
+            'lives_lost'   => 0,
+            'cards_used'   => 0,
+            'turns_played' => 0,
+        ];
+
+        $stats[$stat] = ($stats[$stat] ?? 0) + 1;
+        $player->update(['game_stats' => $stats]);
     }
 
     /**
@@ -461,6 +739,10 @@ class MultiplayerGameService
         $oldLives = $targetPlayer->lives;
         $this->decrementPlayerLives($targetPlayer);
 
+        // Update game stats
+        $this->updatePlayerStats($targetPlayer, 'lives_lost');
+        $this->updatePlayerStats($actingPlayer, 'shots_taken');
+
         // Log the action
         MultiplayerGameLog::create([
             'multiplayer_game_id' => $game->id,
@@ -526,7 +808,27 @@ class MultiplayerGameService
             // Calculate prizes and rating points
             $this->calculatePrizes($game);
             $this->calculateRatingPoints($game);
+            $this->applyPenalties($game);
         }
+    }
+
+    /**
+     * Apply penalties to players who didn't play enough rounds
+     */
+    private function applyPenalties(MultiplayerGame $game): void
+    {
+        if (!$game->enable_penalties || !$game->penalty_rounds_threshold) {
+            return;
+        }
+
+        $minRoundsRequired = (int) ceil($game->penalty_rounds_threshold / 2);
+
+        $game
+            ->players()
+            ->where('rounds_played', '<', $minRoundsRequired)
+            ->where('rebuy_count', '<', $game->rebuy_rounds)
+            ->update(['penalty_paid' => true])
+        ;
     }
 
     /**
@@ -539,8 +841,8 @@ class MultiplayerGameService
             return;
         }
 
-        // Calculate total prize pool
-        $totalPrizePool = $totalPlayers * $game->entrance_fee;
+        // Use current prize pool instead of calculated from entrance fee
+        $totalPrizePool = $game->current_prize_pool;
 
         // Calculate prize amounts
         $firstPlacePrize = (int) ($totalPrizePool * ($game->first_place_percent / 100));
@@ -560,7 +862,6 @@ class MultiplayerGameService
         $game->players()->update(
             [
                 'prize_amount' => 0,
-                'penalty_paid' => false,
             ],
         );
 
@@ -576,20 +877,6 @@ class MultiplayerGameService
         if ($secondPlace) {
             $secondPlace->prize_amount = $secondPlacePrize;
             $secondPlace->save();
-        }
-
-        // Calculate penalty fees
-        $penaltyCount = (int) floor($totalPlayers / 2);
-        $penaltyPlayers = $game
-            ->players()
-            ->orderByDesc('finish_position')
-            ->limit($penaltyCount)
-            ->get()
-        ;
-
-        foreach ($penaltyPlayers as $player) {
-            $player->penalty_paid = true;
-            $player->save();
         }
     }
 
@@ -674,6 +961,9 @@ class MultiplayerGameService
         // Use the card
         $this->usePlayerCard($actingPlayer, $cardType);
 
+        // Update game stats
+        $this->updatePlayerStats($actingPlayer, 'cards_used');
+
         // Log the card usage
         MultiplayerGameLog::create([
             'multiplayer_game_id' => $game->id,
@@ -728,6 +1018,9 @@ class MultiplayerGameService
         string $handicapAction,
         ?int $targetUserId,
     ): void {
+        $targetPlayer = null;
+        $currentPlayerTurnOrder = $game->players()->where('user_id', $actingPlayer->user_id)->first()?->turn_order;
+
         switch ($handicapAction) {
             case 'skip_turn':
                 // Just skip turn, no target needed
@@ -743,7 +1036,6 @@ class MultiplayerGameService
                     throw new RuntimeException('Target player not found or eliminated.');
                 }
 
-                // Check if target player has 3+ lives (removed division check)
                 if ($targetPlayer->lives < 3) {
                     throw new RuntimeException('Target player must have at least 3 lives to take a life.');
                 }
@@ -767,6 +1059,9 @@ class MultiplayerGameService
 
         // Use the handicap card
         $this->usePlayerCard($actingPlayer, 'handicap');
+
+        // Update game stats
+        $this->updatePlayerStats($actingPlayer, 'cards_used');
 
         // Log the handicap card usage
         MultiplayerGameLog::create([
@@ -793,6 +1088,11 @@ class MultiplayerGameService
                     'created_at'          => now(),
                 ]);
                 $this->moveToNextPlayer($game);
+                break;
+
+            case 'pass_turn':
+                // Pass turn to target player
+                $this->passTurnToPlayer($game, $targetPlayer, $currentPlayerTurnOrder);
                 break;
 
             case 'take_life':
@@ -871,6 +1171,9 @@ class MultiplayerGameService
             Auth::id() !== $game->moderator_user_id) {
             throw new RuntimeException('It is not your turn.');
         }
+
+        // Update game stats
+        $this->updatePlayerStats($actingPlayer, 'turns_played');
 
         // Record that this player has taken their turn
         MultiplayerGameLog::create([
@@ -1005,16 +1308,23 @@ class MultiplayerGameService
             $game->refresh();
         }
 
+        $penaltyRevenue = $game
+                ->players()
+                ->where('penalty_paid', true)
+                ->count() * $game->penalty_fee;
+
         return [
             'entrance_fee'          => $game->entrance_fee,
             'total_players'         => $game->players()->count(),
-            'total_prize_pool'      => $game->prize_pool['total'] ?? 0,
+            'total_prize_pool'   => $game->current_prize_pool,
             'first_place_prize'     => $game->prize_pool['first_place'] ?? 0,
             'second_place_prize'    => $game->prize_pool['second_place'] ?? 0,
             'grand_final_fund'      => $game->prize_pool['grand_final_fund'] ?? 0,
             'penalty_fee'           => $game->penalty_fee,
             'penalty_players_count' => $game->players()->where('penalty_paid', true)->count(),
-            'time_fund_total'       => $game->players()->where('penalty_paid', true)->count() * $game->penalty_fee,
+            'time_fund_total'    => $penaltyRevenue,
+            'rebuy_history'      => $game->rebuy_history ?? [],
+            'total_rebuy_amount' => collect($game->rebuy_history ?? [])->sum('amount'),
         ];
     }
 
@@ -1049,6 +1359,9 @@ class MultiplayerGameService
                     ],
                     'finish_position' => $player->finish_position,
                     'rating_points'   => $player->rating_points,
+                    'game_stats'  => $player->game_stats,
+                    'rebuy_count' => $player->rebuy_count,
+                    'total_paid'  => $player->total_paid,
                 ];
             })
         ;

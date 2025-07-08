@@ -42,13 +42,25 @@ class MultiplayerGame extends Model
         'grand_final_percent',
         'penalty_fee',
         'prize_pool',
+        'allow_rebuy',
+        'rebuy_rounds',
+        'lives_per_new_player',
+        'enable_penalties',
+        'penalty_rounds_threshold',
+        'rebuy_history',
+        'current_prize_pool',
     ];
+
     protected $casts = [
         'registration_ends_at' => 'datetime',
         'started_at'           => 'datetime',
         'completed_at'         => 'datetime',
         'allow_player_targeting' => 'boolean',
         'prize_pool'           => 'array',
+        'allow_rebuy'        => 'boolean',
+        'enable_penalties'   => 'boolean',
+        'rebuy_history'      => 'array',
+        'current_prize_pool' => 'decimal:2',
     ];
 
     protected $with = ['officialRating'];

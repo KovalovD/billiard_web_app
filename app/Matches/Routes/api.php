@@ -26,6 +26,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
             ])->name('multiplayer-games.financial-summary');
             Route::get('/rating-summary',
                 [MultiplayerGamesController::class, 'getRatingSummary'])->name('multiplayer-games.rating-summary');
+            Route::get('/statistics',
+                [MultiplayerGamesController::class, 'getGameStatistics'])->name('multiplayer-games.statistics');
         });
 
         // Admin-only routes
@@ -37,6 +39,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
                 [MultiplayerGamesController::class, 'cancel'])->name('multiplayer-games.cancel');
             Route::delete('/{multiplayerGame}/players/{user}',
                 [MultiplayerGamesController::class, 'removePlayer'])->name('multiplayer-games.remove-player');
+            Route::post('/{multiplayerGame}/add-player',
+                [MultiplayerGamesController::class, 'addPlayerDuringGame'])->name('multiplayer-games.add-player');
+            Route::get('/{multiplayerGame}/available-players',
+                [
+                    MultiplayerGamesController::class, 'getAvailablePlayers',
+                ])->name('multiplayer-games.available-players');
         });
     });
 });
