@@ -27,7 +27,7 @@ const {t} = useLocale();
 // Local state
 const selectedCardType = ref<'skip_turn' | 'pass_turn' | 'hand_shot' | 'handicap' | null>(null);
 const selectedTargetPlayer = ref<MultiplayerGamePlayer | null>(null);
-const selectedHandicapAction = ref<'skip_turn' | 'pass_turn' | 'take_life' | null>(null);
+const selectedHandicapAction = ref<'skip_turn' | 'take_life' | null>(null);
 
 // Reset selections when player changes
 watch(() => props.player, () => {
@@ -39,16 +39,14 @@ watch(() => props.player, () => {
 // Computed properties
 const needsTarget = computed(() => {
     if (selectedCardType.value === 'pass_turn') return true;
-    if (selectedCardType.value === 'handicap' && selectedHandicapAction.value === 'pass_turn') return true;
     return selectedCardType.value === 'handicap' && selectedHandicapAction.value === 'take_life';
 });
 
 const eligibleTargetsForTakeLife = computed(() => {
     if (!props.targetPlayers) return [];
     return props.targetPlayers.filter(player => {
-        // Must be Elite, S, or A division and have 3+ lives
-        const division = player.division;
-        return ['Elite', 'S', 'A'].includes(division) && player.lives >= 3;
+        // Must have 3+ lives (removed division check)
+        return player.lives >= 3;
     });
 });
 
@@ -84,7 +82,7 @@ const handleSelectCard = (cardType: 'skip_turn' | 'pass_turn' | 'hand_shot' | 'h
     selectedHandicapAction.value = null;
 };
 
-const handleSelectHandicapAction = (action: 'skip_turn' | 'pass_turn' | 'take_life') => {
+const handleSelectHandicapAction = (action: 'skip_turn' | 'take_life') => {
     if (props.isLoading) return;
 
     selectedHandicapAction.value = selectedHandicapAction.value === action ? null : action;
@@ -118,8 +116,6 @@ const getButtonText = computed(() => {
         switch (selectedHandicapAction.value) {
             case 'skip_turn':
                 return t('Skip Turn');
-            case 'pass_turn':
-                return t('Pass Turn');
             case 'take_life':
                 return t('Take Life');
             default:
@@ -235,14 +231,6 @@ const handleRecordTurn = () => {
                     {{ t('Skip Turn') }}
                 </Button>
                 <Button
-                    :disabled="isLoading"
-                    :variant="selectedHandicapAction === 'pass_turn' ? 'default' : 'outline'"
-                    size="sm"
-                    @click="handleSelectHandicapAction('pass_turn')"
-                >
-                    {{ t('Pass Turn') }}
-                </Button>
-                <Button
                     :disabled="isLoading || eligibleTargetsForTakeLife.length === 0"
                     :variant="selectedHandicapAction === 'take_life' ? 'default' : 'outline'"
                     size="sm"
@@ -259,16 +247,15 @@ const handleRecordTurn = () => {
                 <p v-if="selectedHandicapAction === 'skip_turn'">{{
                         t('Skip your turn, game moves to the next player')
                     }}</p>
-                <p v-else-if="selectedHandicapAction === 'pass_turn'">{{ t('Pass your turn to another player') }}</p>
                 <p v-else-if="selectedHandicapAction === 'take_life'">
-                    {{ t('Take a life from Elite/S/A division players with 3+ lives') }}</p>
+                    {{ t('Take a life from any player with 3+ lives') }}</p>
             </div>
         </div>
 
         <div v-if="needsTarget && availableTargets.length" class="border-t pt-3">
             <h4 class="mb-2 text-sm font-medium">
                 <span v-if="selectedHandicapAction === 'take_life'">{{
-                        t('Select Target (Elite/S/A with 3+ lives):')
+                        t('Select Target (3+ lives):')
                     }}</span>
                 <span v-else>{{ t('Select Target Player:') }}</span>
             </h4>
@@ -293,7 +280,7 @@ const handleRecordTurn = () => {
             <div
                 class="rounded-md bg-yellow-50 p-3 text-center text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300">
                 <p v-if="selectedHandicapAction === 'take_life'">
-                    {{ t('No eligible targets for taking life (need Elite/S/A players with 3+ lives)') }}
+                    {{ t('No eligible targets for taking life (need players with 3+ lives)') }}
                 </p>
                 <p v-else>{{ t('No target players available') }}</p>
             </div>

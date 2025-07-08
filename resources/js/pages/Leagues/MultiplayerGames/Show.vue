@@ -445,10 +445,6 @@ const handleUseCard = async (cardType: 'skip_turn' | 'pass_turn' | 'hand_shot' |
                 case 'skip_turn':
                     message = t('Handicap card used - Skip Turn: your turn is skipped, game moves to the next player');
                     break;
-                case 'pass_turn':
-                    const targetPlayer = game.value.active_players.find(p => p.user.id === targetPlayerId);
-                    message = t('Handicap card used - Pass Turn: turn passed to :player', {player: `${targetPlayer?.user.firstname} ${targetPlayer?.user.lastname}`});
-                    break;
                 case 'take_life':
                     const targetPlayerLife = game.value.active_players.find(p => p.user.id === targetPlayerId);
                     message = t('Handicap card used - Take Life: removed a life from :player', {player: `${targetPlayerLife?.user.firstname} ${targetPlayerLife?.user.lastname}`});

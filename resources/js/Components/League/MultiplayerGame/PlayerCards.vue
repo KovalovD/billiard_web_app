@@ -57,7 +57,7 @@ const getCardDescription = (cardType: string): string => {
         case 'hand_shot':
             return t('Place the cue ball anywhere on the table and play any ball');
         case 'handicap':
-            return t('Choose one of three actions: skip turn, pass turn, or take a life from Elite/S/A players with 3+ lives');
+            return t('Choose one of two actions: skip turn or take a life from any player with 3+ lives');
         default:
             return '';
     }
