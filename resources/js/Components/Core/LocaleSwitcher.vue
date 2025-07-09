@@ -153,6 +153,7 @@ interface Props {
     isMobile?: boolean;
 }
 
+// eslint-disable-next-line
 const props = withDefaults(defineProps<Props>(), {
     isMobile: false
 });

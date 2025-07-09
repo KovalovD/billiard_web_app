@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {ref, onMounted, watch, computed} from 'vue';
+import {computed, onMounted, ref, watch} from 'vue';
 import {Head} from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {useAdminSettings} from '@/composables/useAdminSettings';
@@ -12,6 +12,8 @@ import {
     CardDescription,
     CardHeader,
     CardTitle,
+    Checkbox,
+    DataTable,
     Input,
     Label,
     Modal,
@@ -22,21 +24,19 @@ import {
     SelectValue,
     Spinner,
     Textarea,
-    Checkbox,
-    DataTable,
 } from '@/Components/ui';
-import type {Country, City, Club, ClubTable, Game} from '@/types/api';
+import type {City, Club, ClubTable, Country, Game} from '@/types/api';
 import {
+    BuildingIcon,
+    CheckCircleIcon,
+    EditIcon,
+    GamepadIcon,
     GlobeIcon,
     MapPinIcon,
-    BuildingIcon,
-    TableIcon,
-    GamepadIcon,
     PlusIcon,
-    EditIcon,
-    Trash2Icon,
     SearchIcon,
-    CheckCircleIcon,
+    TableIcon,
+    Trash2Icon,
     XCircleIcon,
 } from 'lucide-vue-next';
 
@@ -154,6 +154,7 @@ const loadCountries = async () => {
         });
         countriesData.value.items = response.data;
         countriesData.value.totalPages = response.meta.last_page;
+// eslint-disable-next-line
     } catch (error) {
         toast.error(t('Error'), t('Failed to load countries'));
     } finally {
@@ -186,6 +187,7 @@ const loadCities = async () => {
             const countriesResponse = await adminSettings.fetchCountries({per_page: 100});
             citiesData.value.countries = countriesResponse.data;
         }
+// eslint-disable-next-line
     } catch (error) {
         toast.error(t('Error'), t('Failed to load cities'));
     } finally {
@@ -218,6 +220,7 @@ const loadClubs = async () => {
             const citiesResponse = await adminSettings.fetchCities({per_page: 100});
             clubsData.value.cities = citiesResponse.data;
         }
+// eslint-disable-next-line
     } catch (error) {
         toast.error(t('Error'), t('Failed to load clubs'));
     } finally {
@@ -271,6 +274,7 @@ const loadTables = async () => {
         const endIndex = startIndex + tablesData.value.perPage;
         tablesData.value.items = allTables.slice(startIndex, endIndex);
         tablesData.value.totalPages = Math.ceil(allTables.length / tablesData.value.perPage);
+// eslint-disable-next-line
     } catch (error) {
         toast.error(t('Error'), t('Failed to load tables'));
     } finally {
@@ -296,6 +300,7 @@ const loadGames = async () => {
         const response = await adminSettings.fetchGames(params);
         gamesData.value.items = response.data;
         gamesData.value.totalPages = response.meta.last_page;
+// eslint-disable-next-line
     } catch (error) {
         toast.error(t('Error'), t('Failed to load games'));
     } finally {
@@ -539,37 +544,6 @@ const resetForms = () => {
     gameForm.value = {name: '', type: 'pool', rules: '', is_multiplayer: false};
 };
 
-// Reorder tables
-const reorderTables = async (direction: 'up' | 'down', table: ClubTable, clubId: number) => {
-    if (!clubId) return;
-
-    try {
-        // Get all tables for this club
-        const clubTables = tablesData.value.items.filter(t => t.club_id === clubId);
-        const currentIndex = clubTables.findIndex(t => t.id === table.id);
-
-        if (currentIndex === -1) return;
-
-        const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
-
-        if (targetIndex < 0 || targetIndex >= clubTables.length) return;
-
-        // Swap positions
-        [clubTables[currentIndex], clubTables[targetIndex]] = [clubTables[targetIndex], clubTables[currentIndex]];
-
-        // Update sort orders
-        const reorderedTables = clubTables.map((t, i) => ({
-            id: t.id,
-            sort_order: i + 1
-        }));
-
-        await adminSettings.reorderClubTables(clubId, reorderedTables);
-        toast.success(t('Success'), t('Tables reordered successfully'));
-        await loadTables();
-    } catch (error) {
-        toast.error(t('Error'), t('Failed to reorder tables'));
-    }
-};
 
 // Table columns
 const countryColumns = computed(() => [
@@ -656,6 +630,8 @@ const currentTabData = computed(() => {
             return tablesData.value;
         case 'games':
             return gamesData.value;
+        default:
+            return null;
     }
 });
 </script>
