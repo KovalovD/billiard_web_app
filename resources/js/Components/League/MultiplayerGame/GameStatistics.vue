@@ -1,10 +1,12 @@
-// resources/js/Components/League/MultiplayerGame/GameStatistics.vue
-
 <script lang="ts" setup>
 import {Card, CardContent, CardHeader, CardTitle} from '@/Components/ui';
 import {useLocale} from '@/composables/useLocale';
 import {BarChart3Icon, CreditCardIcon, HeartIcon, TrophyIcon} from 'lucide-vue-next';
 
+// eslint-disable-next-line
+const props = defineProps<{
+    statistics: any;
+}>();
 const {t} = useLocale();
 
 const formatCurrency = (amount: number) => {
@@ -126,13 +128,13 @@ const formatCurrency = (amount: number) => {
         </Card>
 
         <!-- Rebuy History -->
-        <Card v-if="statistics.rebuy_history?.length > 0">
+        <Card v-if="statistics?.rebuy_history?.length > 0">
             <CardHeader>
                 <CardTitle>{{ t('Rebuy History') }}</CardTitle>
             </CardHeader>
             <CardContent>
                 <div class="space-y-2">
-                    <div v-for="(rebuy, index) in statistics.rebuy_history" :key="index"
+                    <div v-for="(rebuy, index) in statistics?.rebuy_history" :key="index"
                          class="flex items-center justify-between py-2 border-b last:border-0">
                         <div>
                             <p class="font-medium">{{ rebuy.user_name }}</p>

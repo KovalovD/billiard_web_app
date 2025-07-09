@@ -8,7 +8,7 @@ interface Props {
 
 // eslint-disable-next-line
 const props = withDefaults(defineProps<Props>(), {
-    as: 'Link', // По умолчанию используем Inertia Link, если есть href
+    as: 'Link',
 });
 </script>
 
