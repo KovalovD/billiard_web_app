@@ -156,6 +156,10 @@ Route::middleware('auth')->group(function () {
     })->name('profile.stats');
     // --- Admin routes ---
     Route::middleware(AdminMiddleware::class)->prefix('admin')->group(function () {
+        Route::get('/settings', static function () {
+            return Inertia::render('Admin/Settings/Index');
+        })->name('admin.settings');
+
         Route::group(['prefix' => 'leagues'], static function () {
             Route::get('{league:slug}/confirmed-players', static function ($leagueSlug) {
                 $league = League::where('slug', $leagueSlug)->firstOrFail();

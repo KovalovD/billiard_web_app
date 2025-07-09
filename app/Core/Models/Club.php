@@ -24,6 +24,10 @@ class Club extends Model
         'city_id',
     ];
 
+    protected $withCount = ['tournaments', 'tables'];
+
+    protected $with = ['city'];
+
     public static function newFactory(): ClubFactory|Factory
     {
         return ClubFactory::new();

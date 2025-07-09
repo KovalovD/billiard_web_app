@@ -9,23 +9,6 @@ use Illuminate\Validation\Rule;
 
 class UpdateProfileRequest extends BaseFormRequest
 {
-    /**
-     * Prepare the data for validation.
-     */
-    protected function prepareForValidation(): void
-    {
-        // Ensure multipart form data is properly parsed
-        if ($this->isMethod('PUT') || $this->isMethod('PATCH')) {
-            // For PUT/PATCH requests with multipart/form-data,
-            // Laravel might not parse the data correctly
-            if ($this->header('Content-Type') && str_contains($this->header('Content-Type'), 'multipart/form-data')) {
-                // The data should already be available via $this->all()
-                // This is just to ensure it's properly loaded
-                $this->merge($this->all());
-            }
-        }
-    }
-
     public function rules(): array
     {
         $userId = $this->user() ? $this->user()->id : null;
@@ -64,5 +47,22 @@ class UpdateProfileRequest extends BaseFormRequest
             'picture.max'            => 'Profile picture must not exceed 5MB.',
             'tournament_picture.max' => 'Tournament picture must not exceed 5MB.',
         ];
+    }
+
+    /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        // Ensure multipart form data is properly parsed
+        if ($this->isMethod('PUT') || $this->isMethod('PATCH')) {
+            // For PUT/PATCH requests with multipart/form-data,
+            // Laravel might not parse the data correctly
+            if ($this->header('Content-Type') && str_contains($this->header('Content-Type'), 'multipart/form-data')) {
+                // The data should already be available via $this->all()
+                // This is just to ensure it's properly loaded
+                $this->merge($this->all());
+            }
+        }
     }
 }

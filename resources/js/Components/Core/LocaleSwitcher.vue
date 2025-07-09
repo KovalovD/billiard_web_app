@@ -1,28 +1,31 @@
+resources/js/Components/Core/LocaleSwitcher.vue
+
 <template>
     <div class="relative">
-        <!-- Кнопка перемикача мови -->
+        <!-- Desktop/Default Button -->
         <button
-            :class="{
-        'bg-gray-50': isDropdownOpen
-      }"
+            v-if="!isMobile"
             :disabled="isLoading"
-            class="flex items-center space-x-2 px-3 py-2 rounded-md border border-gray-200 hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            :class="{
+                'bg-gray-100 dark:bg-gray-700': isDropdownOpen,
+                'bg-gray-50 dark:bg-gray-800': !isDropdownOpen
+            }"
+            class="flex items-center space-x-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             @click="toggleDropdown"
         >
             <div class="flex items-center space-x-2">
-                <!-- Прапор/іконка поточної мови -->
-                <span class="text-lg">
-        </span>
+                <!-- Current language flag -->
+                <span class="text-lg">{{ getLanguageFlag(currentLocale) }}</span>
 
-                <!-- Назва поточної мови -->
-                <span class="text-sm font-medium text-gray-700">
-          {{ currentLanguageName }}
-        </span>
+                <!-- Current language name -->
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {{ currentLanguageName }}
+                </span>
 
-                <!-- Іконка стрілки -->
+                <!-- Arrow icon -->
                 <svg
                     :class="{ 'rotate-180': isDropdownOpen }"
-                    class="w-4 h-4 text-gray-400 transition-transform duration-200"
+                    class="w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform duration-200"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -36,14 +39,50 @@
                 </svg>
             </div>
 
-            <!-- Індикатор завантаження -->
+            <!-- Loading indicator -->
             <div
                 v-if="isLoading"
-                class="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"
+                class="w-4 h-4 border-2 border-gray-300 dark:border-gray-600 border-t-indigo-600 dark:border-t-indigo-400 rounded-full animate-spin"
             />
         </button>
 
-        <!-- Випадаюче меню -->
+        <!-- Mobile Full Width Button -->
+        <button
+            v-else
+            :disabled="isLoading"
+            class="w-full flex items-center justify-between px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            @click="toggleDropdown"
+        >
+            <div class="flex items-center space-x-3">
+                <span class="text-lg">{{ getLanguageFlag(currentLocale) }}</span>
+                <span class="text-base font-medium text-gray-700 dark:text-gray-300">
+                    {{ currentLanguageName }}
+                </span>
+            </div>
+
+            <div class="flex items-center space-x-2">
+                <div
+                    v-if="isLoading"
+                    class="w-4 h-4 border-2 border-gray-300 dark:border-gray-600 border-t-indigo-600 dark:border-t-indigo-400 rounded-full animate-spin"
+                />
+                <svg
+                    :class="{ 'rotate-180': isDropdownOpen }"
+                    class="w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform duration-200"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        d="M19 9l-7 7-7-7"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                    />
+                </svg>
+            </div>
+        </button>
+
+        <!-- Dropdown menu -->
         <Transition
             enter-active-class="transition ease-out duration-100"
             enter-from-class="transform opacity-0 scale-95"
@@ -54,30 +93,34 @@
         >
             <div
                 v-if="isDropdownOpen"
-                class="absolute right-0 mt-2 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
+                :class="{
+                    'absolute right-0 mt-2 w-48': !isMobile,
+                    'absolute left-0 right-0 mt-2 mx-4': isMobile
+                }"
+                class="rounded-lg shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 dark:ring-gray-700 focus:outline-none z-[100]"
             >
                 <div class="py-1">
                     <button
                         v-for="locale in availableLocales"
                         :key="locale"
-                        :class="{
-              'bg-gray-100 font-medium': locale === currentLocale
-            }"
                         :disabled="isLoading || locale === currentLocale"
-                        class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                        :class="{
+                            'bg-gray-100 dark:bg-gray-700 font-medium': locale === currentLocale,
+                            'hover:bg-gray-100 dark:hover:bg-gray-700': locale !== currentLocale
+                        }"
+                        class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                         @click="handleLocaleChange(locale)"
                     >
-                        <!-- Прапор/іконка мови -->
-                        <span class="text-lg mr-3">
-            </span>
+                        <!-- Language flag -->
+                        <span class="text-lg mr-3">{{ getLanguageFlag(locale) }}</span>
 
-                        <!-- Назва мови -->
+                        <!-- Language name -->
                         <span>{{ getLanguageName(locale) }}</span>
 
-                        <!-- Індикатор поточної мови -->
+                        <!-- Current language indicator -->
                         <svg
                             v-if="locale === currentLocale"
-                            class="ml-auto w-4 h-4 text-blue-600"
+                            class="ml-auto w-4 h-4 text-indigo-600 dark:text-indigo-400"
                             fill="currentColor"
                             viewBox="0 0 20 20"
                         >
@@ -92,10 +135,10 @@
             </div>
         </Transition>
 
-        <!-- Overlay для закриття меню при кліку поза ним -->
+        <!-- Overlay for closing menu on outside click -->
         <div
             v-if="isDropdownOpen"
-            class="fixed inset-0 z-40"
+            class="fixed inset-0 z-[90]"
             @click="closeDropdown"
         />
     </div>
@@ -105,7 +148,16 @@
 import {onMounted, onUnmounted, ref} from 'vue';
 import {useLocale} from '@/composables/useLocale';
 
-// Composable для роботи з локалізацією
+// Props
+interface Props {
+    isMobile?: boolean;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+    isMobile: false
+});
+
+// Composable for localization
 const {
     currentLocale,
     availableLocales,
@@ -115,10 +167,27 @@ const {
     getLanguageName
 } = useLocale();
 
-// Локальний стейт компонента
+// Local component state
 const isDropdownOpen = ref(false);
 
-// Методи для роботи з випадаючим меню
+// Language flags mapping
+const languageFlags: Record<string, string> = {
+    en: '🇬🇧',
+    uk: '🇺🇦',
+    es: '🇪🇸',
+    de: '🇩🇪',
+    fr: '🇫🇷',
+    it: '🇮🇹',
+    pl: '🇵🇱',
+    ru: '🇷🇺'
+};
+
+// Get flag for language
+const getLanguageFlag = (locale: string): string => {
+    return languageFlags[locale] || '🌐';
+};
+
+// Methods for dropdown menu
 const toggleDropdown = () => {
     isDropdownOpen.value = !isDropdownOpen.value;
 };
@@ -127,18 +196,17 @@ const closeDropdown = () => {
     isDropdownOpen.value = false;
 };
 
-// Обробка зміни мови
+// Handle language change
 const handleLocaleChange = async (locale: string) => {
     try {
         await setLocale(locale);
         closeDropdown();
     } catch (error) {
         console.error('Failed to change locale:', error);
-        // Тут можна додати показ повідомлення про помилку
     }
 };
 
-// Закриття меню при натисканні Escape
+// Close menu on Escape key
 const handleKeydown = (event: KeyboardEvent) => {
     if (event.key === 'Escape') {
         closeDropdown();
@@ -153,3 +221,14 @@ onUnmounted(() => {
     document.removeEventListener('keydown', handleKeydown);
 });
 </script>
+
+<style scoped>
+/* Ensure dropdown appears above other elements */
+.z-\[90\] {
+    z-index: 90;
+}
+
+.z-\[100\] {
+    z-index: 100;
+}
+</style>

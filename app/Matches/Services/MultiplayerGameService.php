@@ -92,6 +92,61 @@ class MultiplayerGameService
     }
 
     /**
+     * Create a new multiplayer game
+     */
+    public function create(League $league, array $data): MultiplayerGame
+    {
+        // Ensure the game is a multiplayer type
+        $game = $league->game;
+        if (!$game->is_multiplayer) {
+            throw new RuntimeException('This league does not support multiplayer games');
+        }
+
+        // Validate official rating if provided
+        if (!empty($data['official_rating_id'])) {
+            $officialRating = OfficialRating::find($data['official_rating_id']);
+            if (!$officialRating || !$officialRating->is_active) {
+                throw new RuntimeException('Selected official rating is not available');
+            }
+
+            // Check if rating matches the game type
+            if ($officialRating->game_type !== $game->type) {
+                throw new RuntimeException('Official rating does not match the game type');
+            }
+        }
+
+        return MultiplayerGame::create([
+            'league_id'                => $league->id,
+            'game_id'                  => $game->id,
+            'official_rating_id'       => $data['official_rating_id'] ?? null,
+            'name'                     => $data['name'],
+            'max_players'              => $data['max_players'] ?? null,
+            'registration_ends_at'     => $data['registration_ends_at'] ?? null,
+            'status'                   => 'registration',
+            'allow_player_targeting'   => $data['allow_player_targeting'] ?? false,
+            'entrance_fee'             => $data['entrance_fee'] ?? 300,
+            'first_place_percent'      => $data['first_place_percent'] ?? 60,
+            'second_place_percent'     => $data['second_place_percent'] ?? 20,
+            'grand_final_percent'      => $data['grand_final_percent'] ?? 20,
+            'penalty_fee'              => $data['penalty_fee'] ?? 50,
+            'allow_rebuy'              => $data['allow_rebuy'] ?? false,
+            'rebuy_rounds'             => $data['rebuy_rounds'] ?? null,
+            'lives_per_new_player'     => $data['lives_per_new_player'] ?? 0,
+            'enable_penalties'         => $data['enable_penalties'] ?? false,
+            'penalty_rounds_threshold' => $data['penalty_rounds_threshold'] ?? null,
+        ]);
+    }
+
+    /**
+     * Update current prize pool
+     */
+    private function updatePrizePool(MultiplayerGame $game): void
+    {
+        $totalPaid = $game->players()->sum('total_paid');
+        $game->update(['current_prize_pool' => $totalPaid]);
+    }
+
+    /**
      * Add player during active game (admin only)
      * Admin decides if it's a new player or rebuy
      */
@@ -212,16 +267,6 @@ class MultiplayerGameService
     }
 
     /**
-     * Get current round based on rebuy history
-     */
-    private function getCurrentRound(MultiplayerGame $game): int
-    {
-        $rebuyHistory = collect($game->rebuy_history ?? []);
-        $uniqueRounds = $rebuyHistory->pluck('round')->unique()->count();
-        return max(1, $uniqueRounds);
-    }
-
-    /**
      * Get initial cards for a player
      */
     private function getInitialCards(MultiplayerGame $game, ?MultiplayerGamePlayer $player): array
@@ -297,6 +342,16 @@ class MultiplayerGameService
     }
 
     /**
+     * Get current round based on rebuy history
+     */
+    private function getCurrentRound(MultiplayerGame $game): int
+    {
+        $rebuyHistory = collect($game->rebuy_history ?? []);
+        $uniqueRounds = $rebuyHistory->pluck('round')->unique()->count();
+        return max(1, $uniqueRounds);
+    }
+
+    /**
      * Add lives to all active players
      */
     private function addLivesToAllPlayers(MultiplayerGame $game, int $livesToAdd, int $excludeUserId): void
@@ -317,61 +372,6 @@ class MultiplayerGameService
                 'reason'      => 'new_player_joined',
             ],
             'created_at'          => now(),
-        ]);
-    }
-
-    /**
-     * Update current prize pool
-     */
-    private function updatePrizePool(MultiplayerGame $game): void
-    {
-        $totalPaid = $game->players()->sum('total_paid');
-        $game->update(['current_prize_pool' => $totalPaid]);
-    }
-
-    /**
-     * Create a new multiplayer game
-     */
-    public function create(League $league, array $data): MultiplayerGame
-    {
-        // Ensure the game is a multiplayer type
-        $game = $league->game;
-        if (!$game->is_multiplayer) {
-            throw new RuntimeException('This league does not support multiplayer games');
-        }
-
-        // Validate official rating if provided
-        if (!empty($data['official_rating_id'])) {
-            $officialRating = OfficialRating::find($data['official_rating_id']);
-            if (!$officialRating || !$officialRating->is_active) {
-                throw new RuntimeException('Selected official rating is not available');
-            }
-
-            // Check if rating matches the game type
-            if ($officialRating->game_type !== $game->type) {
-                throw new RuntimeException('Official rating does not match the game type');
-            }
-        }
-
-        return MultiplayerGame::create([
-            'league_id'                => $league->id,
-            'game_id'                  => $game->id,
-            'official_rating_id'       => $data['official_rating_id'] ?? null,
-            'name'                     => $data['name'],
-            'max_players'              => $data['max_players'] ?? null,
-            'registration_ends_at'     => $data['registration_ends_at'] ?? null,
-            'status'                   => 'registration',
-            'allow_player_targeting'   => $data['allow_player_targeting'] ?? false,
-            'entrance_fee'             => $data['entrance_fee'] ?? 300,
-            'first_place_percent'      => $data['first_place_percent'] ?? 60,
-            'second_place_percent'     => $data['second_place_percent'] ?? 20,
-            'grand_final_percent'      => $data['grand_final_percent'] ?? 20,
-            'penalty_fee'              => $data['penalty_fee'] ?? 50,
-            'allow_rebuy'              => $data['allow_rebuy'] ?? false,
-            'rebuy_rounds'             => $data['rebuy_rounds'] ?? null,
-            'lives_per_new_player'     => $data['lives_per_new_player'] ?? 0,
-            'enable_penalties'         => $data['enable_penalties'] ?? false,
-            'penalty_rounds_threshold' => $data['penalty_rounds_threshold'] ?? null,
         ]);
     }
 
@@ -648,6 +648,14 @@ class MultiplayerGameService
     }
 
     /**
+     * Increment player lives
+     */
+    public function incrementPlayerLives(MultiplayerGamePlayer $player): void
+    {
+        $player->increment('lives');
+    }
+
+    /**
      * Update player statistics
      */
     private function updatePlayerStats(MultiplayerGamePlayer $player, string $stat): void
@@ -665,14 +673,6 @@ class MultiplayerGameService
 
         $stats[$stat] = ($stats[$stat] ?? 0) + 1;
         $player->update(['game_stats' => $stats]);
-    }
-
-    /**
-     * Increment player lives
-     */
-    public function incrementPlayerLives(MultiplayerGamePlayer $player): void
-    {
-        $player->increment('lives');
     }
 
     /**
@@ -856,25 +856,6 @@ class MultiplayerGameService
     }
 
     /**
-     * Apply penalties to players who didn't play enough rounds
-     */
-    private function applyPenalties(MultiplayerGame $game): void
-    {
-        if (!$game->enable_penalties || !$game->penalty_rounds_threshold) {
-            return;
-        }
-
-        $minRoundsRequired = (int) ceil($game->penalty_rounds_threshold / 2);
-
-        $game
-            ->players()
-            ->where('rounds_played', '<', $minRoundsRequired)
-            ->where('rebuy_count', '<', $game->rebuy_rounds)
-            ->update(['penalty_paid' => true])
-        ;
-    }
-
-    /**
      * Calculate prize pool for a game
      */
     public function calculatePrizes(MultiplayerGame $game): void
@@ -965,6 +946,25 @@ class MultiplayerGameService
             }
             $player->save();
         }
+    }
+
+    /**
+     * Apply penalties to players who didn't play enough rounds
+     */
+    private function applyPenalties(MultiplayerGame $game): void
+    {
+        if (!$game->enable_penalties || !$game->penalty_rounds_threshold) {
+            return;
+        }
+
+        $minRoundsRequired = (int) ceil($game->penalty_rounds_threshold / 2);
+
+        $game
+            ->players()
+            ->where('rounds_played', '<', $minRoundsRequired)
+            ->where('rebuy_count', '<', $game->rebuy_rounds)
+            ->update(['penalty_paid' => true])
+        ;
     }
 
     private function handleUseCard(

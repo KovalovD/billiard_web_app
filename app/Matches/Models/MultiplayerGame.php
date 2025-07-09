@@ -57,10 +57,10 @@ class MultiplayerGame extends Model
         'completed_at'         => 'datetime',
         'allow_player_targeting' => 'boolean',
         'prize_pool'           => 'array',
-        'allow_rebuy'        => 'boolean',
-        'enable_penalties'   => 'boolean',
-        'rebuy_history'      => 'array',
-        'current_prize_pool' => 'decimal:2',
+        'allow_rebuy'          => 'boolean',
+        'enable_penalties'     => 'boolean',
+        'rebuy_history'        => 'array',
+        'current_prize_pool'   => 'decimal:2',
     ];
 
     protected $with = ['officialRating'];

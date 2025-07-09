@@ -10,12 +10,12 @@ import UserAvatar from '@/Components/Core/UserAvatar.vue';
 import {useAuth} from '@/composables/useAuth';
 import {Head, Link} from '@inertiajs/vue3';
 import axios from 'axios';
-import {onMounted, ref, watch} from 'vue';
+import {onMounted, ref, watch, computed} from 'vue';
 import LocaleSwitcher from "@/Components/Core/LocaleSwitcher.vue";
 import {useLocale} from '@/composables/useLocale';
 import ToastContainer from '@/Components/Core/ToastContainer.vue';
 import MonoDonate from '@/Components/Core/MonoDonate.vue';
-import {ChevronDownIcon, MenuIcon, XIcon} from 'lucide-vue-next';
+import {ChevronDownIcon, MenuIcon, XIcon, SettingsIcon} from 'lucide-vue-next';
 
 const {t} = useLocale();
 const {user} = useAuth();
@@ -25,6 +25,11 @@ const showRegisterModal = ref(false);
 
 // Mobile menu state
 const mobileMenuOpen = ref(false);
+
+// Computed property to check if user is admin
+const isAdmin = computed(() => {
+    return user.value?.role === 'admin' || user.value?.is_admin === true;
+});
 
 // Close mobile menu when route changes
 watch(() => window.location.pathname, () => {
@@ -172,6 +177,16 @@ onMounted(() => {
                                     <span v-if="$page.url.startsWith('/official-ratings')"
                                           class="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 dark:bg-indigo-400"></span>
                                 </NavLink>
+                                <NavLink
+                                    v-if="isAdmin"
+                                    :active="$page.url.startsWith('/admin/settings')"
+                                    :href="'/admin/settings'"
+                                    class="relative text-gray-700 hover:text-indigo-600 dark:text-gray-300 dark:hover:text-indigo-400 transition-colors"
+                                >
+                                    {{ t('Settings') }}
+                                    <span v-if="$page.url.startsWith('/admin/settings')"
+                                          class="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 dark:bg-indigo-400"></span>
+                                </NavLink>
                             </div>
                         </div>
 
@@ -206,6 +221,11 @@ onMounted(() => {
                                             <DropdownLink :href="'/profile/stats'"
                                                           class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">
                                                 {{ t('Statistic') }}
+                                            </DropdownLink>
+                                            <DropdownLink v-if="isAdmin" :href="'/admin/settings'"
+                                                          class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">
+                                                <SettingsIcon class="h-4 w-4"/>
+                                                {{ t('Settings') }}
                                             </DropdownLink>
                                             <div class="my-1 border-t border-gray-200 dark:border-gray-600"/>
                                             <DropdownLink as="button" @click.prevent="handleLogout"
@@ -318,6 +338,14 @@ onMounted(() => {
                                 >
                                     {{ t('Official Ratings') }}
                                 </Link>
+                                <Link
+                                    v-if="isAdmin"
+                                    href="/admin/settings"
+                                    @click="mobileMenuOpen = false"
+                                    :class="[$page.url.startsWith('/admin/settings') ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700', 'group flex items-center rounded-lg px-3 py-2.5 text-base font-medium transition-colors']"
+                                >
+                                    {{ t('Settings') }}
+                                </Link>
                             </nav>
 
                             <!-- User section or auth buttons -->
@@ -348,6 +376,15 @@ onMounted(() => {
                                         >
                                             {{ t('Statistic') }}
                                         </Link>
+                                        <Link
+                                            v-if="isAdmin"
+                                            href="/admin/settings"
+                                            @click="mobileMenuOpen = false"
+                                            class="flex items-center gap-2 rounded-lg px-3 py-2.5 text-base font-medium text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
+                                        >
+                                            <SettingsIcon class="h-4 w-4"/>
+                                            {{ t('Settings') }}
+                                        </Link>
                                         <button
                                             @click="handleLogout"
                                             class="block w-full rounded-lg px-3 py-2.5 text-left text-base font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors"
@@ -376,7 +413,7 @@ onMounted(() => {
                                 <div class="mt-6 space-y-3">
                                     <MonoDonate :show-card="false" :show-qr="false"
                                                 class="w-full justify-center bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg py-2.5 hover:from-amber-600 hover:to-orange-600 transition-all"/>
-                                    <LocaleSwitcher class="w-full"/>
+                                    <LocaleSwitcher :is-mobile="true"/>
                                 </div>
                             </div>
                         </div>
@@ -435,6 +472,10 @@ onMounted(() => {
                             <Link href="/official-ratings"
                                   class="block text-xs text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
                                 {{ t('Official Ratings') }}
+                            </Link>
+                            <Link v-if="isAdmin" href="/admin/settings"
+                                  class="block text-xs text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                                {{ t('Settings') }}
                             </Link>
                         </nav>
                     </div>
@@ -547,7 +588,9 @@ onMounted(() => {
                             :show-qr="false"
                             class="text-xs px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded hover:from-amber-600 hover:to-orange-600 transition-all"
                         />
-                        <LocaleSwitcher class="scale-90"/>
+                        <div class="scale-90">
+                            <LocaleSwitcher/>
+                        </div>
                     </div>
                 </div>
             </div>
