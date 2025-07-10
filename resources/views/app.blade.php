@@ -73,7 +73,7 @@
 @inertia
 
 <!-- Schema.org Organization Data -->
-<script type="application/ld+json">
+{{--<script type="application/ld+json">
     {
         "@context": "https://schema.org",
         "@type": "Organization",
@@ -127,6 +127,6 @@
 
         gtag('config', 'G-KVT7YEV29R');
     </script>
-@endproduction
+@endproduction--}}
 </body>
 </html>
