@@ -231,49 +231,28 @@ const loadClubs = async () => {
 const loadTables = async () => {
     tablesData.value.loading = true;
     try {
-        // Load all tables across all clubs
-        let allTables: ClubTable[] = [];
+        // Build params object only with defined values
+        const params: any = {
+            search: tablesData.value.searchQuery,
+            page: tablesData.value.currentPage,
+            per_page: tablesData.value.perPage,
+        };
 
+        // Only add club_id if it has a value
         if (tablesData.value.clubFilter !== null && tablesData.value.clubFilter !== undefined) {
-            // Load tables for specific club
-            const tables = await adminSettings.fetchClubTables(tablesData.value.clubFilter);
-            allTables = tables.map(table => ({
-                ...table,
-                club_id: tablesData.value.clubFilter,
-                club: tablesData.value.clubs.find(c => c.id === tablesData.value.clubFilter)
-            }));
-        } else {
-            // Load tables for all clubs
+            params.club_id = tablesData.value.clubFilter;
+        }
+
+        // Load tables
+        const response = await adminSettings.fetchClubTables(params);
+        tablesData.value.items = response.data;
+        tablesData.value.totalPages = response.meta.last_page;
+
+        // Load clubs for filters if not loaded
+        if (tablesData.value.clubs.length === 0) {
             const clubsResponse = await adminSettings.fetchClubs({per_page: 100});
             tablesData.value.clubs = clubsResponse.data;
-
-            for (const club of clubsResponse.data) {
-                try {
-                    const tables = await adminSettings.fetchClubTables(club.id);
-                    allTables.push(...tables.map(table => ({
-                        ...table,
-                        club_id: club.id,
-                        club: club
-                    })));
-                } catch (error) {
-                    console.error(`Failed to load tables for club ${club.id}`, error);
-                }
-            }
         }
-
-        // Apply search filter
-        if (tablesData.value.searchQuery) {
-            allTables = allTables.filter(table =>
-                table.name.toLowerCase().includes(tablesData.value.searchQuery.toLowerCase()) ||
-                table.club?.name.toLowerCase().includes(tablesData.value.searchQuery.toLowerCase())
-            );
-        }
-
-        // Manual pagination
-        const startIndex = (tablesData.value.currentPage - 1) * tablesData.value.perPage;
-        const endIndex = startIndex + tablesData.value.perPage;
-        tablesData.value.items = allTables.slice(startIndex, endIndex);
-        tablesData.value.totalPages = Math.ceil(allTables.length / tablesData.value.perPage);
 // eslint-disable-next-line
     } catch (error) {
         toast.error(t('Error'), t('Failed to load tables'));

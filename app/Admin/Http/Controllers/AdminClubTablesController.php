@@ -13,16 +13,34 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 class AdminClubTablesController
 {
     /**
-     * Get all tables for a club
+     * Get all tables
      * @admin
      */
-    public function index(Request $request, Club $club): AnonymousResourceCollection
+    public function index(Request $request): AnonymousResourceCollection
     {
-        $tables = $club
-            ->tables()
+        $query = ClubTable::with('club.city.country');
+
+        if ($request->has('search')) {
+            $search = $request->get('search');
+            $query->where(function ($q) use ($search) {
+                $q
+                    ->where('name', 'like', "%{$search}%")
+                    ->orWhereHas('club', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    })
+                ;
+            });
+        }
+
+        if ($request->has('club_id')) {
+            $query->where('club_id', $request->get('club_id'));
+        }
+
+        $tables = $query
+            ->orderBy('club_id')
             ->orderBy('sort_order')
             ->orderBy('name')
-            ->get()
+            ->paginate($request->get('per_page', 50))
         ;
 
         return ClubTableResource::collection($tables);
@@ -32,13 +50,9 @@ class AdminClubTablesController
      * Get a single table
      * @admin
      */
-    public function show(Club $club, ClubTable $table): ClubTableResource
+    public function show(ClubTable $table): ClubTableResource
     {
-        // Ensure table belongs to club
-        if ($table->club_id !== $club->id) {
-            abort(404);
-        }
-
+        $table->load(['club.city.country']);
         return new ClubTableResource($table);
     }
 
@@ -46,17 +60,18 @@ class AdminClubTablesController
      * Create a new table
      * @admin
      */
-    public function store(ClubTableRequest $request, Club $club): JsonResponse
+    public function store(ClubTableRequest $request): JsonResponse
     {
         $data = $request->validated();
-        $data['club_id'] = $club->id;
 
         // Auto-increment sort order if not provided
         if (!isset($data['sort_order'])) {
-            $data['sort_order'] = $club->tables()->max('sort_order') + 1 ?? 1;
+            $maxOrder = ClubTable::where('club_id', $data['club_id'])->max('sort_order');
+            $data['sort_order'] = ($maxOrder ?? 0) + 1;
         }
 
         $table = ClubTable::create($data);
+        $table->load(['club.city.country']);
 
         return response()->json([
             'success' => true,
@@ -66,16 +81,27 @@ class AdminClubTablesController
     }
 
     /**
+     * Update a table
+     * @admin
+     */
+    public function update(ClubTableRequest $request, ClubTable $table): JsonResponse
+    {
+        $table->update($request->validated());
+        $table->load(['club.city.country']);
+
+        return response()->json([
+            'success' => true,
+            'table'   => new ClubTableResource($table),
+            'message' => 'Table updated successfully',
+        ]);
+    }
+
+    /**
      * Delete a table
      * @admin
      */
-    public function destroy(Club $club, ClubTable $table): JsonResponse
+    public function destroy(ClubTable $table): JsonResponse
     {
-        // Ensure table belongs to club
-        if ($table->club_id !== $club->id) {
-            abort(404);
-        }
-
         // Check if table is used in any active matches
         if ($table->activeMatch()->exists()) {
             return response()->json([
@@ -100,47 +126,50 @@ class AdminClubTablesController
     }
 
     /**
-     * Reorder tables
+     * Get all tables for a specific club
+     * @admin
+     */
+    public function clubTables(Club $club): AnonymousResourceCollection
+    {
+        $tables = $club
+            ->tables()
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get()
+        ;
+
+        return ClubTableResource::collection($tables);
+    }
+
+    /**
+     * Reorder tables for a club
      * @admin
      */
     public function reorder(Request $request, Club $club): JsonResponse
     {
-        $validated = $request->validate([
+        $request->validate([
             'tables'              => 'required|array',
             'tables.*.id'         => 'required|exists:club_tables,id',
-            'tables.*.sort_order' => 'required|integer|min:0',
+            'tables.*.sort_order' => 'required|integer|min:1',
         ]);
 
-        foreach ($validated['tables'] as $tableData) {
-            ClubTable::where('id', $tableData['id'])
-                ->where('club_id', $club->id)
-                ->update(['sort_order' => $tableData['sort_order']])
-            ;
+        foreach ($request->tables as $tableData) {
+            $table = ClubTable::find($tableData['id']);
+
+            // Ensure table belongs to club
+            if ($table->club_id !== $club->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid table for this club',
+                ], 422);
+            }
+
+            $table->update(['sort_order' => $tableData['sort_order']]);
         }
 
         return response()->json([
             'success' => true,
             'message' => 'Tables reordered successfully',
-        ]);
-    }
-
-    /**
-     * Update a table
-     * @admin
-     */
-    public function update(ClubTableRequest $request, Club $club, ClubTable $table): JsonResponse
-    {
-        // Ensure table belongs to club
-        if ($table->club_id !== $club->id) {
-            abort(404);
-        }
-
-        $table->update($request->validated());
-
-        return response()->json([
-            'success' => true,
-            'table'   => new ClubTableResource($table),
-            'message' => 'Table updated successfully',
         ]);
     }
 }

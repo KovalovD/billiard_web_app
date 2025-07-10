@@ -13,26 +13,49 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(AdminMiddleware::class)->prefix('admin')->group(function () {
 
     // Country management
-    Route::apiResource('countries', AdminCountriesController::class);
+    Route::apiResource('countries', AdminCountriesController::class)->names([
+        'index'   => 'admin.countries.index',
+        'show'    => 'admin.countries.show',
+        'store'   => 'admin.countries.store',
+        'update'  => 'admin.countries.update',
+        'destroy' => 'admin.countries.destroy',
+    ]);
 
 // City management
-    Route::apiResource('cities', AdminCitiesController::class);
+    Route::apiResource('cities', AdminCitiesController::class)->names([
+        'index'   => 'admin.cities.index',
+        'show'    => 'admin.cities.show',
+        'store'   => 'admin.cities.store',
+        'update'  => 'admin.cities.update',
+        'destroy' => 'admin.cities.destroy',
+    ]);
 
 // Club management
-    Route::apiResource('clubs', AdminClubsController::class);
+    Route::apiResource('clubs', AdminClubsController::class)->names([
+        'index'   => 'admin.clubs.index',
+        'show'    => 'admin.clubs.show',
+        'store'   => 'admin.clubs.store',
+        'update'  => 'admin.clubs.update',
+        'destroy' => 'admin.clubs.destroy',
+    ]);
 
-// Club tables management
-    Route::prefix('clubs/{club}/tables')->group(function () {
-        Route::get('/', [AdminClubTablesController::class, 'index'])->name('admin.clubs.tables.index');
-        Route::post('/', [AdminClubTablesController::class, 'store'])->name('admin.clubs.tables.store');
-        Route::get('/{table}', [AdminClubTablesController::class, 'show'])->name('admin.clubs.tables.show');
-        Route::put('/{table}', [AdminClubTablesController::class, 'update'])->name('admin.clubs.tables.update');
-        Route::delete('/{table}', [AdminClubTablesController::class, 'destroy'])->name('admin.clubs.tables.destroy');
-        Route::post('/reorder', [AdminClubTablesController::class, 'reorder'])->name('admin.clubs.tables.reorder');
-    });
+    Route::apiResource('tables', AdminClubTablesController::class)->names([
+        'index'   => 'admin.club.tables.index',
+        'show'    => 'admin.club.tables.show',
+        'store'   => 'admin.club.tables.store',
+        'update'  => 'admin.club.tables.update',
+        'destroy' => 'admin.club.tables.destroy',
+    ]);
+
 
 // Game management
-    Route::apiResource('games', AdminGamesController::class);
+    Route::apiResource('games', AdminGamesController::class)->names([
+        'index'   => 'admin.games.index',
+        'show'    => 'admin.games.show',
+        'store'   => 'admin.games.store',
+        'update'  => 'admin.games.update',
+        'destroy' => 'admin.games.destroy',
+    ]);
 
     // Search users
     Route::get('/search-users', [AdminUserSearchController::class, 'searchUsers'])->name('admin.search-users');

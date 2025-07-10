@@ -3,6 +3,7 @@
 
 namespace App\Core\Http\Resources;
 
+use App\Admin\Http\Resources\ClubResource;
 use App\Core\Models\ClubTable;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -23,12 +24,7 @@ class ClubTableResource extends JsonResource
             'updated_at' => $this->updated_at,
 
             // Relations
-            'club'       => $this->whenLoaded('club', function () {
-                return [
-                    'id'   => $this->club->id,
-                    'name' => $this->club->name,
-                ];
-            }),
+            'club' => new ClubResource($this->whenLoaded('club')),
         ];
     }
 }

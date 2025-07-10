@@ -10,6 +10,7 @@ class ClubTableRequest extends BaseFormRequest
     {
         return [
             'name'       => ['required', 'string', 'max:255'],
+            'club_id' => 'required_if:method,POST|exists:clubs,id',
             'stream_url' => ['nullable', 'url', 'max:255'],
             'is_active'  => ['boolean'],
             'sort_order' => ['nullable', 'integer', 'min:0'],

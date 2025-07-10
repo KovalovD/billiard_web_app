@@ -257,13 +257,22 @@ export function useAdminSettings() {
     };
 
     // Club Tables
-    const fetchClubTables = async (clubId: number) => {
+    const fetchClubTables = async (params?: {
+        search?: string;
+        club_id?: number;
+        page?: number;
+        per_page?: number
+    }) => {
         isLoading.value = true;
         error.value = null;
         try {
-            return await apiClient<ClubTable[]>(`/api/admin/clubs/${clubId}/tables`);
+            const queryParams = new URLSearchParams(params as any).toString();
+            return await apiClient<{
+                data: ClubTable[];
+                meta: any
+            }>(`/api/admin/tables${queryParams ? `?${queryParams}` : ''}`);
         } catch (err: any) {
-            error.value = err.message || 'Failed to fetch club tables';
+            error.value = err.message || 'Failed to fetch tables';
             throw err;
         } finally {
             isLoading.value = false;
