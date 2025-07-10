@@ -27,7 +27,15 @@ import CardTitle from './layout/CardTitle.vue';
 import CardDescription from './layout/CardDescription.vue';
 import CardContent from './layout/CardContent.vue';
 import CardFooter from './layout/CardFooter.vue';
+import Alert from './alert/Alert.vue';
+import AlertDescription from './alert/AlertDescription.vue';
+import AlertTitle from './alert/AlertTitle.vue';
 
+// Switch component
+import Switch from './switch/Switch.vue';
+
+// Dialog Footer
+import DialogFooter from './dialog/DialogFooter.vue';
 // Feedback components
 import Modal from './feedback/Modal.vue';
 import Toast from './feedback/Toast.vue';
@@ -46,13 +54,10 @@ export {default as DataTable} from './data-table/DataTable.vue';
 
 // Export both as default and named exports to support both import styles
 export {
-    // Form components
     Button,
     Input,
     Label,
     Textarea,
-
-    // Select components
     Select,
     SelectContent,
     SelectGroup,
@@ -61,16 +66,17 @@ export {
     SelectSeparator,
     SelectTrigger,
     SelectValue,
-
-    // Layout components
     Card,
     CardHeader,
     CardTitle,
     CardDescription,
     CardContent,
     CardFooter,
-
-    // Feedback components
+    Alert,
+    AlertDescription,
+    AlertTitle,
+    Switch,
+    DialogFooter,
     Modal,
     Toast,
     Spinner,

@@ -7,6 +7,7 @@ import {useLocale} from '@/composables/useLocale';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
 import {useAuth} from "@/composables/useAuth";
+import GenerateBracketModal from '@/Components/Tournament/GenerateBracketModal.vue';
 
 import type {ClubTable, Tournament, TournamentBracket, TournamentMatch} from '@/types/api';
 import {Head, router} from '@inertiajs/vue3';
@@ -31,6 +32,7 @@ const tournament = ref<Tournament | null>(null);
 const brackets = ref<TournamentBracket[]>([]);
 const matches = ref<TournamentMatch[]>([]);
 const availableTables = ref<ClubTable[]>([]);
+const showGenerateModal = ref(false);
 
 // Loading states
 const isLoading = ref(true);
@@ -124,17 +126,21 @@ const loadAvailableTables = async () => {
     }
 };
 
-const generateBracket = async () => {
-    if (!confirm(t('Are you sure you want to generate the bracket? This will create all matches based on current seeding.'))) {
-        return;
-    }
+const generateBracket = () => {
+    // Instead of showing confirm dialog, show the options modal
+    showGenerateModal.value = true;
+};
 
+// Handle bracket generation with options
+const handleGenerateBracket = async (options: any) => {
+    showGenerateModal.value = false;
     isGenerating.value = true;
     error.value = null;
 
     try {
         await apiClient(`/api/admin/tournaments/${props.tournamentId}/bracket/generate`, {
-            method: 'POST'
+            method: 'POST',
+            data: options
         });
 
         successMessage.value = t('Bracket generated successfully');
@@ -145,7 +151,6 @@ const generateBracket = async () => {
         isGenerating.value = false;
     }
 };
-
 const startTournament = async () => {
     if (!confirm(t('Are you sure you want to start the tournament?'))) {
         return;
@@ -382,7 +387,7 @@ onMounted(() => {
                 <CardContent>
                     <div class="text-center py-8">
                         <p class="mb-4 text-gray-600 dark:text-gray-400">
-                            {{ t('The bracket has not been generated yet. Click below to create it.') }}
+                            {{ t('The bracket has not been generated yet. Click below to configure and create it.') }}
                         </p>
                         <Button
                             :disabled="isGenerating"
@@ -390,7 +395,7 @@ onMounted(() => {
                             @click="generateBracket"
                         >
                             <Spinner v-if="isGenerating" class="mr-2 h-4 w-4"/>
-                            {{ t('Generate Bracket') }}
+                            {{ t('Configure & Generate Bracket') }}
                         </Button>
                     </div>
                 </CardContent>
@@ -398,38 +403,17 @@ onMounted(() => {
 
             <!-- Bracket Display -->
             <template v-else>
-                <!-- Tournament Info - Mobile optimized -->
-                <Card class="mb-6">
+                <!-- Start Tournament Button -->
+                <Card v-if="tournament?.status === 'upcoming'" class="mt-6">
                     <CardContent class="pt-6">
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-                            <div>
-                                <div class="text-xl sm:text-2xl font-bold text-blue-600">
-                                    {{ tournament?.confirmed_players_count || 0 }}
-                                </div>
-                                <div class="text-xs sm:text-sm text-gray-600">{{ t('Players') }}</div>
-                            </div>
-                            <div>
-                                <div class="text-xl sm:text-2xl font-bold text-green-600">
-                                    <span class="hidden sm:inline">{{
-                                            isDoubleElimination ? t('Double Elimination') : t('Single Elimination')
-                                        }}</span>
-                                    <span class="sm:hidden">{{
-                                            isDoubleElimination ? t('Double Elim') : t('Single Elim')
-                                        }}</span>
-                                </div>
-                                <div class="text-xs sm:text-sm text-gray-600">{{ t('Format') }}</div>
-                            </div>
-                            <div>
-                                <div class="text-xl sm:text-2xl font-bold text-yellow-600">{{ matches.length }}</div>
-                                <div class="text-xs sm:text-sm text-gray-600">{{ t('Matches') }}</div>
-                            </div>
-                            <div>
-                                <div class="text-xl sm:text-2xl font-bold text-purple-600">{{
-                                        tournament?.races_to || 7
-                                    }}
-                                </div>
-                                <div class="text-xs sm:text-sm text-gray-600">{{ t('Races To') }}</div>
-                            </div>
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <p class="text-gray-600 dark:text-gray-400">
+                                {{ t('Bracket is ready. Start the tournament to begin matches.') }}
+                            </p>
+                            <Button size="lg" @click="startTournament">
+                                <PlayIcon class="mr-2 h-4 w-4"/>
+                                {{ t('Start Tournament') }}
+                            </Button>
                         </div>
                     </CardContent>
                 </Card>
@@ -465,21 +449,6 @@ onMounted(() => {
                         />
                     </div>
                 </div>
-
-                <!-- Start Tournament Button -->
-                <Card v-if="tournament?.status === 'upcoming'" class="mt-6">
-                    <CardContent class="pt-6">
-                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                            <p class="text-gray-600 dark:text-gray-400">
-                                {{ t('Bracket is ready. Start the tournament to begin matches.') }}
-                            </p>
-                            <Button size="lg" @click="startTournament">
-                                <PlayIcon class="mr-2 h-4 w-4"/>
-                                {{ t('Start Tournament') }}
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
             </template>
         </div>
     </div>
@@ -498,5 +467,12 @@ onMounted(() => {
         @update-match="handleUpdateMatch"
         @finish-match="handleFinishMatch"
         @process-walkover="handleProcessWalkover"
+    />
+
+    <GenerateBracketModal
+        :show="showGenerateModal"
+        :tournament-id="tournamentId"
+        @close="showGenerateModal = false"
+        @generate="handleGenerateBracket"
     />
 </template>

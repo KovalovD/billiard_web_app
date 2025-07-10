@@ -52,6 +52,8 @@ Route::group(['prefix' => 'tournaments'], static function () {
 Route::middleware(['auth:sanctum', AdminMiddleware::class])
     ->prefix('admin/tournaments')
     ->group(function () {
+        Route::get('/{tournament}/bracket-options',
+            [AdminTournamentsController::class, 'getBracketOptions'])->name('admin.tournaments.bracket-options');
         Route::post('/', [AdminTournamentsController::class, 'store'])->name('admin.tournaments.store');
         Route::put('/{tournament}', [AdminTournamentsController::class, 'update'])->name('admin.tournaments.update');
         Route::delete('/{tournament}',

@@ -70,7 +70,6 @@ const form = ref<CreateTournamentPayload & {
     place_bonuses: [],
     place_rating_points: [],
     organizer: '',
-    format: '',
     tournament_type: 'single_elimination',
     group_size_min: 3,
     group_size_max: 5,
@@ -101,6 +100,7 @@ const isSubmitting = ref(false);
 const tournamentTypes = [
     {value: 'single_elimination', label: t('Single Elimination')},
     {value: 'double_elimination', label: t('Double Elimination')},
+    {value: 'olympic_double_elimination', label: t('Olympic Double Elimination')},
     {value: 'round_robin', label: t('Round Robin')},
     {value: 'groups_playoff', label: t('Groups + Playoff')},
     {value: 'team_groups_playoff', label: t('Team Groups + Playoff')},
@@ -632,15 +632,6 @@ onMounted(() => {
                                                     id="organizer"
                                                     v-model="form.organizer"
                                                     :placeholder="t('Tournament organizer')"
-                                                />
-                                            </div>
-
-                                            <div class="space-y-2">
-                                                <Label for="format">{{ t('Format') }}</Label>
-                                                <Input
-                                                    id="format"
-                                                    v-model="form.format"
-                                                    :placeholder="t('Additional format details')"
                                                 />
                                             </div>
                                         </div>

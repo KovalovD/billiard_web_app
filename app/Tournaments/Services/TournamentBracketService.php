@@ -12,6 +12,7 @@ use App\Tournaments\Models\TournamentBracket;
 use App\Tournaments\Models\TournamentMatch;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Log;
 use RuntimeException;
 use Throwable;
 
@@ -43,6 +44,8 @@ class TournamentBracketService
                 TournamentType::SINGLE_ELIMINATION => $this->generateSingleEliminationBracket($tournament,
                     $confirmedPlayers),
                 TournamentType::DOUBLE_ELIMINATION, TournamentType::DOUBLE_ELIMINATION_FULL => $this->generateDoubleEliminationBracket($tournament,
+                    $confirmedPlayers),
+                TournamentType::OLYMPIC_DOUBLE_ELIMINATION => $this->generateOlympicDoubleEliminationBracket($tournament,
                     $confirmedPlayers),
                 TournamentType::ROUND_ROBIN => $this->generateRoundRobinBracket($tournament, $confirmedPlayers),
                 default => throw new RuntimeException("Bracket generation not supported for tournament type: {$tournament->tournament_type->value}"),
@@ -137,11 +140,12 @@ class TournamentBracketService
                     'round'            => $roundEnum,
                     'bracket_position' => $matchNum,
                     'bracket_side'     => 'upper',
-                    'races_to'         => $tournament->races_to,
+                    // Fix: For single elimination, use UB_R prefix to match the keys generated in getBracketOptions
+                    'races_to' => $this->getRaceToForRound($tournament, sprintf("UB_R%s", $round)),
                     'status'           => MatchStatus::PENDING,
                 ]);
 
-                $currentRoundMatches = $this->getCurrentRoundMatches($round, $matchNum, $bracketSize, $seededBracket,
+                $currentRoundMatches = $this->setupMatchConnections($round, $matchNum, $bracketSize, $seededBracket,
                     $match, $tournament, $previousRoundMatches, $currentRoundMatches);
             }
 
@@ -168,7 +172,10 @@ class TournamentBracketService
         };
     }
 
-    private function getCurrentRoundMatches(
+    /**
+     * Setup match connections and players
+     */
+    private function setupMatchConnections(
         mixed $round,
         int $matchNum,
         mixed $bracketSize,
@@ -195,7 +202,7 @@ class TournamentBracketService
             if ($player1 && !$player2) {
                 $match->winner_id = $player1->user_id;
                 $match->status = MatchStatus::COMPLETED;
-                $match->player1_score = $tournament->races_to;
+                $match->player1_score = $match->races_to;
                 $match->player2_score = 0;
                 $match->completed_at = now();
                 $match->admin_notes = 'Walkover - No opponent';
@@ -203,7 +210,7 @@ class TournamentBracketService
                 $match->winner_id = $player2->user_id;
                 $match->status = MatchStatus::COMPLETED;
                 $match->player1_score = 0;
-                $match->player2_score = $tournament->races_to;
+                $match->player2_score = $match->races_to;
                 $match->completed_at = now();
                 $match->admin_notes = 'Walkover - No opponent';
             } elseif ($player1 && $player2) {
@@ -381,7 +388,7 @@ class TournamentBracketService
             'match_code'    => '3RD',
             'stage'         => MatchStage::THIRD_PLACE,
             'round'         => EliminationRound::THIRD_PLACE,
-            'races_to'      => $tournament->races_to,
+            'races_to' => $this->getRaceToForRound($tournament, "3RD"),
             'status'        => MatchStatus::PENDING,
         ]);
 
@@ -471,11 +478,11 @@ class TournamentBracketService
                     'round'            => $roundEnum,
                     'bracket_position' => $matchNum,
                     'bracket_side'     => 'upper',
-                    'races_to'         => $tournament->races_to,
+                    'races_to'   => $this->getRaceToForRound($tournament, sprintf("UB_R%s", $round)),
                     'status'           => MatchStatus::PENDING,
                 ]);
 
-                $currentRoundMatches = $this->getCurrentRoundMatches($round, $matchNum, $bracketSize, $seededBracket,
+                $currentRoundMatches = $this->setupMatchConnections($round, $matchNum, $bracketSize, $seededBracket,
                     $match, $tournament, $previousRoundMatches, $currentRoundMatches);
             }
 
@@ -564,7 +571,7 @@ class TournamentBracketService
     }
 
     /**
-     * Create complete lower bracket structure - COMPLETELY REWRITTEN
+     * Create complete lower bracket structure
      */
     private function createLowerBracketComplete(
         Tournament $tournament,
@@ -584,11 +591,11 @@ class TournamentBracketService
                 $match = TournamentMatch::create([
                     'tournament_id'    => $tournament->id,
                     'match_code'       => sprintf("LB_R%sM%s", $round, $matchNum + 1),
-                    'stage' => MatchStage::LOWER_BRACKET,
-                    'round' => $roundEnum,
+                    'stage'    => MatchStage::LOWER_BRACKET,
+                    'round'    => $roundEnum,
                     'bracket_position' => $matchNum,
                     'bracket_side'     => 'lower',
-                    'races_to'         => $tournament->races_to,
+                    'races_to' => $this->getRaceToForRound($tournament, sprintf("LB_R%s", $round)),
                     'status'           => MatchStatus::PENDING,
                 ]);
 
@@ -771,7 +778,7 @@ class TournamentBracketService
             'stage'              => MatchStage::BRACKET,
             'round'              => EliminationRound::GRAND_FINALS,
             'bracket_position'   => 0,
-            'races_to'           => $tournament->races_to,
+            'races_to' => $this->getRaceToForRound($tournament, "GF"),
             'status'             => MatchStatus::PENDING,
             'previous_match1_id' => $upperFinal?->id,
             'previous_match2_id' => $lowerFinal?->id,
@@ -787,6 +794,311 @@ class TournamentBracketService
             $lowerFinal->next_match_id = $grandFinal->id;
             $lowerFinal->save();
         }
+    }
+
+    /**
+     * Generate Olympic double elimination bracket
+     */
+    private function generateOlympicDoubleEliminationBracket(
+        Tournament $tournament,
+        Collection $confirmedPlayers,
+    ): TournamentBracket {
+        $playerCount = $confirmedPlayers->count();
+        $bracketSize = $this->getNextPowerOfTwo($playerCount);
+        $upperRounds = (int) log($bracketSize, 2);
+
+        // Validate olympic phase size
+        $olympicPhaseSize = $tournament->olympic_phase_size ?? 4;
+        if ($olympicPhaseSize > $bracketSize) {
+            $olympicPhaseSize = $bracketSize;
+        }
+
+        // Create upper bracket
+        $upperBracket = TournamentBracket::create([
+            'tournament_id' => $tournament->id,
+            'bracket_type'  => BracketType::DOUBLE_UPPER,
+            'total_rounds'  => $upperRounds,
+            'players_count' => $bracketSize,
+        ]);
+
+        // Calculate rounds until Olympic phase
+        $olympicPhaseRound = $upperRounds - (int) log($olympicPhaseSize, 2) + 1;
+
+        // Create lower bracket (only until Olympic phase)
+        $lowerRounds = ($olympicPhaseRound - 1) * 2;
+
+        if ($lowerRounds > 0) {
+            TournamentBracket::create([
+                'tournament_id' => $tournament->id,
+                'bracket_type'  => BracketType::DOUBLE_LOWER,
+                'total_rounds'  => $lowerRounds,
+                'players_count' => $bracketSize - 1,
+            ]);
+        }
+
+        // Create seeded bracket with proper matchups
+        $seededBracket = $this->createSeededBracket($confirmedPlayers, $bracketSize);
+
+        // Create upper bracket matches
+        $upperMatches = $this->createUpperBracketMatches($tournament, $upperBracket, $seededBracket);
+
+        // Create lower bracket structure (only if Olympic phase is not from the start)
+        if ($olympicPhaseSize < $bracketSize) {
+            // Create lower bracket until Olympic phase
+            $lowerMatches = $this->createOlympicLowerBracket(
+                $tournament,
+                $bracketSize,
+                $olympicPhaseRound,
+                $upperMatches,
+            );
+
+            // Collect matches that lead to Olympic phase
+            $olympicMatches = $this->getOlympicPhaseMatches($upperMatches, $lowerMatches, $olympicPhaseRound);
+
+            // Mark these matches to progress to Olympic single elimination
+            $this->markOlympicTransitionMatches($olympicMatches, $tournament);
+        }
+
+        // Create Olympic phase single elimination bracket
+        $this->createOlympicSingleEliminationPhase($tournament, $olympicPhaseSize);
+
+        return $upperBracket;
+    }
+
+    /**
+     * Create Olympic lower bracket (partial double elimination)
+     */
+    private function createOlympicLowerBracket(
+        Tournament $tournament,
+        int $bracketSize,
+        int $olympicPhaseRound,
+        array $upperMatches,
+    ): array {
+        // Calculate structure for lower bracket until Olympic phase
+        $lowerStructure = $this->getOlympicLowerBracketStructure($bracketSize, $olympicPhaseRound);
+        $allLowerMatches = [];
+
+        foreach ($lowerStructure as $round => $roundData) {
+            $currentRoundMatches = [];
+            $roundEnum = $this->getLowerRoundEnum($round, count($lowerStructure));
+
+            for ($matchNum = 0; $matchNum < $roundData['matches']; $matchNum++) {
+                $match = TournamentMatch::create([
+                    'tournament_id'    => $tournament->id,
+                    'match_code'       => sprintf("LB_R%sM%s", $round, $matchNum + 1),
+                    'stage'            => MatchStage::LOWER_BRACKET,
+                    'round'            => $roundEnum,
+                    'bracket_position' => $matchNum,
+                    'bracket_side'     => 'lower',
+                    'races_to'         => $this->getRaceToForRound($tournament, sprintf("LB_R%s", $round)),
+                    'status'           => MatchStatus::PENDING,
+                ]);
+
+                // Connect based on round type (same as regular double elim)
+                if ($roundData['type'] === 'initial') {
+                    $upperMatch1Index = $matchNum * 2;
+                    $upperMatch2Index = $matchNum * 2 + 1;
+
+                    if (isset($upperMatches[1][$upperMatch1Index])) {
+                        $upperMatches[1][$upperMatch1Index]->loser_next_match_id = $match->id;
+                        $upperMatches[1][$upperMatch1Index]->loser_next_match_position = 1;
+                        $upperMatches[1][$upperMatch1Index]->save();
+                    }
+
+                    if (isset($upperMatches[1][$upperMatch2Index])) {
+                        $upperMatches[1][$upperMatch2Index]->loser_next_match_id = $match->id;
+                        $upperMatches[1][$upperMatch2Index]->loser_next_match_position = 2;
+                        $upperMatches[1][$upperMatch2Index]->save();
+                    }
+                } elseif ($roundData['type'] === 'drop') {
+                    $prevRoundMatches = $allLowerMatches[$round - 1] ?? [];
+
+                    if (isset($prevRoundMatches[$matchNum])) {
+                        $match->previous_match1_id = $prevRoundMatches[$matchNum]->id;
+                        $prevRoundMatches[$matchNum]->next_match_id = $match->id;
+                        $prevRoundMatches[$matchNum]->save();
+                    }
+
+                    $upperRoundIndex = $roundData['upper_round'];
+                    if (isset($upperMatches[$upperRoundIndex][$matchNum])) {
+                        $upperMatches[$upperRoundIndex][$matchNum]->loser_next_match_id = $match->id;
+                        $upperMatches[$upperRoundIndex][$matchNum]->loser_next_match_position = 2;
+                        $upperMatches[$upperRoundIndex][$matchNum]->save();
+                    }
+                } elseif ($roundData['type'] === 'regular') {
+                    $prevRoundMatches = $allLowerMatches[$round - 1] ?? [];
+                    $this->setUpProgressionFromPreviousRound($matchNum, $prevRoundMatches, $match);
+                }
+
+                $match->save();
+                $currentRoundMatches[] = $match;
+            }
+
+            $allLowerMatches[$round] = $currentRoundMatches;
+        }
+
+        return $allLowerMatches;
+    }
+
+    /**
+     * Get Olympic lower bracket structure (partial)
+     */
+    private function getOlympicLowerBracketStructure(int $bracketSize, int $olympicPhaseRound): array
+    {
+        // Get full lower bracket structure
+        $fullStructure = $this->getLowerBracketStructure($bracketSize);
+
+        // Calculate how many lower bracket rounds we need
+        $maxLowerRounds = ($olympicPhaseRound - 1) * 2;
+
+        // Filter structure to only include rounds before Olympic phase
+        $olympicStructure = [];
+        foreach ($fullStructure as $round => $data) {
+            if ($round <= $maxLowerRounds) {
+                $olympicStructure[$round] = $data;
+            }
+        }
+
+        return $olympicStructure;
+    }
+
+    /**
+     * Get matches that lead to Olympic phase
+     */
+    private function getOlympicPhaseMatches(
+        array $upperMatches,
+        array $lowerMatches,
+        int $olympicPhaseRound,
+    ): array {
+        $olympicMatches = [];
+
+        // Get upper bracket matches that lead to Olympic phase
+        if (isset($upperMatches[$olympicPhaseRound - 1])) {
+            foreach ($upperMatches[$olympicPhaseRound - 1] as $match) {
+                $olympicMatches[] = $match;
+            }
+        }
+
+        // Get last round of lower bracket matches
+        if (!empty($lowerMatches)) {
+            $lastLowerRound = max(array_keys($lowerMatches));
+            if (isset($lowerMatches[$lastLowerRound])) {
+                foreach ($lowerMatches[$lastLowerRound] as $match) {
+                    $olympicMatches[] = $match;
+                }
+            }
+        }
+
+        return $olympicMatches;
+    }
+
+    /**
+     * Mark matches that transition to Olympic single elimination
+     */
+    private function markOlympicTransitionMatches(array $matches, Tournament $tournament): void
+    {
+        foreach ($matches as $match) {
+            $match->admin_notes = 'Winner advances to Olympic single elimination phase';
+            $match->save();
+        }
+    }
+
+    /**
+     * Create Olympic single elimination phase
+     */
+    private function createOlympicSingleEliminationPhase(Tournament $tournament, int $olympicPhaseSize): void
+    {
+        $olympicRounds = (int) log($olympicPhaseSize, 2);
+        $previousRoundMatches = [];
+
+        for ($round = 1; $round <= $olympicRounds; $round++) {
+            $matchesInRound = $olympicPhaseSize / (2 ** $round);
+            $roundEnum = $this->getRoundEnum($matchesInRound);
+            $currentRoundMatches = [];
+
+            for ($matchNum = 0; $matchNum < $matchesInRound; $matchNum++) {
+                $match = TournamentMatch::create([
+                    'tournament_id'    => $tournament->id,
+                    'match_code'       => sprintf("O_R%sM%s", $round, $matchNum + 1),
+                    'stage'            => MatchStage::BRACKET,
+                    'round'            => $roundEnum,
+                    'bracket_position' => $matchNum,
+                    'bracket_side'     => 'upper',
+                    'races_to'         => $this->getRaceToForRound($tournament, sprintf("O_R%s", $round)),
+                    'status'           => MatchStatus::PENDING,
+                    'admin_notes'      => 'Olympic single elimination phase',
+                ]);
+
+                if ($round > 1) {
+                    $this->setUpProgressionFromPreviousRound($matchNum, $previousRoundMatches, $match);
+                }
+
+                $match->save();
+                $currentRoundMatches[] = $match;
+            }
+
+            $previousRoundMatches = $currentRoundMatches;
+        }
+
+        // Create third place match if enabled and Olympic phase > 4
+        if ($olympicPhaseSize > 4 && $tournament->olympic_has_third_place) {
+            $this->createOlympicThirdPlaceMatch($tournament);
+        }
+    }
+
+    /**
+     * Create third place match for Olympic phase
+     */
+    private function createOlympicThirdPlaceMatch(Tournament $tournament): void
+    {
+        $thirdPlace = TournamentMatch::create([
+            'tournament_id' => $tournament->id,
+            'match_code'    => 'O_3RD',
+            'stage'         => MatchStage::THIRD_PLACE,
+            'round'         => EliminationRound::THIRD_PLACE,
+            'races_to'      => $this->getRaceToForRound($tournament, "O_3RD"),
+            'status'        => MatchStatus::PENDING,
+            'admin_notes'   => 'Olympic phase third place match',
+        ]);
+
+        // Connect Olympic semifinals losers to third place match
+        $olympicSemifinals = $tournament
+            ->matches()
+            ->where('match_code', 'LIKE', 'O_%')
+            ->where('round', EliminationRound::SEMIFINALS)
+            ->get()
+        ;
+
+        foreach ($olympicSemifinals as $semi) {
+            $semi->loser_next_match_id = $thirdPlace->id;
+            $semi->save();
+        }
+    }
+
+    /**
+     * Get race-to value for specific round
+     *
+     * This method now properly handles the mapping between round codes
+     * and the round_races_to array stored in the tournament
+     */
+    private function getRaceToForRound(Tournament $tournament, string $roundCode): int
+    {
+        $roundRacesTo = $tournament->round_races_to ?? [];
+
+        // Debug log
+        Log::info('Getting race-to for round', [
+            'round_code'       => $roundCode,
+            'round_races_to'   => $roundRacesTo,
+            'default_races_to' => $tournament->races_to,
+        ]);
+
+        // Check if custom race-to is defined for this round
+        if (isset($roundRacesTo[$roundCode])) {
+            return (int) $roundRacesTo[$roundCode];
+        }
+
+        // Default to tournament races_to
+        return (int) ($tournament->races_to ?? 7);
     }
 
     /**
@@ -818,5 +1130,153 @@ class TournamentBracketService
         }
 
         return $bracket;
+    }
+
+    /**
+     * Generate groups for group stage tournaments
+     * @throws Throwable
+     */
+    public function generateGroups(Tournament $tournament): array
+    {
+        return DB::transaction(function () use ($tournament) {
+            // Validate tournament type supports groups
+            if (!in_array($tournament->tournament_type->value, [
+                'groups',
+                'groups_playoff',
+                'round_robin',
+                'team_groups_playoff',
+            ])) {
+                throw new RuntimeException("Tournament type does not support group stage");
+            }
+
+            $confirmedPlayers = $tournament
+                ->players()
+                ->where('status', 'confirmed')
+                ->orderBy('seed_number')
+                ->get()
+            ;
+
+            if ($confirmedPlayers->count() < 4) {
+                throw new RuntimeException('At least 4 confirmed players are required for group stage');
+            }
+
+            // Clear existing groups
+            $tournament->groups()->delete();
+
+            // Calculate group configuration
+            $playerCount = $confirmedPlayers->count();
+            $minGroupSize = $tournament->group_size_min ?? 4;
+            $maxGroupSize = $tournament->group_size_max ?? 5;
+
+            $groupConfig = $this->calculateGroupConfiguration($playerCount, $minGroupSize, $maxGroupSize);
+
+            // Create groups and assign players
+            $groups = [];
+
+            foreach ($groupConfig as $groupIndex => $groupSize) {
+                $groupCode = chr(65 + $groupIndex); // A, B, C, etc.
+
+                $group = $tournament->groups()->create([
+                    'group_code'    => $groupCode,
+                    'group_size'    => $groupSize,
+                    'advance_count' => $tournament->playoff_players_per_group ?? 2,
+                ]);
+
+                // Assign players to group using snake draft based on seeding
+                $groupPlayers = $this->assignPlayersToGroup(
+                    $confirmedPlayers,
+                    $groupIndex,
+                    count($groupConfig),
+                    $groupSize,
+                );
+
+                foreach ($groupPlayers as $player) {
+                    $player->update(['group_code' => $groupCode]);
+                }
+
+                // Create round-robin matches within the group
+                $this->createGroupMatches($tournament, $group, $groupPlayers);
+
+                $groups[] = $group;
+            }
+
+            return $groups;
+        });
+    }
+
+    /**
+     * Calculate optimal group configuration
+     */
+    private function calculateGroupConfiguration(int $playerCount, int $minSize, int $maxSize): array
+    {
+        // Try to create equal-sized groups
+        for ($groupSize = $maxSize; $groupSize >= $minSize; $groupSize--) {
+            if ($playerCount % $groupSize === 0) {
+                return array_fill(0, $playerCount / $groupSize, $groupSize);
+            }
+        }
+
+        // If equal groups not possible, minimize variance
+        $numGroups = ceil($playerCount / $maxSize);
+        $baseSize = floor($playerCount / $numGroups);
+        $remainder = $playerCount % $numGroups;
+
+        $groups = array_fill(0, $numGroups, $baseSize);
+        for ($i = 0; $i < $remainder; $i++) {
+            $groups[$i]++;
+        }
+
+        return $groups;
+    }
+
+    /**
+     * Assign players to group using snake draft
+     */
+    private function assignPlayersToGroup(
+        Collection $players,
+        int $groupIndex,
+        int $totalGroups,
+        int $groupSize,
+    ): Collection {
+        $assignedPlayers = collect();
+
+        // Snake draft pattern: A-B-C-C-B-A-A-B-C...
+        for ($round = 0; $round < $groupSize; $round++) {
+            if ($round % 2 === 0) {
+                // Forward direction
+                $playerIndex = $round * $totalGroups + $groupIndex;
+            } else {
+                // Reverse direction
+                $playerIndex = $round * $totalGroups + ($totalGroups - 1 - $groupIndex);
+            }
+
+            if (isset($players[$playerIndex])) {
+                $assignedPlayers->push($players[$playerIndex]);
+            }
+        }
+
+        return $assignedPlayers;
+    }
+
+    /**
+     * Create round-robin matches within a group
+     */
+    private function createGroupMatches(Tournament $tournament, $group, Collection $players): void
+    {
+        foreach ($players as $i => $player1) {
+            foreach ($players->slice($i + 1) as $player2) {
+                TournamentMatch::create([
+                    'tournament_id' => $tournament->id,
+                    'match_code'    => sprintf("%s_%sv%s", $group->group_code, $player1->seed_number,
+                        $player2->seed_number),
+                    'stage'         => MatchStage::GROUP,
+                    'round'         => EliminationRound::GROUPS,
+                    'player1_id'    => $player1->user_id,
+                    'player2_id'    => $player2->user_id,
+                    'races_to'      => $tournament->races_to,
+                    'status'        => MatchStatus::READY,
+                ]);
+            }
+        }
     }
 }

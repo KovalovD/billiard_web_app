@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use RuntimeException;
+use Throwable;
 
 /**
  * @group Admin Tournament Matches
@@ -70,7 +71,7 @@ readonly class AdminTournamentMatchesController
             $match = $this->matchService->startMatch($match, $validated);
 
             return response()->json(new TournamentMatchResource($match->load(['player1', 'player2', 'clubTable'])));
-        } catch (RuntimeException $e) {
+        } catch (RuntimeException|Throwable $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
@@ -105,7 +106,7 @@ readonly class AdminTournamentMatchesController
                 ])),
                 'affected_matches' => $result['affected_matches'],
             ]);
-        } catch (RuntimeException $e) {
+        } catch (RuntimeException|Throwable $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
@@ -139,7 +140,7 @@ readonly class AdminTournamentMatchesController
             $match = $this->matchService->updateMatch($match, $validated);
 
             return response()->json(new TournamentMatchResource($match->load(['player1', 'player2', 'clubTable'])));
-        } catch (RuntimeException $e) {
+        } catch (RuntimeException|Throwable $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),

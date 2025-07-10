@@ -88,13 +88,13 @@ const canStartMatch = computed(() => {
 const canFinishMatch = computed(() => {
     if (!props.match || !props.canEditTournament) return false;
     if (props.match.status !== 'in_progress' && props.match.status !== 'verification') return false;
-    const racesTo = props.tournament?.races_to || 7;
+    const racesTo = props.match?.races_to || 7;
     return matchForm.value.player1_score >= racesTo || matchForm.value.player2_score >= racesTo;
 });
 
 const matchWinner = computed(() => {
     if (!canFinishMatch.value) return null;
-    const racesTo = props.tournament?.races_to || 7;
+    const racesTo = props.match?.races_to || 7;
     if (matchForm.value.player1_score >= racesTo) return props.match?.player1_id;
     if (matchForm.value.player2_score >= racesTo) return props.match?.player2_id;
     return null;
@@ -251,7 +251,7 @@ defineExpose({setError});
                                 ({{ match.bracket_side === 'upper' ? t('Upper') : t('Lower') }})
                             </span>
                         </div>
-                        <div class="text-xs text-gray-500">{{ t('Race to') }} {{ tournament?.races_to || 7 }}</div>
+                        <div class="text-xs text-gray-500">{{ t('Race to') }} {{ match?.races_to || 7 }}</div>
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
@@ -284,7 +284,7 @@ defineExpose({setError});
                         <Input
                             v-model.number="matchForm.player1_score"
                             :disabled="match.status === 'completed' || isWalkoverMatch"
-                            :max="tournament?.races_to || 7"
+                            :max="match?.races_to || 7"
                             min="0"
                             type="number"
                             class="text-center text-2xl font-bold h-12"
@@ -306,7 +306,7 @@ defineExpose({setError});
                         <Input
                             v-model.number="matchForm.player2_score"
                             :disabled="match.status === 'completed' || isWalkoverMatch"
-                            :max="tournament?.races_to || 7"
+                            :max="match?.races_to || 7"
                             min="0"
                             type="number"
                             class="text-center text-2xl font-bold h-12"

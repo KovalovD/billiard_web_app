@@ -108,9 +108,8 @@ const updateApi = updateTournament(props.tournamentId);
 const tournamentTypes = [
     {value: 'single_elimination', label: t('Single Elimination')},
     {value: 'double_elimination', label: t('Double Elimination')},
-    {value: 'double_elimination_full', label: t('Double Elimination (All Places)')},
+    {value: 'olympic_double_elimination', label: t('Olympic Double Elimination')},
     {value: 'round_robin', label: t('Round Robin')},
-    {value: 'groups', label: t('Groups')},
     {value: 'groups_playoff', label: t('Groups + Playoff')},
     {value: 'team_groups_playoff', label: t('Team Groups + Playoff')},
     {value: 'killer_pool', label: t('Killer Pool')},

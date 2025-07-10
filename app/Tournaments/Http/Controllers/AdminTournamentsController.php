@@ -261,9 +261,30 @@ readonly class AdminTournamentsController
      * Generate tournament bracket
      * @admin
      */
-    public function generateBracket(Tournament $tournament): JsonResponse
+    public function generateBracket(Request $request, Tournament $tournament): JsonResponse
     {
         try {
+            // Validate bracket generation parameters
+            $validated = $request->validate([
+                'round_races_to'          => 'nullable|array',
+                'round_races_to.*'        => 'integer|min:1|max:99',
+                'olympic_phase_size'      => 'nullable|integer|in:2,4,8,16,32,64,128',
+                'olympic_has_third_place' => 'nullable|boolean',
+            ]);
+
+            // Update tournament with bracket settings
+            if (!empty($validated['round_races_to'])) {
+                $tournament->round_races_to = $validated['round_races_to'];
+            }
+
+            if ($tournament->tournament_type === 'olympic_double_elimination' && isset($validated['olympic_phase_size'])) {
+                $tournament->olympic_phase_size = $validated['olympic_phase_size'];
+                $tournament->olympic_has_third_place = $validated['olympic_has_third_place'] ?? false;
+            }
+
+            $tournament->save();
+
+            // Generate bracket
             $bracket = $this->bracketService->generateBracket($tournament);
 
             return response()->json([
@@ -338,5 +359,95 @@ readonly class AdminTournamentsController
         $transitions = $this->tournamentService->getStageTransitions($tournament);
 
         return response()->json($transitions);
+    }
+
+    /**
+     * Get bracket generation options
+     * @admin
+     */
+    public function getBracketOptions(Tournament $tournament): JsonResponse
+    {
+        $playerCount = $tournament->confirmed_players_count;
+        $bracketSize = 2 ** ceil(log($playerCount, 2));
+
+        $options = [
+            'tournament_type'  => $tournament->tournament_type,
+            'player_count'     => $playerCount,
+            'bracket_size'     => $bracketSize,
+            'default_races_to' => $tournament->races_to,
+        ];
+
+        // For Olympic double elimination, calculate available phase sizes
+        if ($tournament->tournament_type === 'olympic_double_elimination') {
+            $availablePhases = [];
+            $size = $bracketSize;
+            while ($size >= 2) {
+                if ($size <= $playerCount) {
+                    $availablePhases[] = $size;
+                }
+                $size = $size / 2;
+            }
+            $options['available_olympic_phases'] = $availablePhases;
+        }
+
+        // Calculate rounds for races_to configuration
+        if (in_array($tournament->tournament_type->value,
+            ['single_elimination', 'double_elimination', 'double_elimination_full', 'olympic_double_elimination'])) {
+            $upperRounds = (int) log($bracketSize, 2);
+            $rounds = [];
+
+            // Upper bracket rounds
+            for ($i = 1; $i <= $upperRounds; $i++) {
+                $matchesInRound = $bracketSize / (2 ** $i);
+                $roundName = $this->getRoundDisplayName($i, $upperRounds);
+                $rounds["UB_R{$i}"] = $roundName;
+            }
+
+            // Lower bracket rounds for double elimination
+            if (in_array($tournament->tournament_type->value, ['double_elimination', 'double_elimination_full'])) {
+                $lowerRounds = ($upperRounds - 1) * 2;
+                for ($i = 1; $i <= $lowerRounds; $i++) {
+                    $rounds["LB_R{$i}"] = "Lower Bracket Round {$i}";
+                }
+                $rounds['GF'] = 'Grand Finals';
+            }
+
+            // Olympic phase rounds
+            if ($tournament->tournament_type->value === 'olympic_double_elimination') {
+                $rounds['O_R1'] = 'Olympic Phase R1';
+                $rounds['O_R2'] = 'Olympic Semifinals';
+                $rounds['O_R3'] = 'Olympic Finals';
+            }
+
+            // Third place match
+            if ($tournament->has_third_place_match ||
+                ($tournament->tournament_type->value === 'olympic_double_elimination' && $tournament->olympic_has_third_place)) {
+                $rounds['3RD'] = 'Third Place Match';
+            }
+
+            $options['rounds'] = $rounds;
+            $options['current_round_races_to'] = $tournament->round_races_to ?? [];
+        }
+
+        return response()->json($options);
+    }
+
+    /**
+     * Get round display name
+     */
+    private function getRoundDisplayName(int $round, int $totalRounds): string
+    {
+        $remaining = $totalRounds - $round + 1;
+
+        return match ($remaining) {
+            1 => 'Finals',
+            2 => 'Semifinals',
+            3 => 'Quarterfinals',
+            4 => 'Round of 16',
+            5 => 'Round of 32',
+            6 => 'Round of 64',
+            7 => 'Round of 128',
+            default => "Round {$round}",
+        };
     }
 }

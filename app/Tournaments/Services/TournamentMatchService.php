@@ -49,7 +49,7 @@ class TournamentMatchService
     public function finishMatch(TournamentMatch $match, array $data): array
     {
         return DB::transaction(function () use ($match, $data) {
-            if ($match->status !== MatchStatus::IN_PROGRESS && $match->status !== MatchStatus::VERIFICATION) {
+            if ($match->status !== MatchStatus::IN_PROGRESS && $match->status !== MatchStatus::VERIFICATION && $data['admin_notes'] !== 'Walkover') {
                 throw new RuntimeException('Match must be in progress or verification to be finished');
             }
 
@@ -110,7 +110,7 @@ class TournamentMatchService
     /**
      * Calculate and update player positions based on match result
      */
-    private function updatePlayerPositions(TournamentMatch $match, int $winnerId, int $loserId): void
+    private function updatePlayerPositions(TournamentMatch $match, int $winnerId, ?int $loserId): void
     {
         $tournament = $match->tournament;
 
@@ -136,7 +136,7 @@ class TournamentMatchService
     /**
      * Handle positions for special matches (finals, third place, grand finals)
      */
-    private function handleSpecialMatchPositions(TournamentMatch $match, int $winnerId, int $loserId): bool
+    private function handleSpecialMatchPositions(TournamentMatch $match, int $winnerId, ?int $loserId): bool
     {
         $tournament = $match->tournament;
 

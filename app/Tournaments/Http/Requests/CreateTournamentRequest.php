@@ -35,10 +35,14 @@ class CreateTournamentRequest extends BaseFormRequest
             'organizer'                 => ['nullable', 'string', 'max:255'],
             'format'                    => ['nullable', 'string', 'max:255'],
             'tournament_type'           => ['required', new Enum(TournamentType::class)],
+            'olympic_phase_size'      => ['nullable', 'integer', 'in:2,4,8,16,32,64'],
+            'olympic_has_third_place' => ['boolean'],
             'group_size_min'            => ['nullable', 'integer', 'min:3', 'max:5'],
             'group_size_max'            => ['nullable', 'integer', 'min:3', 'max:5', 'gte:group_size_min'],
             'playoff_players_per_group' => ['nullable', 'integer', 'min:1', 'lt:group_size_min'],
             'races_to'                  => ['nullable', 'integer', 'min:1'],
+            'round_races_to'          => ['nullable', 'array'],
+            'round_races_to.*'        => ['integer', 'min:1'],
             'has_third_place_match'     => ['boolean'],
             'seeding_method'            => ['nullable', new Enum(SeedingMethod::class)],
             'requires_application'      => ['boolean'],
@@ -47,7 +51,6 @@ class CreateTournamentRequest extends BaseFormRequest
             'rating_coefficient'   => ['nullable', 'numeric', 'min:0.1', 'max:5.0'],
         ];
     }
-
     public function messages(): array
     {
         return [

@@ -110,4 +110,5 @@ return [
     'Create :type'                                                           => 'Create :type',
     'In :days days'                                                          => 'In :days days',
     ':count matches'                                                         => ':count matches',
+    'Manage your :entities'                                                  => 'Manage your :entities',
 ];
