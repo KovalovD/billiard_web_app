@@ -124,11 +124,19 @@ class TournamentSeedingService
             if (count($seedNumbers) !== count(array_unique($seedNumbers))) {
                 throw new RuntimeException('Seed numbers must be unique');
             }
+            $seedNumbers = array_column($seeds, 'seed_number', 'player_id');
 
-            // Update seeds
-            foreach ($seeds as $seed) {
-                TournamentPlayer::where('id', $seed['player_id'])
-                    ->update(['seed_number' => $seed['seed_number']])
+            asort($seedNumbers);
+
+            $normalizedSeeds = [];
+            $position = 1;
+            foreach ($seedNumbers as $playerId => $originalSeed) {
+                $normalizedSeeds[$playerId] = $position++;
+            }
+
+            foreach ($normalizedSeeds as $playerId => $seedNumber) {
+                TournamentPlayer::where('id', $playerId)
+                    ->update(['seed_number' => $seedNumber])
                 ;
             }
         });

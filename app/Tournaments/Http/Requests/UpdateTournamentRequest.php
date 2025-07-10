@@ -28,7 +28,7 @@ class UpdateTournamentRequest extends BaseFormRequest
             'application_deadline'      => ['nullable', 'date', 'before_or_equal:start_date'],
             'max_participants'          => ['nullable', 'integer', 'min:2'],
             'entry_fee'                 => ['numeric', 'min:0'],
-            'prize_pool'                => ['numeric', 'min:0'],
+            'prize_pool' => ['string'],
             'prize_distribution' => ['nullable', 'array'],
             'place_prizes'              => ['nullable', 'array'],
             'place_prizes.*'            => ['numeric', 'min:0'],

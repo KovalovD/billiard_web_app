@@ -101,9 +101,7 @@ const isSubmitting = ref(false);
 const tournamentTypes = [
     {value: 'single_elimination', label: t('Single Elimination')},
     {value: 'double_elimination', label: t('Double Elimination')},
-    {value: 'double_elimination_full', label: t('Double Elimination (All Places)')},
     {value: 'round_robin', label: t('Round Robin')},
-    {value: 'groups', label: t('Groups')},
     {value: 'groups_playoff', label: t('Groups + Playoff')},
     {value: 'team_groups_playoff', label: t('Team Groups + Playoff')},
     {value: 'killer_pool', label: t('Killer Pool')},
@@ -590,13 +588,12 @@ onMounted(() => {
                                         </div>
 
                                         <div class="space-y-2">
-                                            <Label for="prize_pool">{{ t('Prize Pool') }} (₴)</Label>
+                                            <Label for="prize_pool">{{ t('Prize Pool') }}</Label>
                                             <Input
-                                                id="prize_pool"
-                                                v-model.number="form.prize_pool"
-                                                min="0"
-                                                step="0.01"
-                                                type="number"
+                                                id="name"
+                                                v-model="form.prize_pool"
+                                                :placeholder="t('Enter Prize Pool')"
+                                                required
                                             />
                                         </div>
 

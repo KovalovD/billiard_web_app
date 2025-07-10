@@ -67,7 +67,7 @@ class Tournament extends Model
         'seeding_completed_at'      => 'datetime',
         'groups_completed_at'       => 'datetime',
         'entry_fee'                 => 'decimal:2',
-        'prize_pool'                => 'decimal:2',
+        'prize_pool'         => 'string',
         'prize_distribution'        => 'array',
         'place_prizes'              => 'array',
         'place_bonuses'             => 'array',

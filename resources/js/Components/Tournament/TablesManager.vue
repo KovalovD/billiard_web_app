@@ -20,7 +20,8 @@ const tables = ref<ClubTable[]>([])
 const isLoading = ref(true)
 const isSaving = ref(false)
 const error = ref<string | null>(null)
-const copiedTableId = ref<number | null>(null)
+const copiedWidgetTableId = ref<number | null>(null)
+const copiedTabletTableId = ref<number | null>(null)
 
 const selectedTable = ref<ClubTable | null>(null)
 const streamUrl = ref('')
@@ -33,9 +34,9 @@ const copyTabletUrl = async (tableId: number) => {
 
     try {
         await navigator.clipboard.writeText(url)
-        copiedTableId.value = tableId
+        copiedTabletTableId.value = tableId
         setTimeout(() => {
-            copiedTableId.value = null
+            copiedTabletTableId.value = null
         }, 2000)
     } catch (err) {
         console.error('Failed to copy:', err)
@@ -99,9 +100,9 @@ const copyWidgetUrl = async (tableId: number) => {
 
     try {
         await navigator.clipboard.writeText(url)
-        copiedTableId.value = tableId
+        copiedWidgetTableId.value = tableId
         setTimeout(() => {
-            copiedTableId.value = null
+            copiedWidgetTableId.value = null
         }, 2000)
     } catch (err) {
         console.error('Failed to copy:', err)
@@ -192,7 +193,7 @@ onMounted(() => {
                                     variant="outline"
                                     @click="copyWidgetUrl(table.id)"
                                 >
-                                    <template v-if="copiedTableId === table.id">
+                                    <template v-if="copiedWidgetTableId === table.id">
                                         <CheckIcon class="mr-2 h-4 w-4 text-green-600"/>
                                         {{ t('Copied!') }}
                                     </template>
@@ -209,8 +210,14 @@ onMounted(() => {
                                     variant="outline"
                                     @click="copyTabletUrl(table.id)"
                                 >
-                                    <TabletIcon class="mr-2 h-4 w-4"/>
-                                    {{ t('Copy Tablet Control URL') }}
+                                    <template v-if="copiedTabletTableId === table.id">
+                                        <CheckIcon class="mr-2 h-4 w-4 text-green-600"/>
+                                        {{ t('Copied!') }}
+                                    </template>
+                                    <template v-else>
+                                        <TabletIcon class="mr-2 h-4 w-4"/>
+                                        {{ t('Copy Tablet Control URL') }}
+                                    </template>
                                 </Button>
                             </div>
 

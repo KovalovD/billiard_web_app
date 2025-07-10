@@ -380,7 +380,6 @@ const handleAddExistingPlayer = async (userId: number) => {
     isAddingPlayer.value = true;
     const success = await addExistingApi.execute({user_id: userId});
     if (success) {
-        showAddExistingModal.value = false;
         searchQuery.value = '';
         await loadPlayers();
     }
@@ -393,7 +392,6 @@ const handleAddNewPlayer = async () => {
     isAddingPlayer.value = true;
     const success = await addNewApi.execute(newPlayerForm.value);
     if (success) {
-        showAddNewModal.value = false;
         resetNewPlayerForm();
         await loadPlayers();
     }

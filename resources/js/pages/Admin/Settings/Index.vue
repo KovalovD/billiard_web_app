@@ -334,6 +334,7 @@ const createItem = async () => {
                 }
                 await adminSettings.createClubTable(tableForm.value.club_id, {
                     name: tableForm.value.name,
+                    club_id: tableForm.value.club_id,
                     stream_url: tableForm.value.stream_url,
                     is_active: tableForm.value.is_active,
                     sort_order: tableForm.value.sort_order
@@ -386,6 +387,7 @@ const updateItem = async () => {
                     editingItem.value.id,
                     {
                         name: tableForm.value.name,
+                        club_id: tableForm.value.club_id,
                         stream_url: tableForm.value.stream_url,
                         is_active: tableForm.value.is_active,
                         sort_order: tableForm.value.sort_order

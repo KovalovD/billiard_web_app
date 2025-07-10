@@ -287,7 +287,7 @@ export function useAdminSettings() {
                 success: boolean;
                 table: ClubTable;
                 message: string
-            }>(`/api/admin/clubs/${clubId}/tables`, {
+            }>(`/api/admin/tables`, {
                 method: 'POST',
                 data
             });
@@ -307,7 +307,7 @@ export function useAdminSettings() {
                 success: boolean;
                 table: ClubTable;
                 message: string
-            }>(`/api/admin/clubs/${clubId}/tables/${tableId}`, {
+            }>(`/api/admin/tables/${tableId}`, {
                 method: 'PUT',
                 data
             });
@@ -326,27 +326,11 @@ export function useAdminSettings() {
             return await apiClient<{
                 success: boolean;
                 message: string
-            }>(`/api/admin/clubs/${clubId}/tables/${tableId}`, {
+            }>(`/api/admin/tables/${tableId}`, {
                 method: 'DELETE'
             });
         } catch (err: any) {
             error.value = err.message || 'Failed to delete table';
-            throw err;
-        } finally {
-            isLoading.value = false;
-        }
-    };
-
-    const reorderClubTables = async (clubId: number, tables: { id: number; sort_order: number }[]) => {
-        isLoading.value = true;
-        error.value = null;
-        try {
-            return await apiClient<{ success: boolean; message: string }>(`/api/admin/clubs/${clubId}/tables/reorder`, {
-                method: 'POST',
-                data: {tables}
-            });
-        } catch (err: any) {
-            error.value = err.message || 'Failed to reorder tables';
             throw err;
         } finally {
             isLoading.value = false;
@@ -468,7 +452,6 @@ export function useAdminSettings() {
         createClubTable,
         updateClubTable,
         deleteClubTable,
-        reorderClubTables,
         // Games
         fetchGames,
         fetchGame,
