@@ -32,6 +32,17 @@ readonly class PlayerController
     }
 
     /**
+     * Get aggregated statistics for all players
+     */
+    public function stats(PlayerIndexRequest $request): JsonResponse
+    {
+        $filters = $request->validated();
+        $stats = $this->playerService->getAggregatedStats($filters);
+
+        return response()->json($stats);
+    }
+
+    /**
      * Get detailed player information with comprehensive statistics
      */
     public function show(User $player): PlayerDetailResource

@@ -1,5 +1,3 @@
-// resources/js/Pages/Players/Index.vue
-
 <script lang="ts" setup>
 import {
     Button,
@@ -70,6 +68,16 @@ interface Player {
     };
 }
 
+interface AggregatedStats {
+    total_players: number;
+    tournament_winners: number;
+    top_10_rated: number;
+    players_with_city: number;
+    players_with_club: number;
+    unique_cities: number;
+    unique_clubs: number;
+}
+
 defineOptions({layout: AuthenticatedLayout});
 
 const {isAuthenticated, user} = useAuth();
@@ -83,6 +91,7 @@ const error = ref<string | null>(null);
 const totalPages = ref(1);
 const total = ref(0);
 const currentPage = ref(1);
+const aggregatedStats = ref<AggregatedStats | null>(null);
 
 // Filters
 const filters = ref({
@@ -109,6 +118,7 @@ const debouncedSearch = (value: string | number | undefined) => {
         filters.value.name = value?.toString() || '';
         currentPage.value = 1;
         fetchPlayers();
+        fetchAggregatedStats();
     }, 300);
 };
 
@@ -173,6 +183,22 @@ const columns = computed(() => [
 ]);
 
 // Fetch data
+const fetchAggregatedStats = async () => {
+    try {
+        const params = new URLSearchParams();
+
+        if (filters.value.name) params.append('name', filters.value.name);
+        if (filters.value.country_id) params.append('country_id', filters.value.country_id.toString());
+        if (filters.value.city_id) params.append('city_id', filters.value.city_id.toString());
+        if (filters.value.club_id) params.append('club_id', filters.value.club_id.toString());
+
+        const response = await apiClient<AggregatedStats>(`/api/players/stats?${params.toString()}`);
+        aggregatedStats.value = response;
+    } catch (err: any) {
+        console.error('Failed to load aggregated stats:', err);
+    }
+};
+
 const fetchPlayers = async () => {
     isLoading.value = true;
     error.value = null;
@@ -245,6 +271,7 @@ const resetFilters = () => {
     };
     currentPage.value = 1;
     fetchPlayers();
+    fetchAggregatedStats();
 };
 
 // Get badge class for stats
@@ -336,6 +363,7 @@ watch([
 ], () => {
     currentPage.value = 1;
     fetchPlayers();
+    fetchAggregatedStats();
 });
 
 // Lifecycle
@@ -358,6 +386,7 @@ onMounted(() => {
         }
     });
 
+    fetchAggregatedStats();
     fetchPlayers();
     fetchCountries();
     fetchCities();
@@ -414,7 +443,7 @@ onUnmounted(() => {
                     <CardContent class="pt-4 sm:pt-6">
                         <div class="text-center">
                             <div class="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400">
-                                {{ total }}
+                                {{ aggregatedStats?.total_players || total }}
                             </div>
                             <div class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{{
                                     t('Total Players')
@@ -427,7 +456,7 @@ onUnmounted(() => {
                     <CardContent class="pt-4 sm:pt-6">
                         <div class="text-center">
                             <div class="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">
-                                {{ players.filter(p => p.stats.tournaments_won > 0).length }}
+                                {{ aggregatedStats?.tournament_winners || 0 }}
                             </div>
                             <div class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{{
                                     t('Tournament Winners')
@@ -440,9 +469,7 @@ onUnmounted(() => {
                     <CardContent class="pt-4 sm:pt-6">
                         <div class="text-center">
                             <div class="text-xl sm:text-2xl font-bold text-yellow-600 dark:text-yellow-400">
-                                {{
-                                    players.filter(p => p.stats.official_rating_position && p.stats.official_rating_position <= 10).length
-                                }}
+                                {{ aggregatedStats?.top_10_rated || 0 }}
                             </div>
                             <div class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{{
                                     t('Top 10 Rated')
@@ -455,9 +482,12 @@ onUnmounted(() => {
                     <CardContent class="pt-4 sm:pt-6">
                         <div class="text-center">
                             <div class="text-xl sm:text-2xl font-bold text-purple-600 dark:text-purple-400">
-                                {{ countries.length }}
+                                {{ aggregatedStats?.players_with_club || 0 }}
+                                <span class="text-sm text-gray-500">/{{ aggregatedStats?.unique_clubs || 0 }}</span>
                             </div>
-                            <div class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{{ t('Countries') }}</div>
+                            <div class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                                {{ t('Players/Clubs') }}
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
@@ -587,7 +617,7 @@ onUnmounted(() => {
                 <CardHeader>
                     <CardTitle class="flex items-center gap-2">
                         <UsersIcon class="h-5 w-5"/>
-                        {{ t('Players') }} ({{ total }})
+                        {{ t('Players') }} ({{ aggregatedStats?.total_players || total }})
                     </CardTitle>
                     <CardDescription>
                         {{ t('Showing :count players', {count: players.length}) }}

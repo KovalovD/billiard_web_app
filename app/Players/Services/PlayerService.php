@@ -17,6 +17,101 @@ use Illuminate\Pagination\LengthAwarePaginator;
 class PlayerService
 {
     /**
+     * Get aggregated statistics for all players
+     */
+    public function getAggregatedStats(array $filters = []): array
+    {
+        $query = User::query()
+            ->where('is_active', true)
+        ;
+
+        // Apply filters
+        if (!empty($filters['country_id'])) {
+            $query->whereHas('homeCity', function (Builder $q) use ($filters) {
+                $q->where('country_id', $filters['country_id']);
+            });
+        }
+
+        if (!empty($filters['city_id'])) {
+            $query->where('home_city_id', $filters['city_id']);
+        }
+
+        if (!empty($filters['club_id'])) {
+            $query->where('home_club_id', $filters['club_id']);
+        }
+
+        if (!empty($filters['name'])) {
+            $query->where(function (Builder $q) use ($filters) {
+                $search = '%'.$filters['name'].'%';
+                $q
+                    ->where('firstname', 'like', $search)
+                    ->orWhere('lastname', 'like', $search)
+                    ->orWhereRaw("CONCAT(lastname, ' ', firstname) LIKE ?", [$search])
+                    ->orWhereRaw("CONCAT(firstname, ' ', lastname) LIKE ?", [$search])
+                ;
+            });
+        }
+
+        // Get counts
+        $totalPlayers = $query->count();
+
+        // Tournament winners
+        $tournamentWinners = (clone $query)
+            ->whereHas('tournamentPlayers', function (Builder $q) {
+                $q->where('position', 1);
+            })
+            ->count()
+        ;
+
+        // Top 10 rated players
+        $top10Rated = (clone $query)
+            ->whereHas('officialRatingPlayers', function (Builder $q) {
+                $q
+                    ->where('is_active', true)
+                    ->where('position', '<=', 10)
+                ;
+            })
+            ->count()
+        ;
+
+        // Players with city
+        $playersWithCity = (clone $query)
+            ->whereNotNull('home_city_id')
+            ->count()
+        ;
+
+        // Players with club
+        $playersWithClub = (clone $query)
+            ->whereNotNull('home_club_id')
+            ->count()
+        ;
+
+        // Count unique cities
+        $uniqueCities = (clone $query)
+            ->whereNotNull('home_city_id')
+            ->distinct('home_city_id')
+            ->count('home_city_id')
+        ;
+
+        // Count unique clubs
+        $uniqueClubs = (clone $query)
+            ->whereNotNull('home_club_id')
+            ->distinct('home_club_id')
+            ->count('home_club_id')
+        ;
+
+        return [
+            'total_players'      => $totalPlayers,
+            'tournament_winners' => $tournamentWinners,
+            'top_10_rated'       => $top10Rated,
+            'players_with_city'  => $playersWithCity,
+            'players_with_club'  => $playersWithClub,
+            'unique_cities'      => $uniqueCities,
+            'unique_clubs'       => $uniqueClubs,
+        ];
+    }
+
+    /**
      * Get players with basic statistics and filtering
      */
     public function getPlayersWithStats(array $filters = []): LengthAwarePaginator|array

@@ -5,6 +5,7 @@ namespace App\Core\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Core\Traits\HasSlug;
 use App\Leagues\Models\Rating;
+use App\OfficialRatings\Models\OfficialRatingPlayer;
 use App\Tournaments\Models\TournamentPlayer;
 use database\factories\UserFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -126,5 +127,10 @@ class User extends Authenticatable
         return Attribute::make(
             get: fn($value) => $this->lastname.' '.$this->firstname,
         );
+    }
+
+    public function officialRatingPlayers(): HasMany
+    {
+        return $this->hasMany(OfficialRatingPlayer::class);
     }
 }
