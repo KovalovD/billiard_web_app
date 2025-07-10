@@ -499,7 +499,7 @@ onMounted(() => {
                     name: tournament.value.name,
                     city: tournament.value.city ? `${tournament.value.city.name}, ${tournament.value.city.country?.name}` : t('Multiple locations'),
                     type: tournament.value.tournament_type_display,
-                    prize: formatCurrency(tournament.value.prize_pool || 0),
+                    prize: tournament.value.prize_pool,
                     players: tournament.value.confirmed_players_count
                 }),
                 keywords: [
@@ -785,9 +785,9 @@ onMounted(() => {
                                         </div>
                                         <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('players') }}</p>
                                     </div>
-                                    <div v-if="tournament.prize_pool > 0" class="text-center sm:text-left">
+                                    <div v-if="tournament.prize_pool" class="text-center sm:text-left">
                                         <div class="text-2xl font-bold text-green-600 dark:text-green-400">
-                                            {{ formatCurrency(tournament.prize_pool) }}
+                                            {{ tournament.prize_pool }}
                                         </div>
                                         <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('Prize Pool') }}</p>
                                     </div>
