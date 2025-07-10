@@ -106,6 +106,8 @@ return [
     'Adding a new player will give :lives extra lives to all active players' => 'Adding a new player will give :lives extra lives to all active players',
     'Eliminated - Rebuy :count of :max'                                      => 'Eliminated - Rebuy :count of :max',
     'includes :count rebuys'                                                 => 'includes :count rebuys',
-    'Page :page of :total' => 'Page :page of :total',
-    'Create :type'         => 'Create :type',
+    'Page :page of :total'                                                   => 'Page :page of :total',
+    'Create :type'                                                           => 'Create :type',
+    'In :days days'                                                          => 'In :days days',
+    ':count matches'                                                         => ':count matches',
 ];

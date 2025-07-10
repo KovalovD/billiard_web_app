@@ -1,10 +1,11 @@
 <script lang="ts" setup>
-import {Card, CardContent, CardDescription, CardHeader, CardTitle, Spinner} from '@/Components/ui';
+import {Card, CardContent, CardHeader, Spinner} from '@/Components/ui';
 import {apiClient} from '@/lib/apiClient';
 import type {League, MatchGame, Rating} from '@/types/api';
 import {Link} from '@inertiajs/vue3';
 import {computed, onMounted, ref} from 'vue';
 import {useLocale} from '@/composables/useLocale';
+import {ActivityIcon, StarIcon, UsersIcon} from 'lucide-vue-next';
 
 interface LeagueWithMatches {
     league: League;
@@ -31,6 +32,18 @@ const activeMatches = computed(() => {
     });
 
     return matches;
+});
+
+// Get total leagues count
+const totalLeagues = computed(() => Object.keys(leagues.value).length);
+
+// Get total active matches count
+const totalActiveMatches = computed(() => {
+    let count = 0;
+    Object.values(leagues.value).forEach((leagueData) => {
+        count += leagueData.activeMatches.filter((match) => match.status === 'in_progress').length;
+    });
+    return count;
 });
 
 const fetchUserLeagues = async () => {
@@ -70,56 +83,100 @@ onMounted(fetchUserLeagues);
 </script>
 
 <template>
-    <Card>
-        <CardHeader>
-            <CardTitle>{{ t('Your Leagues') }}</CardTitle>
-            <CardDescription>{{ t("Leagues you've joined and are active in") }}</CardDescription>
-        </CardHeader>
-        <CardContent>
-            <div v-if="isLoading" class="py-4 text-center text-gray-500 dark:text-gray-400">
-                <Spinner class="text-primary mx-auto mb-2 h-6 w-6"/>
-                <span>{{ t('Loading your leagues...') }}</span>
-            </div>
-
-            <div v-else-if="error" class="py-4 text-center text-red-500 dark:text-red-400">
-                {{ error }}
-            </div>
-
-            <div v-else-if="Object.keys(leagues).length === 0"
-                 class="py-4 text-center text-gray-500 dark:text-gray-400">
-                <p>{{ t("You haven't joined any leagues yet.") }}</p>
+    <Card class="border-0 shadow-sm hover:shadow-md transition-shadow duration-200">
+        <CardHeader class="border-b border-gray-100 dark:border-gray-800 pb-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                        <UsersIcon class="h-5 w-5 text-purple-600 dark:text-purple-400"/>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('Leagues') }}</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('Your active leagues') }}</p>
+                    </div>
+                </div>
                 <Link :href="route('leagues.index.page')"
-                      class="mt-2 block text-blue-600 hover:underline dark:text-blue-400">
-                    {{ t('Browse leagues to join') }}
+                      class="text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors">
+                    {{ t('View all') }}
+                </Link>
+            </div>
+        </CardHeader>
+        <CardContent class="p-0">
+            <div v-if="isLoading" class="flex items-center justify-center py-12">
+                <Spinner class="h-8 w-8 text-gray-400"/>
+            </div>
+
+            <div v-else-if="error" class="py-12 text-center">
+                <p class="text-sm text-red-600 dark:text-red-400">{{ error }}</p>
+            </div>
+
+            <div v-else-if="Object.keys(leagues).length === 0" class="py-12 text-center">
+                <UsersIcon class="mx-auto h-12 w-12 text-gray-300 dark:text-gray-600 mb-3"/>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">{{
+                        t("You haven't joined any leagues yet")
+                    }}</p>
+                <Link :href="route('leagues.index.page')"
+                      class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300">
+                    {{ t('Browse leagues') }} →
                 </Link>
             </div>
 
-            <ul v-else class="divide-y divide-gray-200 dark:divide-gray-700">
-                <li v-for="(item, leagueId) in leagues" :key="leagueId" class="py-3">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h4 class="font-medium text-gray-900 dark:text-white">
-                                {{ item.league.name }}
-                                <span
-                                    v-if="getActiveMatchesCount(item) > 0"
-                                    class="ml-2 rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
-                                >
-                                    {{ getActiveMatchesCount(item) }} {{ t('active') }}
-                                </span>
-                            </h4>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">
-                                {{ t('Your Rating') }}: <span class="font-semibold">{{ item.rating.rating }}</span>
-                                <span v-if="item.activeMatches.length" class="ml-2 text-amber-600 dark:text-amber-400">
-                                    ({{ t(':count matches total', {count: item.activeMatches.length}) }})
-                                </span>
-                            </p>
+            <div v-else>
+                <!-- Stats Bar -->
+                <div v-if="totalLeagues > 0"
+                     class="px-6 py-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
+                    <div class="flex items-center justify-between text-sm">
+                        <div class="flex items-center gap-6">
+                            <div class="flex items-center gap-2">
+                                <span class="text-gray-500 dark:text-gray-400">{{ t('Leagues') }}:</span>
+                                <span class="font-medium text-gray-900 dark:text-white">{{ totalLeagues }}</span>
+                            </div>
+                            <div v-if="totalActiveMatches > 0" class="flex items-center gap-2">
+                                <span class="text-gray-500 dark:text-gray-400">{{ t('Active matches') }}:</span>
+                                <span class="font-medium text-gray-900 dark:text-white">{{ totalActiveMatches }}</span>
+                            </div>
                         </div>
-                        <Link :href="`/leagues/${item.league.id}`"
-                              class="text-sm text-blue-600 hover:underline dark:text-blue-400"> {{ t('View') }}
-                        </Link>
                     </div>
-                </li>
-            </ul>
+                </div>
+
+                <!-- Leagues List -->
+                <div class="divide-y divide-gray-100 dark:divide-gray-800">
+                    <div v-for="(item, leagueId) in leagues" :key="leagueId"
+                         class="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <h4 class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                        {{ item.league.name }}
+                                    </h4>
+                                    <span v-if="getActiveMatchesCount(item) > 0"
+                                          class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
+                                        <ActivityIcon class="h-3 w-3 mr-1"/>
+                                        {{ getActiveMatchesCount(item) }} {{ t('active') }}
+                                    </span>
+                                </div>
+                                <div class="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                                    <span class="flex items-center gap-1">
+                                        <StarIcon class="h-3 w-3"/>
+                                        {{ t('Rating') }}: <strong
+                                        class="text-gray-700 dark:text-gray-300">{{ item.rating.rating }}</strong>
+                                    </span><span class="flex items-center gap-1">
+                                        {{ t('Position') }}: <strong
+                                    class="text-gray-700 dark:text-gray-300">{{ item.rating.position }}</strong>
+                                    </span>
+                                    <span v-if="item.activeMatches.length">
+                                        {{ t(':count matches', {count: item.activeMatches.length}) }}
+                                    </span>
+                                </div>
+                            </div>
+                            <Link :href="`/leagues/${item.league.slug}`"
+                                  class="text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 whitespace-nowrap">
+                                {{ t('View') }} →
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </CardContent>
     </Card>
 </template>

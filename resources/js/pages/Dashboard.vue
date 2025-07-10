@@ -3,7 +3,7 @@ import ActiveMatchesModal from '@/Components/League/ActiveMatchesModal.vue';
 import RecentTournamentsCard from '@/Components/Core/RecentTournamentsCard.vue';
 import UserLeaguesCard from '@/Components/Core/UserLeaguesCard.vue';
 import UserTournamentsCard from '@/Components/Core/UserTournamentsCard.vue';
-import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/Components/ui';
+import {Card, CardContent, CardHeader} from '@/Components/ui';
 import {useAuth} from '@/composables/useAuth';
 import {useLeagues} from '@/composables/useLeagues';
 import {useSeo} from '@/composables/useSeo';
@@ -11,7 +11,7 @@ import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import type {League, MatchGame, TournamentPlayer} from '@/types/api';
 import {Head, Link} from '@inertiajs/vue3';
 import {useLocale} from '@/composables/useLocale';
-import {ArrowRightIcon, LogInIcon, StarIcon, TrophyIcon, UsersIcon} from 'lucide-vue-next';
+import {ArrowRightIcon, LogInIcon, PlusIcon, StarIcon, TrophyIcon, UsersIcon} from 'lucide-vue-next';
 import {onMounted, ref} from 'vue';
 
 interface TournamentWithParticipation {
@@ -92,29 +92,28 @@ onMounted(async () => {
     <Head
         :title="isAuthenticated ? t('Dashboard - Your Billiard Statistics') : t('Dashboard - Billiard League Platform')"/>
 
-    <div class="py-6 sm:py-8 lg:py-12">
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
             <!-- Welcome Section -->
             <header class="mb-8">
-                <div class="bg-white shadow-lg rounded-lg overflow-hidden dark:bg-gray-800">
-                    <div
-                        class="bg-gradient-to-r from-gray-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 p-6 sm:p-8">
-                        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                <div
+                    class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div class="px-6 py-8 sm:px-8 sm:py-10">
+                        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                             {{
                                 isAuthenticated
                                     ? t('welcome_back', {name: user?.firstname || t('User')})
                                     : t('Welcome to WinnerBreak!')
                             }}
                         </h1>
-                        <p class="text-gray-600 dark:text-gray-400">
+                        <p class="mt-2 text-gray-600 dark:text-gray-400">
                             {{
                                 isAuthenticated ? t('Track your progress and manage your games') : t('Join the professional billiard community')
                             }}
                         </p>
-                    </div>
 
-                    <div class="p-6 sm:p-8 pt-0">
-                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        <!-- Quick Actions -->
+                        <div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
                             <Link href="/leagues" class="group">
                                 <article
                                     class="relative overflow-hidden rounded-lg border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50 p-6 transition-all hover:border-indigo-300 hover:shadow-lg dark:border-gray-700 dark:from-gray-800 dark:to-gray-700 dark:hover:border-indigo-600">
@@ -178,28 +177,28 @@ onMounted(async () => {
                             </Link>
                         </div>
 
-                        <!-- Guest login prompt -->
+                        <!-- Guest CTA -->
                         <div v-if="!isAuthenticated"
-                             class="mt-6 rounded-lg bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 p-6 border border-indigo-200 dark:border-indigo-800">
+                             class="mt-8 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/10 dark:to-purple-900/10 rounded-lg p-6 border border-indigo-100 dark:border-indigo-800/50">
                             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                 <div>
-                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                                        {{ t('Ready to compete?') }}
-                                    </h3>
-                                    <p class="text-gray-600 dark:text-gray-400 mt-1">
+                                    <h3 class="font-semibold text-gray-900 dark:text-white">{{
+                                            t('Ready to compete?')
+                                        }}</h3>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
                                         {{
                                             t('Join WinnerBreak to participate in leagues, tournaments, and track your progress.')
                                         }}
                                     </p>
                                 </div>
-                                <div class="flex flex-col sm:flex-row gap-3">
+                                <div class="flex gap-3">
                                     <Link :href="route('login')"
-                                          class="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
+                                          class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors">
                                         <LogInIcon class="mr-2 h-4 w-4"/>
                                         {{ t('Login') }}
                                     </Link>
                                     <Link :href="route('register')"
-                                          class="inline-flex items-center justify-center px-4 py-2 border border-indigo-300 rounded-lg shadow-sm text-sm font-medium text-indigo-700 bg-white hover:bg-indigo-50 dark:border-indigo-600 dark:text-indigo-300 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors">
+                                          class="inline-flex items-center px-4 py-2 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 transition-colors">
                                         {{ t('Register') }}
                                     </Link>
                                 </div>
@@ -211,86 +210,100 @@ onMounted(async () => {
 
             <main>
                 <!-- User Activity Cards - Only for authenticated users -->
-                <div v-if="isAuthenticated" class="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <div v-if="isAuthenticated" class="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
                     <UserLeaguesCard ref="userLeaguesRef" @active-matches-found="handleActiveMatchesFound"/>
                     <UserTournamentsCard ref="userTournamentsRef"
                                          @pending-applications-found="handlePendingApplicationsFound"/>
                 </div>
 
                 <!-- Recent Activity -->
-                <section class="mb-6" aria-labelledby="recent-tournaments-heading">
+                <section class="mb-8" aria-labelledby="recent-tournaments-heading">
                     <h2 id="recent-tournaments-heading" class="sr-only">{{ t('Recent Tournaments') }}</h2>
                     <RecentTournamentsCard/>
                 </section>
 
                 <!-- Recent Leagues -->
-                <section class="mb-6" aria-labelledby="recent-leagues-heading">
-                    <Card class="shadow-lg">
-                        <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
-                            <CardTitle id="recent-leagues-heading">{{ t('Recent Leagues') }}</CardTitle>
-                            <CardDescription>
-                                {{
-                                    isAuthenticated ? t('New and active leagues you might be interested in') : t('Explore active billiard leagues')
-                                }}
-                            </CardDescription>
+                <section class="mb-8" aria-labelledby="recent-leagues-heading">
+                    <Card class="border-0 shadow-sm">
+                        <CardHeader class="border-b border-gray-100 dark:border-gray-800 pb-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                                        {{ t('Recent Leagues') }}</h3>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                        {{
+                                            isAuthenticated ? t('New and active leagues you might be interested in') : t('Explore active billiard leagues')
+                                        }}
+                                    </p>
+                                </div>
+                                <Link :href="route('leagues.index.page')"
+                                      class="text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors">
+                                    {{ t('View all') }}
+                                </Link>
+                            </div>
                         </CardHeader>
-                        <CardContent>
-                            <div v-if="isLoadingLeagues" class="py-8 text-center">
+                        <CardContent class="p-0">
+                            <div v-if="isLoadingLeagues" class="flex items-center justify-center py-12">
                                 <div
-                                    class="animate-spin h-8 w-8 border-4 border-gray-200 border-t-indigo-600 rounded-full mx-auto"></div>
-                                <p class="mt-2 text-gray-500">{{ t('Loading leagues...') }}</p>
+                                    class="animate-spin h-8 w-8 border-4 border-gray-200 border-t-indigo-600 rounded-full"></div>
                             </div>
-                            <div v-else-if="recentLeagues.length === 0"
-                                 class="py-8 text-center text-gray-500 dark:text-gray-400">
-                                {{ t('No leagues found. Check back later.') }}
+                            <div v-else-if="recentLeagues.length === 0" class="py-12 text-center">
+                                <UsersIcon class="mx-auto h-12 w-12 text-gray-300 dark:text-gray-600 mb-3"/>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">
+                                    {{ t('No leagues found. Check back later.') }}</p>
                             </div>
-                            <ul v-else class="divide-y divide-gray-200 dark:divide-gray-700">
-                                <li v-for="league in recentLeagues" :key="league.id"
-                                    class="py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors rounded-lg px-3 -mx-3">
+                            <div v-else class="divide-y divide-gray-100 dark:divide-gray-800">
+                                <div v-for="league in recentLeagues" :key="league.id"
+                                     class="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                                     <div class="flex items-center justify-between">
                                         <div>
-                                            <h4 class="font-medium text-gray-900 dark:text-white">{{ league.name }}</h4>
-                                            <p class="text-sm text-gray-500 dark:text-gray-400">Game: {{
-                                                    league.game
-                                                }}</p>
+                                            <h4 class="text-sm font-medium text-gray-900 dark:text-white">{{
+                                                    league.name
+                                                }}</h4>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ t('Game') }}:
+                                                {{ league.game }}</p>
                                         </div>
                                         <Link :href="`/leagues/${league.id}`"
-                                              class="text-sm text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium">
+                                              class="text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300">
                                             {{ t('View') }} →
                                         </Link>
                                     </div>
-                                </li>
-                            </ul>
+                                </div>
+                            </div>
                         </CardContent>
                     </Card>
                 </section>
 
                 <!-- Admin Actions -->
                 <Card v-if="isAuthenticated && user?.is_admin"
-                      class="shadow-lg border-2 border-purple-200 dark:border-purple-800">
-                    <CardHeader
-                        class="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20">
-                        <CardTitle class="text-purple-900 dark:text-purple-100">{{ t('Admin Actions') }}</CardTitle>
-                        <CardDescription>{{ t('Manage leagues, tournaments and system settings') }}</CardDescription>
+                      class="border-0 shadow-sm bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/10 dark:to-pink-900/10">
+                    <CardHeader class="border-b border-purple-100 dark:border-purple-800/50 pb-4">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{
+                                    t('Admin Actions')
+                                }}</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                {{ t('Manage leagues, tournaments and system settings') }}</p>
+                        </div>
                     </CardHeader>
-                    <CardContent>
-                        <nav class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <CardContent class="pt-6">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <Link href="admin/leagues/create"
-                                  class="inline-flex items-center justify-center px-4 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 transition-colors">
-                                <UsersIcon class="mr-2 h-4 w-4"/>
-                                {{ t('Create New League') }}
+                                  class="inline-flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors">
+                                <PlusIcon class="h-4 w-4"/>
+                                {{ t('Create League') }}
                             </Link>
                             <Link href="/admin/tournaments/create"
-                                  class="inline-flex items-center justify-center px-4 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 transition-colors">
-                                <TrophyIcon class="mr-2 h-4 w-4"/>
-                                {{ t('Create New Tournament') }}
+                                  class="inline-flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors">
+                                <PlusIcon class="h-4 w-4"/>
+                                {{ t('Create Tournament') }}
                             </Link>
                             <Link href="/admin/official-ratings/create"
-                                  class="inline-flex items-center justify-center px-4 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 transition-colors sm:col-span-2 lg:col-span-1">
-                                <StarIcon class="mr-2 h-4 w-4"/>
-                                {{ t('Create Official Rating') }}
+                                  class="inline-flex items-center justify-center gap-2 px-4 py-3 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition-colors">
+                                <PlusIcon class="h-4 w-4"/>
+                                {{ t('Create Rating') }}
                             </Link>
-                        </nav>
+                        </div>
                     </CardContent>
                 </Card>
             </main>

@@ -1,10 +1,11 @@
 <script lang="ts" setup>
-import {Card, CardContent, CardDescription, CardHeader, CardTitle, Spinner} from '@/Components/ui';
+import {Card, CardContent, CardHeader, Spinner} from '@/Components/ui';
 import {apiClient} from '@/lib/apiClient';
 import type {Tournament, TournamentPlayer} from '@/types/api';
 import {Link} from '@inertiajs/vue3';
 import {computed, onMounted, ref} from 'vue';
 import {useLocale} from '@/composables/useLocale';
+import {CalendarIcon, MapPinIcon, TrophyIcon} from 'lucide-vue-next';
 
 interface TournamentWithParticipation {
     tournament: Tournament;
@@ -66,37 +67,37 @@ const fetchUserTournaments = async () => {
 };
 
 // Get status badge for tournament participation
-const getParticipationBadge = (participation: TournamentPlayer) => {
+const getParticipationStatus = (participation: TournamentPlayer) => {
     switch (participation.status) {
         case 'applied':
-            return {text: t('Pending'), class: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'};
+            return {text: t('Pending'), color: 'text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-900/20'};
         case 'confirmed':
             if (participation.position) {
                 if (participation.position === 1) {
                     return {
-                        text: t('Winner') + ` (#${participation.position})`,
-                        class: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                        text: t('Winner'),
+                        color: 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20'
                     };
                 } else if (participation.position <= 3) {
                     return {
-                        text: `Top 3 (#${participation.position})`,
-                        class: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                        text: `#${participation.position}`,
+                        color: 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/20'
                     };
                 } else {
                     return {
                         text: `#${participation.position}`,
-                        class: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                        color: 'text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-800'
                     };
                 }
             }
             return {
                 text: t('Confirmed'),
-                class: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                color: 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20'
             };
         case 'rejected':
-            return {text: t('Rejected'), class: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'};
+            return {text: t('Rejected'), color: 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20'};
         default:
-            return {text: participation.status, class: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'};
+            return {text: participation.status, color: 'text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-800'};
     }
 };
 
@@ -104,7 +105,7 @@ const getParticipationBadge = (participation: TournamentPlayer) => {
 const formatDate = (dateString: string | null) => {
     if (!dateString) return '';
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {month: 'short', day: 'numeric'});
+    return date.toLocaleDateString('uk-UK', {month: 'short', day: 'numeric', year: 'numeric'});
 };
 
 // Refresh data (can be called from parent)
@@ -119,91 +120,114 @@ onMounted(fetchUserTournaments);
 </script>
 
 <template>
-    <Card>
-        <CardHeader>
-            <CardTitle>{{ t('Your Tournaments') }}</CardTitle>
-            <CardDescription>{{ t("Tournaments you've participated in or applied to") }}</CardDescription>
-        </CardHeader>
-        <CardContent>
-            <div v-if="isLoading" class="py-4 text-center text-gray-500 dark:text-gray-400">
-                <Spinner class="text-primary mx-auto mb-2 h-6 w-6"/>
-                <span>{{ t('Loading your tournaments...') }}</span>
-            </div>
-
-            <div v-else-if="error" class="py-4 text-center text-red-500 dark:text-red-400">
-                {{ error }}
-            </div>
-
-            <div v-else-if="!tournamentsData || activeTournaments.length === 0"
-                 class="py-4 text-center text-gray-500 dark:text-gray-400">
-                <p>{{ t('No active tournament participations.') }}</p>
+    <Card class="border-0 shadow-sm hover:shadow-md transition-shadow duration-200">
+        <CardHeader class="border-b border-gray-100 dark:border-gray-800 pb-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
+                        <TrophyIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400"/>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('Tournaments') }}</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('Your tournament activity') }}</p>
+                    </div>
+                </div>
                 <Link :href="route('tournaments.index.page')"
-                      class="mt-2 block text-blue-600 hover:underline dark:text-blue-400">
-                    {{ t('Browse tournaments to join') }}
+                      class="text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors">
+                    {{ t('View all') }}
+                </Link>
+            </div>
+        </CardHeader>
+        <CardContent class="p-0">
+            <div v-if="isLoading" class="flex items-center justify-center py-12">
+                <Spinner class="h-8 w-8 text-gray-400"/>
+            </div>
+
+            <div v-else-if="error" class="py-12 text-center">
+                <p class="text-sm text-red-600 dark:text-red-400">{{ error }}</p>
+            </div>
+
+            <div v-else-if="!tournamentsData || activeTournaments.length === 0" class="py-12 text-center">
+                <TrophyIcon class="mx-auto h-12 w-12 text-gray-300 dark:text-gray-600 mb-3"/>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">{{ t('No active tournaments') }}</p>
+                <Link :href="route('tournaments.index.page')"
+                      class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300">
+                    {{ t('Browse tournaments') }} →
                 </Link>
             </div>
 
             <div v-else>
-                <!-- Quick Stats -->
+                <!-- Stats Bar -->
                 <div v-if="tournamentsData.stats.total_tournaments > 0"
-                     class="mb-4 rounded-lg bg-gray-50 p-3 dark:bg-gray-800/50">
-                    <div class="grid grid-cols-2 gap-2 text-sm">
-                        <div>
-                            <span class="text-gray-600 dark:text-gray-400">{{ t('Tournaments:') }}</span>
-                            <span class="ml-1 font-semibold">{{ tournamentsData.stats.total_tournaments }}</span>
-                        </div>
-                        <div>
-                            <span class="text-gray-600 dark:text-gray-400">{{ t('Wins:') }}</span>
-                            <span class="ml-1 font-semibold">{{ tournamentsData.stats.total_wins }}</span>
-                        </div>
-                        <div>
-                            <span class="text-gray-600 dark:text-gray-400">{{ t('Win Rate:') }}</span>
-                            <span class="ml-1 font-semibold">{{ tournamentsData.stats.win_rate }}%</span>
-                        </div>
-                        <div>
-                            <span class="text-gray-600 dark:text-gray-400">{{ t('Top 3:') }}</span>
-                            <span class="ml-1 font-semibold">{{ tournamentsData.stats.top_three_rate }}%</span>
+                     class="px-6 py-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
+                    <div class="flex items-center justify-between text-sm">
+                        <div class="flex items-center gap-6">
+                            <div class="flex items-center gap-2">
+                                <span class="text-gray-500 dark:text-gray-400">{{ t('Total') }}:</span>
+                                <span class="font-medium text-gray-900 dark:text-white">{{
+                                        tournamentsData.stats.total_tournaments
+                                    }}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-gray-500 dark:text-gray-400">{{ t('Wins') }}:</span>
+                                <span class="font-medium text-gray-900 dark:text-white">{{
+                                        tournamentsData.stats.total_wins
+                                    }}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-gray-500 dark:text-gray-400">{{ t('Win rate') }}:</span>
+                                <span class="font-medium text-gray-900 dark:text-white">{{
+                                        tournamentsData.stats.win_rate
+                                    }}%</span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Active Tournaments List -->
-                <ul class="divide-y divide-gray-200 dark:divide-gray-700">
-                    <li v-for="item in activeTournaments" :key="`${item.tournament.id}-${item.participation.id}`"
-                        class="py-3">
-                        <div class="flex items-center justify-between">
-                            <div class="flex-1">
-                                <div class="flex items-center gap-2">
-                                    <h4 class="font-medium text-gray-900 dark:text-white">
+                <!-- Tournaments List -->
+                <div class="divide-y divide-gray-100 dark:divide-gray-800">
+                    <div v-for="item in activeTournaments.slice(0, 5)"
+                         :key="`${item.tournament.id}-${item.participation.id}`"
+                         class="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <h4 class="text-sm font-medium text-gray-900 dark:text-white truncate">
                                         {{ item.tournament.name }}
                                     </h4>
-                                    <span
-                                        :class="getParticipationBadge(item.participation).class"
-                                        class="rounded-full px-2 py-0.5 text-xs font-medium"
-                                    >
-                                        {{ getParticipationBadge(item.participation).text }}
+                                    <span :class="getParticipationStatus(item.participation).color"
+                                          class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap">
+                                        {{ getParticipationStatus(item.participation).text }}
                                     </span>
                                 </div>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">
-                                    {{ item.tournament.game?.name }} • {{ formatDate(item.tournament.start_date) }}
-                                    <span v-if="item.tournament.city" class="ml-1">• {{
-                                            item.tournament.city.name
-                                        }}</span>
-                                </p>
+                                <div class="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                                    <span class="flex items-center gap-1">
+                                        <CalendarIcon class="h-3 w-3"/>
+                                        {{ formatDate(item.tournament.start_date) }}
+                                    </span>
+                                    <span v-if="item.tournament.game?.name">
+                                        {{ item.tournament.game.name }}
+                                    </span>
+                                    <span v-if="item.tournament.city" class="flex items-center gap-1">
+                                        <MapPinIcon class="h-3 w-3"/>
+                                        {{ item.tournament.city.name }}
+                                    </span>
+                                </div>
                             </div>
-                            <Link :href="`/tournaments/${item.tournament.id}`"
-                                  class="text-sm text-blue-600 hover:underline dark:text-blue-400">
-                                {{ t('View') }}
+                            <Link :href="`/tournaments/${item.tournament.slug}`"
+                                  class="text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 whitespace-nowrap">
+                                {{ t('View') }} →
                             </Link>
                         </div>
-                    </li>
-                </ul>
+                    </div>
+                </div>
 
-                <!-- Link to see all tournaments -->
-                <div v-if="activeTournaments.length >= 5" class="mt-4 text-center">
+                <!-- View More -->
+                <div v-if="activeTournaments.length > 5"
+                     class="px-6 py-3 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800 text-center">
                     <Link :href="route('tournaments.index.page')"
-                          class="text-sm text-blue-600 hover:underline dark:text-blue-400">
-                        {{ t('View all tournaments →') }}
+                          class="text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300">
+                        {{ t('View all tournaments') }} ({{ activeTournaments.length }})
                     </Link>
                 </div>
             </div>
