@@ -11,7 +11,15 @@ import GenerateBracketModal from '@/Components/Tournament/GenerateBracketModal.v
 
 import type {ClubTable, Tournament, TournamentBracket, TournamentMatch} from '@/types/api';
 import {Head, router} from '@inertiajs/vue3';
-import {AlertCircleIcon, ArrowLeftIcon, PlayIcon, RefreshCwIcon, TrophyIcon} from 'lucide-vue-next';
+import {
+    AlertCircleIcon,
+    ArrowLeftIcon,
+    GitBranchIcon,
+    LayersIcon,
+    PlayIcon,
+    RefreshCwIcon,
+    TrophyIcon
+} from 'lucide-vue-next';
 import {computed, onMounted, ref} from 'vue';
 
 defineOptions({layout: AuthenticatedLayout});
@@ -48,6 +56,9 @@ const showMatchModal = ref(false);
 const selectedMatch = ref<TournamentMatch | null>(null);
 const matchModalRef = ref<InstanceType<typeof MatchManagementModal> | null>(null);
 
+// Olympic bracket tab state
+const activeOlympicTab = ref<'first-stage' | 'olympic-stage'>('first-stage');
+
 // Check if tournament can be edited
 const canEditTournament = computed(() => {
     return tournament.value?.status === 'active' && tournament.value?.stage === 'bracket';
@@ -59,7 +70,28 @@ const isDoubleElimination = computed(() => {
         tournament.value?.tournament_type === 'double_elimination_full';
 });
 
+// Check if tournament is Olympic double elimination
+const isOlympicDoubleElimination = computed(() => {
+    return tournament.value?.tournament_type === 'olympic_double_elimination';
+});
+
 const hasGeneratedBracket = computed(() => matches.value.length > 0);
+
+// Split matches by Olympic stage
+const firstStageMatches = computed(() => {
+    if (!isOlympicDoubleElimination.value) return matches.value;
+    return matches.value.filter(m => m.metadata?.olympic_stage === 'first' || m.match_code?.startsWith('FS_'));
+});
+
+const olympicStageMatches = computed(() => {
+    if (!isOlympicDoubleElimination.value) return [];
+    return matches.value.filter(m => m.metadata?.olympic_stage === 'second' || m.match_code?.startsWith('OS_'));
+});
+
+// Handle tab change
+const switchOlympicTab = (tab: 'first-stage' | 'olympic-stage') => {
+    activeOlympicTab.value = tab;
+};
 
 // Methods
 const loadData = async () => {
@@ -427,8 +459,109 @@ onMounted(() => {
                     </CardContent>
                 </Card>
 
-                <!-- Bracket Component with overflow scroll for mobile -->
-                <div class="overflow-x-auto pb-4">
+                <!-- Olympic Tournament Tab Navigation -->
+                <nav v-if="isOlympicDoubleElimination"
+                     class="mb-6 border-b border-gray-200 dark:border-gray-700 overflow-x-auto" role="navigation"
+                     aria-label="Olympic bracket tabs">
+                    <div class="-mb-px flex space-x-6 sm:space-x-8 min-w-max">
+                        <button
+                            id="tab-first-stage"
+                            :class="[
+                                'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
+                                activeOlympicTab === 'first-stage'
+                                    ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                            ]"
+                            :aria-selected="activeOlympicTab === 'first-stage'"
+                            role="tab"
+                            @click="switchOlympicTab('first-stage')"
+                        >
+                            <span class="flex items-center gap-2">
+                                <GitBranchIcon class="h-4 w-4"/>
+                                {{ t('First Stage') }}
+                                <span class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+                                    {{ t('Double Elimination') }}
+                                </span>
+                            </span>
+                        </button>
+                        <button
+                            id="tab-olympic-stage"
+                            :class="[
+                                'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
+                                activeOlympicTab === 'olympic-stage'
+                                    ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                            ]"
+                            :aria-selected="activeOlympicTab === 'olympic-stage'"
+                            role="tab"
+                            @click="switchOlympicTab('olympic-stage')"
+                        >
+                            <span class="flex items-center gap-2">
+                                <LayersIcon class="h-4 w-4"/>
+                                {{ t('Olympic Stage') }}
+                                <span class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+                                    {{ t('Single Elimination') }}
+                                </span>
+                            </span>
+                        </button>
+                    </div>
+                </nav>
+
+                <!-- Olympic Tournament Tab Content -->
+                <main v-if="isOlympicDoubleElimination" role="tabpanel">
+                    <!-- First Stage Tab -->
+                    <div v-if="activeOlympicTab === 'first-stage'">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>{{ t('First Stage - Double Elimination') }}</CardTitle>
+                                <CardDescription>
+                                    {{ t('Top players from upper and lower brackets advance to Olympic stage') }}
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div class="overflow-x-auto pb-4">
+                                    <div class="min-w-[800px]">
+                                        <DoubleEliminationBracket
+                                            :can-edit="canEditTournament"
+                                            :current-user-id="currentUserId"
+                                            :matches="firstStageMatches"
+                                            :tournament="tournament!"
+                                            @open-match="openMatchModal"
+                                        />
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <!-- Olympic Stage Tab -->
+                    <div v-if="activeOlympicTab === 'olympic-stage'">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>{{ t('Olympic Stage - Single Elimination') }}</CardTitle>
+                                <CardDescription>
+                                    {{ t('Final single elimination bracket for top players') }}
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div class="overflow-x-auto pb-4">
+                                    <div class="min-w-[800px]">
+                                        <SingleEliminationBracket
+                                            :can-edit="canEditTournament"
+                                            :current-user-id="currentUserId"
+                                            :matches="olympicStageMatches"
+                                            :tournament="tournament!"
+                                            @open-match="openMatchModal"
+                                        />
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </main>
+
+                <!-- Regular Tournament Bracket (non-Olympic) -->
+                <div v-else class="overflow-x-auto pb-4">
                     <div class="min-w-[800px]">
                         <SingleEliminationBracket
                             v-if="!isDoubleElimination"

@@ -16,9 +16,11 @@ class TournamentBracket extends Model
         'total_rounds',
         'players_count',
         'bracket_structure',
+        'metadata',
     ];
 
     protected $casts = [
+        'metadata' => 'array',
         'total_rounds'      => 'integer',
         'players_count'     => 'integer',
         'bracket_structure' => 'array',

@@ -38,10 +38,12 @@ class TournamentMatch extends Model
         'started_at',
         'completed_at',
         'admin_notes',
+        'metadata',
     ];
 
     protected $casts = [
         'scheduled_at'     => 'datetime',
+        'metadata' => 'array',
         'started_at'       => 'datetime',
         'completed_at'     => 'datetime',
         'player1_score'    => 'integer',
@@ -53,6 +55,8 @@ class TournamentMatch extends Model
         'bracket_side'     => BracketSide::class,
         'status'           => MatchStatus::class,
     ];
+
+    protected $with = ['tournament'];
 
     public function tournament(): BelongsTo
     {

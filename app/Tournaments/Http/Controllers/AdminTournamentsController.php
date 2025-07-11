@@ -16,7 +16,6 @@ use App\Tournaments\Models\TournamentPlayer;
 use App\Tournaments\Services\TournamentBracketService;
 use App\Tournaments\Services\TournamentService;
 use App\User\Http\Resources\UserResource;
-use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -35,11 +34,10 @@ readonly class AdminTournamentsController
     ) {
     }
 
-    /**
-     * Create tournament
-     * @admin
-     * @throws Throwable
-     */
+    // ─────────────────────────────────────────────────────────────────────────────
+    //  CRUD / PLAYERS / STATUS/STAGE
+    // ─────────────────────────────────────────────────────────────────────────────
+
     public function store(CreateTournamentRequest $request): TournamentResource
     {
         $tournament = $this->tournamentService->createTournament($request->validated());
@@ -47,22 +45,15 @@ readonly class AdminTournamentsController
         return new TournamentResource($tournament);
     }
 
-    /**
-     * Update tournament
-     * @admin
-     * @throws Throwable
-     */
     public function update(UpdateTournamentRequest $request, Tournament $tournament): TournamentResource
     {
         $data = $request->validated();
 
-        // Handle official rating association update
+        // handle rating relation
         if (array_key_exists('official_rating_id', $data)) {
             DB::transaction(function () use ($tournament, $data) {
-                // Remove existing associations
                 $tournament->officialRatings()->detach();
 
-                // Add new association if provided
                 if (!empty($data['official_rating_id'])) {
                     $rating = $this->officialRatingService
                         ->getAllRatings()
@@ -79,8 +70,6 @@ readonly class AdminTournamentsController
                     }
                 }
             });
-
-            // Remove these fields from the update data as they're handled separately
             unset($data['official_rating_id'], $data['rating_coefficient']);
         }
 
@@ -89,10 +78,6 @@ readonly class AdminTournamentsController
         return new TournamentResource($tournament);
     }
 
-    /**
-     * Delete tournament
-     * @admin
-     */
     public function destroy(Tournament $tournament): JsonResponse
     {
         $this->tournamentService->deleteTournament($tournament);
@@ -100,10 +85,6 @@ readonly class AdminTournamentsController
         return response()->json(['message' => 'Tournament deleted successfully']);
     }
 
-    /**
-     * Add existing player to tournament
-     * @admin
-     */
     public function addPlayer(AddTournamentPlayerRequest $request, Tournament $tournament): JsonResponse
     {
         try {
@@ -125,11 +106,6 @@ readonly class AdminTournamentsController
         }
     }
 
-    /**
-     * Add new player to tournament with registration
-     * @admin
-     * @throws Throwable
-     */
     public function addNewPlayer(AddPlayerRequest $request, Tournament $tournament): JsonResponse
     {
         $result = $this->tournamentService->addNewPlayerToTournament(
@@ -145,10 +121,6 @@ readonly class AdminTournamentsController
         ]);
     }
 
-    /**
-     * Remove player from tournament
-     * @admin
-     */
     public function removePlayer(Tournament $tournament, TournamentPlayer $player): JsonResponse
     {
         if ($player->tournament_id !== $tournament->id) {
@@ -162,10 +134,6 @@ readonly class AdminTournamentsController
         return response()->json(['message' => 'Player removed from tournament successfully']);
     }
 
-    /**
-     * Update player position, rating points, and financial rewards
-     * @admin
-     */
     public function updatePlayer(Request $request, Tournament $tournament, TournamentPlayer $player): JsonResponse
     {
         if ($player->tournament_id !== $tournament->id) {
@@ -194,10 +162,6 @@ readonly class AdminTournamentsController
         ]);
     }
 
-    /**
-     * Set tournament results with bonus and achievement amounts
-     * @admin
-     */
     public function setResults(Request $request, Tournament $tournament): JsonResponse
     {
         $validated = $request->validate([
@@ -215,16 +179,10 @@ readonly class AdminTournamentsController
 
             return response()->json(['message' => 'Tournament results set successfully']);
         } catch (Throwable $e) {
-            return response()->json([
-                'message' => $e->getMessage(),
-            ], 400);
+            return response()->json(['message' => $e->getMessage()], 400);
         }
     }
 
-    /**
-     * Change tournament status
-     * @admin
-     */
     public function changeStatus(Request $request, Tournament $tournament): JsonResponse
     {
         $validated = $request->validate([
@@ -239,10 +197,6 @@ readonly class AdminTournamentsController
         ]);
     }
 
-    /**
-     * Change tournament stage
-     * @admin
-     */
     public function changeStage(Request $request, Tournament $tournament): JsonResponse
     {
         $validated = $request->validate([
@@ -257,14 +211,13 @@ readonly class AdminTournamentsController
         ]);
     }
 
-    /**
-     * Generate tournament bracket
-     * @admin
-     */
+    // ─────────────────────────────────────────────────────────────────────────────
+    //  BRACKET & GROUP GENERATION
+    // ─────────────────────────────────────────────────────────────────────────────
+
     public function generateBracket(Request $request, Tournament $tournament): JsonResponse
     {
         try {
-            // Validate bracket generation parameters
             $validated = $request->validate([
                 'round_races_to'          => 'nullable|array',
                 'round_races_to.*'        => 'integer|min:1|max:99',
@@ -272,36 +225,31 @@ readonly class AdminTournamentsController
                 'olympic_has_third_place' => 'nullable|boolean',
             ]);
 
-            // Update tournament with bracket settings
             if (!empty($validated['round_races_to'])) {
                 $tournament->round_races_to = $validated['round_races_to'];
             }
 
-            if ($tournament->tournament_type === 'olympic_double_elimination' && isset($validated['olympic_phase_size'])) {
+            if (
+                $tournament->tournament_type->value === 'olympic_double_elimination' &&
+                isset($validated['olympic_phase_size'])
+            ) {
                 $tournament->olympic_phase_size = $validated['olympic_phase_size'];
                 $tournament->olympic_has_third_place = $validated['olympic_has_third_place'] ?? false;
             }
 
             $tournament->save();
 
-            // Generate bracket
-            $bracket = $this->bracketService->generateBracket($tournament);
+            $bracket = $this->bracketService->generateBracket($tournament->refresh());
 
             return response()->json([
                 'message' => 'Tournament bracket generated successfully',
                 'bracket' => $bracket,
             ]);
         } catch (Throwable $e) {
-            return response()->json([
-                'message' => $e->getMessage(),
-            ], 400);
+            return response()->json(['message' => $e->getMessage()], 400);
         }
     }
 
-    /**
-     * Generate tournament groups
-     * @admin
-     */
     public function generateGroups(Tournament $tournament): JsonResponse
     {
         try {
@@ -312,16 +260,14 @@ readonly class AdminTournamentsController
                 'groups'  => $groups,
             ]);
         } catch (Throwable $e) {
-            return response()->json([
-                'message' => $e->getMessage(),
-            ], 400);
+            return response()->json(['message' => $e->getMessage()], 400);
         }
     }
 
-    /**
-     * Get tournament matches
-     * @admin
-     */
+    // ─────────────────────────────────────────────────────────────────────────────
+    //  READ-ONLY ENDPOINTS
+    // ─────────────────────────────────────────────────────────────────────────────
+
     public function getMatches(Tournament $tournament): AnonymousResourceCollection
     {
         $matches = $tournament
@@ -334,26 +280,15 @@ readonly class AdminTournamentsController
         return TournamentMatchResource::collection($matches);
     }
 
-    /**
-     * Search users for adding to tournament
-     * @admin
-     */
     public function searchUsers(Request $request): AnonymousResourceCollection
     {
-        $validated = $request->validate([
-            'query' => 'required|string|min:2',
-        ]);
+        $validated = $request->validate(['query' => 'required|string|min:2']);
 
         $users = $this->tournamentService->searchUsers($validated['query']);
 
         return UserResource::collection($users);
     }
 
-    /**
-     * Get available stage transitions for tournament
-     * @admin
-     * @throws Exception
-     */
     public function getStageTransitions(Tournament $tournament): JsonResponse
     {
         $transitions = $this->tournamentService->getStageTransitions($tournament);
@@ -362,79 +297,146 @@ readonly class AdminTournamentsController
     }
 
     /**
-     * Get bracket generation options
-     * @admin
+     * Get bracket generation options (supports per-round race_to editing).
+     * Обновлено — учитывает фактическое количество раундов «первого этапа»
+     * олимпийской двойной сетки согласно новой бизнес-логике.
      */
     public function getBracketOptions(Tournament $tournament): JsonResponse
     {
         $playerCount = $tournament->confirmed_players_count;
         $bracketSize = 2 ** ceil(log($playerCount, 2));
 
-        $options = [
+        $base = [
             'tournament_type'  => $tournament->tournament_type,
             'player_count'     => $playerCount,
             'bracket_size'     => $bracketSize,
             'default_races_to' => $tournament->races_to,
         ];
 
-        // For Olympic double elimination, calculate available phase sizes
-        if ($tournament->tournament_type === 'olympic_double_elimination') {
-            $availablePhases = [];
-            $size = $bracketSize;
-            while ($size >= 2) {
-                if ($size <= $playerCount) {
-                    $availablePhases[] = $size;
-                }
-                $size = $size / 2;
-            }
-            $options['available_olympic_phases'] = $availablePhases;
+        // ── classic SE/DE ───────────────────────────────────────────────────────
+        if (in_array(
+            $tournament->tournament_type->value,
+            ['single_elimination', 'double_elimination', 'double_elimination_full'],
+            true,
+        )) {
+            $base += $this->buildStdElimRoundList($tournament, $bracketSize);
+            return response()->json($base);
         }
 
-        // Calculate rounds for races_to configuration
-        if (in_array($tournament->tournament_type->value,
-            ['single_elimination', 'double_elimination', 'double_elimination_full', 'olympic_double_elimination'])) {
+        // ── olympic double elimination ─────────────────────────────────────────
+        if ($tournament->tournament_type->value === 'olympic_double_elimination') {
+            $olSize = $tournament->olympic_phase_size ?? 4;
+
+            // available olympic sizes ≤ playerCount
+            $avail = [];
+            for ($sz = $bracketSize; $sz >= 2; $sz >>= 1) {
+                if ($sz <= $playerCount) {
+                    $avail[] = $sz;
+                }
+            }
+            $base['available_olympic_phases'] = $avail;
+
+            // upper rounds actually played
             $upperRounds = (int) log($bracketSize, 2);
+            $olRound = $upperRounds - (int) log($olSize / 2, 2) + 1;
+            $playedUpperRounds = $olRound - 1;
+
             $rounds = [];
-
-            // Upper bracket rounds
-            for ($i = 1; $i <= $upperRounds; $i++) {
-                $matchesInRound = $bracketSize / (2 ** $i);
-                $roundName = $this->getRoundDisplayName($i, $upperRounds);
-                $rounds["UB_R{$i}"] = $roundName;
+            for ($i = 1; $i <= $playedUpperRounds; $i++) {
+                $rounds["UB_R{$i}"] = $this->getRoundDisplayName($i, $playedUpperRounds);
             }
 
-            // Lower bracket rounds for double elimination
-            if (in_array($tournament->tournament_type->value, ['double_elimination', 'double_elimination_full'])) {
-                $lowerRounds = ($upperRounds - 1) * 2;
-                for ($i = 1; $i <= $lowerRounds; $i++) {
-                    $rounds["LB_R{$i}"] = "Lower Bracket Round {$i}";
-                }
-                $rounds['GF'] = 'Grand Finals';
+            // lower rounds actually played
+            $ls = $this->getLowerBracketStructureForDisplay($bracketSize);
+            $targetLB = $this->calcOlympicTargetLowerRound($ls, $olSize);
+
+            for ($i = 1; $i <= $targetLB; $i++) {
+                $rounds["LB_R{$i}"] = $this->getLowerRoundDisplayName($i, $targetLB, $ls[$i] ?? []);
             }
 
-            // Olympic phase rounds
-            if ($tournament->tournament_type->value === 'olympic_double_elimination') {
-                $rounds['O_R1'] = 'Olympic Phase R1';
-                $rounds['O_R2'] = 'Olympic Semifinals';
-                $rounds['O_R3'] = 'Olympic Finals';
+            // olympic single-elim
+            $olRounds = (int) log($olSize, 2);
+            for ($i = 1; $i <= $olRounds; $i++) {
+                $rounds["O_R{$i}"] = 'Olympic '.$this->getRoundDisplayName($i, $olRounds);
+            }
+            if ($tournament->olympic_has_third_place) {
+                $rounds['O_3RD'] = 'Olympic Third Place Match';
             }
 
-            // Third place match
-            if ($tournament->has_third_place_match ||
-                ($tournament->tournament_type->value === 'olympic_double_elimination' && $tournament->olympic_has_third_place)) {
-                $rounds['3RD'] = 'Third Place Match';
-            }
+            $base['rounds'] = $rounds;
+            $base['current_round_races_to'] = $tournament->round_races_to ?? [];
 
-            $options['rounds'] = $rounds;
-            $options['current_round_races_to'] = $tournament->round_races_to ?? [];
+            return response()->json($base);
         }
 
-        return response()->json($options);
+        // ── fallback for any future types ──────────────────────────────────────
+        return response()->json($base);
     }
 
-    /**
-     * Get round display name
-     */
+    // ─────────────────────────────────────────────────────────────────────────────
+    //  HELPER METHODS (display & calculations)
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    private function buildStdElimRoundList(Tournament $t, int $bracketSize): array
+    {
+        $upperRounds = (int) log($bracketSize, 2);
+        $r = [];
+
+        for ($i = 1; $i <= $upperRounds; $i++) {
+            $r["UB_R{$i}"] = $this->getRoundDisplayName($i, $upperRounds);
+        }
+
+        if (in_array($t->tournament_type->value, ['double_elimination', 'double_elimination_full'], true)) {
+            $lowerRounds = ($upperRounds - 1) * 2;
+            $ls = $this->getLowerBracketStructureForDisplay($bracketSize);
+
+            for ($i = 1; $i <= $lowerRounds; $i++) {
+                $r["LB_R{$i}"] = $this->getLowerRoundDisplayName($i, $lowerRounds, $ls[$i] ?? []);
+            }
+
+            $r['GF'] = 'Grand Finals';
+            if ($t->tournament_type->value === 'double_elimination_full') {
+                $r['GF_RESET'] = 'Grand Finals Reset';
+            }
+        }
+
+        if ($t->tournament_type->value === 'single_elimination' && $t->has_third_place_match) {
+            $r['3RD'] = 'Third Place Match';
+        }
+
+        return [
+            'rounds'                 => $r,
+            'current_round_races_to' => $t->round_races_to ?? [],
+        ];
+    }
+
+    private function calcOlympicTargetLowerRound(array $ls, int $olSize): int
+    {
+        $adv = $olSize / 2;
+        $tar = 0;
+        $p = 0;
+
+        foreach ($ls as $round => $info) {
+            $p = $info['type'] === 'initial'
+                ? $info['matches'] * 2
+                : (int) ceil($p / 2);
+
+            if ($p === $adv) {
+                $tar = $round;
+                if (
+                    isset($ls[$tar + 1]) &&
+                    $ls[$tar]['type'] !== 'drop' &&
+                    $ls[$tar + 1]['type'] === 'drop'
+                ) {
+                    ++$tar;
+                }
+                break;
+            }
+        }
+
+        return $tar;
+    }
+
     private function getRoundDisplayName(int $round, int $totalRounds): string
     {
         $remaining = $totalRounds - $round + 1;
@@ -448,6 +450,85 @@ readonly class AdminTournamentsController
             6 => 'Round of 64',
             7 => 'Round of 128',
             default => "Round {$round}",
+        };
+    }
+
+    private function getLowerBracketStructureForDisplay(int $bracketSize): array
+    {
+        // (версия без изменений — держим синхронной с сервисом)
+        return match ($bracketSize) {
+            4 => [
+                1 => ['matches' => 1, 'type' => 'initial'],
+                2 => ['matches' => 1, 'type' => 'final_drop', 'upper_round' => 2],
+            ],
+            8 => [
+                1 => ['matches' => 2, 'type' => 'initial'], 2 => ['matches' => 2, 'type' => 'drop', 'upper_round' => 2],
+                3 => ['matches' => 1, 'type' => 'regular'],
+                4 => ['matches' => 1, 'type' => 'final_drop', 'upper_round' => 3],
+            ],
+            16 => [
+                1 => ['matches' => 4, 'type' => 'initial'], 2 => ['matches' => 4, 'type' => 'drop', 'upper_round' => 2],
+                3 => ['matches' => 2, 'type' => 'regular'], 4 => ['matches' => 2, 'type' => 'drop', 'upper_round' => 3],
+                5 => ['matches' => 1, 'type' => 'regular'],
+                6 => ['matches' => 1, 'type' => 'final_drop', 'upper_round' => 4],
+            ],
+            32 => [
+                1 => ['matches' => 8, 'type' => 'initial'], 2 => ['matches' => 8, 'type' => 'drop', 'upper_round' => 2],
+                3 => ['matches' => 4, 'type' => 'regular'], 4 => ['matches' => 4, 'type' => 'drop', 'upper_round' => 3],
+                5 => ['matches' => 2, 'type' => 'regular'], 6 => ['matches' => 2, 'type' => 'drop', 'upper_round' => 4],
+                7 => ['matches' => 1, 'type' => 'regular'],
+                8 => ['matches' => 1, 'type' => 'final_drop', 'upper_round' => 5],
+            ],
+            64 => [
+                1  => ['matches' => 16, 'type' => 'initial'],
+                2  => ['matches' => 16, 'type' => 'drop', 'upper_round' => 2],
+                3  => ['matches' => 8, 'type' => 'regular'],
+                4  => ['matches' => 8, 'type' => 'drop', 'upper_round' => 3],
+                5  => ['matches' => 4, 'type' => 'regular'],
+                6  => ['matches' => 4, 'type' => 'drop', 'upper_round' => 4],
+                7  => ['matches' => 2, 'type' => 'regular'],
+                8  => ['matches' => 2, 'type' => 'drop', 'upper_round' => 5],
+                9  => ['matches' => 1, 'type' => 'regular'],
+                10 => ['matches' => 1, 'type' => 'final_drop', 'upper_round' => 6],
+            ],
+            128 => [
+                1  => ['matches' => 32, 'type' => 'initial'],
+                2  => ['matches' => 32, 'type' => 'drop', 'upper_round' => 2],
+                3  => ['matches' => 16, 'type' => 'regular'],
+                4  => ['matches' => 16, 'type' => 'drop', 'upper_round' => 3],
+                5  => ['matches' => 8, 'type' => 'regular'],
+                6  => ['matches' => 8, 'type' => 'drop', 'upper_round' => 4],
+                7  => ['matches' => 4, 'type' => 'regular'],
+                8  => ['matches' => 4, 'type' => 'drop', 'upper_round' => 5],
+                9  => ['matches' => 2, 'type' => 'regular'],
+                10 => ['matches' => 2, 'type' => 'drop', 'upper_round' => 6],
+                11 => ['matches' => 1, 'type' => 'regular'],
+                12 => ['matches' => 1, 'type' => 'final_drop', 'upper_round' => 7],
+            ],
+            default => [],
+        };
+    }
+
+    private function getLowerRoundDisplayName(int $round, int $total, array $info): string
+    {
+        $type = $info['type'] ?? 'regular';
+        $matches = $info['matches'] ?? 0;
+
+        $stage = match ($matches) {
+            1 => 'Finals',
+            2 => 'Semifinals',
+            4 => 'Quarterfinals',
+            8 => 'Round of 16',
+            16 => 'Round of 32',
+            32 => 'Round of 64',
+            default => "Round {$round}",
+        };
+
+        return match ($type) {
+            'initial', 'regular' => "Lower Bracket {$stage}",
+            'drop' => "Lower Bracket {$stage} (w/ drops)",
+            'final_drop' => "Lower Bracket Finals (w/ UB Finals loser)",
+            default => "Lower Bracket Round {$round}",
         };
     }
 }

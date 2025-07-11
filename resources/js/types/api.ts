@@ -473,6 +473,7 @@ export type TournamentStage = 'registration' | 'seeding' | 'group' | 'bracket' |
 export type TournamentType =
     'single_elimination'
     | 'double_elimination'
+    | 'olympic_double_elimination'
     | 'double_elimination_full'
     | 'round_robin'
     | 'groups'

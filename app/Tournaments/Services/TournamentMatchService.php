@@ -88,13 +88,22 @@ class TournamentMatchService
             // Calculate and update player positions
             $this->updatePlayerPositions($match, $winnerId, $loserId);
 
-            // Progress winner to next match if applicable
-            if ($match->next_match_id) {
-                $this->progressWinnerToNextMatch($match);
-                $affectedMatchIds[] = $match->next_match_id;
+            // Check if this is an Olympic tournament match that advances to Olympic stage
+            if ($this->isOlympicAdvancingMatch($match)) {
+                $olympicMatchId = $this->progressWinnerToOlympicStage($match);
+                if ($olympicMatchId) {
+                    $affectedMatchIds[] = $olympicMatchId;
+                }
+            } else {
+                // Progress winner to next match if applicable
+                if ($match->next_match_id) {
+                    $this->progressWinnerToNextMatch($match);
+                    $affectedMatchIds[] = $match->next_match_id;
+                }
             }
 
             // Handle loser progression for double elimination
+            // For Olympic tournaments, only prevent loser progression if this specific match advances to Olympic stage
             if ($match->loser_next_match_id) {
                 $this->progressLoserToNextMatch($match);
                 $affectedMatchIds[] = $match->loser_next_match_id;
@@ -108,6 +117,66 @@ class TournamentMatchService
     }
 
     /**
+     * Check if match advances to Olympic stage
+     */
+    private function isOlympicAdvancingMatch(TournamentMatch $match): bool
+    {
+        return isset($match->metadata['advances_to_olympic']) && $match->metadata['advances_to_olympic'] === true;
+    }
+
+    /**
+     * Progress winner to Olympic stage
+     */
+    private function progressWinnerToOlympicStage(TournamentMatch $match): ?int
+    {
+        if (!$match->winner_id || !isset($match->metadata['olympic_position'])) {
+            return null;
+        }
+
+        $olympicPosition = $match->metadata['olympic_position'];
+        $tournament = $match->tournament;
+
+        // Find the corresponding Olympic stage match
+        $olympicMatch = $this->findOlympicStageMatch($tournament, $olympicPosition);
+
+        if (!$olympicMatch) {
+            return null;
+        }
+
+        // Assign winner to the Olympic match
+        if (!$olympicMatch->player1_id) {
+            $olympicMatch->player1_id = $match->winner_id;
+        } elseif (!$olympicMatch->player2_id) {
+            $olympicMatch->player2_id = $match->winner_id;
+        }
+
+        // Update status to ready if both players are set
+        if ($olympicMatch->player1_id && $olympicMatch->player2_id) {
+            $olympicMatch->status = MatchStatus::READY;
+        }
+
+        $olympicMatch->save();
+
+        return $olympicMatch->id;
+    }
+
+    /**
+     * Find Olympic stage match by position
+     */
+    private function findOlympicStageMatch(Tournament $tournament, int $position): ?TournamentMatch
+    {
+        // Olympic matches are paired: positions 0,1 go to first match, 2,3 to second, etc.
+        $matchIndex = floor($position / 2);
+        $matchNumber = $matchIndex + 1;
+
+        return TournamentMatch::where('tournament_id', $tournament->id)
+            ->where('match_code', 'OS_R1M'.$matchNumber)
+            ->whereJsonContains('metadata->olympic_stage', 'second')
+            ->first()
+        ;
+    }
+
+    /**
      * Calculate and update player positions based on match result
      */
     private function updatePlayerPositions(TournamentMatch $match, int $winnerId, ?int $loserId): void
@@ -116,6 +185,12 @@ class TournamentMatchService
 
         // Handle special matches first
         if ($this->handleSpecialMatchPositions($match, $winnerId, $loserId)) {
+            return;
+        }
+
+        // For Olympic tournaments, handle position differently
+        if ($tournament->tournament_type === TournamentType::OLYMPIC_DOUBLE_ELIMINATION) {
+            $this->handleOlympicPositions($match, $winnerId, $loserId);
             return;
         }
 
@@ -131,6 +206,106 @@ class TournamentMatchService
                 ])
             ;
         }
+    }
+
+    /**
+     * Handle positions for Olympic tournament matches
+     */
+    private function handleOlympicPositions(TournamentMatch $match, int $winnerId, ?int $loserId): void
+    {
+        $tournament = $match->tournament;
+
+        // Check if this is an Olympic stage match
+        $isOlympicStage = isset($match->metadata['olympic_stage']) && $match->metadata['olympic_stage'] === 'second';
+
+        if ($isOlympicStage) {
+            // Olympic stage finals
+            if ($match->round === EliminationRound::FINALS) {
+                TournamentPlayer::where('tournament_id', $tournament->id)
+                    ->where('user_id', $winnerId)
+                    ->update(['position' => 1])
+                ;
+
+                TournamentPlayer::where('tournament_id', $tournament->id)
+                    ->where('user_id', $loserId)
+                    ->update(['position' => 2])
+                ;
+            } // Olympic stage third place
+            elseif ($match->match_code === 'OS_3RD' || $match->stage === MatchStage::THIRD_PLACE) {
+                TournamentPlayer::where('tournament_id', $tournament->id)
+                    ->where('user_id', $winnerId)
+                    ->update(['position' => 3])
+                ;
+
+                TournamentPlayer::where('tournament_id', $tournament->id)
+                    ->where('user_id', $loserId)
+                    ->update(['position' => 4])
+                ;
+            } // Other Olympic stage eliminations
+            else {
+                $position = $this->calculateOlympicStagePosition($match->round);
+                if ($position !== null) {
+                    TournamentPlayer::where('tournament_id', $tournament->id)
+                        ->where('user_id', $loserId)
+                        ->update([
+                            'position'          => $position,
+                            'elimination_round' => $match->round,
+                        ])
+                    ;
+                }
+            }
+        } else {
+            // First stage eliminations
+            $position = $this->calculateOlympicFirstStagePosition($match, $tournament);
+            if ($position !== null) {
+                TournamentPlayer::where('tournament_id', $tournament->id)
+                    ->where('user_id', $loserId)
+                    ->update([
+                        'position'          => $position,
+                        'elimination_round' => $match->round,
+                    ])
+                ;
+            }
+        }
+    }
+
+    /**
+     * Calculate position for Olympic stage elimination
+     */
+    private function calculateOlympicStagePosition(?EliminationRound $round): ?int
+    {
+        return match ($round) {
+            EliminationRound::SEMIFINALS => 3, // 3-4 handled by third place match
+            EliminationRound::QUARTERFINALS => 5, // 5-8
+            EliminationRound::ROUND_16 => 9, // 9-16
+            default => null,
+        };
+    }
+
+    /**
+     * Calculate position for Olympic first stage elimination
+     */
+    private function calculateOlympicFirstStagePosition(TournamentMatch $match, Tournament $tournament): ?int
+    {
+        $olympicPhaseSize = $tournament->olympic_phase_size ?? 8;
+
+        // Players eliminated in first stage are positioned after Olympic stage participants
+        // Base position starts after Olympic phase size
+        $basePosition = $olympicPhaseSize + 1;
+
+        // If eliminated from lower bracket in first stage
+        if ($match->bracket_side === 'lower') {
+            // Extract round number
+            preg_match('/FS_LB_R(\d+)M/', $match->match_code, $matches);
+            $roundNumber = isset($matches[1]) ? (int) $matches[1] : 0;
+
+            // Later rounds get better positions
+            return $basePosition + (10 - $roundNumber);
+        }
+
+        // Upper bracket eliminations in first stage don't get final positions
+        // (they drop to lower bracket)
+        return null;
     }
 
     /**
@@ -171,8 +346,9 @@ class TournamentMatchService
             return true;
         }
 
-        // Third Place Match
-        if ($match->round === EliminationRound::THIRD_PLACE || $match->stage === MatchStage::THIRD_PLACE) {
+        // Third Place Match (excluding Olympic third place which is handled separately)
+        if (($match->round === EliminationRound::THIRD_PLACE || $match->stage === MatchStage::THIRD_PLACE)
+            && !str_starts_with($match->match_code, 'OS_')) {
             TournamentPlayer::where('tournament_id', $tournament->id)
                 ->where('user_id', $winnerId)
                 ->update(['position' => 3])
@@ -186,8 +362,9 @@ class TournamentMatchService
             return true;
         }
 
-        // Single Elimination Finals
-        if ($match->round === EliminationRound::FINALS && $match->stage === MatchStage::BRACKET) {
+        // Single Elimination Finals (excluding Olympic)
+        if ($match->round === EliminationRound::FINALS && $match->stage === MatchStage::BRACKET
+            && $tournament->tournament_type !== TournamentType::OLYMPIC_DOUBLE_ELIMINATION) {
             $isDoubleElim = in_array($tournament->tournament_type->value, [
                 TournamentType::DOUBLE_ELIMINATION->value,
                 TournamentType::DOUBLE_ELIMINATION_FULL->value,
@@ -478,7 +655,14 @@ class TournamentMatchService
                 // Recalculate positions
                 $this->updatePlayerPositions($match, $data['winner_id'], $loserId);
 
-                $this->progressWinnerToNextMatch($match);
+                // Handle Olympic tournament progression
+                if ($this->isOlympicAdvancingMatch($match)) {
+                    $this->progressWinnerToOlympicStage($match);
+                } else {
+                    $this->progressWinnerToNextMatch($match);
+                }
+
+                // Always handle loser progression if defined
                 if ($match->loser_next_match_id) {
                     $this->progressLoserToNextMatch($match);
                 }
@@ -493,6 +677,12 @@ class TournamentMatchService
      */
     private function revertMatchProgression(TournamentMatch $match): void
     {
+        // Handle Olympic tournament reversion
+        if ($this->isOlympicAdvancingMatch($match)) {
+            $this->revertOlympicProgression($match);
+            // Don't return here - still need to handle loser progression
+        }
+
         // Clear winner from next match
         if ($match->next_match_id) {
             $nextMatch = TournamentMatch::find($match->next_match_id);
@@ -532,6 +722,39 @@ class TournamentMatchService
                 if ($loserMatch->winner_id) {
                     $this->revertMatchProgression($loserMatch);
                 }
+            }
+        }
+    }
+
+    /**
+     * Revert Olympic stage progression
+     */
+    private function revertOlympicProgression(TournamentMatch $match): void
+    {
+        if (!$match->winner_id || !isset($match->metadata['olympic_position'])) {
+            return;
+        }
+
+        $olympicPosition = $match->metadata['olympic_position'];
+        $tournament = $match->tournament;
+
+        // Find the corresponding Olympic stage match
+        $olympicMatch = $this->findOlympicStageMatch($tournament, $olympicPosition);
+
+        if ($olympicMatch) {
+            // Clear the winner from the Olympic match
+            if ($olympicMatch->player1_id === $match->winner_id) {
+                $olympicMatch->player1_id = null;
+            } elseif ($olympicMatch->player2_id === $match->winner_id) {
+                $olympicMatch->player2_id = null;
+            }
+
+            $olympicMatch->status = MatchStatus::PENDING;
+            $olympicMatch->save();
+
+            // Recursively revert if Olympic match was completed
+            if ($olympicMatch->winner_id) {
+                $this->revertMatchProgression($olympicMatch);
             }
         }
     }
