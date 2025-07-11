@@ -511,6 +511,9 @@ export interface Tournament {
     club_id?: number;
     start_date: string;
     end_date: string;
+    olympic_phase_size: any;
+    olympic_has_third_place: boolean;
+    round_races_to: any;
     application_deadline?: string;
     max_participants?: number;
     entry_fee: number;

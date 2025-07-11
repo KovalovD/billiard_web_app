@@ -8,8 +8,6 @@ import {
     Button,
     Card,
     CardContent,
-    CardHeader,
-    CardTitle,
     Input,
     Label,
     Select,
@@ -18,6 +16,7 @@ import {
     SelectTrigger,
     SelectValue,
     Spinner,
+    Switch,
     Textarea
 } from '@/Components/ui';
 import {useProfileApi} from '@/composables/useProfileApi';
@@ -34,7 +33,7 @@ import {
     MapPinIcon,
     SettingsIcon,
     TrophyIcon,
-    UsersIcon
+    UsersIcon,
 } from 'lucide-vue-next';
 import {computed, onMounted, ref, watch} from 'vue';
 
@@ -45,13 +44,16 @@ const {t} = useLocale();
 const {createTournament} = useTournaments();
 const {fetchCities, fetchClubs} = useProfileApi();
 
-// Form data with new fields
+// Form data with all fields
 const form = ref<CreateTournamentPayload & {
     official_rating_id?: number;
     rating_coefficient?: number;
     application_deadline?: string;
     requires_application?: boolean;
     auto_approve_applications?: boolean;
+    olympic_phase_size?: number;
+    olympic_has_third_place?: boolean;
+    round_races_to?: Record<string, number>;
 }>({
     name: '',
     regulation: '',
@@ -71,10 +73,13 @@ const form = ref<CreateTournamentPayload & {
     place_rating_points: [],
     organizer: '',
     tournament_type: 'single_elimination',
-    group_size_min: 3,
+    olympic_phase_size: 8,
+    olympic_has_third_place: false,
+    group_size_min: 4,
     group_size_max: 5,
     playoff_players_per_group: 2,
     races_to: 7,
+    round_races_to: {},
     has_third_place_match: false,
     seeding_method: 'random',
     requires_application: true,
@@ -100,8 +105,10 @@ const isSubmitting = ref(false);
 const tournamentTypes = [
     {value: 'single_elimination', label: t('Single Elimination')},
     {value: 'double_elimination', label: t('Double Elimination')},
+    {value: 'double_elimination_full', label: t('Double Elimination All Places')},
     {value: 'olympic_double_elimination', label: t('Olympic Double Elimination')},
     {value: 'round_robin', label: t('Round Robin')},
+    {value: 'groups', label: t('Groups')},
     {value: 'groups_playoff', label: t('Groups + Playoff')},
     {value: 'team_groups_playoff', label: t('Team Groups + Playoff')},
     {value: 'killer_pool', label: t('Killer Pool')},
@@ -111,6 +118,15 @@ const seedingMethods = [
     {value: 'random', label: t('Random')},
     {value: 'rating', label: t('By Rating')},
     {value: 'manual', label: t('Manual')},
+];
+
+const olympicPhaseSizes = [
+    {value: 2, label: '2'},
+    {value: 4, label: '4'},
+    {value: 8, label: '8'},
+    {value: 16, label: '16'},
+    {value: 32, label: '32'},
+    {value: 64, label: '64'},
 ];
 
 // API calls
@@ -136,6 +152,10 @@ const showPlayoffSettings = computed(() => {
 
 const showThirdPlaceOption = computed(() => {
     return ['single_elimination', 'double_elimination', 'double_elimination_full'].includes(form.value.tournament_type);
+});
+
+const showOlympicSettings = computed(() => {
+    return form.value.tournament_type === 'olympic_double_elimination';
 });
 
 // Watch for official rating changes to filter games
@@ -226,32 +246,45 @@ onMounted(() => {
 <template>
     <Head :title="t('Create Tournament')"/>
 
-    <div class="py-12">
-        <div class="mx-auto max-w-4xl sm:px-6 lg:px-8">
+    <div class="py-6 sm:py-8 lg:py-12">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <!-- Header -->
-            <div class="mb-6 flex items-center justify-between">
+            <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">{{
-                            t('Create Tournament')
-                        }}</h1>
-                    <p class="text-gray-600 dark:text-gray-400">{{ t('Set up a new billiard tournament') }}</p>
+                    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+                        {{ t('Create Tournament') }}
+                    </h1>
+                    <p class="text-gray-600 dark:text-gray-400 mt-1">
+                        {{ t('Set up a new billiard tournament') }}
+                    </p>
                 </div>
                 <Button variant="outline" @click="handleCancel">
                     <ArrowLeftIcon class="mr-2 h-4 w-4"/>
-                    {{ t('Back to Tournaments') }}
+                    <span class="hidden sm:inline">{{ t('Back to Tournaments') }}</span>
+                    <span class="sm:hidden">{{ t('Back') }}</span>
                 </Button>
             </div>
 
-            <!-- Main Form -->
-            <Card>
-                <CardHeader>
-                    <CardTitle class="flex items-center gap-2">
-                        <TrophyIcon class="h-5 w-5"/>
-                        {{ t('Tournament Details') }}
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <form class="space-y-6" @submit.prevent="handleSubmit">
+            <!-- Main Form Card -->
+            <Card class="shadow-lg">
+                <div class="bg-gradient-to-r from-gray-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 p-6 sm:p-8">
+                    <div class="flex items-center gap-3">
+                        <div class="h-12 w-12 rounded-full bg-indigo-600 flex items-center justify-center shadow-md">
+                            <TrophyIcon class="h-6 w-6 text-white"/>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-900 dark:text-white">
+                                {{ t('Tournament Details') }}
+                            </h2>
+                            <p class="text-gray-600 dark:text-gray-400">
+                                {{ t('Fill in the information below to create your tournament') }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <CardContent class="p-6 sm:p-8">
+                    <form class="space-y-8" @submit.prevent="handleSubmit">
                         <!-- Basic Information - Always visible -->
                         <div class="space-y-6">
                             <div class="grid grid-cols-1 gap-6">
@@ -262,6 +295,7 @@ onMounted(() => {
                                         v-model="form.name"
                                         :placeholder="t('Enter tournament name')"
                                         required
+                                        class="w-full"
                                     />
                                 </div>
                             </div>
@@ -325,7 +359,7 @@ onMounted(() => {
                             <AccordionItem value="structure">
                                 <AccordionTrigger value="structure">
                                     <div class="flex items-center gap-2">
-                                        <SettingsIcon class="h-5 w-5"/>
+                                        <SettingsIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400"/>
                                         {{ t('Tournament Structure') }}
                                     </div>
                                 </AccordionTrigger>
@@ -351,7 +385,7 @@ onMounted(() => {
                                             </div>
 
                                             <div class="space-y-2">
-                                                <Label for="races_to">{{ t('Races To') }}</Label>
+                                                <Label for="races_to">{{ t('Default Races To') }}</Label>
                                                 <Input
                                                     id="races_to"
                                                     v-model.number="form.races_to"
@@ -359,6 +393,9 @@ onMounted(() => {
                                                     min="1"
                                                     type="number"
                                                 />
+                                                <p class="text-sm text-gray-500 dark:text-gray-400">
+                                                    {{ t('Default race length for all rounds') }}
+                                                </p>
                                             </div>
 
                                             <div class="space-y-2">
@@ -379,21 +416,55 @@ onMounted(() => {
                                                 </Select>
                                             </div>
 
-                                            <div v-if="showThirdPlaceOption" class="flex items-center space-x-2">
-                                                <input
+                                            <div v-if="showThirdPlaceOption" class="flex items-center space-x-3 pt-7">
+                                                <Switch
                                                     id="has_third_place_match"
                                                     v-model="form.has_third_place_match"
-                                                    class="rounded border-gray-300 text-primary focus:ring-primary"
-                                                    type="checkbox"
                                                 />
-                                                <Label for="has_third_place_match">{{
-                                                        t('Include third place match')
-                                                    }}</Label>
+                                                <Label for="has_third_place_match" class="cursor-pointer">
+                                                    {{ t('Include third place match') }}
+                                                </Label>
+                                            </div>
+                                        </div>
+
+                                        <!-- Olympic Settings -->
+                                        <div v-if="showOlympicSettings"
+                                             class="grid grid-cols-1 gap-6 lg:grid-cols-2 pt-6 border-t dark:border-gray-700">
+                                            <div class="space-y-2">
+                                                <Label for="olympic_phase_size">{{ t('Olympic Phase Size') }}</Label>
+                                                <Select v-model="form.olympic_phase_size">
+                                                    <SelectTrigger>
+                                                        <SelectValue/>
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem
+                                                            v-for="size in olympicPhaseSizes"
+                                                            :key="size.value"
+                                                            :value="size.value"
+                                                        >
+                                                            {{ size.label }} {{ t('players') }}
+                                                        </SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <p class="text-sm text-gray-500 dark:text-gray-400">
+                                                    {{ t('Number of players advancing to Olympic stage') }}
+                                                </p>
+                                            </div>
+
+                                            <div class="flex items-center space-x-3 pt-7">
+                                                <Switch
+                                                    id="olympic_has_third_place"
+                                                    v-model="form.olympic_has_third_place"
+                                                />
+                                                <Label for="olympic_has_third_place" class="cursor-pointer">
+                                                    {{ t('Include Olympic third place match') }}
+                                                </Label>
                                             </div>
                                         </div>
 
                                         <!-- Group Settings -->
-                                        <div v-if="showGroupSettings" class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                                        <div v-if="showGroupSettings"
+                                             class="grid grid-cols-1 gap-6 lg:grid-cols-3 pt-6 border-t dark:border-gray-700">
                                             <div class="space-y-2">
                                                 <Label for="group_size_min">{{ t('Min Group Size') }}</Label>
                                                 <Input
@@ -437,7 +508,7 @@ onMounted(() => {
                             <AccordionItem value="registration">
                                 <AccordionTrigger value="registration">
                                     <div class="flex items-center gap-2">
-                                        <UsersIcon class="h-5 w-5"/>
+                                        <UsersIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400"/>
                                         {{ t('Registration & Dates') }}
                                     </div>
                                 </AccordionTrigger>
@@ -488,29 +559,25 @@ onMounted(() => {
                                                 />
                                             </div>
 
-                                            <div class="flex items-center space-x-2">
-                                                <input
+                                            <div class="flex items-center space-x-3 pt-7">
+                                                <Switch
                                                     id="requires_application"
                                                     v-model="form.requires_application"
-                                                    class="rounded border-gray-300 text-primary focus:ring-primary"
-                                                    type="checkbox"
                                                 />
-                                                <Label for="requires_application">{{
-                                                        t('Require application approval')
-                                                    }}</Label>
+                                                <Label for="requires_application" class="cursor-pointer">
+                                                    {{ t('Require application approval') }}
+                                                </Label>
                                             </div>
 
-                                            <div class="flex items-center space-x-2">
-                                                <input
+                                            <div class="flex items-center space-x-3 pt-7">
+                                                <Switch
                                                     id="auto_approve_applications"
                                                     v-model="form.auto_approve_applications"
                                                     :disabled="!form.requires_application"
-                                                    class="rounded border-gray-300 text-primary focus:ring-primary disabled:opacity-50"
-                                                    type="checkbox"
                                                 />
-                                                <Label for="auto_approve_applications">{{
-                                                        t('Auto-approve applications')
-                                                    }}</Label>
+                                                <Label for="auto_approve_applications" class="cursor-pointer">
+                                                    {{ t('Auto-approve applications') }}
+                                                </Label>
                                             </div>
                                         </div>
                                     </div>
@@ -521,7 +588,7 @@ onMounted(() => {
                             <AccordionItem value="location">
                                 <AccordionTrigger value="location">
                                     <div class="flex items-center gap-2">
-                                        <MapPinIcon class="h-5 w-5"/>
+                                        <MapPinIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400"/>
                                         {{ t('Location') }}
                                     </div>
                                 </AccordionTrigger>
@@ -570,7 +637,7 @@ onMounted(() => {
                             <AccordionItem value="financial">
                                 <AccordionTrigger value="financial">
                                     <div class="flex items-center gap-2">
-                                        <DollarSignIcon class="h-5 w-5"/>
+                                        <DollarSignIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400"/>
                                         {{ t('Financial Details') }}
                                     </div>
                                 </AccordionTrigger>
@@ -590,10 +657,9 @@ onMounted(() => {
                                         <div class="space-y-2">
                                             <Label for="prize_pool">{{ t('Prize Pool') }}</Label>
                                             <Input
-                                                id="name"
+                                                id="prize_pool"
                                                 v-model="form.prize_pool"
                                                 :placeholder="t('Enter Prize Pool')"
-                                                required
                                             />
                                         </div>
 
@@ -619,7 +685,7 @@ onMounted(() => {
                             <AccordionItem value="additional">
                                 <AccordionTrigger value="additional">
                                     <div class="flex items-center gap-2">
-                                        <FileTextIcon class="h-5 w-5"/>
+                                        <FileTextIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400"/>
                                         {{ t('Additional Information') }}
                                     </div>
                                 </AccordionTrigger>
@@ -643,6 +709,7 @@ onMounted(() => {
                                                 v-model="form.details"
                                                 :placeholder="t('Tournament description and additional details')"
                                                 rows="3"
+                                                class="resize-none"
                                             />
                                         </div>
 
@@ -653,6 +720,7 @@ onMounted(() => {
                                                 v-model="form.regulation"
                                                 :placeholder="t('Tournament rules and regulations')"
                                                 rows="4"
+                                                class="resize-none"
                                             />
                                         </div>
                                     </div>
@@ -661,7 +729,7 @@ onMounted(() => {
                         </Accordion>
 
                         <!-- Form Actions -->
-                        <div class="flex justify-end space-x-4 border-t pt-6">
+                        <div class="flex justify-end space-x-4 border-t dark:border-gray-700 pt-6">
                             <Button type="button" variant="outline" @click="handleCancel">
                                 {{ t('Cancel') }}
                             </Button>
@@ -679,8 +747,10 @@ onMounted(() => {
 
             <!-- Error Display -->
             <div v-if="createApi.error.value"
-                 class="mt-4 rounded bg-red-100 p-4 text-red-600 dark:bg-red-900/30 dark:text-red-400">
-                {{ t('Error creating tournament') }}: {{ createApi.error.value.message }}
+                 class="mt-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
+                <p class="text-red-600 dark:text-red-400">
+                    {{ t('Error creating tournament') }}: {{ createApi.error.value.message }}
+                </p>
             </div>
         </div>
     </div>
