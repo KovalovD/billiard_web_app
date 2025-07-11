@@ -8,4 +8,5 @@ enum MatchStage: string
     case GROUP = 'group';
     case THIRD_PLACE = 'third_place';
     case LOWER_BRACKET = 'lower_bracket';
+    case PLAYOFF = 'playoff';
 }

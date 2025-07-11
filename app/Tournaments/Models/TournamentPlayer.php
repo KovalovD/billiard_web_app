@@ -32,6 +32,10 @@ class TournamentPlayer extends Model
         'applied_at',
         'confirmed_at',
         'rejected_at',
+        'tiebreaker_wins',
+        'tiebreaker_games_diff',
+        'temp_wins',
+        'temp_games_diff',
     ];
 
     protected $casts = [
