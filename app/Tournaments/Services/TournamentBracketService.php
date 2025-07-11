@@ -556,8 +556,13 @@ class TournamentBracketService
                 ]);
 
                 if ($roundData['type'] === 'initial') {
-                    $u1 = $matchNum * 2;
-                    $u2 = $matchNum * 2 + 1;
+                    // Calculate which upper matches feed into this lower match
+                    $totalUpperMatches = $roundData['matches'] * 2;
+                    $reorderedIndices = $this->getAlternatingLoserIndices($totalUpperMatches);
+
+                    $u1 = $reorderedIndices[$matchNum * 2];
+                    $u2 = $reorderedIndices[$matchNum * 2 + 1];
+
                     if (isset($upperMatches[1][$u1])) {
                         $upperMatches[1][$u1]->loser_next_match_id = $match->id;
                         $upperMatches[1][$u1]->loser_next_match_position = 1;
@@ -576,10 +581,15 @@ class TournamentBracketService
                         $prev[$matchNum]->save();
                     }
                     $uRound = $roundData['upper_round'];
-                    if (isset($upperMatches[$uRound][$matchNum])) {
-                        $upperMatches[$uRound][$matchNum]->loser_next_match_id = $match->id;
-                        $upperMatches[$uRound][$matchNum]->loser_next_match_position = 2;
-                        $upperMatches[$uRound][$matchNum]->save();
+
+                    // Reverse the order for drop rounds to maximize separation
+                    $totalUpperMatches = $roundData['matches'];
+                    $reversedIndex = $totalUpperMatches - 1 - $matchNum;
+
+                    if (isset($upperMatches[$uRound][$reversedIndex])) {
+                        $upperMatches[$uRound][$reversedIndex]->loser_next_match_id = $match->id;
+                        $upperMatches[$uRound][$reversedIndex]->loser_next_match_position = 2;
+                        $upperMatches[$uRound][$reversedIndex]->save();
                     }
                 } elseif ($roundData['type'] === 'regular') {
                     $prev = $allLowerMatches[$round - 1] ?? [];
@@ -607,6 +617,23 @@ class TournamentBracketService
 
         $lastRound = max(array_keys($allLowerMatches));
         return $allLowerMatches[$lastRound][0] ?? null;
+    }
+
+    /**
+     * Get alternating indices to maximize separation between players from same upper bracket section
+     */
+    private function getAlternatingLoserIndices(int $totalMatches): array
+    {
+        $indices = [];
+        $half = $totalMatches / 2;
+
+        // Alternate between first half and second half
+        for ($i = 0; $i < $half; $i++) {
+            $indices[] = $i;
+            $indices[] = $totalMatches - 1 - $i;
+        }
+
+        return $indices;
     }
 
     private function getLowerBracketStructure(int $bracketSize): array
@@ -756,8 +783,13 @@ class TournamentBracketService
                 ]);
 
                 if ($roundData['type'] === 'initial') {
-                    $u1 = $matchNum * 2;
-                    $u2 = $matchNum * 2 + 1;
+                    // Apply same alternating logic for Olympic stage
+                    $totalUpperMatches = $roundData['matches'] * 2;
+                    $reorderedIndices = $this->getAlternatingLoserIndices($totalUpperMatches);
+
+                    $u1 = $reorderedIndices[$matchNum * 2];
+                    $u2 = $reorderedIndices[$matchNum * 2 + 1];
+
                     if (isset($upperMatches[1][$u1])) {
                         $upperMatches[1][$u1]->loser_next_match_id = $match->id;
                         $upperMatches[1][$u1]->loser_next_match_position = 1;
@@ -776,10 +808,15 @@ class TournamentBracketService
                         $prev[$matchNum]->save();
                     }
                     $uRound = $roundData['upper_round'];
-                    if (isset($upperMatches[$uRound][$matchNum])) {
-                        $upperMatches[$uRound][$matchNum]->loser_next_match_id = $match->id;
-                        $upperMatches[$uRound][$matchNum]->loser_next_match_position = 2;
-                        $upperMatches[$uRound][$matchNum]->save();
+
+                    // Reverse the order for drop rounds in Olympic stage too
+                    $totalUpperMatches = $roundData['matches'];
+                    $reversedIndex = $totalUpperMatches - 1 - $matchNum;
+
+                    if (isset($upperMatches[$uRound][$reversedIndex])) {
+                        $upperMatches[$uRound][$reversedIndex]->loser_next_match_id = $match->id;
+                        $upperMatches[$uRound][$reversedIndex]->loser_next_match_position = 2;
+                        $upperMatches[$uRound][$reversedIndex]->save();
                     }
                 } elseif ($roundData['type'] === 'regular') {
                     $prev = $allLowerMatches[$round - 1] ?? [];

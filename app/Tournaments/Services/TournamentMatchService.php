@@ -51,7 +51,18 @@ class TournamentMatchService
         $open = $tournament
             ->matches()
             ->whereIn('status', [MatchStatus::PENDING, MatchStatus::READY, MatchStatus::IN_PROGRESS])
-            ->whereNull('metadata->is_tiebreaker')
+            ->where(function ($query) {
+                $query
+                    ->whereNull('metadata->is_tiebreaker')
+                    ->orWhere(function ($q) {
+                        if ($this->isPostgres()) {
+                            $q->whereRaw("(metadata->>'is_tiebreaker')::boolean = false");
+                        } else {
+                            $q->whereRaw("JSON_EXTRACT(metadata, '$.is_tiebreaker') = false");
+                        }
+                    })
+                ;
+            })
             ->count()
         ;
 
@@ -127,10 +138,17 @@ class TournamentMatchService
     private function generateTiebreakerMatches(Tournament $tournament, Collection $blocks): void
     {
         DB::transaction(static function () use ($tournament, $blocks) {
-            $nextRound = (int) $tournament
-                    ->matches()
-                    ->whereJsonContains('metadata->is_tiebreaker', true)
-                    ->max(DB::raw("CAST(JSON_EXTRACT(metadata,'$.tiebreaker_round') AS UNSIGNED)")) + 1;
+            // Get max tiebreaker round using database-agnostic approach
+            $existingRounds = $tournament
+                ->matches()
+                ->whereJsonContains('metadata->is_tiebreaker', true)
+                ->get()
+                ->pluck('metadata.tiebreaker_round')
+                ->filter()
+                ->max()
+            ;
+
+            $nextRound = ($existingRounds ?? 0) + 1;
 
             foreach ($blocks as $key => $players) {
 
@@ -267,7 +285,16 @@ class TournamentMatchService
 
         $reg = TournamentMatch::where('tournament_id', $t->id)
             ->where(function ($q) {
-                $q->whereNull('metadata->is_tiebreaker')->orWhereJsonContains('metadata->is_tiebreaker', false);
+                $q
+                    ->whereNull('metadata->is_tiebreaker')
+                    ->orWhere(function ($subQ) {
+                        if ($this->isPostgres()) {
+                            $subQ->whereRaw("(metadata->>'is_tiebreaker')::boolean = false");
+                        } else {
+                            $subQ->whereRaw("JSON_EXTRACT(metadata, '$.is_tiebreaker') = false");
+                        }
+                    })
+                ;
             })
             ->where(function ($q) use ($a, $b) {
                 $q->where(function ($s) use ($a, $b) {
@@ -283,6 +310,14 @@ class TournamentMatchService
             return $a->seed_number - $b->seed_number;
         }
         return $reg->winner_id === $a->user_id ? -1 : 1;
+    }
+
+    /**
+     * Check if using PostgreSQL
+     */
+    private function isPostgres(): bool
+    {
+        return DB::connection()->getDriverName() === 'pgsql';
     }
 
     /**
