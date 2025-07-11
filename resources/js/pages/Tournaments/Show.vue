@@ -4,6 +4,7 @@ import TournamentApplicationCard from '@/Components/Tournament/TournamentApplica
 import SingleEliminationBracket from '@/Components/Tournament/SingleEliminationBracket.vue';
 import DoubleEliminationBracket from '@/Components/Tournament/DoubleEliminationBracket.vue';
 import TablesManager from '@/Components/Tournament/TablesManager.vue';
+import MatchesList from '@/Components/Tournament/MatchesList.vue';
 import {useAuth} from '@/composables/useAuth';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
@@ -14,9 +15,7 @@ import TournamentRegistrationModal from '@/Components/Tournament/TournamentRegis
 import {
     ArrowLeftIcon,
     CalendarIcon,
-    CheckCircleIcon,
     ClipboardListIcon,
-    ClockIcon,
     GitBranchIcon,
     LayersIcon,
     LogInIcon,
@@ -61,6 +60,9 @@ const error = ref<string | null>(null);
 const showTablesModal = ref(false);
 const {setSeoMeta, generateBreadcrumbJsonLd, generateSportsEventJsonLd} = useSeo();
 
+// Olympic bracket tab state
+const activeOlympicTab = ref<'first-stage' | 'olympic-stage'>('first-stage');
+
 // Get initial tab from URL query parameter
 const getInitialTab = (): 'info' | 'players' | 'bracket' | 'matches' | 'groups' | 'results' | 'applications' => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -85,6 +87,11 @@ const switchTab = (tab: 'info' | 'players' | 'bracket' | 'matches' | 'groups' | 
     }
 
     window.history.replaceState({}, '', url.toString());
+};
+
+// Handle Olympic tab change
+const switchOlympicTab = (tab: 'first-stage' | 'olympic-stage') => {
+    activeOlympicTab.value = tab;
 };
 
 const handleRegistrationSuccess = () => {
@@ -145,7 +152,7 @@ const showBracketButton = computed(() => {
     return isAuthenticated.value &&
         isAdmin.value &&
         tournament.value &&
-        ['single_elimination', 'double_elimination', 'double_elimination_full', 'groups_playoff', 'team_groups_playoff'].includes(tournament.value.tournament_type) &&
+        ['single_elimination', 'double_elimination', 'double_elimination_full', 'groups_playoff', 'team_groups_playoff', 'olympic_double_elimination'].includes(tournament.value.tournament_type) &&
         (tournament.value.stage === 'bracket' || tournament.value.brackets_generated) &&
         tournament.value.status !== 'completed';
 });
@@ -169,7 +176,7 @@ const showMatchesButton = computed(() => {
 // Check if bracket tab should be shown for non-admins
 const canViewBracket = computed(() => {
     return tournament.value &&
-        ['single_elimination', 'double_elimination', 'double_elimination_full', 'groups_playoff', 'team_groups_playoff'].includes(tournament.value.tournament_type) &&
+        ['single_elimination', 'double_elimination', 'double_elimination_full', 'groups_playoff', 'team_groups_playoff', 'olympic_double_elimination'].includes(tournament.value.tournament_type) &&
         (tournament.value.stage === 'bracket' || tournament.value.brackets_generated || tournament.value.status === 'completed');
 });
 
@@ -192,6 +199,22 @@ const canViewMatches = computed(() => {
 const isDoubleElimination = computed(() => {
     return tournament.value?.tournament_type === 'double_elimination' ||
         tournament.value?.tournament_type === 'double_elimination_full';
+});
+
+// Check if tournament is Olympic double elimination
+const isOlympicDoubleElimination = computed(() => {
+    return tournament.value?.tournament_type === 'olympic_double_elimination';
+});
+
+// Split matches by Olympic stage
+const firstStageMatches = computed(() => {
+    if (!isOlympicDoubleElimination.value) return matches.value;
+    return matches.value.filter(m => m.metadata?.olympic_stage === 'first' || m.match_code?.startsWith('FS_'));
+});
+
+const olympicStageMatches = computed(() => {
+    if (!isOlympicDoubleElimination.value) return [];
+    return matches.value.filter(m => m.metadata?.olympic_stage === 'second' || m.match_code?.startsWith('OS_'));
 });
 
 // Filter and sort matches for display
@@ -1112,8 +1135,8 @@ onMounted(() => {
                                 <CardDescription>
                                     {{ tournament.confirmed_players_count }} {{ t('confirmed players') }}
                                     <span v-if="tournament.max_participants">
-                       {{ t('out of') }} {{ tournament.max_participants }} {{ t('maximum') }}
-                   </span>
+                                       {{ t('out of') }} {{ tournament.max_participants }} {{ t('maximum') }}
+                                   </span>
                                 </CardDescription>
                             </CardHeader>
                             <CardContent class="p-6">
@@ -1257,12 +1280,86 @@ onMounted(() => {
 
                     <!-- Bracket Tab -->
                     <div v-if="activeTab === 'bracket' && canViewBracket">
+                        <!-- Olympic Tournament Tab Navigation -->
+                        <nav v-if="isOlympicDoubleElimination"
+                             class="mb-6 border-b border-gray-200 dark:border-gray-700 overflow-x-auto"
+                             role="navigation"
+                             aria-label="Olympic bracket tabs">
+                            <div class="-mb-px flex space-x-6 sm:space-x-8 min-w-max">
+                                <button
+                                    id="tab-first-stage"
+                                    :class="[
+                                        'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
+                                        activeOlympicTab === 'first-stage'
+                                            ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                                    ]"
+                                    :aria-selected="activeOlympicTab === 'first-stage'"
+                                    role="tab"
+                                    @click="switchOlympicTab('first-stage')"
+                                >
+                                    <span class="flex items-center gap-2">
+                                        <GitBranchIcon class="h-4 w-4"/>
+                                        {{ t('First Stage') }}
+                                        <span class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+                                            {{ t('Double Elimination') }}
+                                        </span>
+                                    </span>
+                                </button>
+                                <button
+                                    id="tab-olympic-stage"
+                                    :class="[
+                                        'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
+                                        activeOlympicTab === 'olympic-stage'
+                                            ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                                    ]"
+                                    :aria-selected="activeOlympicTab === 'olympic-stage'"
+                                    role="tab"
+                                    @click="switchOlympicTab('olympic-stage')"
+                                >
+                                    <span class="flex items-center gap-2">
+                                        <LayersIcon class="h-4 w-4"/>
+                                        {{ t('Olympic Stage') }}
+                                        <span class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+                                            {{ t('Single Elimination') }}
+                                        </span>
+                                    </span>
+                                </button>
+                            </div>
+                        </nav>
+
                         <div v-if="isLoadingMatches" class="flex justify-center py-12">
                             <Spinner class="h-8 w-8 text-indigo-600"/>
                         </div>
                         <div v-else-if="matches.length === 0" class="text-center py-12">
                             <p class="text-gray-500">{{ t('Bracket has not been generated yet.') }}</p>
                         </div>
+
+                        <!-- Olympic Tournament Tab Content -->
+                        <template v-else-if="isOlympicDoubleElimination">
+                            <!-- First Stage Tab -->
+                            <div v-if="activeOlympicTab === 'first-stage'">
+                                <DoubleEliminationBracket
+                                    :can-edit="false"
+                                    :current-user-id="currentUserId"
+                                    :matches="firstStageMatches"
+                                    :tournament="tournament!"
+                                />
+                            </div>
+
+                            <!-- Olympic Stage Tab -->
+                            <div v-if="activeOlympicTab === 'olympic-stage'">
+                                <SingleEliminationBracket
+                                    :can-edit="false"
+                                    :current-user-id="currentUserId"
+                                    :matches="olympicStageMatches"
+                                    :tournament="tournament!"
+                                />
+                            </div>
+                        </template>
+
+                        <!-- Regular Tournament Bracket (non-Olympic) -->
                         <template v-else>
                             <SingleEliminationBracket
                                 v-if="!isDoubleElimination"
@@ -1284,107 +1381,13 @@ onMounted(() => {
 
                     <!-- Matches Tab -->
                     <div v-if="activeTab === 'matches' && canViewMatches">
-                        <Card class="shadow-lg">
-                            <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
-                                <CardTitle class="flex items-center gap-2">
-                                    <PlayIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400"/>
-                                    {{ t('Tournament Matches') }}
-                                </CardTitle>
-                                <CardDescription>
-                                    {{ t('All tournament matches and results') }}
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent class="p-6">
-                                <div v-if="isLoadingMatches" class="flex justify-center py-8">
-                                    <Spinner class="h-6 w-6 text-indigo-600"/>
-                                </div>
-                                <div v-else-if="displayMatches.length === 0" class="py-8 text-center text-gray-500">
-                                    {{ t('No matches scheduled yet.') }}
-                                </div>
-                                <div v-else class="space-y-4">
-                                    <div
-                                        v-for="match in displayMatches"
-                                        :key="match.id"
-                                        class="flex flex-col sm:flex-row sm:items-center sm:justify-between rounded-lg border p-4 gap-4"
-                                    >
-                                        <!-- Match Info -->
-                                        <div class="flex-1">
-                                            <div class="flex flex-col sm:flex-row sm:items-center gap-4">
-                                                <!-- Match Code & Stage -->
-                                                <div class="min-w-[120px]">
-                                                    <p class="font-medium">
-                                                        {{ match.match_code || `#${match.id}` }}
-                                                    </p>
-                                                    <p class="text-sm text-gray-500">
-                                                        {{ match.stage_display }}
-                                                        <span v-if="match.round_display"> - {{
-                                                                match.round_display
-                                                            }}</span>
-                                                    </p>
-                                                </div>
-
-                                                <!-- Players -->
-                                                <div class="flex-1">
-                                                    <div class="flex items-center justify-between">
-                                                        <div class="flex-1">
-                                                            <p class="text-sm"
-                                                               :class="{'text-green-600 font-bold': match.winner_id === match.player1_id}">
-                                                                {{ match.player1?.firstname }}
-                                                                {{ match.player1?.lastname }}
-                                                                <span v-if="!match.player1"
-                                                                      class="text-gray-400">{{ t('TBD') }}</span>
-                                                            </p>
-                                                            <p class="text-sm"
-                                                               :class="{'text-green-600 font-bold': match.winner_id === match.player2_id}">
-                                                                {{ match.player2?.firstname }}
-                                                                {{ match.player2?.lastname }}
-                                                                <span v-if="!match.player2"
-                                                                      class="text-gray-400">{{ t('TBD') }}</span>
-                                                            </p>
-                                                        </div>
-
-                                                        <!-- Scores -->
-                                                        <div class="mx-4 text-center">
-                                                            <p class="text-xl font-bold">
-                                                                {{ match.player1_score ?? '-' }}
-                                                            </p>
-                                                            <p class="text-xl font-bold">
-                                                                {{ match.player2_score ?? '-' }}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Status & Table -->
-                                        <div
-                                            class="flex flex-row sm:flex-col justify-between sm:justify-start items-center sm:items-end gap-2 sm:text-right">
-                                        <span :class="[
-                                            'inline-flex px-2 py-1 text-xs font-medium rounded-full',
-                                            getMatchStatusBadgeClass(match.status)
-                                        ]">
-                                            {{ match.status_display }}
-                                        </span>
-                                            <div class="text-right">
-                                                <p v-if="match.club_table" class="text-sm text-gray-500">
-                                                    {{ match.club_table.name }}
-                                                </p>
-                                                <p v-if="match.scheduled_at" class="text-sm text-gray-500">
-                                                    <ClockIcon class="inline h-3 w-3"/>
-                                                    {{ formatDateTime(match.scheduled_at) }}
-                                                </p>
-                                                <p v-if="match.completed_at && match.status === 'completed'"
-                                                   class="text-sm text-gray-500">
-                                                    <CheckCircleIcon class="inline h-3 w-3"/>
-                                                    {{ formatDateTime(match.completed_at) }}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                        <MatchesList
+                            :matches="displayMatches"
+                            :is-loading="isLoadingMatches"
+                            :show-table="true"
+                            :show-scheduled-time="true"
+                            :show-completed-time="true"
+                        />
                     </div>
 
                     <!-- Applications Tab -->

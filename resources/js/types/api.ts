@@ -629,6 +629,7 @@ export interface TournamentMatch {
     admin_notes?: string;
     created_at: string;
     updated_at: string;
+    metadata: any;
 
     // Relations
     player1?: User;

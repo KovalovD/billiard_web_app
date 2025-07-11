@@ -111,4 +111,5 @@ return [
     'In :days days'                                                          => 'In :days days',
     ':count matches'                                                         => ':count matches',
     'Manage your :entities'                                                  => 'Manage your :entities',
+    'Showing :count matches' => 'Showing :count matches',
 ];

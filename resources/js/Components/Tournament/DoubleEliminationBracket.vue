@@ -319,7 +319,7 @@ watch(baseBracketRef, newRef => {
                     <g
                         v-for="m in allPositionedMatches"
                         :key="m.id"
-                        :class="[canEdit ? 'cursor-pointer' : 'cursor-not-allowed']"
+                        :class="[canEdit ? 'cursor-pointer' : 'cursor-default']"
                         class="match-group"
                         @click="handleMatchClick(m.id)"
                     >

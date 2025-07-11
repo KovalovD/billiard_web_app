@@ -43,7 +43,8 @@ const {
     isCurrentUserMatch,
     getPlayerDisplay,
 } = useBracket(
-    props.currentUserId
+    props.currentUserId,
+    {initialZoom: 1}
 );
 
 // Provide methods for BaseBracket
@@ -203,7 +204,7 @@ watch(baseBracketRef, (newRef) => {
                     <g
                         v-for="m in positionedMatches"
                         :key="m.id"
-                        :class="[canEdit ? 'cursor-pointer' : 'cursor-not-allowed']"
+                        :class="[canEdit ? 'cursor-pointer' : 'cursor-default']"
                         class="match-group"
                         @click="handleMatchClick(m.id)"
                     >

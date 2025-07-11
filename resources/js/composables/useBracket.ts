@@ -221,7 +221,7 @@ export function useBracket(
 
     // Generic scroll to match function
     const scrollToMatch = (targetMatch: BracketMatch & { x: number; y: number }) => {
-        if (!targetMatch) return;
+        if (!targetMatch || !bracketScrollContainerRef.value) return;
 
         // Set zoom to comfortable level
         setZoom(1.2);

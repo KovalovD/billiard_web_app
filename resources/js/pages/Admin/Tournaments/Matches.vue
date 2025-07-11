@@ -17,12 +17,24 @@ import {
     Spinner
 } from '@/Components/ui';
 import MatchManagementModal from "@/Components/Tournament/MatchManagementModal.vue";
+import MatchesList from '@/Components/Tournament/MatchesList.vue';
 import {useLocale} from '@/composables/useLocale';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
 import type {ClubTable, Tournament, TournamentGroup, TournamentMatch} from '@/types/api';
-import {Head, router} from '@inertiajs/vue3';
-import {ArrowLeftIcon, ClockIcon, FilterIcon, RefreshCwIcon,} from 'lucide-vue-next';
+import {Head, Link} from '@inertiajs/vue3';
+import {
+    ActivityIcon,
+    AlertCircleIcon,
+    ArrowLeftIcon,
+    CheckCircleIcon,
+    ClockIcon,
+    FilterIcon,
+    PlayIcon,
+    RefreshCwIcon,
+    SearchIcon,
+    TrophyIcon
+} from 'lucide-vue-next';
 import {computed, onMounted, onUnmounted, ref, watch} from 'vue';
 
 defineOptions({layout: AuthenticatedLayout});
@@ -109,21 +121,7 @@ const filteredMatches = computed(() => {
         });
     }
 
-    // Sort matches
-    return filtered.sort((a, b) => {
-        // First by status (ready/in_progress first)
-        const statusOrder = ['in_progress', 'verification', 'ready', 'pending', 'completed'];
-        const statusDiff = statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status);
-        if (statusDiff !== 0) return statusDiff;
-
-        // Then by scheduled time
-        if (a.scheduled_at && b.scheduled_at) {
-            return new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime();
-        }
-
-        // Then by match code
-        return (a.match_code || '').localeCompare(b.match_code || '');
-    });
+    return filtered;
 });
 
 const matchStats = computed(() => {
@@ -338,21 +336,6 @@ const handleProcessWalkover = async () => {
     }
 };
 
-const getMatchStatusBadgeClass = (status: string) => {
-    switch (status) {
-        case 'completed':
-            return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
-        case 'in_progress':
-            return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
-        case 'verification':
-            return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300';
-        case 'ready':
-            return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
-        default:
-            return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300';
-    }
-};
-
 onMounted(() => {
     loadData();
 });
@@ -389,125 +372,189 @@ onUnmounted(() => {
 <template>
     <Head :title="tournament ? `${t('Matches')}: ${tournament.name}` : t('Tournament Matches')"/>
 
-    <div class="py-6 sm:py-12">
+    <div class="py-6 sm:py-8 lg:py-12">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <!-- Mobile-optimized Header -->
+            <!-- Header -->
             <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                    <h1 class="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-200">
-                        {{ t('Tournament Matches') }}
-                    </h1>
-                    <p class="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-                        {{ tournament ? tournament.name : '' }}
-                    </p>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        @click="router.visit(`/tournaments/${tournament?.slug}`)"
-                    >
+                <Link :href="`/tournaments/${tournament?.slug}`">
+                    <Button variant="outline" size="sm">
                         <ArrowLeftIcon class="mr-2 h-4 w-4"/>
                         <span class="hidden sm:inline">{{ t('Back to Tournament') }}</span>
                         <span class="sm:hidden">{{ t('Back') }}</span>
                     </Button>
-                    <Button size="sm" variant="outline" @click="loadData">
-                        <RefreshCwIcon class="mr-2 h-4 w-4"/>
+                </Link>
+
+                <div class="flex flex-wrap gap-2">
+                    <Button
+                        size="sm"
+                        variant="secondary"
+                        @click="loadData"
+                        :disabled="isLoading"
+                    >
+                        <RefreshCwIcon :class="{ 'animate-spin': isLoading }" class="mr-2 h-4 w-4"/>
                         <span class="hidden sm:inline">{{ t('Refresh') }}</span>
                     </Button>
                 </div>
             </div>
 
             <!-- Messages -->
-            <div v-if="successMessage" class="mb-4 rounded bg-green-100 p-4 text-green-700">
-                {{ successMessage }}
+            <div v-if="successMessage"
+                 class="mb-6 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-4">
+                <p class="text-green-600 dark:text-green-400">{{ successMessage }}</p>
             </div>
-            <div v-if="error" class="mb-4 rounded bg-red-100 p-4 text-red-700">
-                {{ error }}
+            <div v-if="error"
+                 class="mb-6 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
+                <p class="text-red-600 dark:text-red-400">{{ error }}</p>
             </div>
 
             <!-- Loading State -->
-            <div v-if="isLoading" class="flex items-center justify-center p-8">
-                <Spinner/>
+            <div v-if="isLoading" class="flex justify-center py-12">
+                <div class="text-center">
+                    <Spinner class="mx-auto h-8 w-8 text-indigo-600"/>
+                    <p class="mt-2 text-gray-500">{{ t('Loading tournament data...') }}</p>
+                </div>
             </div>
 
             <!-- Content -->
             <div v-else class="space-y-6">
-                <!-- Stats Cards - Mobile optimized -->
-                <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-4">
-                    <Card>
-                        <CardContent class="pt-4 sm:pt-6">
+                <!-- Tournament Header Card -->
+                <Card class="shadow-lg">
+                    <div
+                        class="bg-gradient-to-r from-gray-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 p-6 sm:p-8">
+                        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <div
+                                        class="h-12 w-12 rounded-full bg-indigo-600 flex items-center justify-center shadow-md">
+                                        <PlayIcon class="h-6 w-6 text-white"/>
+                                    </div>
+                                    <div>
+                                        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+                                            {{ t('Match Management') }}
+                                        </h1>
+                                        <p class="text-gray-600 dark:text-gray-400 mt-1">
+                                            {{ tournament?.name }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Auto-refresh indicator -->
+                            <div v-if="matchStats.inProgress > 0"
+                                 class="flex items-center gap-2 px-3 py-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
+                                <ActivityIcon class="h-4 w-4 text-yellow-600 dark:text-yellow-400 animate-pulse"/>
+                                <span class="text-sm text-yellow-700 dark:text-yellow-300">
+                                    {{ t('Auto-refreshing every 30s') }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </Card>
+
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                    <Card class="shadow-md hover:shadow-lg transition-shadow">
+                        <CardContent class="pt-6">
                             <div class="text-center">
-                                <p class="text-xl sm:text-2xl font-bold">{{ matchStats.total }}</p>
-                                <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{{
-                                        t('Total Matches')
+                                <div class="inline-flex p-3 rounded-full bg-gray-100 dark:bg-gray-800 mb-3">
+                                    <TrophyIcon class="h-6 w-6 text-gray-600 dark:text-gray-400"/>
+                                </div>
+                                <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ matchStats.total }}</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('Total Matches') }}</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card class="shadow-md hover:shadow-lg transition-shadow">
+                        <CardContent class="pt-6">
+                            <div class="text-center">
+                                <div class="inline-flex p-3 rounded-full bg-green-100 dark:bg-green-900/30 mb-3">
+                                    <CheckCircleIcon class="h-6 w-6 text-green-600 dark:text-green-400"/>
+                                </div>
+                                <p class="text-2xl font-bold text-green-600 dark:text-green-400">{{
+                                        matchStats.completed
                                     }}</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('Completed') }}</p>
                             </div>
                         </CardContent>
                     </Card>
-                    <Card>
-                        <CardContent class="pt-4 sm:pt-6">
+
+                    <Card class="shadow-md hover:shadow-lg transition-shadow">
+                        <CardContent class="pt-6">
                             <div class="text-center">
-                                <p class="text-xl sm:text-2xl font-bold text-green-600">{{ matchStats.completed }}</p>
-                                <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{{ t('Completed') }}</p>
+                                <div class="inline-flex p-3 rounded-full bg-yellow-100 dark:bg-yellow-900/30 mb-3">
+                                    <PlayIcon class="h-6 w-6 text-yellow-600 dark:text-yellow-400"/>
+                                </div>
+                                <p class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                                    {{ matchStats.inProgress }}</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('In Progress') }}</p>
                             </div>
                         </CardContent>
                     </Card>
-                    <Card>
-                        <CardContent class="pt-4 sm:pt-6">
+
+                    <Card class="shadow-md hover:shadow-lg transition-shadow">
+                        <CardContent class="pt-6">
                             <div class="text-center">
-                                <p class="text-xl sm:text-2xl font-bold text-yellow-600">{{ matchStats.inProgress }}</p>
-                                <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{{
-                                        t('In Progress')
+                                <div class="inline-flex p-3 rounded-full bg-blue-100 dark:bg-blue-900/30 mb-3">
+                                    <ClockIcon class="h-6 w-6 text-blue-600 dark:text-blue-400"/>
+                                </div>
+                                <p class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{
+                                        matchStats.ready
                                     }}</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('Ready') }}</p>
                             </div>
                         </CardContent>
                     </Card>
-                    <Card>
-                        <CardContent class="pt-4 sm:pt-6">
+
+                    <Card class="col-span-2 sm:col-span-1 shadow-md hover:shadow-lg transition-shadow">
+                        <CardContent class="pt-6">
                             <div class="text-center">
-                                <p class="text-xl sm:text-2xl font-bold text-blue-600">{{ matchStats.ready }}</p>
-                                <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{{ t('Ready') }}</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Card class="col-span-2 sm:col-span-1">
-                        <CardContent class="pt-4 sm:pt-6">
-                            <div class="text-center">
-                                <p class="text-xl sm:text-2xl font-bold text-gray-600">{{ matchStats.pending }}</p>
-                                <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{{ t('Pending') }}</p>
+                                <div class="inline-flex p-3 rounded-full bg-gray-100 dark:bg-gray-800 mb-3">
+                                    <AlertCircleIcon class="h-6 w-6 text-gray-600 dark:text-gray-400"/>
+                                </div>
+                                <p class="text-2xl font-bold text-gray-600 dark:text-gray-400">{{
+                                        matchStats.pending
+                                    }}</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('Pending') }}</p>
                             </div>
                         </CardContent>
                     </Card>
                 </div>
 
-                <!-- Filters - Mobile optimized -->
-                <Card>
-                    <CardHeader>
-                        <CardTitle class="flex items-center gap-2 text-lg">
-                            <FilterIcon class="h-5 w-5"/>
+                <!-- Filters -->
+                <Card class="shadow-lg">
+                    <CardHeader class="bg-gray-50 dark:bg-gray-800/50">
+                        <CardTitle class="flex items-center gap-2">
+                            <FilterIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400"/>
                             {{ t('Filters') }}
                         </CardTitle>
+                        <CardDescription>
+                            {{ t('Filter matches to find what you need') }}
+                        </CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent class="p-6">
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                             <!-- Search -->
-                            <div>
-                                <Label for="search" class="text-sm">{{ t('Search') }}</Label>
-                                <Input
-                                    id="search"
-                                    v-model="searchQuery"
-                                    :placeholder="t('Player name or match code')"
-                                    type="text"
-                                    class="text-sm"
-                                />
+                            <div class="sm:col-span-2 lg:col-span-1">
+                                <Label for="search">{{ t('Search') }}</Label>
+                                <div class="relative">
+                                    <SearchIcon
+                                        class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400"/>
+                                    <Input
+                                        id="search"
+                                        v-model="searchQuery"
+                                        :placeholder="t('Player name or match code')"
+                                        type="text"
+                                        class="pl-10"
+                                    />
+                                </div>
                             </div>
 
                             <!-- Status Filter -->
                             <div>
-                                <Label for="status" class="text-sm">{{ t('Status') }}</Label>
+                                <Label for="status">{{ t('Status') }}</Label>
                                 <Select v-model="filterStatus">
-                                    <SelectTrigger class="text-sm">
+                                    <SelectTrigger>
                                         <SelectValue :placeholder="t('All statuses')"/>
                                     </SelectTrigger>
                                     <SelectContent>
@@ -523,9 +570,9 @@ onUnmounted(() => {
 
                             <!-- Stage Filter -->
                             <div>
-                                <Label for="stage" class="text-sm">{{ t('Stage') }}</Label>
+                                <Label for="stage">{{ t('Stage') }}</Label>
                                 <Select v-model="filterStage">
-                                    <SelectTrigger class="text-sm">
+                                    <SelectTrigger>
                                         <SelectValue :placeholder="t('All stages')"/>
                                     </SelectTrigger>
                                     <SelectContent>
@@ -539,9 +586,9 @@ onUnmounted(() => {
 
                             <!-- Group Filter (for group stage) -->
                             <div v-if="filterStage === 'groups' && groups.length > 0">
-                                <Label for="group" class="text-sm">{{ t('Group') }}</Label>
+                                <Label for="group">{{ t('Group') }}</Label>
                                 <Select v-model="filterGroup">
-                                    <SelectTrigger class="text-sm">
+                                    <SelectTrigger>
                                         <SelectValue :placeholder="t('All groups')"/>
                                     </SelectTrigger>
                                     <SelectContent>
@@ -555,9 +602,9 @@ onUnmounted(() => {
 
                             <!-- Round Filter (for bracket) -->
                             <div v-if="filterStage !== 'groups' && uniqueRounds.length > 0">
-                                <Label for="round" class="text-sm">{{ t('Round') }}</Label>
+                                <Label for="round">{{ t('Round') }}</Label>
                                 <Select v-model="filterRound">
-                                    <SelectTrigger class="text-sm">
+                                    <SelectTrigger>
                                         <SelectValue :placeholder="t('All rounds')"/>
                                     </SelectTrigger>
                                     <SelectContent>
@@ -572,184 +619,16 @@ onUnmounted(() => {
                     </CardContent>
                 </Card>
 
-                <!-- Matches List - Mobile optimized -->
-                <Card>
-                    <CardHeader>
-                        <CardTitle>{{ t('Matches') }}</CardTitle>
-                        <CardDescription>
-                            {{ t('Showing :count matches', {count: filteredMatches.length}) }}
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div v-if="filteredMatches.length === 0" class="py-8 text-center text-gray-500">
-                            {{ t('No matches found') }}
-                        </div>
-
-                        <!-- Mobile view -->
-                        <div class="space-y-4 sm:hidden">
-                            <div
-                                v-for="match in filteredMatches"
-                                :key="match.id"
-                                class="rounded-lg border p-4"
-                            >
-                                <!-- Match header -->
-                                <div class="flex items-center justify-between mb-3">
-                                    <div>
-                                        <p class="font-medium text-sm">
-                                            {{ match.match_code || `#${match.id}` }}
-                                        </p>
-                                        <p class="text-xs text-gray-500">
-                                            {{ match.stage_display }}
-                                            <span v-if="match.round_display"> - {{ match.round_display }}</span>
-                                        </p>
-                                    </div>
-                                    <span
-                                        :class="[
-                                            'px-2 py-1 text-xs font-medium rounded-full',
-                                            getMatchStatusBadgeClass(match.status)
-                                        ]"
-                                    >
-                                        {{ match.status_display }}
-                                    </span>
-                                </div>
-
-                                <!-- Players and scores -->
-                                <div class="space-y-2 mb-3">
-                                    <div class="flex items-center justify-between">
-                                        <p :class="{'text-green-600 font-bold': match.winner_id === match.player1_id}"
-                                           class="text-sm">
-                                            {{ match.player1?.firstname }} {{ match.player1?.lastname }}
-                                            <span v-if="!match.player1" class="text-gray-400">{{ t('TBD') }}</span>
-                                        </p>
-                                        <p class="text-lg font-bold">
-                                            {{ match.player1_score ?? '-' }}
-                                        </p>
-                                    </div>
-                                    <div class="flex items-center justify-between">
-                                        <p :class="{'text-green-600 font-bold': match.winner_id === match.player2_id}"
-                                           class="text-sm">
-                                            {{ match.player2?.firstname }} {{ match.player2?.lastname }}
-                                            <span v-if="!match.player2" class="text-gray-400">{{ t('TBD') }}</span>
-                                        </p>
-                                        <p class="text-lg font-bold">
-                                            {{ match.player2_score ?? '-' }}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <!-- Match details -->
-                                <div class="space-y-1 text-xs text-gray-500">
-                                    <p v-if="match.club_table">
-                                        {{ t('Table') }}: {{ match.club_table.name }}
-                                    </p>
-                                    <p v-if="match.scheduled_at">
-                                        <ClockIcon class="inline h-3 w-3"/>
-                                        {{ new Date(match.scheduled_at).toLocaleString() }}
-                                    </p>
-                                </div>
-
-                                <!-- Actions -->
-                                <div class="mt-3">
-                                    <Button
-                                        :disabled="!canEditTournament"
-                                        size="sm"
-                                        variant="outline"
-                                        class="w-full"
-                                        @click="openMatchModal(match)"
-                                    >
-                                        {{ t('Manage') }}
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Desktop view -->
-                        <div class="hidden sm:block space-y-4">
-                            <div
-                                v-for="match in filteredMatches"
-                                :key="match.id"
-                                class="flex items-center justify-between rounded-lg border p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                            >
-                                <!-- Match Info -->
-                                <div class="flex-1">
-                                    <div class="flex items-center gap-4">
-                                        <!-- Match Code & Stage -->
-                                        <div class="min-w-[120px]">
-                                            <p class="font-medium">
-                                                {{ match.match_code || `#${match.id}` }}
-                                            </p>
-                                            <p class="text-sm text-gray-500">
-                                                {{ match.stage_display }}
-                                                <span v-if="match.round_display"> - {{ match.round_display }}</span>
-                                            </p>
-                                        </div>
-
-                                        <!-- Players -->
-                                        <div class="flex-1">
-                                            <div class="flex items-center justify-between">
-                                                <div class="flex-1">
-                                                    <p :class="{'text-green-600': match.winner_id === match.player1_id}"
-                                                       class="font-medium">
-                                                        {{ match.player1?.firstname }} {{ match.player1?.lastname }}
-                                                        <span v-if="!match.player1" class="text-gray-400">{{
-                                                                t('TBD')
-                                                            }}</span>
-                                                    </p>
-                                                    <p :class="{'text-green-600': match.winner_id === match.player2_id}"
-                                                       class="font-medium">
-                                                        {{ match.player2?.firstname }} {{ match.player2?.lastname }}
-                                                        <span v-if="!match.player2" class="text-gray-400">{{
-                                                                t('TBD')
-                                                            }}</span>
-                                                    </p>
-                                                </div>
-
-                                                <!-- Scores -->
-                                                <div class="mx-4 text-center">
-                                                    <p class="text-xl font-bold">
-                                                        {{ match.player1_score ?? '-' }}
-                                                    </p>
-                                                    <p class="text-xl font-bold">
-                                                        {{ match.player2_score ?? '-' }}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Status & Table -->
-                                        <div class="text-right">
-                                            <span :class="[
-                                                'inline-flex px-2 py-1 text-xs font-medium rounded-full',
-                                                getMatchStatusBadgeClass(match.status)
-                                            ]">
-                                                {{ match.status_display }}
-                                            </span>
-                                            <p v-if="match.club_table" class="mt-1 text-sm text-gray-500">
-                                                {{ match.club_table.name }}
-                                            </p>
-                                            <p v-if="match.scheduled_at" class="mt-1 text-sm text-gray-500">
-                                                <ClockIcon class="inline h-3 w-3"/>
-                                                {{ new Date(match.scheduled_at).toLocaleString() }}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Actions -->
-                                <div class="ml-4">
-                                    <Button
-                                        :disabled="!canEditTournament"
-                                        size="sm"
-                                        variant="outline"
-                                        @click="openMatchModal(match)"
-                                    >
-                                        {{ t('Manage') }}
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                <!-- Matches List -->
+                <MatchesList
+                    :matches="filteredMatches"
+                    :is-loading="false"
+                    :show-table="true"
+                    :show-scheduled-time="true"
+                    :show-completed-time="true"
+                    :is-clickable="canEditTournament"
+                    :on-match-click="openMatchModal"
+                />
             </div>
         </div>
     </div>

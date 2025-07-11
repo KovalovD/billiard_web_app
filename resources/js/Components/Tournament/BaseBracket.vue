@@ -35,7 +35,7 @@
                                 size="sm"
                                 variant="ghost"
                                 class="p-1 sm:p-2"
-                                @click="zoomOut"
+                                @click="onZoomOut"
                             >
                                 <MinusIcon class="h-3 w-3 sm:h-4 sm:w-4"/>
                             </Button>
@@ -48,7 +48,7 @@
                                 size="sm"
                                 variant="ghost"
                                 class="p-1 sm:p-2"
-                                @click="zoomIn"
+                                @click="onZoomIn"
                             >
                                 <PlusIcon class="h-3 w-3 sm:h-4 sm:w-4"/>
                             </Button>
@@ -57,7 +57,7 @@
                                 size="sm"
                                 variant="ghost"
                                 class="p-1 sm:p-2 hidden sm:block"
-                                @click="resetZoom"
+                                @click="onResetZoom"
                             >
                                 <RotateCcwIcon class="h-4 w-4"/>
                             </Button>
@@ -69,7 +69,7 @@
                             size="sm"
                             variant="outline"
                             class="hidden sm:flex"
-                            @click="toggleFullscreen"
+                            @click="onToggleFullscreen"
                         >
                             <ExpandIcon v-if="!isFullscreen" class="h-4 w-4"/>
                             <ShrinkIcon v-else class="h-4 w-4"/>
@@ -88,7 +88,7 @@
                 <kbd class="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">0</kbd> {{ t('reset') }},
                 <kbd class="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">F11</kbd>
                 {{ t('fullscreen') }}
-                <span class="ml-2">• {{ t('Pinch to zoom on touch devices') }}</span>
+                <span class="ml-2">• {{ t('Scroll horizontally to navigate') }}</span>
             </div>
 
             <!-- Mobile touch hint -->
@@ -96,7 +96,7 @@
                 class="sm:hidden border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-2 text-xs text-gray-500 dark:text-gray-400">
                 <div class="flex items-center justify-center gap-2">
                     <MoveIcon class="h-3 w-3"/>
-                    {{ t('Pan') }}
+                    {{ t('Scroll') }}
                     <span class="mx-1">•</span>
                     <ScaleIcon class="h-3 w-3"/>
                     {{ t('Pinch zoom') }}
@@ -105,11 +105,11 @@
 
             <div
                 ref="bracketScrollContainerRef"
-                class="bracket-container overflow-auto bg-gray-50 dark:bg-gray-900/50"
-                @touchend="handleTouchEnd"
-                @touchmove="handleTouchMove"
-                @touchstart="handleTouchStart"
-                @wheel="handleWheel"
+                class="bracket-container overflow-x-auto bg-gray-50 dark:bg-gray-900/50"
+                @touchend="onTouchEnd"
+                @touchmove="onTouchMove"
+                @touchstart="onTouchStart"
+                @wheel="onWheel"
             >
                 <div :style="{ transform: `scale(${zoomLevel})` }" class="bracket-zoom-wrapper">
                     <slot/>
@@ -132,7 +132,7 @@ import {
     ShrinkIcon,
     UserIcon
 } from 'lucide-vue-next';
-import {inject} from "vue";
+import {inject, ref} from "vue";
 
 interface Props {
     title: string;
@@ -150,10 +150,14 @@ const emit = defineEmits<{
 
 const {t} = useLocale();
 
-// Expose refs and methods from parent through template refs
+// Component refs
+const bracketContainerRef = ref<HTMLDivElement>();
+const bracketScrollContainerRef = ref<HTMLDivElement>();
+
+// Expose refs for parent components
 defineExpose({
-    bracketContainerRef: undefined,
-    bracketScrollContainerRef: undefined,
+    bracketContainerRef,
+    bracketScrollContainerRef,
 });
 
 const onFindMyMatch = () => {
@@ -169,32 +173,38 @@ const handleTouchEnd = inject<(e: TouchEvent) => void>('handleTouchEnd')!;
 const handleTouchMove = inject<(e: TouchEvent) => void>('handleTouchMove')!;
 const handleTouchStart = inject<(e: TouchEvent) => void>('handleTouchStart')!;
 const handleWheel = inject<(e: WheelEvent) => void>('handleWheel')!;
+
+// Wrapper methods to ensure injected functions are called
+const onZoomOut = () => zoomOut?.();
+const onZoomIn = () => zoomIn?.();
+const onResetZoom = () => resetZoom?.();
+const onToggleFullscreen = () => toggleFullscreen?.();
+const onTouchEnd = (e: TouchEvent) => handleTouchEnd?.(e);
+const onTouchMove = (e: TouchEvent) => handleTouchMove?.(e);
+const onTouchStart = (e: TouchEvent) => handleTouchStart?.(e);
+const onWheel = (e: WheelEvent) => handleWheel?.(e);
 </script>
 
 <style scoped>
 .bracket-container {
-    max-height: calc(100vh - 200px);
-    min-height: 400px;
+    /* Remove vertical scroll, only horizontal */
+    overflow-y: visible;
+    overflow-x: auto;
     /* Remove touch-action to allow custom touch handling */
-    touch-action: none;
-}
-
-/* Mobile adjustments */
-@media (max-width: 640px) {
-    .bracket-container {
-        max-height: calc(100vh - 150px);
-        min-height: 300px;
-    }
+    touch-action: pan-x pan-y;
+    position: relative;
 }
 
 /* Fullscreen adjustments */
 .bracket-fullscreen-container:fullscreen {
     background: white;
     padding: 0.5rem;
+    overflow: auto;
 }
 
 .bracket-fullscreen-container:fullscreen .bracket-container {
-    max-height: calc(100vh - 80px);
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
 }
 
 .bracket-zoom-wrapper {
@@ -202,9 +212,12 @@ const handleWheel = inject<(e: WheelEvent) => void>('handleWheel')!;
     transition: transform 0.2s ease-out;
     /* Add minimum size to ensure scrollability on mobile */
     min-width: max-content;
+    position: relative;
+    /* Allow vertical expansion */
+    display: inline-block;
 }
 
-/* Custom scrollbar styling - thinner on mobile */
+/* Custom scrollbar styling - only for horizontal */
 .bracket-container::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -242,5 +255,22 @@ const handleWheel = inject<(e: WheelEvent) => void>('handleWheel')!;
     -moz-user-select: none;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
+}
+
+/* Dark mode adjustments */
+:root.dark .bracket-fullscreen-container:fullscreen {
+    background: #1f2937;
+}
+
+:root.dark .bracket-container::-webkit-scrollbar-track {
+    background: #374151;
+}
+
+:root.dark .bracket-container::-webkit-scrollbar-thumb {
+    background: #6b7280;
+}
+
+:root.dark .bracket-container::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
 }
 </style>
