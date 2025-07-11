@@ -319,7 +319,7 @@ const handleProcessWalkover = async () => {
     if (!selectedMatch.value || !tournament.value) return;
 
     try {
-        const racesTo = tournament.value.races_to || 7;
+        const racesTo = selectedMatch.value.races_to || 7;
 
         const response = await apiClient<{
             match: TournamentMatch;
