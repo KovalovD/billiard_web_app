@@ -521,22 +521,48 @@ readonly class TournamentService
                 ;
 
                 if ($unseededPlayers === 0) {
-                    $nextStage = in_array($tournament->tournament_type->value,
-                        ['groups', 'groups_playoff', 'team_groups_playoff'])
-                        ? TournamentStage::GROUP
-                        : TournamentStage::BRACKET;
+                    // For round robin, go directly to bracket stage
+                    if ($tournament->tournament_type->value === 'round_robin') {
+                        $transitions[] = [
+                            'stage'        => TournamentStage::BRACKET,
+                            'label'        => 'Generate Round Robin',
+                            'description'  => 'Create all matches for round robin tournament',
+                            'requirements' => [],
+                        ];
+                    } else {
+                        $nextStage = in_array($tournament->tournament_type->value,
+                            ['groups', 'groups_playoff', 'team_groups_playoff'])
+                            ? TournamentStage::GROUP
+                            : TournamentStage::BRACKET;
 
+                        $transitions[] = [
+                            'stage'        => $nextStage,
+                            'label'        => $nextStage === TournamentStage::GROUP ? 'Generate Groups' : 'Generate Bracket',
+                            'description'  => $nextStage === TournamentStage::GROUP
+                                ? 'Create groups and generate round-robin matches'
+                                : 'Create elimination bracket and matches',
+                            'requirements' => [],
+                        ];
+                    }
+                }
+                break;
+
+            case TournamentStage::BRACKET:
+                $incompleteMatches = $tournament
+                    ->matches()
+                    ->whereIn('status', [MatchStatus::PENDING, MatchStatus::READY, MatchStatus::IN_PROGRESS])
+                    ->count()
+                ;
+
+                if ($incompleteMatches === 0) {
                     $transitions[] = [
-                        'stage'        => $nextStage,
-                        'label'        => $nextStage === TournamentStage::GROUP ? 'Generate Groups' : 'Generate Bracket',
-                        'description'  => $nextStage === TournamentStage::GROUP
-                            ? 'Create groups and generate round-robin matches'
-                            : 'Create elimination bracket and matches',
+                        'stage'       => TournamentStage::COMPLETED,
+                        'label'       => 'Complete Tournament',
+                        'description' => 'Finalize results and update ratings',
                         'requirements' => [],
                     ];
                 }
                 break;
-
             case TournamentStage::GROUP:
                 $incompleteMatches = $tournament
                     ->matches()
@@ -551,24 +577,6 @@ readonly class TournamentService
                         'stage'        => TournamentStage::BRACKET,
                         'label'        => 'Start Playoff',
                         'description'  => 'Move top players from each group to playoff bracket',
-                        'requirements' => [],
-                    ];
-                }
-                break;
-
-            case TournamentStage::BRACKET:
-                $incompleteMatches = $tournament
-                    ->matches()
-                    ->where('stage', MatchStage::BRACKET)
-                    ->whereIn('status', [MatchStatus::PENDING, MatchStatus::IN_PROGRESS])
-                    ->count()
-                ;
-
-                if ($incompleteMatches === 0) {
-                    $transitions[] = [
-                        'stage'        => TournamentStage::COMPLETED,
-                        'label'        => 'Complete Tournament',
-                        'description'  => 'Finalize results and update ratings',
                         'requirements' => [],
                     ];
                 }

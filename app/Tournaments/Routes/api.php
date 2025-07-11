@@ -17,6 +17,11 @@ Route::get('user/tournaments/upcoming',
     [UserTournamentsController::class, 'upcoming'])->name('user.tournaments.upcoming');
 
 Route::group(['prefix' => 'tournaments'], static function () {
+    // Add after other tournament routes
+    Route::get('/{tournament}/round-robin/standings',
+        [TournamentsController::class, 'roundRobinStandings'])
+        ->name('tournaments.round-robin.standings')
+    ;
     Route::post('/{tournament}/register',
         [TournamentRegistrationController::class, 'register'])->name('tournaments.register');
     Route::get('/{tournament}/check-email/{email}',

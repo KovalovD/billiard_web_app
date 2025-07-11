@@ -35,6 +35,7 @@ import DataTable from '@/Components/ui/data-table/DataTable.vue';
 import StageTransition from "@/Components/Tournament/StageTransition.vue";
 import {useSeo} from "@/composables/useSeo";
 import UserAvatar from "@/Components/Core/UserAvatar.vue";
+import RoundRobinStandings from "@/Components/Tournament/RoundRobinStandings.vue";
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -124,6 +125,19 @@ const sortedPlayers = computed(() => {
     });
 });
 
+// Check if tournament is round robin
+const isRoundRobin = computed(() => {
+    return tournament.value?.tournament_type === 'round_robin';
+});
+
+// Check if we should show round robin standings
+const canViewRoundRobin = computed(() => {
+    return isRoundRobin.value &&
+        (tournament.value?.stage === 'bracket' ||
+            tournament.value?.status === 'active' ||
+            tournament.value?.status === 'completed');
+});
+
 const confirmedPlayers = computed(() =>
     sortedPlayers.value.filter(p => p.is_confirmed)
 );
@@ -152,7 +166,7 @@ const showBracketButton = computed(() => {
     return isAuthenticated.value &&
         isAdmin.value &&
         tournament.value &&
-        ['single_elimination', 'double_elimination', 'double_elimination_full', 'groups_playoff', 'team_groups_playoff', 'olympic_double_elimination'].includes(tournament.value.tournament_type) &&
+        ['single_elimination', 'double_elimination', 'double_elimination_full', 'groups_playoff', 'team_groups_playoff', 'olympic_double_elimination', 'round_robin'].includes(tournament.value.tournament_type) &&
         (tournament.value.stage === 'bracket' || tournament.value.brackets_generated) &&
         tournament.value.status !== 'completed';
 });
@@ -935,7 +949,7 @@ onMounted(() => {
                             </span>
                         </button>
                         <button
-                            v-if="canViewBracket"
+                            v-if="canViewBracket || canViewRoundRobin"
                             id="tab-bracket"
                             :class="[
                                 'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
@@ -948,8 +962,9 @@ onMounted(() => {
                             @click="switchTab('bracket')"
                         >
                             <span class="flex items-center gap-2">
-                                <GitBranchIcon class="h-4 w-4"/>
-                                {{ t('Bracket') }}
+                                <GitBranchIcon v-if="!isRoundRobin" class="h-4 w-4"/>
+                                <TrophyIcon v-else class="h-4 w-4"/>
+                                {{ isRoundRobin ? t('Standings') : t('Bracket') }}
                             </span>
                         </button>
                         <button
@@ -1279,88 +1294,117 @@ onMounted(() => {
                     </div>
 
                     <!-- Bracket Tab -->
-                    <div v-if="activeTab === 'bracket' && canViewBracket">
-                        <!-- Olympic Tournament Tab Navigation -->
-                        <nav v-if="isOlympicDoubleElimination"
-                             class="mb-6 border-b border-gray-200 dark:border-gray-700 overflow-x-auto"
-                             role="navigation"
-                             aria-label="Olympic bracket tabs">
-                            <div class="-mb-px flex space-x-6 sm:space-x-8 min-w-max">
-                                <button
-                                    id="tab-first-stage"
-                                    :class="[
-                                        'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
-                                        activeOlympicTab === 'first-stage'
-                                            ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                                    ]"
-                                    :aria-selected="activeOlympicTab === 'first-stage'"
-                                    role="tab"
-                                    @click="switchOlympicTab('first-stage')"
-                                >
-                                    <span class="flex items-center gap-2">
-                                        <GitBranchIcon class="h-4 w-4"/>
-                                        {{ t('First Stage') }}
-                                        <span class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
-                                            {{ t('Double Elimination') }}
-                                        </span>
-                                    </span>
-                                </button>
-                                <button
-                                    id="tab-olympic-stage"
-                                    :class="[
-                                        'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
-                                        activeOlympicTab === 'olympic-stage'
-                                            ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                                    ]"
-                                    :aria-selected="activeOlympicTab === 'olympic-stage'"
-                                    role="tab"
-                                    @click="switchOlympicTab('olympic-stage')"
-                                >
-                                    <span class="flex items-center gap-2">
-                                        <LayersIcon class="h-4 w-4"/>
-                                        {{ t('Olympic Stage') }}
-                                        <span class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
-                                            {{ t('Single Elimination') }}
-                                        </span>
-                                    </span>
-                                </button>
-                            </div>
-                        </nav>
+                    <div v-if="activeTab === 'bracket' && (canViewBracket || canViewRoundRobin)">
+                        <!-- Round Robin Standings -->
+                        <template v-if="isRoundRobin">
+                            <RoundRobinStandings
+                                :tournament-id="tournamentId"
+                            />
 
-                        <div v-if="isLoadingMatches" class="flex justify-center py-12">
-                            <Spinner class="h-8 w-8 text-indigo-600"/>
-                        </div>
-                        <div v-else-if="matches.length === 0" class="text-center py-12">
-                            <p class="text-gray-500">{{ t('Bracket has not been generated yet.') }}</p>
-                        </div>
-
-                        <!-- Olympic Tournament Tab Content -->
-                        <template v-else-if="isOlympicDoubleElimination">
-                            <!-- First Stage Tab -->
-                            <div v-if="activeOlympicTab === 'first-stage'">
-                                <DoubleEliminationBracket
-                                    :can-edit="false"
-                                    :current-user-id="currentUserId"
-                                    :matches="firstStageMatches"
-                                    :tournament="tournament!"
-                                />
-                            </div>
-
-                            <!-- Olympic Stage Tab -->
-                            <div v-if="activeOlympicTab === 'olympic-stage'">
-                                <SingleEliminationBracket
-                                    :can-edit="false"
-                                    :current-user-id="currentUserId"
-                                    :matches="olympicStageMatches"
-                                    :tournament="tournament!"
-                                />
-                            </div>
+                            <!-- Round Robin Matches List -->
+                            <Card v-if="matches.length > 0" class="mt-6 shadow-lg">
+                                <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
+                                    <CardTitle class="flex items-center gap-2">
+                                        <PlayIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400"/>
+                                        {{ t('All Matches') }}
+                                    </CardTitle>
+                                    <CardDescription>
+                                        {{ t('Head-to-head matches between all players') }}
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent class="p-6">
+                                    <MatchesList
+                                        :matches="displayMatches"
+                                        :is-loading="isLoadingMatches"
+                                        :show-table="true"
+                                        :show-scheduled-time="true"
+                                        :show-completed-time="true"
+                                    />
+                                </CardContent>
+                            </Card>
                         </template>
-
-                        <!-- Regular Tournament Bracket (non-Olympic) -->
                         <template v-else>
+                            <!-- Olympic Tournament Tab Navigation -->
+                            <nav v-if="isOlympicDoubleElimination"
+                                 class="mb-6 border-b border-gray-200 dark:border-gray-700 overflow-x-auto"
+                                 role="navigation"
+                                 aria-label="Olympic bracket tabs">
+                                <div class="-mb-px flex space-x-6 sm:space-x-8 min-w-max">
+                                    <button
+                                        id="tab-first-stage"
+                                        :class="[
+                                            'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
+                                            activeOlympicTab === 'first-stage'
+                                                ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                                        ]"
+                                        :aria-selected="activeOlympicTab === 'first-stage'"
+                                        role="tab"
+                                        @click="switchOlympicTab('first-stage')"
+                                    >
+                                        <span class="flex items-center gap-2">
+                                            <GitBranchIcon class="h-4 w-4"/>
+                                            {{ t('First Stage') }}
+                                            <span class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+                                                {{ t('Double Elimination') }}
+                                            </span>
+                                        </span>
+                                    </button>
+                                    <button
+                                        id="tab-olympic-stage"
+                                        :class="[
+                                            'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
+                                            activeOlympicTab === 'olympic-stage'
+                                                ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                                        ]"
+                                        :aria-selected="activeOlympicTab === 'olympic-stage'"
+                                        role="tab"
+                                        @click="switchOlympicTab('olympic-stage')"
+                                    >
+                                        <span class="flex items-center gap-2">
+                                            <LayersIcon class="h-4 w-4"/>
+                                            {{ t('Olympic Stage') }}
+                                            <span class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+                                                {{ t('Single Elimination') }}
+                                            </span>
+                                        </span>
+                                    </button>
+                                </div>
+                            </nav>
+
+                            <div v-if="isLoadingMatches" class="flex justify-center py-12">
+                                <Spinner class="h-8 w-8 text-indigo-600"/>
+                            </div>
+                            <div v-else-if="matches.length === 0" class="text-center py-12">
+                                <p class="text-gray-500">{{ t('Bracket has not been generated yet.') }}</p>
+                            </div>
+
+                            <!-- Olympic Tournament Tab Content -->
+                            <template v-else-if="isOlympicDoubleElimination">
+                                <!-- First Stage Tab -->
+                                <div v-if="activeOlympicTab === 'first-stage'">
+                                    <DoubleEliminationBracket
+                                        :can-edit="false"
+                                        :current-user-id="currentUserId"
+                                        :matches="firstStageMatches"
+                                        :tournament="tournament!"
+                                    />
+                                </div>
+
+                                <!-- Olympic Stage Tab -->
+                                <div v-if="activeOlympicTab === 'olympic-stage'">
+                                    <SingleEliminationBracket
+                                        :can-edit="false"
+                                        :current-user-id="currentUserId"
+                                        :matches="olympicStageMatches"
+                                        :tournament="tournament!"
+                                    />
+                                </div>
+                            </template>
+
+                            <!-- Regular Tournament Bracket (non-Olympic) -->
+                            <template v-else>
                             <SingleEliminationBracket
                                 v-if="!isDoubleElimination"
                                 :can-edit="false"
@@ -1376,6 +1420,7 @@ onMounted(() => {
                                 :matches="matches"
                                 :tournament="tournament!"
                             />
+                        </template>
                         </template>
                     </div>
 

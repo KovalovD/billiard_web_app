@@ -15,6 +15,83 @@ use Throwable;
 
 class TournamentMatchService
 {
+
+    /**
+     * Calculate round robin standings after match completion
+     */
+    private function updateRoundRobinStandings(TournamentMatch $match): void
+    {
+        $tournament = $match->tournament;
+
+        // Only for round robin tournaments
+        if ($tournament->tournament_type !== TournamentType::ROUND_ROBIN) {
+            return;
+        }
+
+        $winnerId = $match->winner_id;
+        $loserId = $match->winner_id === $match->player1_id
+            ? $match->player2_id
+            : $match->player1_id;
+
+        // Update winner stats
+        $winnerPlayer = TournamentPlayer::where('tournament_id', $tournament->id)
+            ->where('user_id', $winnerId)
+            ->first()
+        ;
+
+        if ($winnerPlayer) {
+            $winnerPlayer->increment('group_wins');
+            $winnerPlayer->increment('group_games_diff',
+                abs($match->player1_score - $match->player2_score));
+        }
+
+        // Update loser stats
+        $loserPlayer = TournamentPlayer::where('tournament_id', $tournament->id)
+            ->where('user_id', $loserId)
+            ->first()
+        ;
+
+        if ($loserPlayer) {
+            $loserPlayer->increment('group_losses');
+            $loserPlayer->decrement('group_games_diff',
+                abs($match->player1_score - $match->player2_score));
+        }
+
+        // Check if all matches are completed to calculate final positions
+        $incompleteMatches = $tournament
+            ->matches()
+            ->whereIn('status', [MatchStatus::PENDING, MatchStatus::READY, MatchStatus::IN_PROGRESS])
+            ->count()
+        ;
+
+        if ($incompleteMatches === 0) {
+            $this->calculateRoundRobinFinalPositions($tournament);
+        }
+    }
+
+    /**
+     * Calculate final positions for round robin tournament
+     */
+    private function calculateRoundRobinFinalPositions(Tournament $tournament): void
+    {
+        $players = $tournament
+            ->players()
+            ->where('status', 'confirmed')
+            ->orderByDesc('group_wins')
+            ->orderByDesc('group_games_diff')
+            ->get()
+        ;
+
+        $position = 1;
+        foreach ($players as $player) {
+            $player->update([
+                'position'       => $position++,
+                'group_position' => $position - 1,
+            ]);
+        }
+    }
+
+
     /**
      * Start a match
      * @throws Throwable
@@ -101,6 +178,8 @@ class TournamentMatchService
                     $affectedMatchIds[] = $match->next_match_id;
                 }
             }
+
+            $this->updateRoundRobinStandings($match);
 
             // Handle loser progression for double elimination
             // For Olympic tournaments, only prevent loser progression if this specific match advances to Olympic stage

@@ -51,6 +51,51 @@ class TournamentBracketService
         });
     }
 
+    private function generateRoundRobinBracket(Tournament $tournament, Collection $confirmedPlayers): TournamentBracket
+    {
+        $playerCount = $confirmedPlayers->count();
+
+        $bracket = TournamentBracket::create([
+            'tournament_id'     => $tournament->id,
+            'bracket_type'      => BracketType::SINGLE,
+            'total_rounds'      => 1,
+            'players_count'     => $playerCount,
+            'bracket_structure' => [
+                'type'          => 'round_robin',
+                'total_matches' => ($playerCount * ($playerCount - 1)) / 2,
+            ],
+        ]);
+
+        // Initialize player stats
+        foreach ($confirmedPlayers as $player) {
+            $player->update([
+                'group_wins'       => 0,
+                'group_losses'     => 0,
+                'group_games_diff' => 0,
+            ]);
+        }
+
+        // Create all matches (everyone plays everyone)
+        $matchNumber = 1;
+        foreach ($confirmedPlayers as $i => $p1) {
+            foreach ($confirmedPlayers->slice($i + 1) as $p2) {
+                TournamentMatch::create([
+                    'tournament_id'    => $tournament->id,
+                    'match_code'       => sprintf('RR_M%d', $matchNumber++),
+                    'stage'            => MatchStage::GROUP, // Use GROUP stage for round robin
+                    'round'            => EliminationRound::GROUPS, // Use GROUPS round
+                    'player1_id'       => $p1->user_id,
+                    'player2_id'       => $p2->user_id,
+                    'races_to'         => $tournament->races_to,
+                    'status'           => MatchStatus::READY,
+                    'bracket_position' => $matchNumber - 1,
+                ]);
+            }
+        }
+
+        return $bracket;
+    }
+
     private function generateSingleEliminationBracket(
         Tournament $tournament,
         Collection $confirmedPlayers,
@@ -1130,33 +1175,6 @@ class TournamentBracketService
             return (int) $roundRacesTo[$roundCode];
         }
         return (int) ($tournament->races_to ?? 7);
-    }
-
-    private function generateRoundRobinBracket(Tournament $tournament, Collection $confirmedPlayers): TournamentBracket
-    {
-        $bracket = TournamentBracket::create([
-            'tournament_id' => $tournament->id,
-            'bracket_type'  => BracketType::SINGLE,
-            'total_rounds'  => 1,
-            'players_count' => $confirmedPlayers->count(),
-        ]);
-
-        foreach ($confirmedPlayers as $i => $p1) {
-            foreach ($confirmedPlayers->slice($i + 1) as $p2) {
-                TournamentMatch::create([
-                    'tournament_id' => $tournament->id,
-                    'match_code' => sprintf('RR_%sv%s', $p1->seed_number, $p2->seed_number),
-                    'stage'         => MatchStage::BRACKET,
-                    'round'      => EliminationRound::ROUND_128,
-                    'player1_id' => $p1->user_id,
-                    'player2_id' => $p2->user_id,
-                    'races_to'      => $tournament->races_to,
-                    'status'     => MatchStatus::READY,
-                ]);
-            }
-        }
-
-        return $bracket;
     }
 
     /**

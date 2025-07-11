@@ -3,12 +3,14 @@
 namespace App\Tournaments\Http\Controllers;
 
 use App\Core\Http\Resources\ClubTableResource;
+use App\Tournaments\Enums\MatchStatus;
 use App\Tournaments\Http\Resources\TournamentBracketResource;
 use App\Tournaments\Http\Resources\TournamentGroupResource;
 use App\Tournaments\Http\Resources\TournamentPlayerResource;
 use App\Tournaments\Http\Resources\TournamentResource;
 use App\Tournaments\Models\Tournament;
 use App\Tournaments\Services\TournamentService;
+use App\User\Http\Resources\UserResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -26,6 +28,66 @@ readonly class TournamentsController
     public function tables(Tournament $tournament): AnonymousResourceCollection
     {
         return ClubTableResource::collection($this->tournamentService->getTables($tournament));
+    }
+
+    /**
+     * Get round robin standings
+     */
+    public function roundRobinStandings(Tournament $tournament): JsonResponse
+    {
+        if ($tournament->tournament_type->value !== 'round_robin') {
+            return response()->json([
+                'message' => 'This endpoint is only for round robin tournaments',
+            ], 400);
+        }
+
+        $standings = $tournament
+            ->players()
+            ->where('status', 'confirmed')
+            ->with('user')
+            ->orderByDesc('group_wins')
+            ->orderByDesc('group_games_diff')
+            ->orderBy('group_losses')
+            ->get()
+            ->map(function ($player, $index) {
+                $totalMatches = $player->group_wins + $player->group_losses;
+                $winRate = $totalMatches > 0
+                    ? round(($player->group_wins / $totalMatches) * 100, 1)
+                    : 0;
+
+                return [
+                    'position'       => $index + 1,
+                    'player'         => new UserResource($player->user),
+                    'wins'           => $player->group_wins,
+                    'losses'         => $player->group_losses,
+                    'games_diff'     => $player->group_games_diff > 0
+                        ? '+'.$player->group_games_diff
+                        : $player->group_games_diff,
+                    'win_rate'       => $winRate.'%',
+                    'matches_played' => $totalMatches,
+                ];
+            })
+        ;
+
+        $completedMatches = $tournament
+            ->matches()
+            ->where('status', MatchStatus::COMPLETED)
+            ->count()
+        ;
+
+        $totalMatches = $tournament->matches()->count();
+
+        return response()->json([
+            'standings'    => $standings,
+            'progress'     => [
+                'completed'  => $completedMatches,
+                'total'      => $totalMatches,
+                'percentage' => $totalMatches > 0
+                    ? round(($completedMatches / $totalMatches) * 100, 1)
+                    : 0,
+            ],
+            'is_completed' => $completedMatches === $totalMatches,
+        ]);
     }
 
     /**

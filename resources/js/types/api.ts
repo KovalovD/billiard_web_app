@@ -563,6 +563,26 @@ export interface Tournament {
     }>;
 }
 
+export interface RoundRobinStanding {
+    position: number;
+    player: User;
+    wins: number;
+    losses: number;
+    games_diff: string;
+    win_rate: string;
+    matches_played: number;
+}
+
+export interface RoundRobinResponse {
+    standings: RoundRobinStanding[];
+    progress: {
+        completed: number;
+        total: number;
+        percentage: number;
+    };
+    is_completed: boolean;
+}
+
 export interface TournamentPlayer {
     is_winner: boolean;
     id: number;

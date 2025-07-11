@@ -8,6 +8,7 @@ import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
 import {useAuth} from "@/composables/useAuth";
 import GenerateBracketModal from '@/Components/Tournament/GenerateBracketModal.vue';
+import RoundRobinStandings from '@/Components/Tournament/RoundRobinStandings.vue';
 
 import type {ClubTable, Tournament, TournamentBracket, TournamentMatch} from '@/types/api';
 import {Head, router} from '@inertiajs/vue3';
@@ -16,6 +17,7 @@ import {
     ArrowLeftIcon,
     GitBranchIcon,
     LayersIcon,
+    MonitorIcon,
     PlayIcon,
     RefreshCwIcon,
     TrophyIcon
@@ -31,7 +33,9 @@ const props = defineProps<{
 const {t} = useLocale();
 
 const {user} = useAuth();
-
+const isRoundRobin = computed(() => {
+    return tournament.value?.tournament_type === 'round_robin';
+});
 // Get current user from page props
 const currentUserId = user.value?.id;
 
@@ -559,6 +563,85 @@ onMounted(() => {
                         </Card>
                     </div>
                 </main>
+
+                <template v-if="isRoundRobin">
+                    <RoundRobinStandings
+                        :tournament-id="tournamentId"
+                    />
+
+                    <!-- Round Robin Matches Management -->
+                    <Card class="mt-6">
+                        <CardHeader>
+                            <CardTitle class="flex items-center gap-2">
+                                <PlayIcon class="h-5 w-5"/>
+                                {{ t('Manage Matches') }}
+                            </CardTitle>
+                            <CardDescription>
+                                {{ t('Click on any match to update results') }}
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div v-if="matches.length === 0" class="text-center py-8 text-gray-500">
+                                {{ t('No matches generated yet') }}
+                            </div>
+                            <div v-else class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                <div
+                                    v-for="match in matches"
+                                    :key="match.id"
+                                    @click="openMatchModal(match.id)"
+                                    class="p-4 border rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                                    :class="{
+                                        'border-green-500': match.status === 'completed',
+                                        'border-yellow-500': match.status === 'in_progress',
+                                        'border-blue-500': match.status === 'ready',
+                                        'border-gray-300': match.status === 'pending'
+                                    }"
+                                >
+                                    <div class="flex justify-between items-start mb-2">
+                                        <span class="text-xs font-medium text-gray-500">
+                                            {{ match.match_code }}
+                                        </span>
+                                        <span :class="[
+                                            'text-xs px-2 py-1 rounded-full',
+                                            match.status === 'completed' ? 'bg-green-100 text-green-800' :
+                                            match.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
+                                            match.status === 'ready' ? 'bg-blue-100 text-blue-800' :
+                                            'bg-gray-100 text-gray-800'
+                                        ]">
+                                            {{ match.status_display }}
+                                        </span>
+                                    </div>
+
+                                    <div class="space-y-2">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-sm"
+                                                  :class="{'font-bold': match.winner_id === match.player1_id}">
+                                                {{ match.player1?.firstname }} {{ match.player1?.lastname }}
+                                            </span>
+                                            <span class="text-lg font-bold">
+                                                {{ match.player1_score || 0 }}
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-sm"
+                                                  :class="{'font-bold': match.winner_id === match.player2_id}">
+                                                {{ match.player2?.firstname }} {{ match.player2?.lastname }}
+                                            </span>
+                                            <span class="text-lg font-bold">
+                                                {{ match.player2_score || 0 }}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div v-if="match.club_table" class="mt-2 text-xs text-gray-500">
+                                        <MonitorIcon class="inline h-3 w-3 mr-1"/>
+                                        {{ match.club_table.name }}
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </template>
 
                 <!-- Regular Tournament Bracket (non-Olympic) -->
                 <div v-else class="overflow-x-auto pb-4">
