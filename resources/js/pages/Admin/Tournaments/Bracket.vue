@@ -644,7 +644,7 @@ onMounted(() => {
                 </template>
 
                 <!-- Regular Tournament Bracket (non-Olympic) -->
-                <div v-else class="overflow-x-auto pb-4">
+                <div v-else-if="isOlympicDoubleElimination" class="overflow-x-auto pb-4">
                     <div class="min-w-[800px]">
                         <SingleEliminationBracket
                             v-if="!isDoubleElimination"
