@@ -10,12 +10,12 @@ import UserAvatar from '@/Components/Core/UserAvatar.vue';
 import {useAuth} from '@/composables/useAuth';
 import {Head, Link} from '@inertiajs/vue3';
 import axios from 'axios';
-import {onMounted, ref, watch, computed} from 'vue';
+import {computed, onMounted, ref, watch} from 'vue';
 import LocaleSwitcher from "@/Components/Core/LocaleSwitcher.vue";
 import {useLocale} from '@/composables/useLocale';
 import ToastContainer from '@/Components/Core/ToastContainer.vue';
 import MonoDonate from '@/Components/Core/MonoDonate.vue';
-import {ChevronDownIcon, MenuIcon, XIcon, SettingsIcon} from 'lucide-vue-next';
+import {ChevronDownIcon, MenuIcon, SettingsIcon, XIcon} from 'lucide-vue-next';
 
 const {t} = useLocale();
 const {user} = useAuth();
@@ -221,11 +221,6 @@ onMounted(() => {
                                             <DropdownLink :href="'/profile/stats'"
                                                           class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">
                                                 {{ t('Statistic') }}
-                                            </DropdownLink>
-                                            <DropdownLink v-if="isAdmin" :href="'/admin/settings'"
-                                                          class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">
-                                                <SettingsIcon class="h-4 w-4"/>
-                                                {{ t('Settings') }}
                                             </DropdownLink>
                                             <div class="my-1 border-t border-gray-200 dark:border-gray-600"/>
                                             <DropdownLink as="button" @click.prevent="handleLogout"

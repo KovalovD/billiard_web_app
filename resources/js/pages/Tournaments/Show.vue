@@ -1,3 +1,4 @@
+<!-- resources/js/Pages/Tournaments/Show.vue -->
 <script lang="ts" setup>
 import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Spinner} from '@/Components/ui';
 import TournamentApplicationCard from '@/Components/Tournament/TournamentApplicationCard.vue';
@@ -30,7 +31,7 @@ import {
     UserPlusIcon,
     UsersIcon
 } from 'lucide-vue-next';
-import {computed, onMounted, ref} from 'vue';
+import {computed, nextTick, onMounted, ref, watch} from 'vue';
 import DataTable from '@/Components/ui/data-table/DataTable.vue';
 import StageTransition from "@/Components/Tournament/StageTransition.vue";
 import {useSeo} from "@/composables/useSeo";
@@ -78,7 +79,6 @@ const activeTab = ref<'info' | 'players' | 'bracket' | 'matches' | 'groups' | 'r
 const switchTab = (tab: 'info' | 'players' | 'bracket' | 'matches' | 'groups' | 'results' | 'applications') => {
     activeTab.value = tab;
     showMobileMenu.value = false;
-
     // Update URL without page reload
     const url = new URL(window.location.href);
     if (tab === 'info') {
@@ -391,7 +391,7 @@ const fetchTournament = async () => {
     try {
         tournament.value = await apiClient<Tournament>(`/api/tournaments/${props.tournamentId}`);
     } catch (err: any) {
-        error.value = err.message || 'Failed to load tournament';
+      error.value = err.message || t('Failed to load tournament');
     } finally {
         isLoadingTournament.value = false;
     }
@@ -524,6 +524,153 @@ const columns = computed(() => [
     }
 ]);
 
+// Add this with other computed properties
+const playerColumns = computed(() => [
+  {
+    key: 'seed',
+    label: t('#seed'),
+    align: 'center' as const,
+    width: '60px',
+    render: (player: TournamentPlayer) => ({
+      seed: player.seed_number
+    })
+  },
+  {
+    key: 'player',
+    label: t('Player'),
+    align: 'left' as const,
+    render: (player: TournamentPlayer) => ({
+      name: `${player.user?.firstname} ${player.user?.lastname}`,
+      location: player.user?.home_city ?
+          `${player.user.home_city.name}${player.user.home_city.country ? ', ' + player.user.home_city.country.name : ''}`
+          : null
+    })
+  },
+  {
+    key: 'rating',
+    label: t('Rating'),
+    align: 'center' as const,
+    width: '100px',
+    render: (player: TournamentPlayer) => ({
+      rating: player.rating || null,
+      position: null // You can add position if available
+    })
+  },
+  {
+    key: 'club',
+    label: t('Club'),
+    align: 'left' as const,
+    render: (player: TournamentPlayer) => ({
+      name: player.user?.home_club?.name || null
+    })
+  },
+  {
+    key: 'status',
+    label: t('Status'),
+    align: 'center' as const,
+    width: '100px',
+    render: (player: TournamentPlayer) => ({
+      status: player.status,
+      status_display: player.status_display
+    })
+  },
+  {
+    key: 'registered',
+    label: t('Registered'),
+    align: 'center' as const,
+    width: '120px',
+    render: (player: TournamentPlayer) => ({
+      date: formatDate(player.confirmed_at || player.registered_at)
+    })
+  }
+]);
+
+// Get row class with click handling
+const getPlayerRowClass = (): string => {
+  return 'cursor-pointer transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-700/50';
+};
+
+// Get row attributes for player
+const getPlayerRowAttributes = (player: TournamentPlayer): Record<string, string> => {
+  return {
+    'data-player-slug': player.user?.slug || '',
+    'role': 'button',
+    'tabindex': '0',
+    'aria-label': `${t('View')} ${player.user?.firstname} ${player.user?.lastname} ${t('profile')}`
+  };
+};
+
+// Handle table click handlers (similar to official ratings)
+const setupTableClickHandlers = () => {
+  // Only setup handlers for players tab
+  if (activeTab.value !== 'players') return;
+
+  nextTick(() => {
+    // ===== Desktop table rows =====
+    const tableContainer = document.querySelector('[data-players-table]');
+    if (tableContainer) {
+      const rows = tableContainer.querySelectorAll('tbody tr[data-player-slug]');
+      rows.forEach(row => {
+        const playerSlug = row.getAttribute('data-player-slug');
+        if (!playerSlug) return;
+
+        const newRow = row.cloneNode(true) as HTMLElement;
+        row.parentNode?.replaceChild(newRow, row);
+
+        const openPlayer = () => window.open(`/players/${playerSlug}`, '_blank', 'noopener');
+
+        newRow.addEventListener('click', openPlayer);
+        newRow.addEventListener('keydown', (e: KeyboardEvent) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            openPlayer();
+          }
+        });
+      });
+    }
+
+    // ===== Mobile cards =====
+    const mobileCards = document.querySelectorAll('.mobile-card[data-player-slug]');
+    mobileCards.forEach(card => {
+      const playerSlug = card.getAttribute('data-player-slug');
+      if (!playerSlug) return;
+
+      const newCard = card.cloneNode(true) as HTMLElement;
+      card.parentNode?.replaceChild(newCard, card);
+
+      const openPlayer = () => window.open(`/players/${playerSlug}`, '_blank', 'noopener');
+
+      newCard.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        if (target.closest('button, a, input, select, textarea')) return; // интерактив внутри карточки
+        openPlayer();
+      });
+      newCard.addEventListener('keydown', (e: KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openPlayer();
+        }
+      });
+    });
+  });
+};
+
+// Watch for tab changes and re-setup handlers
+watch(activeTab, (newTab) => {
+  if (newTab === 'players') {
+    nextTick(() => {
+      setupTableClickHandlers();
+    });
+  }
+});
+
+// Watch for data changes and loading state
+watch([() => confirmedPlayers.value, () => isLoadingPlayers.value], () => {
+  if (!isLoadingPlayers.value && confirmedPlayers.value.length > 0 && activeTab.value === 'players') {
+    setupTableClickHandlers();
+  }
+});
+
 onMounted(() => {
     fetchTournament().then(() => {
         if (tournament.value) {
@@ -573,7 +720,7 @@ onMounted(() => {
             });
         }
     });
-    fetchPlayers();
+  fetchPlayers()
     fetchMatches();
     fetchGroups();
 });
@@ -1145,57 +1292,157 @@ onMounted(() => {
                             <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
                                 <CardTitle class="flex items-center gap-2">
                                     <UsersIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400"/>
-                                    {{ t('Confirmed Players') }}
+                                  {{ t('Tournament Players') }}
                                 </CardTitle>
                                 <CardDescription>
-                                    {{ tournament.confirmed_players_count }} {{ t('confirmed players') }}
-                                    <span v-if="tournament.max_participants">
-                                       {{ t('out of') }} {{ tournament.max_participants }} {{ t('maximum') }}
-                                   </span>
+                <span class="text-sm font-medium">
+                    {{ tournament.confirmed_players_count }} {{ t('confirmed') }}
+                    <span v-if="tournament.max_participants" class="text-gray-500">
+                        / {{ tournament.max_participants }} {{ t('max') }}
+                    </span>
+                </span>
                                 </CardDescription>
                             </CardHeader>
-                            <CardContent class="p-6">
-                                <div v-if="isLoadingPlayers" class="flex justify-center py-8">
+                          <CardContent class="p-0">
+                            <div v-if="isLoadingPlayers" class="flex justify-center py-12">
                                     <Spinner class="h-6 w-6 text-indigo-600"/>
                                 </div>
-                                <div v-else-if="confirmedPlayers.length === 0"
-                                     class="py-8 text-center text-gray-500">
+                            <div v-else-if="confirmedPlayers.length === 0" class="py-12 text-center text-gray-500">
                                     {{ t('No confirmed players yet.') }}
                                 </div>
-                                <div v-else class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                                    <div
-                                        v-for="player in confirmedPlayers"
-                                        :key="player.id"
-                                        class="flex items-center justify-between p-3 bg-gray-50 rounded-lg dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                            <div v-else data-players-table>
+                              <DataTable
+                                  :columns="playerColumns"
+                                  :data="confirmedPlayers"
+                                  :compact-mode="true"
+                                  :mobile-card-mode="true"
+                                  :empty-message="t('No players found.')"
+                                  :show-header="true"
+                                  class="border-0"
+                                  :row-class="getPlayerRowClass"
+                                  :row-attributes="getPlayerRowAttributes"
                                     >
-                                        <div class="flex items-center gap-3">
-                                            <UserAvatar
-                                                :user="player.user"
-                                                size="sm"
-                                                priority="tournament_picture"
-                                                :exclusive-priority="true"
-                                            />
-                                            <div>
-                                                <p class="font-medium">
-                                    <span v-if="player.seed_number"
-                                          class="text-gray-500 mr-2 text-sm">#{{
-                                            player.seed_number
-                                        }}</span>
-                                                    {{ player.user?.firstname }} {{ player.user?.lastname }}
-                                                </p>
-                                                <p class="text-sm text-gray-600 dark:text-gray-400">
-                                                    {{ player.status_display }}
-                                                </p>
-                                                <p v-if="player.confirmed_at" class="text-xs text-gray-500">
-                                                    {{ t('Confirmed:') }} {{ formatDate(player.confirmed_at) }}
-                                                </p>
-                                            </div>
-                                        </div>
+                                <template #cell-seed="{ value }">
+                        <span v-if="value.seed" class="font-mono text-sm text-gray-500">
+                            #{{ value.seed }}
+                        </span>
+                                  <span v-else class="text-gray-400">—</span>
+                                </template>
+
+                                <template #cell-player="{ value, item }">
+                                  <div class="flex items-center gap-3 py-2">
+                                    <UserAvatar
+                                        :user="item.user"
+                                        size="md"
+                                        priority="tournament_picture"
+                                        :exclusive-priority="true"
+                                    />
+                                    <div class="min-w-0">
+                                      <p class="font-medium text-gray-900 dark:text-white truncate">
+                                        {{ value.name }}
+                                      </p>
+                                      <p v-if="value.location"
+                                         class="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                        {{ value.location }}
+                                      </p>
                                     </div>
+                                  </div>
+                                </template>
+
+                                <template #cell-rating="{ value }">
+                                  <div v-if="value.rating" class="text-center">
+                            <span class="font-medium text-gray-900 dark:text-white">
+                                {{ value.rating }}
+                            </span>
+                                    <span v-if="value.position" class="text-xs text-gray-500 block">
+                                #{{ value.position }}
+                            </span>
+                                  </div>
+                                  <span v-else class="text-gray-400 text-center block">—</span>
+                                </template>
+
+                                <template #cell-club="{ value }">
+                        <span v-if="value.name"
+                              class="text-sm text-gray-600 dark:text-gray-400 truncate block max-w-[150px]">
+                            {{ value.name }}
+                        </span>
+                                  <span v-else class="text-gray-400">—</span>
+                                </template>
+
+                                <template #cell-status="{ value }">
+                        <span :class="[
+                            'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium',
+                            getPlayerStatusBadgeClass(value.status)
+                        ]">
+                            {{ value.status_display }}
+                        </span>
+                                </template>
+
+                                <template #cell-registered="{ value }">
+                        <span class="text-sm text-gray-500 whitespace-nowrap">
+                            {{ value.date }}
+                        </span>
+                                </template>
+
+                                <!-- Mobile card view -->
+                                <template #mobile-primary="{ item }">
+                                  <div class="flex items-start justify-between">
+                                    <div class="flex items-center gap-3 flex-1 min-w-0">
+                                      <div class="flex-shrink-0">
+                                        <UserAvatar
+                                            :user="item.user"
+                                            size="md"
+                                            priority="tournament_picture"
+                                            :exclusive-priority="true"
+                                        />
+                                      </div>
+                                      <div class="min-w-0 flex-1">
+                                        <div class="flex items-center gap-2">
+                                        <span v-if="item.seed_number" class="font-mono text-xs text-gray-500">
+                                            #{{ item.seed_number }}
+                                        </span>
+                                          <h3 class="text-base font-semibold text-gray-900 dark:text-white truncate">
+                                            {{ item.user?.firstname }} {{ item.user?.lastname }}
+                                          </h3>
+                                        </div>
+                                        <p v-if="item.user?.home_city || item.user?.home_club"
+                                           class="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                                            <span v-if="item.user?.home_club?.name">{{
+                                                                item.user.home_club.name
+                                                              }}</span>
+                                          <span v-if="item.user?.home_city?.name"
+                                                class="before:content-['•'] before:mx-1">
+                                            {{ item.user.home_city.name }}
+                                        </span>
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <div class="flex-shrink-0 ml-2">
+                                <span :class="[
+                                    'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium',
+                                    getPlayerStatusBadgeClass(item.status)
+                                ]">
+                                    {{ item.status_display }}
+                                </span>
+                                    </div>
+                                  </div>
+
+                                  <div class="mt-3 flex items-center justify-between text-sm">
+                                    <div v-if="item.rating" class="flex items-center gap-1">
+                                      <span class="text-gray-500">{{ t('Rating:') }}</span>
+                                      <span class="font-medium">{{ item.rating }}</span>
+                                    </div>
+                                    <span class="text-gray-500">
+                                {{ t('Registered:') }} {{ formatDate(item.confirmed_at || item.registered_at) }}
+                            </span>
+                                  </div>
+                                </template>
+                              </DataTable>
                                 </div>
                             </CardContent>
                         </Card>
                     </div>
+
                     <!-- Groups Tab -->
                     <div v-if="activeTab === 'groups' && canViewGroups">
                         <div class="space-y-6">
@@ -1405,22 +1652,22 @@ onMounted(() => {
 
                             <!-- Regular Tournament Bracket (non-Olympic) -->
                             <template v-else>
-                            <SingleEliminationBracket
-                                v-if="!isDoubleElimination"
-                                :can-edit="false"
-                                :current-user-id="currentUserId"
-                                :matches="matches"
-                                :tournament="tournament!"
-                            />
+                              <SingleEliminationBracket
+                                  v-if="!isDoubleElimination"
+                                  :can-edit="false"
+                                  :current-user-id="currentUserId"
+                                  :matches="matches"
+                                  :tournament="tournament!"
+                              />
 
-                            <DoubleEliminationBracket
-                                v-else
-                                :can-edit="false"
-                                :current-user-id="currentUserId"
-                                :matches="matches"
-                                :tournament="tournament!"
-                            />
-                        </template>
+                              <DoubleEliminationBracket
+                                  v-else
+                                  :can-edit="false"
+                                  :current-user-id="currentUserId"
+                                  :matches="matches"
+                                  :tournament="tournament!"
+                              />
+                            </template>
                         </template>
                     </div>
 
