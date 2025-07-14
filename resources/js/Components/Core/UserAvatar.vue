@@ -46,24 +46,14 @@ const imageUrl = computed(() => {
 
     // Helper function to get full URL
     const getFullUrl = (path: string | null | undefined) => {
-        if (!path) return null;
-        // If it's already a full URL, return as is
-        if (path.startsWith('http://') || path.startsWith('https://')) {
-            return path;
-        }
-        // If it starts with /storage/, it's already a public path
-        if (path.startsWith('/storage/')) {
-            return path;
-        }
-        // Otherwise, prepend /storage/
-        return `/storage/${path}`;
+        return path;
     };
 
     // If exclusive priority is set, only use the specified priority image
     if (props.exclusivePriority) {
         switch (props.priority) {
             case 'avatar':
-                return props.user.avatar || null;
+                return getFullUrl(props.user.avatar);
             case 'picture':
                 return getFullUrl(props.user.picture);
             case 'tournament_picture':
@@ -75,9 +65,9 @@ const imageUrl = computed(() => {
 
     // Otherwise use the priority fallback system
     const priorities = {
-        avatar: [props.user.avatar, getFullUrl(props.user.picture), getFullUrl(props.user.tournament_picture)],
-        picture: [getFullUrl(props.user.picture), props.user.avatar, getFullUrl(props.user.tournament_picture)],
-        tournament_picture: [getFullUrl(props.user.tournament_picture), getFullUrl(props.user.picture), props.user.avatar]
+        avatar: [getFullUrl(props.user.avatar), getFullUrl(props.user.picture), getFullUrl(props.user.tournament_picture)],
+        picture: [getFullUrl(props.user.picture), getFullUrl(props.user.avatar), getFullUrl(props.user.tournament_picture)],
+        tournament_picture: [getFullUrl(props.user.tournament_picture), getFullUrl(props.user.picture), getFullUrl(props.user.avatar)]
     };
 
     const urls = priorities[props.priority] || priorities.avatar;

@@ -24,10 +24,10 @@ class ProfileService
         if ($request->hasFile('picture')) {
             // Delete old picture if exists
             if ($user->picture) {
-                Storage::disk('public')->delete($user->picture);
+                Storage::disk('r2')->delete($user->picture);
             }
 
-            $path = $request->file('picture')?->store('profile-pictures', 'public');
+            $path = $request->file('picture')?->store('profile-pictures', 'r2');
             $validated['picture'] = $path;
         }
 
@@ -35,10 +35,10 @@ class ProfileService
         if ($request->hasFile('tournament_picture')) {
             // Delete old tournament picture if exists
             if ($user->tournament_picture) {
-                Storage::disk('public')->delete($user->tournament_picture);
+                Storage::disk('r2')->delete($user->tournament_picture);
             }
 
-            $path = $request->file('tournament_picture')?->store('tournament-pictures', 'public');
+            $path = $request->file('tournament_picture')?->store('tournament-pictures', 'r2');
             $validated['tournament_picture'] = $path;
         }
 
@@ -73,11 +73,11 @@ class ProfileService
     {
         // Delete profile pictures
         if ($user->picture) {
-            Storage::disk('public')->delete($user->picture);
+            Storage::disk('r2')->delete($user->picture);
         }
 
         if ($user->tournament_picture) {
-            Storage::disk('public')->delete($user->tournament_picture);
+            Storage::disk('r2')->delete($user->tournament_picture);
         }
 
         // Soft delete the user
@@ -90,10 +90,10 @@ class ProfileService
     public function deletePicture(User $user, string $type = 'profile'): bool
     {
         if ($type === 'profile' && $user->picture) {
-            Storage::disk('public')->delete($user->picture);
+            Storage::disk('r2')->delete($user->picture);
             $user->update(['picture' => null]);
         } elseif ($type === 'tournament' && $user->tournament_picture) {
-            Storage::disk('public')->delete($user->tournament_picture);
+            Storage::disk('r2')->delete($user->tournament_picture);
             $user->update(['tournament_picture' => null]);
         }
 

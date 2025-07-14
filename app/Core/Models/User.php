@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Storage;
 
 class User extends Authenticatable
 {
@@ -132,5 +133,14 @@ class User extends Authenticatable
     public function officialRatingPlayers(): HasMany
     {
         return $this->hasMany(OfficialRatingPlayer::class);
+    }
+
+    public function getPicture(?string $path): string
+    {
+        if (!$path) {
+            return '';
+        }
+
+        return Storage::disk('r2')->url($path);
     }
 }

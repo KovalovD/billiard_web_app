@@ -82,7 +82,7 @@ const triggerFileInput = () => {
 
 const getImageUrl = () => {
     if (previewUrl.value) return previewUrl.value;
-    if (props.currentPicture) return `/storage/${props.currentPicture}`;
+    if (props.currentPicture) return props.currentPicture;
     return null;
 };
 </script>
