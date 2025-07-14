@@ -1,3 +1,4 @@
+resources/js/Components/Tournament/SingleElimination.vue
 <script lang="ts" setup>
 import {computed, provide, ref, watch} from 'vue';
 import type {Tournament, TournamentMatch} from '@/types/api';
@@ -5,6 +6,7 @@ import {useLocale} from '@/composables/useLocale';
 import {useBracket} from '@/composables/useBracket';
 import BaseBracket from '@/Components/Tournament/BaseBracket.vue';
 import BracketStyles from '@/Components/Tournament/BracketStyles.vue';
+import MatchCard from '@/Components/Tournament/MatchCard.vue';
 
 const props = defineProps<{
     matches: TournamentMatch[];
@@ -19,12 +21,14 @@ const emit = defineEmits<{
 
 const {t} = useLocale();
 
-// Use the bracket composable
+// Use more compact dimensions
+const nodeWidth = 180;
+const nodeHeight = 50;
+const hGap = 80;
+const vGap = 20;
+
+// Use the bracket composable with compact settings
 const {
-    nodeWidth,
-    nodeHeight,
-    hGap,
-    vGap,
     zoomLevel,
     isFullscreen,
     bracketContainerRef,
@@ -39,9 +43,6 @@ const {
     handleWheel,
     toggleFullscreen,
     findMyMatch,
-    getMatchClass,
-    isCurrentUserMatch,
-    getPlayerDisplay,
 } = useBracket(
     props.currentUserId,
     {initialZoom: 1}
@@ -179,7 +180,7 @@ watch(baseBracketRef, (newRef) => {
         @find-my-match="handleFindMyMatch"
     >
         <BracketStyles/>
-        <div class="p-6">
+        <div class="p-4">
             <svg
                 :height="svgHeight"
                 :width="svgWidth"
@@ -201,91 +202,18 @@ watch(baseBracketRef, (newRef) => {
 
                 <!-- Matches -->
                 <g class="matches">
-                    <g
+                    <MatchCard
                         v-for="m in positionedMatches"
                         :key="m.id"
-                        :class="[canEdit ? 'cursor-pointer' : 'cursor-default']"
-                        class="match-group"
-                        @click="handleMatchClick(m.id)"
-                    >
-                        <!-- Match background -->
-                        <rect
-                            :class="[
-                                getMatchClass(m),
-                                isCurrentUserMatch(m) ? 'user-match' : ''
-                            ]"
-                            :height="nodeHeight"
-                            :width="nodeWidth"
-                            :x="m.x"
-                            :y="m.y"
-                            rx="8"
-                        />
-
-                        <!-- Walkover indicator -->
-                        <g v-if="m.isWalkover">
-                            <rect
-                                :x="m.x + 2"
-                                :y="m.y + 2"
-                                fill="#fbbf24"
-                                height="16"
-                                rx="2"
-                                width="24"
-                            />
-                            <text :x="m.x + 14" :y="m.y + 13" class="walkover-text" text-anchor="middle">
-                                W/O
-                            </text>
-                        </g>
-
-                        <!-- Match number -->
-                        <text :x="m.x + 30" :y="m.y + 14" class="match-number">
-                            {{ t('Match') }} #{{ m.match_code }}
-                        </text>
-
-                        <!-- Player 1 -->
-                        <g>
-                            <rect
-                                :class="m.winner_id === m.player1?.id ? 'player-winner' : 'player-bg'"
-                                :height="30"
-                                :width="nodeWidth"
-                                :x="m.x"
-                                :y="m.y + 20"
-                                rx="4"
-                            />
-                            <text :x="m.x + 8" :y="m.y + 38" class="player-name">
-                                {{ getPlayerDisplay(m.player1, m.isWalkover, !!m.player2) }}
-                            </text>
-                            <text :x="m.x + nodeWidth - 25" :y="m.y + 38" class="player-score">
-                                {{ m.player1_score ?? '-' }}
-                            </text>
-                        </g>
-
-                        <!-- Player 2 -->
-                        <g>
-                            <rect
-                                :class="m.winner_id === m.player2?.id ? 'player-winner' : 'player-bg'"
-                                :height="30"
-                                :width="nodeWidth"
-                                :x="m.x"
-                                :y="m.y + 50"
-                                rx="4"
-                            />
-                            <text :x="m.x + 8" :y="m.y + 68" class="player-name">
-                                {{ getPlayerDisplay(m.player2, m.isWalkover, !!m.player1) }}
-                            </text>
-                            <text :x="m.x + nodeWidth - 25" :y="m.y + 68" class="player-score">
-                                {{ m.player2_score ?? '-' }}
-                            </text>
-                        </g>
-
-                        <!-- Status indicator - Only for in_progress matches -->
-                        <circle
-                            v-if="m.status === 'in_progress'"
-                            :cx="m.x + nodeWidth - 10"
-                            :cy="m.y + 10"
-                            class="status-in-progress"
-                            r="4"
-                        />
-                    </g>
+                        :match="m"
+                        :x="m.x"
+                        :y="m.y"
+                        :can-edit="canEdit"
+                        :current-user-id="currentUserId"
+                        :card-width="nodeWidth"
+                        :card-height="nodeHeight"
+                        @click="handleMatchClick"
+                    />
                 </g>
             </svg>
         </div>

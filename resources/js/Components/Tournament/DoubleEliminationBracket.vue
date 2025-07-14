@@ -1,3 +1,4 @@
+resources/js/Components/Tournament/DoubleElimination.vue
 <script lang="ts" setup>
 import {computed, provide, ref, watch} from 'vue'
 import type {Tournament, TournamentMatch} from '@/types/api'
@@ -5,6 +6,7 @@ import {useLocale} from '@/composables/useLocale'
 import {useBracket} from '@/composables/useBracket'
 import BaseBracket from '@/Components/Tournament/BaseBracket.vue'
 import BracketStyles from '@/Components/Tournament/BracketStyles.vue'
+import MatchCard from '@/Components/Tournament/MatchCard.vue'
 
 const props = defineProps<{
     matches: TournamentMatch[]
@@ -19,11 +21,13 @@ const emit = defineEmits<{
 
 const {t} = useLocale()
 
+// Use more compact dimensions
+const nodeWidth = 180
+const nodeHeight = 50
+const hGap = 100
+const vGap = 20
+
 const {
-    nodeWidth,
-    nodeHeight,
-    hGap,
-    vGap,
     zoomLevel,
     isFullscreen,
     bracketContainerRef,
@@ -39,10 +43,7 @@ const {
     toggleFullscreen,
     findMyMatch,
     scrollToMatch,
-    getMatchClass,
-    isCurrentUserMatch,
-    getPlayerDisplay
-} = useBracket(props.currentUserId, {initialZoom: 0.8, hGap: 140})
+} = useBracket(props.currentUserId, {initialZoom: 0.8})
 
 provide('zoomIn', zoomIn)
 provide('zoomOut', zoomOut)
@@ -135,7 +136,7 @@ const positionedUpperMatches = computed(() => {
 
 const positionedLowerMatches = computed(() => {
     const list: Array<ReturnType<typeof transformMatch> & { x: number; y: number }> = []
-    const baseY = upperBracketHeight.value + 100
+    const baseY = upperBracketHeight.value + 80
     const block = nodeHeight + vGap
     lowerRounds.value.forEach((roundMatches, roundIndex) => {
         const spacing = Math.pow(2, Math.floor(roundIndex / 2)) * block
@@ -287,10 +288,10 @@ watch(baseBracketRef, newRef => {
         @find-my-match="handleFindMyMatch"
     >
         <BracketStyles/>
-        <div class="p-6">
+        <div class="p-4">
             <svg :height="svgHeight" :width="svgWidth" class="bracket-svg" style="min-width: 100%">
                 <text class="bracket-label" x="20" y="25">{{ t('Upper Bracket') }}</text>
-                <text :y="upperBracketHeight + 85" class="bracket-label" x="20">
+                <text :y="upperBracketHeight + 65" class="bracket-label" x="20">
                     {{ t('Lower Bracket') }}
                 </text>
                 <text
@@ -306,9 +307,9 @@ watch(baseBracketRef, newRef => {
                         v-for="seg in connectorSegments"
                         :key="seg.id"
                         :class="[
-              'connector-line',
-              seg.type === 'lower' ? 'connector-line-lower' : ''
-            ]"
+                            'connector-line',
+                            seg.type === 'lower' ? 'connector-line-lower' : ''
+                        ]"
                         :x1="seg.x1"
                         :x2="seg.x2"
                         :y1="seg.y1"
@@ -316,111 +317,23 @@ watch(baseBracketRef, newRef => {
                     />
                 </g>
                 <g class="matches">
-                    <g
+                    <MatchCard
                         v-for="m in allPositionedMatches"
                         :key="m.id"
-                        :class="[canEdit ? 'cursor-pointer' : 'cursor-default']"
-                        class="match-group"
-                        @click="handleMatchClick(m.id)"
-                    >
-                        <rect
-                            :class="[
-                getMatchClass(m),
-                m.bracketSide === 'lower' ? 'lower-bracket-match' : '',
-                isCurrentUserMatch(m) ? 'user-match' : ''
-              ]"
-                            :height="nodeHeight"
-                            :width="nodeWidth"
-                            :x="m.x"
-                            :y="m.y"
-                            rx="8"
-                        />
-                        <g v-if="m.isWalkover">
-                            <rect :x="m.x + 2" :y="m.y + 2" fill="#fbbf24" height="16" rx="2" width="24"/>
-                            <text :x="m.x + 14" :y="m.y + 13" class="walkover-text" text-anchor="middle">
-                                W/O
-                            </text>
-                        </g>
-                        <text :x="m.x + 30" :y="m.y + 14" class="match-number">{{ m.match_code }}</text>
-                        <g>
-                            <rect
-                                :class="m.winner_id === m.player1?.id ? 'player-winner' : 'player-bg'"
-                                :height="30"
-                                :width="nodeWidth"
-                                :x="m.x"
-                                :y="m.y + 20"
-                                rx="4"
-                            />
-                            <text :x="m.x + 8" :y="m.y + 38" class="player-name">
-                                {{ getPlayerDisplay(m.player1, m.isWalkover, !!m.player2) }}
-                            </text>
-                            <text :x="m.x + nodeWidth - 25" :y="m.y + 38" class="player-score">
-                                {{ m.player1_score ?? '-' }}
-                            </text>
-                        </g>
-                        <g>
-                            <rect
-                                :class="m.winner_id === m.player2?.id ? 'player-winner' : 'player-bg'"
-                                :height="30"
-                                :width="nodeWidth"
-                                :x="m.x"
-                                :y="m.y + 50"
-                                rx="4"
-                            />
-                            <text :x="m.x + 8" :y="m.y + 68" class="player-name">
-                                {{ getPlayerDisplay(m.player2, m.isWalkover, !!m.player1) }}
-                            </text>
-                            <text :x="m.x + nodeWidth - 25" :y="m.y + 68" class="player-score">
-                                {{ m.player2_score ?? '-' }}
-                            </text>
-                        </g>
-                        <circle
-                            v-if="m.status === 'in_progress'"
-                            :cx="m.x + nodeWidth - 10"
-                            :cy="m.y + 10"
-                            class="status-in-progress"
-                            r="4"
-                        />
-                        <g v-if="m.loser_next_match_id && matchesById.get(m.loser_next_match_id)">
-                            <rect
-                                :x="m.x"
-                                :y="m.y + nodeHeight + 5"
-                                :width="nodeWidth"
-                                height="20"
-                                fill="#f3f4f6"
-                                stroke="#e5e7eb"
-                                stroke-width="1"
-                                rx="4"
-                                class="cursor-pointer hover:fill-gray-300 transition-colors"
-                                @click.stop="handleLoserDropClick(m.loser_next_match_id)"
-                            />
-                            <text
-                                :x="m.x + nodeWidth / 2"
-                                :y="m.y + nodeHeight + 18"
-                                text-anchor="middle"
-                                class="text-xs fill-gray-600 pointer-events-none"
-                                font-size="11"
-                            >
-                                {{ t('Drops to') }} {{ matchesById.get(m.loser_next_match_id)?.match_code }}
-                            </text>
-                        </g>
-                    </g>
+                        :match="m"
+                        :x="m.x"
+                        :y="m.y"
+                        :can-edit="canEdit"
+                        :current-user-id="currentUserId"
+                        :card-width="nodeWidth"
+                        :card-height="nodeHeight"
+                        :show-loser-drop="true"
+                        :matches-by-id="matchesById"
+                        @click="handleMatchClick"
+                        @loser-drop-click="handleLoserDropClick"
+                    />
                 </g>
             </svg>
         </div>
     </BaseBracket>
 </template>
-
-<style scoped>
-.hover\:fill-gray-300:hover {
-    fill: #d1d5db;
-}
-.transition-colors {
-    transition-property: fill;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 150ms;
-}
-.pointer-events-none {
-    pointer-events: none;
-}
-</style>
