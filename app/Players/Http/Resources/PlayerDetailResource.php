@@ -29,7 +29,7 @@ class PlayerDetailResource extends JsonResource
             'description'        => $this->description,
             'equipment'          => $this->equipment ?? [],
             'tournament_picture' => $this->tournament_picture ?? null,
-            'avatar'             => $this->when($this->picture, fn() => asset('storage/'.$this->picture)),
+            'avatar' => $this->getPicture($this->picture),
             // Location
             'home_city'          => $this->whenLoaded('homeCity', fn() => [
                 'id'      => $this->homeCity->id,

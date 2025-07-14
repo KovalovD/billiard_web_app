@@ -464,13 +464,13 @@ class PlayerService
                 'player1' => [
                     'id'                 => $player1->id,
                     'full_name'          => $player1->full_name,
-                    'tournament_picture' => $player1->tournament_picture ?? null,
+                    'tournament_picture' => $player1->getPicture($player1->tournament_picture) ?: $player1->getPicture($player1->picture),
 
                 ],
                 'player2' => [
                     'id'                 => $player2->id,
                     'full_name'          => $player2->full_name,
-                    'tournament_picture' => $player2->tournament_picture ?? null,
+                    'tournament_picture' => $player2->getPicture($player2->tournament_picture) ?: $player2->getPicture($player2->picture),
 
                 ],
             ],

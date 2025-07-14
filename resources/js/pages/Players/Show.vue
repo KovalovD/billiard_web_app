@@ -576,7 +576,7 @@ onMounted(() => {
                                 <div class="flex items-center gap-3 mb-3">
                                     <UserAvatar
                                         :user="player"
-                                        size="lg"
+                                        size="xl"
                                         priority="tournament_picture"
                                     />
                                     <div>
@@ -1258,7 +1258,7 @@ onMounted(() => {
                         <div class="flex items-center gap-3">
                             <UserAvatar
                                 :user="result"
-                                size="sm"
+                                size="md"
                                 priority="picture"
                             />
                             <div>

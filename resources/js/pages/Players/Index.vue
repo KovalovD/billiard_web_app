@@ -645,7 +645,7 @@ onUnmounted(() => {
                                     <div class="flex-shrink-0 h-10 w-10">
                                         <UserAvatar
                                             :user="value.player"
-                                            size="sm"
+                                            size="md"
                                             priority="picture"
                                         />
                                     </div>
