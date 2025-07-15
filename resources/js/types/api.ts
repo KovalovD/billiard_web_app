@@ -507,6 +507,7 @@ export interface Tournament {
     status_display: string;
     stage_display: string;
     game_id: number;
+    is_registration_open: boolean;
     city_id?: number;
     club_id?: number;
     start_date: string;
