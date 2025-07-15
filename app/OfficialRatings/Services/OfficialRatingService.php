@@ -6,6 +6,7 @@ use App\Matches\Enums\GameType;
 use App\OfficialRatings\Models\OfficialRating;
 use App\OfficialRatings\Models\OfficialRatingPlayer;
 use App\Tournaments\Models\Tournament;
+use App\User\Http\Resources\UserResource;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -527,7 +528,7 @@ class OfficialRatingService
                 }
 
                 $players[$player->user_id] = [
-                    'user'               => $player->user,
+                    'user'         => new UserResource($player->user),
                     'rating'             => ($players[$player->user_id]['rating'] ?? 0) + $player->rating_points,
                     $index         => $prize,
                     $oppositeIndex => $oppositePrize,

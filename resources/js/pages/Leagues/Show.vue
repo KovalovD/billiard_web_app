@@ -1,4 +1,4 @@
-// resources/js/pages/Leagues/Show.vue
+<!-- resources/js/Pages/Leagues/Show.vue -->
 <script lang="ts" setup>
 import ChallengeModal from '@/Components/League/ChallengeModal.vue';
 import PendingConfirmationBanner from '@/Components/League/PendingConfirmationBanner.vue';
@@ -395,14 +395,14 @@ watch(
 <template>
     <Head :title="pageTitle"/>
 
-    <div class="py-6 sm:py-8 lg:py-12">
+    <div class="py-4 sm:py-6 lg:py-8">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <!-- Header with actions -->
-            <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div class="flex items-center gap-4">
+            <div class="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div class="flex items-center gap-3">
                     <Link :href="route('leagues.index.page')">
                         <Button variant="outline" size="sm">
-                            <ArrowLeftIcon class="mr-2 h-4 w-4"/>
+                            <ArrowLeftIcon class="mr-1.5 h-3.5 w-3.5"/>
                             <span class="hidden sm:inline">{{ t('Back to Leagues') }}</span>
                             <span class="sm:hidden">{{ t('Back') }}</span>
                         </Button>
@@ -410,19 +410,19 @@ watch(
                 </div>
 
                 <!-- Admin controls - Desktop -->
-                <div v-if="isAuthenticated && isAdmin && league" class="hidden sm:flex flex-wrap gap-2">
+                <div v-if="isAuthenticated && isAdmin && league" class="hidden sm:flex flex-wrap gap-1.5">
                     <Link :href="route('leagues.edit', { league: league.slug })">
                         <Button variant="secondary" size="sm">
-                            <PencilIcon class="mr-2 h-4 w-4"/>
+                            <PencilIcon class="mr-1.5 h-3.5 w-3.5"/>
                             {{ t('Edit League') }}
                         </Button>
                     </Link>
 
                     <div ref="adminDropdownRef" class="relative">
                         <Button variant="secondary" size="sm" @click="adminDropdownOpen = !adminDropdownOpen">
-                            <UsersIcon class="mr-2 h-4 w-4"/>
+                            <UsersIcon class="mr-1.5 h-3.5 w-3.5"/>
                             {{ t('Manage Players') }}
-                            <ChevronDownIcon class="ml-1 h-4 w-4"/>
+                            <ChevronDownIcon class="ml-1 h-3.5 w-3.5"/>
                         </Button>
 
                         <div
@@ -458,13 +458,13 @@ watch(
                     class="sm:hidden"
                     @click="adminDropdownOpen = !adminDropdownOpen"
                 >
-                    <UsersIcon class="h-4 w-4"/>
+                    <UsersIcon class="h-3.5 w-3.5"/>
                 </Button>
 
                 <!-- Login prompt for guests -->
                 <div v-else-if="!isAuthenticated" class="text-center">
-                    <Link :href="route('login')" class="text-sm text-blue-600 hover:underline dark:text-blue-400">
-                        <LogInIcon class="mr-1 inline h-4 w-4"/>
+                    <Link :href="route('login')" class="text-xs text-blue-600 hover:underline dark:text-blue-400">
+                        <LogInIcon class="mr-1 inline h-3.5 w-3.5"/>
                         {{ t('Login to participate') }}
                     </Link>
                 </div>
@@ -473,9 +473,9 @@ watch(
             <!-- Mobile Admin Menu -->
             <div
                 v-if="isAuthenticated && isAdmin && league && adminDropdownOpen"
-                class="sm:hidden mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+                class="sm:hidden mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
             >
-                <div class="grid grid-cols-2 gap-2">
+                <div class="grid grid-cols-2 gap-1.5">
                     <Link :href="route('leagues.edit', { league: league.slug })">
                         <Button size="sm" variant="secondary" class="w-full">
                             <PencilIcon class="mr-1 h-3 w-3"/>
@@ -499,60 +499,60 @@ watch(
             />
 
             <!-- League Loading State -->
-            <div v-if="isLoadingLeague" class="flex justify-center items-center py-12">
+            <div v-if="isLoadingLeague" class="flex justify-center items-center py-8">
                 <div class="text-center">
-                    <Spinner class="mx-auto h-8 w-8 text-indigo-600"/>
-                    <p class="mt-2 text-gray-500">{{ t('Loading league information...') }}</p>
+                    <Spinner class="mx-auto h-6 w-6 text-indigo-600"/>
+                    <p class="mt-1.5 text-sm text-gray-500">{{ t('Loading league information...') }}</p>
                 </div>
             </div>
 
             <!-- League Error State -->
             <div v-else-if="leagueError"
-                 class="mb-6 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
-                <p class="text-red-600 dark:text-red-400">
+                 class="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3">
+                <p class="text-sm text-red-600 dark:text-red-400">
                     {{ t('Error loading league: :error', {error: leagueError.message}) }}</p>
             </div>
 
             <!-- League Content -->
             <template v-else-if="league">
                 <!-- League Info Card -->
-                <Card class="mb-8 shadow-lg overflow-hidden">
+                <Card class="mb-6 shadow-lg overflow-hidden">
                     <div
-                        class="bg-gradient-to-r from-gray-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 p-6 sm:p-8">
-                        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                        class="bg-gradient-to-r from-gray-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 p-4 sm:p-6">
+                        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                             <div class="flex-1">
-                                <div class="flex items-center gap-3 mb-3">
+                                <div class="flex items-center gap-2.5 mb-2">
                                     <div
-                                        class="h-12 w-12 rounded-full bg-indigo-600 flex items-center justify-center shadow-md">
-                                        <TrophyIcon class="h-6 w-6 text-white"/>
+                                        class="h-10 w-10 rounded-full bg-indigo-600 flex items-center justify-center shadow-md">
+                                        <TrophyIcon class="h-5 w-5 text-white"/>
                                     </div>
                                     <div>
-                                        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                                        <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2.5">
                                             {{ league.name }}
                                             <span v-if="leagueStatus"
-                                                  :class="['rounded-full px-2 py-1 text-xs font-semibold', leagueStatus.class]">
-                                               <component :is="leagueStatus.icon" class="mr-1 inline h-3 w-3"/>
+                                                  :class="['rounded-full px-2 py-0.5 text-xs font-semibold', leagueStatus.class]">
+                                               <component :is="leagueStatus.icon" class="mr-1 inline h-2.5 w-2.5"/>
                                                {{ leagueStatus.text }}
                                            </span>
                                         </h1>
-                                        <p class="text-gray-600 dark:text-gray-400 mt-1">
+                                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
                                             {{ league.game ?? t('N/A') }}
                                         </p>
                                     </div>
                                 </div>
 
                                 <!-- League Info -->
-                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-                                    <div class="flex items-center text-gray-600 dark:text-gray-400">
-                                        <UsersIcon class="h-4 w-4 mr-2"/>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-3">
+                                    <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                                        <UsersIcon class="h-3.5 w-3.5 mr-1.5"/>
                                         <span>{{
                                                 league.active_players ?? 0
                                             }}{{ league.max_players ? `/${league.max_players}` : '' }} {{
                                                 t('Players')
                                             }}</span>
                                     </div>
-                                    <div class="flex items-center text-gray-600 dark:text-gray-400">
-                                        <SmileIcon class="h-4 w-4 mr-2"/>
+                                    <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                                        <SmileIcon class="h-3.5 w-3.5 mr-1.5"/>
                                         <span>{{ league.has_rating ? `Enabled (${league.start_rating})` : 'Disabled' }} {{
                                                 t('Rating')
                                             }}</span>
@@ -560,66 +560,69 @@ watch(
                                 </div>
 
                                 <!-- Stats Grid -->
-                                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-6">
+                                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
                                     <div class="text-center sm:text-left">
-                                        <div class="flex items-center gap-2 justify-center sm:justify-start">
-                                            <UsersIcon class="h-4 w-4 text-gray-400"/>
-                                            <span class="text-2xl font-bold text-gray-900 dark:text-white">{{
+                                        <div class="flex items-center gap-1.5 justify-center sm:justify-start">
+                                            <UsersIcon class="h-3.5 w-3.5 text-gray-400"/>
+                                            <span class="text-xl font-bold text-gray-900 dark:text-white">{{
                                                     league.active_players ?? 0
                                                 }}</span>
                                         </div>
-                                        <p class="text-sm text-gray-500 dark:text-gray-400">{{
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">{{
                                                 t('Active Players')
                                             }}</p>
                                     </div>
                                     <div
                                         v-if="league.game_multiplayer && league.grand_final_fund_accumulated !== undefined"
                                         class="text-center sm:text-left">
-                                        <div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                                        <div class="text-xl font-bold text-yellow-600 dark:text-yellow-400">
                                             {{ formatCurrency(league.grand_final_fund_accumulated) }}
                                         </div>
-                                        <p class="text-sm text-gray-500 dark:text-gray-400">{{
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">{{
                                                 t('Grand Final Fund')
                                             }}</p>
                                     </div>
                                     <div v-if="league.started_at" class="text-center sm:text-left">
-                                        <div class="text-lg font-semibold text-gray-900 dark:text-white">
+                                        <div class="text-base font-semibold text-gray-900 dark:text-white">
                                             {{ new Date(league.started_at!).toLocaleDateString() }}
                                         </div>
-                                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('Start Date') }}</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('Start Date') }}</p>
                                     </div>
                                 </div>
                             </div>
                             <div v-if="league.picture" class="hidden sm:block">
                                 <img :alt="league.name" :src="league.picture"
-                                     class="h-24 w-24 rounded-lg object-cover"/>
+                                     class="h-20 w-20 rounded-lg object-cover"/>
                             </div>
                         </div>
                     </div>
 
-                    <CardContent class="p-6 sm:p-8">
-                        <p v-if="league.details" class="mb-4 whitespace-pre-wrap text-gray-700 dark:text-gray-300">
+                    <CardContent class="p-4 sm:p-6">
+                        <p v-if="league.details"
+                           class="mb-3 whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300">
                             {{ league.details }}</p>
-                        <p v-else class="mb-4 text-gray-500 italic">{{ t('No details provided for this league.') }}</p>
+                        <p v-else class="mb-3 text-sm text-gray-500 italic">{{
+                                t('No details provided for this league.')
+                            }}</p>
 
-                        <div class="mt-4 grid grid-cols-1 gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
-                            <div v-if="league.started_at" class="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
+                        <div class="mt-3 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
+                            <div v-if="league.started_at" class="rounded-lg bg-gray-50 p-2.5 dark:bg-gray-800">
                                 <span class="font-medium text-gray-600 dark:text-gray-400">{{ t('Start Date') }}</span>
                                 <p class="text-gray-900 dark:text-gray-200">
                                     {{ new Date(league.started_at).toLocaleDateString() }}
                                 </p>
                             </div>
-                            <div v-if="league.finished_at" class="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
+                            <div v-if="league.finished_at" class="rounded-lg bg-gray-50 p-2.5 dark:bg-gray-800">
                                 <span class="font-medium text-gray-600 dark:text-gray-400">{{ t('End Date') }}</span>
                                 <p class="text-gray-900 dark:text-gray-200">
                                     {{ new Date(league.finished_at).toLocaleDateString() }}
                                 </p>
                             </div>
-                            <div v-if="!league.game_multiplayer" class="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
+                            <div v-if="!league.game_multiplayer" class="rounded-lg bg-gray-50 p-2.5 dark:bg-gray-800">
                                 <span class="font-medium text-gray-600 dark:text-gray-400">{{ t('Max Score') }}</span>
                                 <p class="text-gray-900 dark:text-gray-200">{{ league.max_score || 'N/A' }}</p>
                             </div>
-                            <div v-if="!league.game_multiplayer" class="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
+                            <div v-if="!league.game_multiplayer" class="rounded-lg bg-gray-50 p-2.5 dark:bg-gray-800">
                                 <span class="font-medium text-gray-600 dark:text-gray-400">{{
                                         t('Invite Expiry')
                                     }}</span>
@@ -629,21 +632,22 @@ watch(
                         </div>
 
                         <!-- Multiplayer Games Section - Available to everyone -->
-                        <div v-if="league?.game_multiplayer" class="mb-6 mt-4">
+                        <div v-if="league?.game_multiplayer" class="mb-4 mt-3">
                             <Link :href="`/leagues/${league?.slug}/multiplayer-games`">
-                                <Button variant="secondary">
-                                    <GamepadIcon class="mr-2 h-4 w-4"/>
+                                <Button variant="secondary" size="sm">
+                                    <GamepadIcon class="mr-1.5 h-3.5 w-3.5"/>
                                     {{ t('View Multiplayer Games') }}
                                 </Button>
                             </Link>
                         </div>
 
                         <!-- Join/Leave Actions - Only for authenticated users -->
-                        <div v-if="isAuthenticated" class="mt-6">
+                        <div v-if="isAuthenticated" class="mt-4">
                             <template v-if="!isCurrentUserInLeague">
-                                <Button v-if="canUserJoinLeague" :disabled="isJoining" @click="handleJoinLeague">
-                                    <Spinner v-if="isJoining" class="mr-2 h-4 w-4"/>
-                                    <UserPlusIcon v-else class="mr-2 h-4 w-4"/>
+                                <Button v-if="canUserJoinLeague" :disabled="isJoining" @click="handleJoinLeague"
+                                        size="sm">
+                                    <Spinner v-if="isJoining" class="mr-1.5 h-3.5 w-3.5"/>
+                                    <UserPlusIcon v-else class="mr-1.5 h-3.5 w-3.5"/>
                                     {{ t('Join League') }}
                                 </Button>
                                 <div v-else class="text-sm text-gray-500 dark:text-gray-400">
@@ -651,18 +655,19 @@ watch(
                                 </div>
                             </template>
 
-                            <Button v-else :disabled="isLeaving" variant="secondary" @click="handleLeaveLeague">
-                                <Spinner v-if="isLeaving" class="mr-2 h-4 w-4"/>
-                                <LogOutIcon v-else class="mr-2 h-4 w-4"/>
+                            <Button v-else :disabled="isLeaving" variant="secondary" @click="handleLeaveLeague"
+                                    size="sm">
+                                <Spinner v-if="isLeaving" class="mr-1.5 h-3.5 w-3.5"/>
+                                <LogOutIcon v-else class="mr-1.5 h-3.5 w-3.5"/>
                                 {{ t('Leave League') }}
                             </Button>
                         </div>
 
                         <!-- Guest prompts -->
-                        <div v-else class="mt-6 space-y-2">
-                            <div class="rounded-md bg-blue-50 p-4 dark:bg-blue-900/20">
-                                <p class="text-blue-800 dark:text-blue-300">
-                                    <LogInIcon class="mr-2 inline h-4 w-4"/>
+                        <div v-else class="mt-4 space-y-2">
+                            <div class="rounded-md bg-blue-50 p-3 dark:bg-blue-900/20">
+                                <p class="text-sm text-blue-800 dark:text-blue-300">
+                                    <LogInIcon class="mr-1.5 inline h-3.5 w-3.5"/>
                                     <Link :href="route('login')" class="font-medium hover:underline">
                                         {{ t('Login to join this league') }}
                                     </Link>
@@ -674,28 +679,28 @@ watch(
                 </Card>
 
                 <!-- Players & Ratings Card -->
-                <Card class="mb-8 shadow-lg">
-                    <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
+                <Card class="mb-6 shadow-lg">
+                    <CardHeader class="bg-gray-50 dark:bg-gray-700/50 py-3">
                         <div class="flex items-center justify-between w-full">
-                            <CardTitle class="flex items-center gap-2">
-                                <UsersIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400"/>
+                            <CardTitle class="flex items-center gap-1.5 text-base">
+                                <UsersIcon class="h-4 w-4 text-indigo-600 dark:text-indigo-400"/>
                                 {{ t('Players & Ratings') }}
                             </CardTitle>
                             <!-- Only show add player button to authenticated admins -->
                             <Button v-if="isAuthenticated && isAdmin" variant="outline" size="sm"
                                     @click="showAddPlayerModal = true">
-                                <UserPlusIcon class="mr-2 h-4 w-4"/>
+                                <UserPlusIcon class="mr-1.5 h-3.5 w-3.5"/>
                                 {{ t('Add Player') }}
                             </Button>
                         </div>
                     </CardHeader>
-                    <CardContent class="p-6">
-                        <div v-if="isLoadingPlayers" class="py-4 text-center">
-                            <Spinner class="text-primary mx-auto h-6 w-6"/>
-                            <p class="mt-2 text-gray-500">{{ t('Loading players...') }}</p>
+                    <CardContent class="p-4">
+                        <div v-if="isLoadingPlayers" class="py-3 text-center">
+                            <Spinner class="text-primary mx-auto h-5 w-5"/>
+                            <p class="mt-1.5 text-sm text-gray-500">{{ t('Loading players...') }}</p>
                         </div>
 
-                        <div v-else-if="playersError" class="rounded bg-red-100 p-4 text-red-500">
+                        <div v-else-if="playersError" class="rounded bg-red-100 p-3 text-sm text-red-500">
                             {{ t('Error loading players: :error', {error: playersError.message}) }}
                         </div>
 
@@ -716,47 +721,48 @@ watch(
 
                 <!-- Matches Card - Show to everyone but limit actions for guests -->
                 <Card v-if="!league.game_multiplayer" class="shadow-lg">
-                    <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
-                        <CardTitle class="flex items-center gap-2">
-                            <GamepadIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400"/>
+                    <CardHeader class="bg-gray-50 dark:bg-gray-700/50 py-3">
+                        <CardTitle class="flex items-center gap-1.5 text-base">
+                            <GamepadIcon class="h-4 w-4 text-indigo-600 dark:text-indigo-400"/>
                             {{ t('Matches') }}
                         </CardTitle>
-                        <CardDescription>{{ t('Recent challenges and games.') }}</CardDescription>
+                        <CardDescription class="text-xs">{{ t('Recent challenges and games.') }}</CardDescription>
                     </CardHeader>
-                    <CardContent class="p-6">
+                    <CardContent class="p-4">
                         <div v-if="isLoadingMatches">
-                            <Spinner class="text-primary mx-auto h-6 w-6"/>
-                            <p class="mt-2 text-center text-gray-500">{{ t('Loading matches...') }}</p>
+                            <Spinner class="text-primary mx-auto h-5 w-5"/>
+                            <p class="mt-1.5 text-center text-sm text-gray-500">{{ t('Loading matches...') }}</p>
                         </div>
 
-                        <div v-else-if="matchesError" class="rounded bg-red-100 p-4 text-red-500">
+                        <div v-else-if="matchesError" class="rounded bg-red-100 p-3 text-sm text-red-500">
                             {{ t('Error loading matches: :error', {error: matchesError.message}) }}
                         </div>
 
-                        <div v-else-if="!matches || matches.length === 0" class="py-4 text-center text-gray-500">
+                        <div v-else-if="!matches || matches.length === 0"
+                             class="py-3 text-center text-sm text-gray-500">
                             {{ t('No matches found for this league.') }}
                         </div>
 
-                        <ul v-else class="space-y-3">
+                        <ul v-else class="space-y-2">
                             <li
                                 v-for="match in matches"
                                 :key="match.id"
                                 :class="isAuthenticated && needsConfirmation(match) ? 'border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-900/20' : ''"
-                                class="rounded-lg border p-4 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800/50"
+                                class="rounded-lg border p-3 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800/50"
                             >
                                 <div class="flex items-start justify-between">
                                     <div>
                                         <div class="flex items-center space-x-2">
-                                            <span class="text-sm text-gray-500">{{
+                                            <span class="text-xs text-gray-500">{{
                                                     match.created_at ? new Date(match.created_at).toLocaleDateString() : ''
                                                 }}</span>
                                             <span :class="getMatchStatusClass(match.status)"
-                                                  class="rounded-full px-2 py-0.5 text-xs">
+                                                  class="rounded-full px-1.5 py-0.5 text-xs">
                                                {{ getMatchStatusDisplay(match.status) }}
                                            </span>
                                             <span
                                                 v-if="isAuthenticated && match.status === 'must_be_confirmed' && needsConfirmation(match)"
-                                                class="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
+                                                class="rounded-full bg-amber-100 px-1.5 py-0.5 text-xs text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
                                             >
                                                {{ t('Needs your confirmation') }}
                                            </span>
@@ -767,12 +773,12 @@ watch(
                                                    !needsConfirmation(match) &&
                                                    (match.firstPlayer?.user?.id === user?.id || match.secondPlayer?.user?.id === user?.id)
                                                "
-                                                class="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-800 dark:bg-green-900/30 dark:text-green-300"
+                                                class="rounded-full bg-green-100 px-1.5 py-0.5 text-xs text-green-800 dark:bg-green-900/30 dark:text-green-300"
                                             >
                                                {{ t('Waiting for opponent to confirm') }}
                                            </span>
                                         </div>
-                                        <h3 class="mt-1 font-medium">
+                                        <h3 class="mt-0.5 text-sm font-medium">
                                            <span
                                                :class="{
                                                    'text-red-600 dark:text-red-400':
@@ -793,7 +799,7 @@ watch(
                                                    'Player 1'
                                                }}
                                            </span>
-                                            <span class="mx-2 font-semibold"
+                                            <span class="mx-1.5 font-semibold"
                                             >{{ match.first_user_score || 0 }} VS {{
                                                     match.second_user_score || 0
                                                 }}</span
@@ -820,7 +826,7 @@ watch(
                                            </span>
                                         </h3>
 
-                                        <p v-if="match.details" class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                                        <p v-if="match.details" class="mt-0.5 text-xs text-gray-600 dark:text-gray-400">
                                             {{ match.details }}
                                         </p>
                                     </div>
@@ -832,7 +838,7 @@ watch(
                                                (match.status === 'in_progress' || match.status === 'must_be_confirmed') &&
                                                (match.firstPlayer?.user?.id === user?.id || match.secondPlayer?.user?.id === user?.id)
                                            "
-                                            class="space-y-2"
+                                            class="space-y-1.5"
                                         >
                                             <Button
                                                 :class="
@@ -917,11 +923,11 @@ watch(
 
     <!-- Generic Message Modal -->
     <Modal :show="showGenericModal" @close="showGenericModal = false">
-        <div class="p-6">
-            <h3 class="mb-3 text-lg font-medium">{{ t('Notification') }}</h3>
-            <p>{{ genericModalMessage }}</p>
-            <div class="mt-6 flex justify-end">
-                <Button @click="showGenericModal = false">{{ t('Close') }}</Button>
+        <div class="p-4">
+            <h3 class="mb-2.5 text-base font-medium">{{ t('Notification') }}</h3>
+            <p class="text-sm">{{ genericModalMessage }}</p>
+            <div class="mt-4 flex justify-end">
+                <Button size="sm" @click="showGenericModal = false">{{ t('Close') }}</Button>
             </div>
         </div>
     </Modal>

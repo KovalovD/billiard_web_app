@@ -1,3 +1,4 @@
+<!-- resources/js/Pages/Leagues/MultiplayerGames/Show.vue -->
 <script lang="ts" setup>
 import SetModeratorModal from '@/Components/League/MultiplayerGame/SetModeratorModal.vue';
 import GameRegistry from '@/Components/League/MultiplayerGame/GameRegistry.vue';
@@ -666,14 +667,14 @@ onMounted(() => {
 <template>
     <Head :title="game ? `${game.name} - ${league?.name || t('Multiplayer Game')}` : t('Multiplayer Game')"/>
 
-    <div class="py-6 sm:py-8 lg:py-12">
+    <div class="py-4 sm:py-6 lg:py-8">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <!-- Header with actions -->
-            <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div class="flex items-center gap-4">
+            <div class="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div class="flex items-center gap-3">
                     <Link :href="`/leagues/${league?.slug}/multiplayer-games`">
                         <Button variant="outline" size="sm">
-                            <ArrowLeftIcon class="mr-2 h-4 w-4"/>
+                            <ArrowLeftIcon class="mr-1.5 h-3.5 w-3.5"/>
                             <span class="hidden sm:inline">{{ t('Back to Games') }}</span>
                             <span class="sm:hidden">{{ t('Back') }}</span>
                         </Button>
@@ -681,13 +682,13 @@ onMounted(() => {
                 </div>
 
                 <!-- Admin controls - Desktop -->
-                <div v-if="isAuthenticated && (isAdmin || isModerator)" class="hidden sm:flex flex-wrap gap-2">
-                    <span
-                        v-if="game"
-                        :class="['rounded-full px-3 py-1 text-sm font-semibold', statusBadgeClass]"
-                    >
-                        {{ statusText }}
-                    </span>
+                <div v-if="isAuthenticated && (isAdmin || isModerator)" class="hidden sm:flex flex-wrap gap-1.5">
+                   <span
+                       v-if="game"
+                       :class="['rounded-full px-2.5 py-0.5 text-xs font-semibold', statusBadgeClass]"
+                   >
+                       {{ statusText }}
+                   </span>
 
                     <Button
                         v-if="isAdmin && game?.status === 'in_progress' && game?.allow_rebuy"
@@ -695,7 +696,7 @@ onMounted(() => {
                         size="sm"
                         @click="showRebuyModal = true"
                     >
-                        <UserPlusIcon class="mr-2 h-4 w-4"/>
+                        <UserPlusIcon class="mr-1.5 h-3.5 w-3.5"/>
                         {{ t('Add/Rebuy Player') }}
                     </Button>
 
@@ -705,7 +706,7 @@ onMounted(() => {
                         size="sm"
                         @click="showFinishModal = true"
                     >
-                        <TrophyIcon class="mr-2 h-4 w-4"/>
+                        <TrophyIcon class="mr-1.5 h-3.5 w-3.5"/>
                         {{ t('Finish Game') }}
                     </Button>
                     <Button
@@ -714,7 +715,7 @@ onMounted(() => {
                         size="sm"
                         @click="handleStart"
                     >
-                        <TrophyIcon class="mr-2 h-4 w-4"/>
+                        <TrophyIcon class="mr-1.5 h-3.5 w-3.5"/>
                         {{ t('Start Game') }}
                     </Button>
                     <Button
@@ -723,7 +724,7 @@ onMounted(() => {
                         size="sm"
                         @click="showModeratorModal = true"
                     >
-                        <UserIcon class="mr-2 h-4 w-4"/>
+                        <UserIcon class="mr-1.5 h-3.5 w-3.5"/>
                         {{ t('Change Moderator') }}
                     </Button>
                     <Button
@@ -732,7 +733,7 @@ onMounted(() => {
                         size="sm"
                         @click="showAddPlayerModal = true"
                     >
-                        <UserPlusIcon class="mr-2 h-4 w-4"/>
+                        <UserPlusIcon class="mr-1.5 h-3.5 w-3.5"/>
                         {{ t('Add Player') }}
                     </Button>
                 </div>
@@ -745,24 +746,24 @@ onMounted(() => {
                     class="sm:hidden"
                     @click="showMobileAdminMenu = !showMobileAdminMenu"
                 >
-                    <UserIcon class="h-4 w-4"/>
+                    <UserIcon class="h-3.5 w-3.5"/>
                 </Button>
 
                 <!-- Status badge for mobile -->
                 <span
                     v-if="game && !isAuthenticated"
-                    :class="['rounded-full px-3 py-1 text-sm font-semibold', statusBadgeClass]"
+                    :class="['rounded-full px-2.5 py-0.5 text-xs font-semibold', statusBadgeClass]"
                 >
-                    {{ statusText }}
-                </span>
+                   {{ statusText }}
+               </span>
             </div>
 
             <!-- Mobile Admin Menu -->
             <div
                 v-if="isAuthenticated && (isAdmin || isModerator) && showMobileAdminMenu"
-                class="sm:hidden mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+                class="sm:hidden mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
             >
-                <div class="grid grid-cols-2 gap-2">
+                <div class="grid grid-cols-2 gap-1.5">
                     <Button
                         v-if="game?.status === 'completed'"
                         size="sm"
@@ -807,62 +808,62 @@ onMounted(() => {
             </div>
 
             <!-- Page Title -->
-            <div class="mb-8">
-                <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div class="mb-6">
+                <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                     <div class="flex-1">
-                        <div class="flex items-center gap-3 mb-3">
+                        <div class="flex items-center gap-2.5 mb-2">
                             <div
-                                class="h-12 w-12 rounded-full bg-indigo-600 flex items-center justify-center shadow-md">
-                                <GamepadIcon class="h-6 w-6 text-white"/>
+                                class="h-10 w-10 rounded-full bg-indigo-600 flex items-center justify-center shadow-md">
+                                <GamepadIcon class="h-5 w-5 text-white"/>
                             </div>
                             <div>
-                                <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                                <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2.5">
                                     {{ game ? game.name : t('Multiplayer Game') }}
                                     <span v-if="game"
-                                          :class="['rounded-full px-3 py-1 text-sm font-semibold', statusBadgeClass]">
-                                        {{ statusText }}
-                                    </span>
+                                          :class="['rounded-full px-2.5 py-0.5 text-xs font-semibold', statusBadgeClass]">
+                                       {{ statusText }}
+                                   </span>
                                 </h1>
-                                <p v-if="league" class="text-gray-600 dark:text-gray-400 mt-1">
+                                <p v-if="league" class="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
                                     {{ league.name }}
                                 </p>
                             </div>
                         </div>
 
                         <!-- Game Stats -->
-                        <div v-if="game" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
+                        <div v-if="game" class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
                             <div class="text-center sm:text-left">
-                                <div class="flex items-center gap-2 justify-center sm:justify-start">
-                                    <UsersIcon class="h-4 w-4 text-gray-400"/>
-                                    <span class="text-2xl font-bold text-gray-900 dark:text-white">
-                                        {{ game.total_players_count }}
-                                    </span>
+                                <div class="flex items-center gap-1.5 justify-center sm:justify-start">
+                                    <UsersIcon class="h-3.5 w-3.5 text-gray-400"/>
+                                    <span class="text-xl font-bold text-gray-900 dark:text-white">
+                                       {{ game.total_players_count }}
+                                   </span>
                                 </div>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('Total Players') }}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('Total Players') }}</p>
                             </div>
                             <div class="text-center sm:text-left">
-                                <div class="flex items-center gap-2 justify-center sm:justify-start">
-                                    <TrophyIcon class="h-4 w-4 text-gray-400"/>
-                                    <span class="text-2xl font-bold text-gray-900 dark:text-white">
-                                        {{ formatCurrency(game.entrance_fee * game.total_players_count) }}
-                                    </span>
+                                <div class="flex items-center gap-1.5 justify-center sm:justify-start">
+                                    <TrophyIcon class="h-3.5 w-3.5 text-gray-400"/>
+                                    <span class="text-xl font-bold text-gray-900 dark:text-white">
+                                       {{ formatCurrency(game.entrance_fee * game.total_players_count) }}
+                                   </span>
                                 </div>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('Prize Pool') }}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('Prize Pool') }}</p>
                             </div>
                             <div v-if="game.initial_lives" class="text-center sm:text-left">
-                                <div class="flex items-center gap-2 justify-center sm:justify-start">
-                                    <WalletIcon class="h-4 w-4 text-gray-400"/>
-                                    <span class="text-2xl font-bold text-gray-900 dark:text-white">
-                                        {{ game.initial_lives }}
-                                    </span>
+                                <div class="flex items-center gap-1.5 justify-center sm:justify-start">
+                                    <WalletIcon class="h-3.5 w-3.5 text-gray-400"/>
+                                    <span class="text-xl font-bold text-gray-900 dark:text-white">
+                                       {{ game.initial_lives }}
+                                   </span>
                                 </div>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('Initial Lives') }}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('Initial Lives') }}</p>
                             </div>
                             <div v-if="game.started_at" class="text-center sm:text-left">
-                                <div class="text-lg font-semibold text-gray-900 dark:text-white">
+                                <div class="text-base font-semibold text-gray-900 dark:text-white">
                                     {{ new Date(game.started_at).toLocaleDateString() }}
                                 </div>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('Start Date') }}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('Start Date') }}</p>
                             </div>
                         </div>
                     </div>
@@ -873,37 +874,37 @@ onMounted(() => {
             <div
                 v-if="formattedStatusMessage"
                 :class="[
-                    'mb-6 rounded-lg border p-4',
-                    !isAuthenticated
-                        ? 'border-yellow-200 bg-yellow-50 text-yellow-800 dark:border-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300'
-                        : 'border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300'
-                ]"
+                   'mb-4 rounded-lg border p-3',
+                   !isAuthenticated
+                       ? 'border-yellow-200 bg-yellow-50 text-yellow-800 dark:border-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300'
+                       : 'border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300'
+               ]"
             >
-                <p class="text-sm sm:text-base">{{ formattedStatusMessage }}</p>
+                <p class="text-sm">{{ formattedStatusMessage }}</p>
             </div>
 
             <!-- Action Feedback Message -->
             <div
                 v-if="actionFeedback"
                 :class="actionFeedback.type === 'success'
-                    ? 'border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-900/20 dark:text-green-300'
-                    : 'border-red-200 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300'"
-                class="mb-6 rounded-lg border p-4"
+                   ? 'border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-900/20 dark:text-green-300'
+                   : 'border-red-200 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300'"
+                class="mb-4 rounded-lg border p-3"
             >
-                <p class="text-sm sm:text-base">{{ actionFeedback.message }}</p>
+                <p class="text-sm">{{ actionFeedback.message }}</p>
             </div>
 
             <!-- Error message from composable -->
             <div v-if="error"
-                 class="mb-6 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
-                <p class="text-red-600 dark:text-red-400">{{ error }}</p>
+                 class="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3">
+                <p class="text-sm text-red-600 dark:text-red-400">{{ error }}</p>
             </div>
 
             <!-- Loading State -->
-            <div v-if="isLoadingLeague || isLoadingGame" class="flex justify-center items-center py-12">
+            <div v-if="isLoadingLeague || isLoadingGame" class="flex justify-center items-center py-8">
                 <div class="text-center">
-                    <Spinner class="mx-auto h-8 w-8 text-indigo-600"/>
-                    <p class="mt-2 text-gray-500">{{ t('Loading game information...') }}</p>
+                    <Spinner class="mx-auto h-6 w-6 text-indigo-600"/>
+                    <p class="mt-1.5 text-sm text-gray-500">{{ t('Loading game information...') }}</p>
                 </div>
             </div>
 
@@ -915,110 +916,110 @@ onMounted(() => {
                 </div>
 
                 <!-- Game in progress or completed -->
-                <div v-else class="space-y-6">
+                <div v-else class="space-y-4">
                     <!-- Game summary -->
                     <MultiplayerGameSummary :game="game"/>
 
                     <!-- Tab Navigation -->
-                    <nav class="mb-6 border-b border-gray-200 dark:border-gray-700 overflow-x-auto" role="navigation"
+                    <nav class="mb-4 border-b border-gray-200 dark:border-gray-700 overflow-x-auto" role="navigation"
                          aria-label="Game tabs">
-                        <div class="-mb-px flex space-x-6 sm:space-x-8 min-w-max">
+                        <div class="-mb-px flex space-x-4 sm:space-x-6 min-w-max">
                             <button
                                 :class="[
-                                    'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
-                                    activeTab === 'game'
-                                        ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                                ]"
+                                   'py-3 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
+                                   activeTab === 'game'
+                                       ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                               ]"
                                 :aria-selected="activeTab === 'game'"
                                 role="tab"
                                 @click="switchTab('game')"
                             >
-                                <span class="flex items-center gap-2">
-                                    <GamepadIcon class="h-4 w-4"/>
-                                    {{ t('Game') }}
-                                </span>
+                               <span class="flex items-center gap-1.5">
+                                   <GamepadIcon class="h-3.5 w-3.5"/>
+                                   {{ t('Game') }}
+                               </span>
                             </button>
                             <button
                                 :class="[
-                                    'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
-                                    activeTab === 'prizes'
-                                        ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                                ]"
+                                   'py-3 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
+                                   activeTab === 'prizes'
+                                       ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                               ]"
                                 :aria-selected="activeTab === 'prizes'"
                                 role="tab"
                                 @click="switchTab('prizes')"
                             >
-                                <span class="flex items-center gap-2">
-                                    <TrophyIcon class="h-4 w-4"/>
-                                    {{ t('Prizes') }}
-                                </span>
+                               <span class="flex items-center gap-1.5">
+                                   <TrophyIcon class="h-3.5 w-3.5"/>
+                                   {{ t('Prizes') }}
+                               </span>
                             </button>
                             <button
                                 :class="[
-                                    'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
-                                    activeTab === 'ratings'
-                                        ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                                ]"
+                                   'py-3 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
+                                   activeTab === 'ratings'
+                                       ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                               ]"
                                 :aria-selected="activeTab === 'ratings'"
                                 role="tab"
                                 @click="switchTab('ratings')"
                             >
-                                <span class="flex items-center gap-2">
-                                    <SmileIcon class="h-4 w-4"/>
-                                    {{ t('Rating Points') }}
-                                </span>
+                               <span class="flex items-center gap-1.5">
+                                   <SmileIcon class="h-3.5 w-3.5"/>
+                                   {{ t('Rating Points') }}
+                               </span>
                             </button>
                             <button
                                 :class="[
-                                    'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
-                                    activeTab === 'timefund'
-                                        ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                                ]"
+                                   'py-3 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
+                                   activeTab === 'timefund'
+                                       ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                               ]"
                                 :aria-selected="activeTab === 'timefund'"
                                 role="tab"
                                 @click="switchTab('timefund')"
                             >
-                                <span class="flex items-center gap-2">
-                                    <ClockIcon class="h-4 w-4"/>
-                                    {{ t('Time Fund') }}
-                                </span>
+                               <span class="flex items-center gap-1.5">
+                                   <ClockIcon class="h-3.5 w-3.5"/>
+                                   {{ t('Time Fund') }}
+                               </span>
                             </button>
                             <button
                                 :class="[
-                                    'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
-                                    activeTab === 'statistics'
-                                        ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                                ]"
+                                   'py-3 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
+                                   activeTab === 'statistics'
+                                       ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                               ]"
                                 :aria-selected="activeTab === 'statistics'"
                                 role="tab"
                                 @click="switchTab('statistics')"
                             >
-                                <span class="flex items-center gap-2">
-                                    <BarChart3Icon class="h-4 w-4"/>
-                                    {{ t('Statistics') }}
-                                </span>
+                               <span class="flex items-center gap-1.5">
+                                   <BarChart3Icon class="h-3.5 w-3.5"/>
+                                   {{ t('Statistics') }}
+                               </span>
                             </button>
                             <button
                                 v-if="isAuthenticated && (isAdmin || isModerator)"
                                 :class="[
-                                    'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
-                                    activeTab === 'widget'
-                                        ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                                ]"
+                                   'py-3 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
+                                   activeTab === 'widget'
+                                       ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                               ]"
                                 :aria-selected="activeTab === 'widget'"
                                 role="tab"
                                 @click="switchTab('widget')"
                             >
-                                <span class="flex items-center gap-2">
-                                    <MonitorIcon class="h-4 w-4"/>
-                                    {{ t('OBS Widget') }}
-                                </span>
+                               <span class="flex items-center gap-1.5">
+                                   <MonitorIcon class="h-3.5 w-3.5"/>
+                                   {{ t('OBS Widget') }}
+                               </span>
                             </button>
                         </div>
                     </nav>
@@ -1026,18 +1027,18 @@ onMounted(() => {
                     <!-- Tab Content -->
                     <main role="tabpanel">
                         <!-- Game tab -->
-                        <div v-if="activeTab === 'game'" class="space-y-6">
-                            <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                        <div v-if="activeTab === 'game'" class="space-y-4">
+                            <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
                                 <!-- Active Players Panel -->
                                 <div class="order-2 lg:order-1 lg:col-span-1">
                                     <Card class="shadow-lg" v-if="game.active_players.length > 0">
-                                        <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
-                                            <CardTitle class="flex items-center gap-2">
-                                                <UsersIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400"/>
+                                        <CardHeader class="bg-gray-50 dark:bg-gray-700/50 py-3">
+                                            <CardTitle class="flex items-center gap-1.5 text-base">
+                                                <UsersIcon class="h-4 w-4 text-indigo-600 dark:text-indigo-400"/>
                                                 {{ t('Active Players') }}
                                             </CardTitle>
                                         </CardHeader>
-                                        <CardContent class="p-6">
+                                        <CardContent class="p-4">
                                             <PlayersList
                                                 :highlight-current-turn="true"
                                                 :max-lives="game.initial_lives"
@@ -1053,25 +1054,25 @@ onMounted(() => {
                                     <!-- Eliminated Players if any -->
                                     <Card
                                         v-if="game.eliminated_players.length > 0"
-                                        :class="game.active_players.length > 0 ? 'mt-6' : ''"
+                                        :class="game.active_players.length > 0 ? 'mt-4' : ''"
                                     >
-                                        <CardHeader>
-                                            <CardTitle>{{ t('Eliminated Players') }}</CardTitle>
+                                        <CardHeader class="py-3">
+                                            <CardTitle class="text-base">{{ t('Eliminated Players') }}</CardTitle>
                                         </CardHeader>
-                                        <CardContent>
+                                        <CardContent class="p-4">
                                             <div class="divide-y">
                                                 <div
                                                     v-for="player in game.eliminated_players"
                                                     :key="player.id"
-                                                    class="flex items-center justify-between py-3"
+                                                    class="flex items-center justify-between py-2"
                                                 >
-                                                    <div class="flex items-center space-x-3">
+                                                    <div class="flex items-center space-x-2.5">
                                                         <div
-                                                            class="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">
+                                                            class="flex h-5 w-5 items-center justify-center rounded-full bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 text-xs">
                                                             {{ player.finish_position }}
                                                         </div>
                                                         <div>
-                                                            <p class="font-medium">
+                                                            <p class="text-sm font-medium">
                                                                 {{ player.user.firstname }} {{ player.user.lastname }}
                                                                 ({{ player.division }})
                                                             </p>
@@ -1080,7 +1081,7 @@ onMounted(() => {
                                                         </div>
                                                     </div>
 
-                                                    <div class="text-sm text-gray-500">
+                                                    <div class="text-xs text-gray-500">
                                                         {{ t('Eliminated:') }} {{ formatDate(player?.eliminated_at) }}
                                                     </div>
                                                 </div>
@@ -1092,7 +1093,7 @@ onMounted(() => {
                                 <!-- Game Action Panel - Only for authenticated users in progress games -->
                                 <div v-if="isAuthenticated && game.status === 'in_progress'"
                                      class="order-1 lg:order-2 lg:col-span-2">
-                                    <div v-if="selectedActingPlayer" class="space-y-4">
+                                    <div v-if="selectedActingPlayer" class="space-y-3">
                                         <GameActionPanel
                                             :is-current-turn="selectedActingPlayer.is_current_turn"
                                             :is-loading="isActionLoading"
@@ -1106,7 +1107,7 @@ onMounted(() => {
                                         />
                                     </div>
 
-                                    <div v-else-if="isModerator" class="space-y-4">
+                                    <div v-else-if="isModerator" class="space-y-3">
                                         <LivesEditorView
                                             :current-turn-player-id="game.current_turn_player_id"
                                             :is-loading="isActionLoading"
@@ -1118,7 +1119,7 @@ onMounted(() => {
                                     </div>
 
                                     <div v-else
-                                         class="rounded-lg border p-4 text-center text-gray-500 dark:text-gray-400">
+                                         class="rounded-lg border p-3 text-center text-sm text-gray-500 dark:text-gray-400">
                                         <p>{{ t('Select a player to view their actions or wait for your turn.') }}</p>
                                     </div>
                                 </div>
@@ -1127,19 +1128,19 @@ onMounted(() => {
                                 <div v-else-if="!isAuthenticated && game.status === 'in_progress'"
                                      class="order-1 lg:order-2 lg:col-span-2">
                                     <Card>
-                                        <CardHeader>
-                                            <CardTitle>{{ t('Game in Progress') }}</CardTitle>
+                                        <CardHeader class="py-3">
+                                            <CardTitle class="text-base">{{ t('Game in Progress') }}</CardTitle>
                                         </CardHeader>
-                                        <CardContent>
-                                            <div class="text-center py-8">
-                                                <p class="text-gray-600 dark:text-gray-400 mb-4">
+                                        <CardContent class="p-4">
+                                            <div class="text-center py-6">
+                                                <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
                                                     {{
                                                         t('This multiplayer game is currently in progress. You can watch the live action by viewing the player list on the left.')
                                                     }}
                                                 </p>
                                                 <Link :href="route('login')">
-                                                    <Button>
-                                                        <LogInIcon class="mr-2 h-4 w-4"/>
+                                                    <Button size="sm">
+                                                        <LogInIcon class="mr-1.5 h-3.5 w-3.5"/>
                                                         {{ t('Login to Participate') }}
                                                     </Button>
                                                 </Link>
@@ -1152,25 +1153,25 @@ onMounted(() => {
                                 <div v-if="game.status === 'completed' || game.status === 'finished'"
                                      class="order-1 lg:order-2 lg:col-span-2">
                                     <Card>
-                                        <CardHeader>
-                                            <CardTitle>{{ t('Game Results') }}</CardTitle>
+                                        <CardHeader class="py-3">
+                                            <CardTitle class="text-base">{{ t('Game Results') }}</CardTitle>
                                         </CardHeader>
-                                        <CardContent>
+                                        <CardContent class="p-4">
                                             <DataTable
                                                 :columns="resultsColumns"
                                                 :compact-mode="true"
                                                 :data="game.eliminated_players.sort((a, b) => (a.finish_position || 999) - (b.finish_position || 999))"
                                             >
                                                 <template #cell-finish_position="{ value }">
-                                                <span
-                                                    :class="{
-                                                        'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300': value.isWinner,
-                                                        'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200': !value.isWinner
-                                                    }"
-                                                    class="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium"
-                                                >
-                                                    {{ value.position }}
-                                                </span>
+                                               <span
+                                                   :class="{
+                                                       'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300': value.isWinner,
+                                                       'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200': !value.isWinner
+                                                   }"
+                                                   class="inline-flex h-5 w-5 items-center justify-center rounded-full text-xs font-medium"
+                                               >
+                                                   {{ value.position }}
+                                               </span>
                                                 </template>
                                                 <template #cell-player="{ value }">
                                                     {{ value.name }}
@@ -1178,21 +1179,21 @@ onMounted(() => {
                                                           class="ml-1 text-xs text-blue-600">{{ t('(You)') }}</span>
                                                 </template>
                                                 <template #cell-rating_points="{ value }">
-                                                <span v-if="value"
-                                                      class="rounded-full bg-blue-100 px-2 py-1 text-xs text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-                                                    +{{ value }}
-                                                </span>
+                                               <span v-if="value"
+                                                     class="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                                                   +{{ value }}
+                                               </span>
                                                     <span v-else>—</span>
                                                 </template>
                                                 <template #cell-prize_amount="{ value }">
-                                                <span v-if="value && value > 0" class="font-medium">
-                                                    {{
-                                                        (value || 0).toLocaleString('uk-UA', {
-                                                            style: 'currency',
-                                                            currency: 'UAH'
-                                                        }).replace('UAH', '₴')
-                                                    }}
-                                                </span>
+                                               <span v-if="value && value > 0" class="text-sm font-medium">
+                                                   {{
+                                                       (value || 0).toLocaleString('uk-UA', {
+                                                           style: 'currency',
+                                                           currency: 'UAH'
+                                                       }).replace('UAH', '₴')
+                                                   }}
+                                               </span>
                                                     <span v-else>—</span>
                                                 </template>
                                             </DataTable>
@@ -1203,49 +1204,49 @@ onMounted(() => {
                         </div>
 
                         <!-- Prizes tab -->
-                        <div v-if="activeTab === 'prizes'" class="space-y-6">
+                        <div v-if="activeTab === 'prizes'" class="space-y-4">
                             <PrizeSummaryCard :game="game"/>
                         </div>
 
                         <!-- Ratings tab -->
-                        <div v-if="activeTab === 'ratings'" class="space-y-6">
+                        <div v-if="activeTab === 'ratings'" class="space-y-4">
                             <RatingSummaryCard :game="game"/>
                         </div>
 
-                        <div v-if="activeTab === 'statistics'" class="space-y-6">
-                            <div v-if="isLoadingStatistics" class="text-center py-8">
-                                <Spinner class="mx-auto h-8 w-8 text-indigo-600"/>
-                                <p class="mt-2 text-gray-500">{{ t('Loading statistics...') }}</p>
+                        <div v-if="activeTab === 'statistics'" class="space-y-4">
+                            <div v-if="isLoadingStatistics" class="text-center py-6">
+                                <Spinner class="mx-auto h-6 w-6 text-indigo-600"/>
+                                <p class="mt-1.5 text-sm text-gray-500">{{ t('Loading statistics...') }}</p>
                             </div>
                             <GameStatistics v-else-if="gameStatistics" :statistics="gameStatistics"/>
-                            <div v-else class="text-center py-8 text-gray-500">
+                            <div v-else class="text-center py-6 text-sm text-gray-500">
                                 {{ t('No statistics available') }}
                             </div>
                         </div>
 
                         <!-- Time Fund tab -->
-                        <div v-if="activeTab === 'timefund'" class="space-y-6">
+                        <div v-if="activeTab === 'timefund'" class="space-y-4">
                             <TimeFundCard :game="game"/>
                         </div>
 
                         <!-- Widget tab -->
                         <div v-if="activeTab === 'widget' && isAuthenticated && (isAdmin || isModerator)"
-                             class="space-y-6">
+                             class="space-y-4">
                             <!-- Instructions -->
                             <Card class="shadow-lg">
-                                <CardHeader class="bg-blue-50 dark:bg-blue-900/20">
-                                    <CardTitle class="flex items-center gap-2">
-                                        <MonitorIcon class="h-5 w-5 text-blue-600 dark:text-blue-400"/>
+                                <CardHeader class="bg-blue-50 dark:bg-blue-900/20 py-3">
+                                    <CardTitle class="flex items-center gap-1.5 text-base">
+                                        <MonitorIcon class="h-4 w-4 text-blue-600 dark:text-blue-400"/>
                                         {{ t('OBS Stream Widget Setup') }}
                                     </CardTitle>
-                                    <CardDescription>
+                                    <CardDescription class="text-xs">
                                         {{
                                             t('Display live game information in your stream with customizable widgets.')
                                         }}
                                     </CardDescription>
                                 </CardHeader>
-                                <CardContent class="p-6">
-                                    <ol class="list-decimal list-inside space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                                <CardContent class="p-4">
+                                    <ol class="list-decimal list-inside space-y-1.5 text-sm text-gray-600 dark:text-gray-400">
                                         <li>{{ t('Choose a widget preset below or customize parameters') }}</li>
                                         <li>{{ t('Copy the widget URL') }}</li>
                                         <li>{{ t('Add Browser Source in OBS') }}</li>
@@ -1255,35 +1256,35 @@ onMounted(() => {
                             </Card>
 
                             <!-- Widget Presets -->
-                            <div class="grid gap-6 md:grid-cols-2">
+                            <div class="grid gap-4 md:grid-cols-2">
                                 <Card v-for="preset in widgetPresets" :key="preset.id" class="shadow-lg">
-                                    <CardHeader class="bg-gray-50 dark:bg-gray-700/50">
-                                        <CardTitle class="flex items-center gap-2">
-                                            <MonitorIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400"/>
+                                    <CardHeader class="bg-gray-50 dark:bg-gray-700/50 py-3">
+                                        <CardTitle class="flex items-center gap-1.5 text-base">
+                                            <MonitorIcon class="h-4 w-4 text-indigo-600 dark:text-indigo-400"/>
                                             {{ preset.name }}
                                         </CardTitle>
                                     </CardHeader>
-                                    <CardContent class="p-6">
-                                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">{{
+                                    <CardContent class="p-4">
+                                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">{{
                                                 preset.description
                                             }}</p>
 
                                         <!-- Preview details -->
-                                        <div class="mb-4 space-y-2 text-sm">
+                                        <div class="mb-3 space-y-1.5 text-sm">
                                             <div class="flex items-center justify-between">
                                                 <span class="text-gray-600 dark:text-gray-400">{{ t('Theme:') }}</span>
                                                 <span class="font-medium">{{ preset.preview.theme }}</span>
                                             </div>
                                             <div class="flex items-center justify-between">
-                                                <span class="text-gray-600 dark:text-gray-400">{{
-                                                        t('Refresh:')
-                                                    }}</span>
+                                               <span class="text-gray-600 dark:text-gray-400">{{
+                                                       t('Refresh:')
+                                                   }}</span>
                                                 <span class="font-medium">{{ preset.preview.refresh }}</span>
                                             </div>
                                             <div class="flex items-center justify-between">
-                                                <span class="text-gray-600 dark:text-gray-400">{{
-                                                        t('Features:')
-                                                    }}</span>
+                                               <span class="text-gray-600 dark:text-gray-400">{{
+                                                       t('Features:')
+                                                   }}</span>
                                                 <span class="text-xs font-medium">{{
                                                         preset.preview.features.join(', ')
                                                     }}</span>
@@ -1298,29 +1299,28 @@ onMounted(() => {
                                             @click="copyWidgetUrl(preset.id, preset.url)"
                                         >
                                             <template v-if="copiedWidgetId === preset.id">
-                                                <CheckIcon class="mr-2 h-4 w-4 text-green-600"/>
+                                                <CheckIcon class="mr-1.5 h-3.5 w-3.5 text-green-600"/>
                                                 {{ t('Copied!') }}
                                             </template>
                                             <template v-else>
-                                                <CopyIcon class="mr-2 h-4 w-4"/>
+                                                <CopyIcon class="mr-1.5 h-3.5 w-3.5"/>
                                                 {{ t('Copy Widget URL') }}
                                             </template>
                                         </Button>
 
                                         <!-- URL Preview -->
-                                        <details class="mt-3 cursor-pointer">
+                                        <details class="mt-2.5 cursor-pointer">
                                             <summary
                                                 class="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200">
                                                 {{ t('View URL') }}
                                             </summary>
-                                            <div class="mt-2 rounded bg-gray-100 p-2 dark:bg-gray-800">
+                                            <div class="mt-1.5 rounded bg-gray-100 p-1.5 dark:bg-gray-800">
                                                 <code class="text-xs break-all">{{ preset.url }}</code>
                                             </div>
                                         </details>
                                     </CardContent>
                                 </Card>
                             </div>
-
                             <!-- Custom URL Builder Info -->
                             <Card class="shadow-lg">
                                 <CardHeader class="bg-gray-50 dark:bg-gray-700/50">

@@ -1,5 +1,4 @@
-// resources/js/Pages/Players/Show.vue
-
+<!-- resources/js/Pages/Players/Show.vue -->
 <script lang="ts" setup>
 import {
     Button,
@@ -524,18 +523,18 @@ onMounted(() => {
 <template>
     <Head :title="player ? `${player.full_name} - Player Profile` : 'Player Profile'"/>
 
-    <div class="py-6 sm:py-12">
+    <div class="py-4 sm:py-6 lg:py-8">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <!-- Mobile-optimized Header -->
-            <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div class="flex items-center gap-4">
+            <div class="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div class="flex items-center gap-3">
                     <Button
                         variant="outline"
                         size="sm"
                         @click="router.visit('/players')"
                         class="flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
                     >
-                        <ArrowLeftIcon class="h-5 w-5 mr-2"/>
+                        <ArrowLeftIcon class="h-3.5 w-3.5 mr-1.5"/>
                         <span class="hidden sm:inline">{{ t('Back to Players') }}</span>
                         <span class="sm:hidden">{{ t('Back') }}</span>
                     </Button>
@@ -546,51 +545,52 @@ onMounted(() => {
                     size="sm"
                     @click="showHeadToHeadModal = true"
                 >
-                    <SwordsIcon class="mr-2 h-4 w-4"/>
+                    <SwordsIcon class="mr-1.5 h-3.5 w-3.5"/>
                     <span class="hidden sm:inline">{{ t('Head to Head') }}</span>
+                    <span class="sm:hidden">{{ t('H2H') }}</span>
                 </Button>
             </div>
 
             <!-- Loading State -->
-            <div v-if="isLoading" class="flex justify-center items-center py-12">
-                <Spinner class="h-8 w-8"/>
+            <div v-if="isLoading" class="flex justify-center items-center py-8">
+                <Spinner class="h-6 w-6"/>
             </div>
 
             <!-- Error State -->
-            <div v-else-if="error" class="text-center py-12">
-                <XCircleIcon class="h-12 w-12 text-red-500 mx-auto mb-4"/>
-                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+            <div v-else-if="error" class="text-center py-8">
+                <XCircleIcon class="h-10 w-10 text-red-500 mx-auto mb-3"/>
+                <h3 class="text-base font-medium text-gray-900 dark:text-gray-100 mb-1">
                     {{ t('Error Loading Player') }}
                 </h3>
-                <p class="text-gray-600 dark:text-gray-400">{{ error }}</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400">{{ error }}</p>
             </div>
 
             <!-- Player Content -->
-            <div v-else-if="player" class="space-y-6">
+            <div v-else-if="player" class="space-y-4">
                 <!-- Player Info Card -->
-                <Card class="mb-8 shadow-lg overflow-hidden">
+                <Card class="mb-6 shadow-lg overflow-hidden">
                     <div
-                        class="bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-800 dark:to-gray-700 p-6 sm:p-8">
-                        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                        class="bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-800 dark:to-gray-700 p-4 sm:p-6">
+                        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                             <div class="flex-1">
-                                <div class="flex items-center gap-3 mb-3">
+                                <div class="flex items-center gap-2.5 mb-2">
                                     <UserAvatar
                                         :user="player"
-                                        size="xl"
+                                        size="lg"
                                         priority="tournament_picture"
                                     />
                                     <div>
-                                        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                                        <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2.5">
                                             {{ player.full_name }}
                                             <span v-if="isCurrentUser"
-                                                  class="text-xs sm:text-sm px-2 sm:px-3 py-1 bg-blue-100 text-blue-800 rounded-full dark:bg-blue-900/30 dark:text-blue-300">
+                                                  class="text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full dark:bg-blue-900/30 dark:text-blue-300">
                                                 {{ t('You') }}
                                             </span>
                                         </h1>
                                         <div
-                                            class="flex flex-wrap items-center gap-4 text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1">
+                                            class="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400 mt-0.5">
                                             <div v-if="player.home_city" class="flex items-center">
-                                                <MapPinIcon class="h-4 w-4 mr-1"/>
+                                                <MapPinIcon class="h-3.5 w-3.5 mr-1"/>
                                                 {{
                                                     player.home_city.name
                                                 }}{{
@@ -598,11 +598,11 @@ onMounted(() => {
                                                 }}
                                             </div>
                                             <div v-if="player.home_club" class="flex items-center">
-                                                <TrophyIcon class="h-4 w-4 mr-1"/>
+                                                <TrophyIcon class="h-3.5 w-3.5 mr-1"/>
                                                 {{ player.home_club.name }}
                                             </div>
                                             <div v-if="player.created_at" class="flex items-center">
-                                                <CalendarIcon class="h-4 w-4 mr-1"/>
+                                                <CalendarIcon class="h-3.5 w-3.5 mr-1"/>
                                                 {{ t('Member since') }} {{ formatDate(player.created_at) }}
                                             </div>
                                         </div>
@@ -610,47 +610,47 @@ onMounted(() => {
                                 </div>
 
                                 <!-- Stats Grid -->
-                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 mt-6">
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
                                     <div class="text-center sm:text-left">
-                                        <div class="flex items-center gap-2 justify-center sm:justify-start">
-                                            <TrophyIcon class="h-4 w-4 text-blue-500"/>
-                                            <span class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+                                        <div class="flex items-center gap-1.5 justify-center sm:justify-start">
+                                            <TrophyIcon class="h-3.5 w-3.5 text-blue-500"/>
+                                            <span class="text-xl font-bold text-gray-900 dark:text-white">
                                                 {{ player.tournament_stats.total_tournaments }}
                                             </span>
                                         </div>
-                                        <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">
                                             {{ t('Tournaments') }}</p>
                                     </div>
                                     <div class="text-center sm:text-left">
-                                        <div class="flex items-center gap-2 justify-center sm:justify-start">
-                                            <AwardIcon class="h-4 w-4 text-green-500"/>
-                                            <span class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+                                        <div class="flex items-center gap-1.5 justify-center sm:justify-start">
+                                            <AwardIcon class="h-3.5 w-3.5 text-green-500"/>
+                                            <span class="text-xl font-bold text-gray-900 dark:text-white">
                                                 {{ player.tournament_stats.tournaments_won }}
                                             </span>
                                         </div>
-                                        <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{{
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">{{
                                                 t('Wins')
                                             }}</p>
                                     </div>
                                     <div class="text-center sm:text-left">
-                                        <div class="flex items-center gap-2 justify-center sm:justify-start">
-                                            <TrendingUpIcon class="h-4 w-4 text-yellow-500"/>
-                                            <span class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+                                        <div class="flex items-center gap-1.5 justify-center sm:justify-start">
+                                            <TrendingUpIcon class="h-3.5 w-3.5 text-yellow-500"/>
+                                            <span class="text-xl font-bold text-gray-900 dark:text-white">
                                                 {{ Math.round(player.tournament_stats.win_rate) }}%
                                             </span>
                                         </div>
-                                        <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{{
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">{{
                                                 t('Win Rate')
                                             }}</p>
                                     </div>
                                     <div class="text-center sm:text-left">
-                                        <div class="flex items-center gap-2 justify-center sm:justify-start">
-                                            <StarIcon class="h-4 w-4 text-purple-500"/>
-                                            <span class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+                                        <div class="flex items-center gap-1.5 justify-center sm:justify-start">
+                                            <StarIcon class="h-3.5 w-3.5 text-purple-500"/>
+                                            <span class="text-xl font-bold text-gray-900 dark:text-white">
                                                 {{ formatCurrency(player.tournament_stats.total_prize_won) }}
                                             </span>
                                         </div>
-                                        <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">
                                             {{ t('Total Prize') }}</p>
                                     </div>
                                 </div>
@@ -658,67 +658,71 @@ onMounted(() => {
                         </div>
                     </div>
 
-                    <CardContent class="p-6 sm:p-8">
+                    <CardContent class="p-4 sm:p-6">
                         <!-- Player Info Section -->
-                        <div class="space-y-6">
+                        <div class="space-y-4">
                             <!-- Personal Information -->
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <div v-if="player.birthdate" class="flex items-center gap-3">
-                                    <CakeIcon class="h-5 w-5 text-gray-400"/>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                <div v-if="player.birthdate" class="flex items-center gap-2.5">
+                                    <CakeIcon class="h-4 w-4 text-gray-400"/>
                                     <div>
-                                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('Age') }}</p>
-                                        <p class="font-medium">
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('Age') }}</p>
+                                        <p class="text-sm font-medium">
                                             {{ calculateAge(player.birthdate) }} {{ t('years') }}
-                                            <span class="text-sm text-gray-500 ml-1">({{
+                                            <span class="text-xs text-gray-500 ml-1">({{
                                                     formatDate(player.birthdate)
                                                 }})</span>
                                         </p>
                                     </div>
                                 </div>
 
-                                <div v-if="player.sex_value" class="flex items-center gap-3">
-                                    <UserIcon class="h-5 w-5 text-gray-400"/>
+                                <div v-if="player.sex_value" class="flex items-center gap-2.5">
+                                    <UserIcon class="h-4 w-4 text-gray-400"/>
                                     <div>
-                                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('Gender') }}</p>
-                                        <p class="font-medium">{{ player.sex_value }}</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('Gender') }}</p>
+                                        <p class="text-sm font-medium">{{ player.sex_value }}</p>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Description -->
-                            <div v-if="player.description" class="border-t pt-6">
-                                <div class="flex items-center gap-2 mb-3">
-                                    <InfoIcon class="h-5 w-5 text-gray-400"/>
-                                    <h4 class="font-semibold text-gray-900 dark:text-gray-100">{{ t('About') }}</h4>
+                            <div v-if="player.description" class="border-t pt-4">
+                                <div class="flex items-center gap-1.5 mb-2">
+                                    <InfoIcon class="h-4 w-4 text-gray-400"/>
+                                    <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{
+                                            t('About')
+                                        }}</h4>
                                 </div>
-                                <p class="text-gray-600 dark:text-gray-400 whitespace-pre-line">{{
+                                <p class="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-line">{{
                                         player.description
                                     }}</p>
                             </div>
 
                             <!-- Equipment -->
-                            <div v-if="player.equipment && player.equipment.length > 0" class="border-t pt-6">
-                                <div class="flex items-center gap-2 mb-4">
-                                    <PackageIcon class="h-5 w-5 text-gray-400"/>
-                                    <h4 class="font-semibold text-gray-900 dark:text-gray-100">{{ t('Equipment') }}</h4>
+                            <div v-if="player.equipment && player.equipment.length > 0" class="border-t pt-4">
+                                <div class="flex items-center gap-1.5 mb-3">
+                                    <PackageIcon class="h-4 w-4 text-gray-400"/>
+                                    <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{
+                                            t('Equipment')
+                                        }}</h4>
                                 </div>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     <div
                                         v-for="(item, index) in player.equipment"
                                         :key="item.id || index"
-                                        class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg"
+                                        class="flex items-center gap-2.5 p-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg"
                                     >
-                                        <span class="text-2xl">{{ getEquipmentIcon(item.type) }}</span>
+                                        <span class="text-xl">{{ getEquipmentIcon(item.type) }}</span>
                                         <div class="flex-1">
-                                            <div class="font-medium text-gray-900 dark:text-white">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-white">
                                                 {{ item.brand }}
                                                 <span v-if="item.model" class="text-gray-600 dark:text-gray-400">
                                                     - {{ item.model }}
                                                 </span>
                                             </div>
-                                            <div class="text-sm text-gray-500 dark:text-gray-400">
+                                            <div class="text-xs text-gray-500 dark:text-gray-400">
                                                 {{ getEquipmentLabel(item.type) }}
-                                                <span v-if="item.description" class="ml-2">
+                                                <span v-if="item.description" class="ml-1">
                                                     • {{ item.description }}
                                                 </span>
                                             </div>
@@ -728,12 +732,12 @@ onMounted(() => {
                             </div>
 
                             <!-- Statistics Summary -->
-                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 border-t pt-6">
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 border-t pt-4">
                                 <div>
-                                    <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                                    <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1.5">
                                         {{ t('Player Statistics') }}</h4>
-                                    <div class="space-y-2">
-                                        <div class="flex justify-between text-sm sm:text-base">
+                                    <div class="space-y-1">
+                                        <div class="flex justify-between text-sm">
                                             <span class="text-gray-600 dark:text-gray-400">{{
                                                     t('Top 3 Finishes')
                                                 }}:</span>
@@ -741,13 +745,13 @@ onMounted(() => {
                                                     player.tournament_stats.tournaments_top3
                                                 }}</span>
                                         </div>
-                                        <div class="flex justify-between text-sm sm:text-base">
+                                        <div class="flex justify-between text-sm">
                                             <span class="text-gray-600 dark:text-gray-400">{{ t('Top 3 Rate') }}:</span>
                                             <span class="font-medium">{{
                                                     Math.round(player.tournament_stats.top3_rate)
                                                 }}%</span>
                                         </div>
-                                        <div class="flex justify-between text-sm sm:text-base">
+                                        <div class="flex justify-between text-sm">
                                             <span class="text-gray-600 dark:text-gray-400">{{
                                                     t('Rating Points')
                                                 }}:</span>
@@ -758,13 +762,13 @@ onMounted(() => {
                                     </div>
                                 </div>
                                 <div>
-                                    <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">{{
+                                    <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1.5">{{
                                             t('Active Leagues')
                                         }}</h4>
                                     <div v-if="player.league_stats.filter(l => l.is_active).length > 0"
-                                         class="space-y-2">
+                                         class="space-y-1">
                                         <div v-for="league in player.league_stats.filter(l => l.is_active).slice(0, 3)"
-                                             :key="league.league_id" class="flex justify-between text-sm sm:text-base">
+                                             :key="league.league_id" class="flex justify-between text-sm">
                                             <span class="text-gray-600 dark:text-gray-400">{{
                                                     league.league_name
                                                 }}:</span>
@@ -781,13 +785,13 @@ onMounted(() => {
                 </Card>
 
                 <!-- Tab Navigation -->
-                <nav class="mb-6 border-b border-gray-200 dark:border-gray-700 overflow-x-auto" role="navigation"
+                <nav class="mb-4 border-b border-gray-200 dark:border-gray-700 overflow-x-auto" role="navigation"
                      aria-label="Player tabs">
-                    <div class="-mb-px flex space-x-6 sm:space-x-8 min-w-max">
+                    <div class="-mb-px flex space-x-4 sm:space-x-6 min-w-max">
                         <button
                             id="tab-overview"
                             :class="[
-                                'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
+                                'py-3 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
                                 activeTab === 'overview'
                                     ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
@@ -796,15 +800,15 @@ onMounted(() => {
                             role="tab"
                             @click="switchTab('overview')"
                         >
-                            <span class="flex items-center gap-2">
-                                <ChartBarIcon class="h-4 w-4"/>
+                            <span class="flex items-center gap-1.5">
+                                <ChartBarIcon class="h-3.5 w-3.5"/>
                                 {{ t('Overview') }}
                             </span>
                         </button>
                         <button
                             id="tab-tournaments"
                             :class="[
-                                'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
+                                'py-3 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
                                 activeTab === 'tournaments'
                                     ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
@@ -813,11 +817,11 @@ onMounted(() => {
                             role="tab"
                             @click="switchTab('tournaments')"
                         >
-                            <span class="flex items-center gap-2">
-                                <TrophyIcon class="h-4 w-4"/>
+                            <span class="flex items-center gap-1.5">
+                                <TrophyIcon class="h-3.5 w-3.5"/>
                                 {{ t('Tournaments') }}
                                 <span v-if="player"
-                                      class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+                                      class="text-xs bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded-full">
                                     {{ player.recent_tournaments.length }}
                                 </span>
                             </span>
@@ -825,7 +829,7 @@ onMounted(() => {
                         <button
                             id="tab-matches"
                             :class="[
-                                'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
+                                'py-3 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
                                 activeTab === 'matches'
                                     ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
@@ -834,11 +838,11 @@ onMounted(() => {
                             role="tab"
                             @click="switchTab('matches')"
                         >
-                            <span class="flex items-center gap-2">
-                                <GamepadIcon class="h-4 w-4"/>
+                            <span class="flex items-center gap-1.5">
+                                <GamepadIcon class="h-3.5 w-3.5"/>
                                 {{ t('Matches') }}
                                 <span v-if="player"
-                                      class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+                                      class="text-xs bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded-full">
                                     {{ player.recent_matches.length }}
                                 </span>
                             </span>
@@ -846,7 +850,7 @@ onMounted(() => {
                         <button
                             id="tab-ratings"
                             :class="[
-                                'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
+                                'py-3 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
                                 activeTab === 'ratings'
                                     ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
@@ -855,11 +859,11 @@ onMounted(() => {
                             role="tab"
                             @click="switchTab('ratings')"
                         >
-                            <span class="flex items-center gap-2">
-                                <StarIcon class="h-4 w-4"/>
+                            <span class="flex items-center gap-1.5">
+                                <StarIcon class="h-3.5 w-3.5"/>
                                 {{ t('Ratings') }}
                                 <span v-if="player"
-                                      class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+                                      class="text-xs bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded-full">
                                     {{ player.official_ratings.length }}
                                 </span>
                             </span>
@@ -867,7 +871,7 @@ onMounted(() => {
                         <button
                             id="tab-achievements"
                             :class="[
-                                'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
+                                'py-3 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
                                 activeTab === 'achievements'
                                     ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
@@ -876,11 +880,11 @@ onMounted(() => {
                             role="tab"
                             @click="switchTab('achievements')"
                         >
-                            <span class="flex items-center gap-2">
-                                <AwardIcon class="h-4 w-4"/>
+                            <span class="flex items-center gap-1.5">
+                                <AwardIcon class="h-3.5 w-3.5"/>
                                 {{ t('Achievements') }}
                                 <span v-if="player"
-                                      class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+                                      class="text-xs bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded-full">
                                     {{ player.achievements.length }}
                                 </span>
                             </span>
@@ -888,7 +892,7 @@ onMounted(() => {
                         <button
                             id="tab-detailed-stats"
                             :class="[
-                                'py-4 px-1 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap',
+                                'py-3 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
                                 activeTab === 'detailed-stats'
                                     ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
@@ -897,8 +901,8 @@ onMounted(() => {
                             role="tab"
                             @click="switchTab('detailed-stats')"
                         >
-                            <span class="flex items-center gap-2">
-                                <ChartBarIcon class="h-4 w-4"/>
+                            <span class="flex items-center gap-1.5">
+                                <ChartBarIcon class="h-3.5 w-3.5"/>
                                 {{ t('Detailed Stats') }}
                             </span>
                         </button>
@@ -908,28 +912,28 @@ onMounted(() => {
                 <!-- Tab Content -->
                 <main role="tabpanel">
                     <!-- Overview Tab -->
-                    <div v-if="activeTab === 'overview'" class="space-y-6">
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div v-if="activeTab === 'overview'" class="space-y-4">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                             <!-- League Stats -->
                             <Card>
-                                <CardHeader>
-                                    <CardTitle class="flex items-center gap-2">
-                                        <TrendingUpIcon class="h-5 w-5"/>
+                                <CardHeader class="py-3">
+                                    <CardTitle class="flex items-center gap-1.5 text-base">
+                                        <TrendingUpIcon class="h-4 w-4"/>
                                         {{ t('League Performance') }}
                                     </CardTitle>
                                 </CardHeader>
-                                <CardContent>
-                                    <div v-if="player.league_stats.length > 0" class="space-y-4">
+                                <CardContent class="p-4">
+                                    <div v-if="player.league_stats.length > 0" class="space-y-3">
                                         <div v-for="league in player.league_stats" :key="league.league_id"
-                                             class="border rounded-lg p-4">
-                                            <div class="flex items-center justify-between mb-2">
-                                                <h4 class="font-medium">{{ league.league_name }}</h4>
+                                             class="border rounded-lg p-3">
+                                            <div class="flex items-center justify-between mb-1.5">
+                                                <h4 class="text-sm font-medium">{{ league.league_name }}</h4>
                                                 <span
-                                                    :class="['px-2 py-1 text-xs font-medium rounded-full', getPositionBadgeClass(league.position)]">
+                                                    :class="['px-1.5 py-0.5 text-xs font-medium rounded-full', getPositionBadgeClass(league.position)]">
                                                     #{{ league.position }}
                                                 </span>
                                             </div>
-                                            <div class="grid grid-cols-2 gap-2 text-sm">
+                                            <div class="grid grid-cols-2 gap-1.5 text-xs">
                                                 <div>
                                                     <span class="text-gray-500">{{ t('Rating') }}:</span>
                                                     <span class="font-medium ml-1">{{ league.rating }}</span>
@@ -952,7 +956,7 @@ onMounted(() => {
                                             </div>
                                         </div>
                                     </div>
-                                    <div v-else class="text-center text-gray-500 py-4">
+                                    <div v-else class="text-center text-sm text-gray-500 py-3">
                                         {{ t('No league statistics available') }}
                                     </div>
                                 </CardContent>
@@ -960,32 +964,34 @@ onMounted(() => {
 
                             <!-- Recent Activity -->
                             <Card>
-                                <CardHeader>
-                                    <CardTitle class="flex items-center gap-2">
-                                        <ClockIcon class="h-5 w-5"/>
+                                <CardHeader class="py-3">
+                                    <CardTitle class="flex items-center gap-1.5 text-base">
+                                        <ClockIcon class="h-4 w-4"/>
                                         {{ t('Recent Activity') }}
                                     </CardTitle>
                                 </CardHeader>
-                                <CardContent>
-                                    <div v-if="player.recent_tournaments.length > 0" class="space-y-3">
+                                <CardContent class="p-4">
+                                    <div v-if="player.recent_tournaments.length > 0" class="space-y-2">
                                         <div v-for="tournament in player.recent_tournaments.slice(0, 5)"
                                              :key="tournament.tournament_id"
-                                             class="flex items-center justify-between p-3 border rounded-lg">
+                                             class="flex items-center justify-between p-2 border rounded-lg">
                                             <div class="flex-1 min-w-0">
-                                                <h4 class="font-medium truncate">{{ tournament.tournament_name }}</h4>
-                                                <p class="text-sm text-gray-500">{{ tournament.game_name }}</p>
+                                                <h4 class="text-sm font-medium truncate">{{
+                                                        tournament.tournament_name
+                                                    }}</h4>
+                                                <p class="text-xs text-gray-500">{{ tournament.game_name }}</p>
                                             </div>
                                             <div class="text-right">
                                                 <span
-                                                    :class="['px-2 py-1 text-xs font-medium rounded-full', getPositionBadgeClass(tournament.position)]">
+                                                    :class="['px-1.5 py-0.5 text-xs font-medium rounded-full', getPositionBadgeClass(tournament.position)]">
                                                     {{ tournament.position ? `#${tournament.position}` : t('N/A') }}
                                                 </span>
-                                                <p class="text-xs text-gray-500 mt-1">
+                                                <p class="text-xs text-gray-500 mt-0.5">
                                                     {{ formatDate(tournament.start_date) }}</p>
                                             </div>
                                         </div>
                                     </div>
-                                    <div v-else class="text-center text-gray-500 py-4">
+                                    <div v-else class="text-center text-sm text-gray-500 py-3">
                                         {{ t('No recent tournaments') }}
                                     </div>
                                 </CardContent>
@@ -994,11 +1000,11 @@ onMounted(() => {
                     </div>
 
                     <!-- Tournaments Tab -->
-                    <div v-if="activeTab === 'tournaments'" class="space-y-6">
+                    <div v-if="activeTab === 'tournaments'" class="space-y-4">
                         <Card>
-                            <CardHeader>
-                                <CardTitle class="flex items-center gap-2">
-                                    <TrophyIcon class="h-5 w-5"/>
+                            <CardHeader class="py-3">
+                                <CardTitle class="flex items-center gap-1.5 text-base">
+                                    <TrophyIcon class="h-4 w-4"/>
                                     {{ t('Recent Tournaments') }}
                                 </CardTitle>
                             </CardHeader>
@@ -1008,11 +1014,12 @@ onMounted(() => {
                                     :data="player.recent_tournaments"
                                     :empty-message="t('No tournaments found')"
                                     :mobile-card-mode="true"
+                                    :compact-mode="true"
                                 >
                                     <template #cell-tournament="{ value }">
                                         <div>
-                                            <div class="font-medium">{{ value.name }}</div>
-                                            <div class="text-sm text-gray-500">{{ value.game }}</div>
+                                            <div class="text-sm font-medium">{{ value.name }}</div>
+                                            <div class="text-xs text-gray-500">{{ value.game }}</div>
                                             <div v-if="value.location" class="text-xs text-gray-400">{{
                                                     value.location
                                                 }}
@@ -1022,22 +1029,22 @@ onMounted(() => {
 
                                     <template #cell-position="{ value }">
                                         <span v-if="value"
-                                              :class="['px-2 py-1 text-xs font-medium rounded-full', getPositionBadgeClass(value)]">
+                                              :class="['px-1.5 py-0.5 text-xs font-medium rounded-full', getPositionBadgeClass(value)]">
                                             #{{ value }}
                                         </span>
                                         <span v-else class="text-gray-400">—</span>
                                     </template>
 
                                     <template #cell-prize="{ value }">
-                                        <span class="font-medium">{{ formatCurrency(value) }}</span>
+                                        <span class="text-sm font-medium">{{ formatCurrency(value) }}</span>
                                     </template>
 
                                     <template #cell-rating_points="{ value }">
-                                        <span class="font-medium">{{ value }}</span>
+                                        <span class="text-sm font-medium">{{ value }}</span>
                                     </template>
 
                                     <template #cell-date="{ value }">
-                                        <span class="text-sm">{{ formatDate(value) }}</span>
+                                        <span class="text-xs">{{ formatDate(value) }}</span>
                                     </template>
                                 </DataTable>
                             </CardContent>
@@ -1045,11 +1052,11 @@ onMounted(() => {
                     </div>
 
                     <!-- Matches Tab -->
-                    <div v-if="activeTab === 'matches'" class="space-y-6">
+                    <div v-if="activeTab === 'matches'" class="space-y-4">
                         <Card>
-                            <CardHeader>
-                                <CardTitle class="flex items-center gap-2">
-                                    <GamepadIcon class="h-5 w-5"/>
+                            <CardHeader class="py-3">
+                                <CardTitle class="flex items-center gap-1.5 text-base">
+                                    <GamepadIcon class="h-4 w-4"/>
                                     {{ t('Recent Matches') }}
                                 </CardTitle>
                             </CardHeader>
@@ -1059,11 +1066,12 @@ onMounted(() => {
                                     :data="player.recent_matches"
                                     :empty-message="t('No matches found')"
                                     :mobile-card-mode="true"
+                                    :compact-mode="true"
                                 >
                                     <template #cell-match="{ value }">
                                         <div>
-                                            <div class="font-medium">{{ value.tournament }}</div>
-                                            <div class="text-sm text-gray-500">{{ value.game }}</div>
+                                            <div class="text-sm font-medium">{{ value.tournament }}</div>
+                                            <div class="text-xs text-gray-500">{{ value.game }}</div>
                                             <div class="text-xs text-gray-400">{{ value.stage }} - {{
                                                     value.round
                                                 }}
@@ -1072,13 +1080,13 @@ onMounted(() => {
                                     </template>
 
                                     <template #cell-opponent="{ value }">
-                                        <span class="font-medium">{{ value }}</span>
+                                        <span class="text-sm font-medium">{{ value }}</span>
                                     </template>
 
                                     <template #cell-result="{ value }">
                                         <div class="text-center">
                                             <div
-                                                :class="['font-medium', value.won ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400']">
+                                                :class="['text-sm font-medium', value.won ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400']">
                                                 {{ value.score }}
                                             </div>
                                             <div class="text-xs text-gray-500">{{ t('Best of') }} {{
@@ -1089,7 +1097,7 @@ onMounted(() => {
                                     </template>
 
                                     <template #cell-date="{ value }">
-                                        <span class="text-sm">{{ formatDateTime(value) }}</span>
+                                        <span class="text-xs">{{ formatDateTime(value) }}</span>
                                     </template>
                                 </DataTable>
                             </CardContent>
@@ -1097,27 +1105,27 @@ onMounted(() => {
                     </div>
 
                     <!-- Ratings Tab -->
-                    <div v-if="activeTab === 'ratings'" class="space-y-6">
+                    <div v-if="activeTab === 'ratings'" class="space-y-4">
                         <Card>
-                            <CardHeader>
-                                <CardTitle class="flex items-center gap-2">
-                                    <StarIcon class="h-5 w-5"/>
+                            <CardHeader class="py-3">
+                                <CardTitle class="flex items-center gap-1.5 text-base">
+                                    <StarIcon class="h-4 w-4"/>
                                     {{ t('Official Ratings') }}
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent class="p-4">
                                 <div v-if="player.official_ratings.length > 0"
-                                     class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                     class="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     <div v-for="rating in player.official_ratings" :key="rating.official_rating_id"
-                                         class="border rounded-lg p-4">
-                                        <div class="flex items-center justify-between mb-3">
-                                            <h4 class="font-medium">{{ rating.rating_name }}</h4>
+                                         class="border rounded-lg p-3">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <h4 class="text-sm font-medium">{{ rating.rating_name }}</h4>
                                             <span
-                                                :class="['px-2 py-1 text-xs font-medium rounded-full', getPositionBadgeClass(rating.position)]">
+                                                :class="['px-1.5 py-0.5 text-xs font-medium rounded-full', getPositionBadgeClass(rating.position)]">
                                                 #{{ rating.position }}
                                             </span>
                                         </div>
-                                        <div class="grid grid-cols-2 gap-3 text-sm">
+                                        <div class="grid grid-cols-2 gap-2 text-xs">
                                             <div>
                                                 <span class="text-gray-500">{{ t('Points') }}:</span>
                                                 <span class="font-medium ml-1">{{ rating.rating_points }}</span>
@@ -1137,8 +1145,8 @@ onMounted(() => {
                                                 </span>
                                             </div>
                                         </div>
-                                        <div class="mt-3 pt-3 border-t">
-                                            <div class="flex justify-between text-sm">
+                                        <div class="mt-2 pt-2 border-t">
+                                            <div class="flex justify-between text-xs">
                                                 <span class="text-gray-500">{{ t('Total Prize') }}:</span>
                                                 <span class="font-medium">{{
                                                         formatCurrency(rating.total_prize_amount)
@@ -1147,7 +1155,7 @@ onMounted(() => {
                                         </div>
                                     </div>
                                 </div>
-                                <div v-else class="text-center text-gray-500 py-8">
+                                <div v-else class="text-center text-sm text-gray-500 py-6">
                                     {{ t('No official ratings available') }}
                                 </div>
                             </CardContent>
@@ -1155,32 +1163,32 @@ onMounted(() => {
                     </div>
 
                     <!-- Achievements Tab -->
-                    <div v-if="activeTab === 'achievements'" class="space-y-6">
+                    <div v-if="activeTab === 'achievements'" class="space-y-4">
                         <Card>
-                            <CardHeader>
-                                <CardTitle class="flex items-center gap-2">
-                                    <AwardIcon class="h-5 w-5"/>
+                            <CardHeader class="py-3">
+                                <CardTitle class="flex items-center gap-1.5 text-base">
+                                    <AwardIcon class="h-4 w-4"/>
                                     {{ t('Achievements') }}
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent class="p-4">
                                 <div v-if="player.achievements.length > 0"
-                                     class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                     class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                     <div v-for="achievement in player.achievements" :key="achievement.type"
-                                         class="border rounded-lg p-4 text-center">
-                                        <div class="flex justify-center mb-3">
+                                         class="border rounded-lg p-3 text-center">
+                                        <div class="flex justify-center mb-2">
                                             <div
-                                                class="h-12 w-12 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
-                                                <MedalIcon class="h-6 w-6 text-yellow-600 dark:text-yellow-400"/>
+                                                class="h-10 w-10 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
+                                                <MedalIcon class="h-5 w-5 text-yellow-600 dark:text-yellow-400"/>
                                             </div>
                                         </div>
-                                        <h4 class="font-medium mb-1">{{ achievement.name }}</h4>
-                                        <p class="text-sm text-gray-600 dark:text-gray-400">{{
+                                        <h4 class="text-sm font-medium mb-0.5">{{ achievement.name }}</h4>
+                                        <p class="text-xs text-gray-600 dark:text-gray-400">{{
                                                 achievement.description
                                             }}</p>
                                     </div>
                                 </div>
-                                <div v-else class="text-center text-gray-500 py-8">
+                                <div v-else class="text-center text-sm text-gray-500 py-6">
                                     {{ t('No achievements unlocked yet') }}
                                 </div>
                             </CardContent>
@@ -1188,15 +1196,15 @@ onMounted(() => {
                     </div>
 
                     <!-- Detailed Stats Tab -->
-                    <div v-if="activeTab === 'detailed-stats'" class="space-y-6">
+                    <div v-if="activeTab === 'detailed-stats'" class="space-y-4">
                         <Card>
-                            <CardHeader>
-                                <CardTitle class="flex items-center gap-2">
-                                    <ChartBarIcon class="h-5 w-5"/>
+                            <CardHeader class="py-3">
+                                <CardTitle class="flex items-center gap-1.5 text-base">
+                                    <ChartBarIcon class="h-4 w-4"/>
                                     {{ t('Detailed Match Statistics') }}
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent class="p-4">
                                 <DetailedMatchStats :player-id="player.id"/>
                             </CardContent>
                         </Card>
@@ -1210,9 +1218,9 @@ onMounted(() => {
     <Dialog v-model:open="showHeadToHeadModal" @update:open="(open) => !open && resetHeadToHeadState()">
         <DialogContent class="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-                <div class="flex items-center justify-between mb-4">
-                    <DialogTitle class="flex items-center gap-2">
-                        <SwordsIcon class="h-5 w-5"/>
+                <div class="flex items-center justify-between mb-3">
+                    <DialogTitle class="flex items-center gap-1.5 text-base">
+                        <SwordsIcon class="h-4 w-4"/>
                         {{ t('Head to Head Statistics') }}
                     </DialogTitle>
                     <Button
@@ -1220,123 +1228,123 @@ onMounted(() => {
                         variant="outline"
                         size="sm"
                         @click="resetHeadToHeadState"
-                        class="flex items-center gap-2"
+                        class="flex items-center gap-1.5"
                     >
-                        <ArrowLeftIcon class="h-4 w-4"/>
+                        <ArrowLeftIcon class="h-3.5 w-3.5"/>
                         {{ t('Back to Search') }}
                     </Button>
                 </div>
             </DialogHeader>
 
-            <div v-if="!selectedOpponent" class="space-y-4">
+            <div v-if="!selectedOpponent" class="space-y-3">
                 <div>
                     <Label for="opponent-search" class="text-sm">{{ t('Search for opponent') }}</Label>
                     <div class="relative mt-1">
-                        <SearchIcon class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"/>
+                        <SearchIcon class="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400"/>
                         <Input
                             id="opponent-search"
                             type="text"
                             :placeholder="t('Enter opponent name...')"
-                            class="pl-10"
+                            class="pl-9"
                             :model-value="searchQuery"
                             @update:model-value="handleHeadToHeadSearch"
                         />
                     </div>
                 </div>
 
-                <div v-if="isSearching" class="flex justify-center py-4">
-                    <Spinner class="h-6 w-6"/>
+                <div v-if="isSearching" class="flex justify-center py-3">
+                    <Spinner class="h-5 w-5"/>
                 </div>
 
-                <div v-else-if="searchResults.length > 0" class="space-y-2 max-h-60 overflow-y-auto">
+                <div v-else-if="searchResults.length > 0" class="space-y-1.5 max-h-60 overflow-y-auto">
                     <div
                         v-for="result in searchResults"
                         :key="result.id"
-                        class="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
+                        class="flex items-center justify-between p-2.5 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
                         @click="selectOpponent(result)"
                     >
-                        <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-2.5">
                             <UserAvatar
                                 :user="result"
-                                size="md"
+                                size="sm"
                                 priority="picture"
                             />
                             <div>
-                                <div class="font-medium">{{ result.full_name }}</div>
-                                <div v-if="result.home_city || result.home_club" class="text-sm text-gray-500">
+                                <div class="text-sm font-medium">{{ result.full_name }}</div>
+                                <div v-if="result.home_city || result.home_club" class="text-xs text-gray-500">
                                     {{ [result.home_city?.name, result.home_club?.name].filter(Boolean).join(', ') }}
                                 </div>
                             </div>
                         </div>
-                        <ChevronRightIcon class="h-4 w-4 text-gray-400"/>
+                        <ChevronRightIcon class="h-3.5 w-3.5 text-gray-400"/>
                     </div>
                 </div>
 
-                <div v-else-if="searchQuery.length >= 2" class="text-center text-gray-500 py-4">
+                <div v-else-if="searchQuery.length >= 2" class="text-center text-sm text-gray-500 py-3">
                     {{ t('No players found') }}
                 </div>
             </div>
 
-            <div v-else-if="isHeadToHeadLoading" class="flex justify-center py-8">
-                <Spinner class="h-8 w-8"/>
+            <div v-else-if="isHeadToHeadLoading" class="flex justify-center py-6">
+                <Spinner class="h-6 w-6"/>
             </div>
 
-            <div v-else-if="headToHeadError" class="text-center py-8">
-                <XCircleIcon class="h-12 w-12 text-red-500 mx-auto mb-4"/>
-                <p class="text-gray-600 dark:text-gray-400">{{ headToHeadError }}</p>
+            <div v-else-if="headToHeadError" class="text-center py-6">
+                <XCircleIcon class="h-10 w-10 text-red-500 mx-auto mb-3"/>
+                <p class="text-sm text-gray-600 dark:text-gray-400">{{ headToHeadError }}</p>
             </div>
 
-            <div v-else-if="headToHeadStats" class="space-y-6">
+            <div v-else-if="headToHeadStats" class="space-y-4">
                 <!-- Summary Stats -->
                 <Card>
-                    <CardHeader>
-                        <CardTitle>{{ t('Summary') }}</CardTitle>
+                    <CardHeader class="py-3">
+                        <CardTitle class="text-base">{{ t('Summary') }}</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <CardContent class="p-4">
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                             <div class="text-center">
-                                <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                                <div class="text-xl font-bold text-blue-600 dark:text-blue-400">
                                     {{ headToHeadStats.summary.total_matches }}
                                 </div>
-                                <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('Total Matches') }}</div>
+                                <div class="text-xs text-gray-600 dark:text-gray-400">{{ t('Total Matches') }}</div>
                             </div>
                             <div class="text-center">
-                                <div class="mb-2">
+                                <div class="mb-1.5">
                                     <UserAvatar
                                         :user="headToHeadStats.players.player1"
-                                        size="md"
+                                        size="sm"
                                         priority="tournament_picture"
                                         className="mx-auto"
                                     />
                                 </div>
-                                <div class="text-2xl font-bold text-green-600 dark:text-green-400">
+                                <div class="text-xl font-bold text-green-600 dark:text-green-400">
                                     {{ headToHeadStats.summary.player1_wins }}
                                 </div>
-                                <div class="text-sm text-gray-600 dark:text-gray-400">
+                                <div class="text-xs text-gray-600 dark:text-gray-400">
                                     {{ headToHeadStats.players.player1.full_name }}
                                 </div>
                             </div>
                             <div class="text-center">
-                                <div class="mb-2">
+                                <div class="mb-1.5">
                                     <UserAvatar
                                         :user="headToHeadStats.players.player2"
-                                        size="md"
+                                        size="sm"
                                         priority="tournament_picture"
                                         className="mx-auto"
                                     />
                                 </div>
-                                <div class="text-2xl font-bold text-red-600 dark:text-red-400">
+                                <div class="text-xl font-bold text-red-600 dark:text-red-400">
                                     {{ headToHeadStats.summary.player2_wins }}
                                 </div>
-                                <div class="text-sm text-gray-600 dark:text-gray-400">
+                                <div class="text-xs text-gray-600 dark:text-gray-400">
                                     {{ headToHeadStats.players.player2.full_name }}
                                 </div>
                             </div>
                             <div class="text-center">
-                                <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                                <div class="text-xl font-bold text-purple-600 dark:text-purple-400">
                                     {{ Math.round(headToHeadStats.summary.player1_win_rate) }}%
                                 </div>
-                                <div class="text-sm text-gray-600 dark:text-gray-400">{{ t('Win Rate') }}</div>
+                                <div class="text-xs text-gray-600 dark:text-gray-400">{{ t('Win Rate') }}</div>
                             </div>
                         </div>
                     </CardContent>
@@ -1344,25 +1352,25 @@ onMounted(() => {
 
                 <!-- Match History -->
                 <Card>
-                    <CardHeader>
-                        <CardTitle>{{ t('Match History') }}</CardTitle>
+                    <CardHeader class="py-3">
+                        <CardTitle class="text-base">{{ t('Match History') }}</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <div v-if="headToHeadStats.match_history.length > 0" class="space-y-3">
+                    <CardContent class="p-4">
+                        <div v-if="headToHeadStats.match_history.length > 0" class="space-y-2">
                             <div v-for="match in headToHeadStats.match_history" :key="match.match_id"
-                                 class="border rounded-lg p-4">
-                                <div class="flex items-center justify-between mb-2">
+                                 class="border rounded-lg p-3">
+                                <div class="flex items-center justify-between mb-1">
                                     <div>
-                                        <h4 class="font-medium">{{ match.tournament_name }}</h4>
-                                        <p class="text-sm text-gray-500">{{ match.game_name }} - {{
+                                        <h4 class="text-sm font-medium">{{ match.tournament_name }}</h4>
+                                        <p class="text-xs text-gray-500">{{ match.game_name }} - {{
                                                 match.match_stage
                                             }}</p>
                                     </div>
                                     <div class="text-right">
-                                        <div class="font-medium">
+                                        <div class="text-sm font-medium">
                                             {{ match.player1_score }} - {{ match.player2_score }}
                                         </div>
-                                        <div class="text-sm text-gray-500">{{
+                                        <div class="text-xs text-gray-500">{{
                                                 formatDateTime(match.completed_at)
                                             }}
                                         </div>
@@ -1370,7 +1378,7 @@ onMounted(() => {
                                 </div>
                             </div>
                         </div>
-                        <div v-else class="text-center text-gray-500 py-4">
+                        <div v-else class="text-center text-sm text-gray-500 py-3">
                             {{ t('No match history available') }}
                         </div>
                     </CardContent>

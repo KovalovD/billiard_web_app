@@ -28,8 +28,9 @@ class PlayerDetailResource extends JsonResource
             'birthdate'          => $this->birthdate?->toISOString(),
             'description'        => $this->description,
             'equipment'          => $this->equipment ?? [],
-            'tournament_picture' => $this->tournament_picture ?? null,
-            'avatar' => $this->getPicture($this->picture),
+            'picture'            => $this->getPicture($this->picture),
+            'tournament_picture' => $this->getPicture($this->tournament_picture),
+            'avatar'             => $this->getPicture($this->picture),
             // Location
             'home_city'          => $this->whenLoaded('homeCity', fn() => [
                 'id'      => $this->homeCity->id,

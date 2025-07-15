@@ -210,7 +210,7 @@ onMounted(async () => {
 
             <main>
                 <!-- User Activity Cards - Only for authenticated users -->
-                <div v-if="isAuthenticated" class="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <div v-if="isAuthenticated" class="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2 ">
                     <UserLeaguesCard ref="userLeaguesRef" @active-matches-found="handleActiveMatchesFound"/>
                     <UserTournamentsCard ref="userTournamentsRef"
                                          @pending-applications-found="handlePendingApplicationsFound"/>
@@ -224,7 +224,7 @@ onMounted(async () => {
 
                 <!-- Recent Leagues -->
                 <section class="mb-8" aria-labelledby="recent-leagues-heading">
-                    <Card class="border-0 shadow-sm">
+                    <Card class="border-0 shadow-sm dark:bg-gray-800 dark:border-gray-700">
                         <CardHeader class="border-b border-gray-100 dark:border-gray-800 pb-4">
                             <div class="flex items-center justify-between">
                                 <div>

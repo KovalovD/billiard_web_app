@@ -120,7 +120,8 @@ onMounted(fetchUserTournaments);
 </script>
 
 <template>
-    <Card class="border-0 shadow-sm hover:shadow-md transition-shadow duration-200">
+    <Card
+        class="border-0 shadow-sm hover:shadow-md transition-shadow duration-200 dark:bg-gray-800 dark:border-gray-700">
         <CardHeader class="border-b border-gray-100 dark:border-gray-800 pb-4">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
@@ -185,7 +186,7 @@ onMounted(fetchUserTournaments);
                 </div>
 
                 <!-- Tournaments List -->
-                <div class="divide-y divide-gray-100 dark:divide-gray-800">
+                <div class="divide-y divide-gray-100 dark:divide-gray-800 dark:bg-gray-800 dark:border-gray-700">
                     <div v-for="item in activeTournaments.slice(0, 5)"
                          :key="`${item.tournament.id}-${item.participation.id}`"
                          class="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
