@@ -178,7 +178,43 @@
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {Head} from '@inertiajs/vue3';
 import {useLocale} from "@/composables/useLocale";
+import {onMounted} from "vue";
+import {useSeo} from "@/composables/useSeo";
+
+const getSeo = useSeo();
+const {setSeoMeta} = useSeo();
 
 const {t} = useLocale();
-
+onMounted(() => {
+    setSeoMeta({
+        title: t('Privacy Policy - WinnerBreak | Data Protection & User Privacy'),
+        description: t('WinnerBreak privacy policy. Learn how we collect, use, and protect your personal data. GDPR compliant. Your privacy is our priority. Last updated: :date', {date: new Date().toLocaleDateString()}),
+        keywords: [
+            'privacy policy', 'политика конфиденциальности',
+            'data protection', 'защита данных',
+            'GDPR compliance', 'соответствие GDPR',
+            'user privacy', 'конфиденциальность пользователей',
+            'personal data', 'персональные данные',
+            'WinnerBreak privacy', 'конфиденциальность ВиннерБрейк'
+        ],
+        ogType: 'article',
+        canonicalUrl: `${window.location.origin}/privacy-policy`,
+        robots: 'index, follow',
+        alternateLanguages: getSeo.getAlternateLanguageUrls('/privacy-policy'),
+        jsonLd: {
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            "name": t('Privacy Policy'),
+            "description": t('WinnerBreak privacy policy and data protection information'),
+            "url": `${window.location.origin}/privacy-policy`,
+            "inLanguage": document.documentElement.lang || 'en',
+            "isPartOf": {
+                "@type": "WebSite",
+                "name": "WinnerBreak"
+            },
+            "datePublished": "2023-01-01",
+            "dateModified": new Date().toISOString()
+        }
+    });
+});
 </script>

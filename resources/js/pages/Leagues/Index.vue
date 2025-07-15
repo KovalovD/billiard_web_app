@@ -13,7 +13,10 @@ import {computed, onMounted, onUnmounted, ref} from 'vue';
 import {useLocale} from '@/composables/useLocale';
 
 const {t} = useLocale();
-const {setSeoMeta, generateBreadcrumbJsonLd} = useSeo();
+const {
+    setSeoMeta, generateBreadcrumbJsonLd, getAlternateLanguageUrls,
+    generateGameJsonLd
+} = useSeo();
 
 defineOptions({layout: AuthenticatedLayout});
 
@@ -129,21 +132,70 @@ const handleTableKeydown = (event: Event) => {
 };
 
 onMounted(() => {
+    const currentPath = window.location.pathname;
+
     setSeoMeta({
-        title: t('Billiard Leagues - Join Competitive Pool Leagues'),
-        description: t('Browse and join competitive billiard leagues. Find leagues matching your skill level, track standings, challenge players, and improve your ELO rating.'),
-        keywords: ['billiard leagues', 'pool leagues', 'competitive billiards', 'league standings', 'ELO rating', 'billiard competition'],
+        title: t('Billiard Leagues Directory - Join Professional Pool Competitions | WinnerBreak'),
+        description: t('Discover and join competitive billiard leagues across Ukraine and worldwide. Find 8-ball, 9-ball, and snooker leagues matching your skill level. Track standings, challenge players, improve your ELO rating, and compete for prizes in professional pool leagues.'),
+        keywords: [
+            'billiard leagues', 'бильярдные лиги', 'pool leagues directory', 'каталог лиг пула',
+            'competitive billiards', 'соревновательный бильярд', 'league standings', 'турнирная таблица',
+            'ELO rating system', 'система рейтинга ELO', '8-ball leagues', 'лиги восьмерки',
+            '9-ball competitions', 'соревнования девятки', 'snooker leagues', 'снукерные лиги',
+            'Ukraine billiards', 'украинский бильярд', 'Lviv pool leagues', 'львовские лиги пула',
+            'online league registration', 'онлайн регистрация в лигу', 'amateur pool leagues', 'любительские лиги',
+            'professional billiards', 'профессиональный бильярд', 'WinnerBreak leagues', 'лиги ВиннерБрейк'
+        ],
         ogType: 'website',
+        ogImage: '/images/leagues-preview.jpg',
+        canonicalUrl: `${window.location.origin}${currentPath}`,
+        robots: 'index, follow',
+        alternateLanguages: getAlternateLanguageUrls(currentPath),
+        additionalMeta: [
+            {property: 'article:section', content: 'Sports'},
+            {property: 'article:tag', content: 'Billiards'},
+            {property: 'article:tag', content: 'Pool'},
+            {property: 'article:tag', content: 'Leagues'}
+        ],
         jsonLd: {
-            ...generateBreadcrumbJsonLd([
-                {name: t('Home'), url: window.location.origin},
-                {name: t('Leagues'), url: `${window.location.origin}/leagues`}
-            ]),
             "@context": "https://schema.org",
-            "@type": "SportsActivityLocation",
-            "name": t('WinnerBreak Billiard Leagues'),
-            "description": t('Competitive billiard leagues for all skill levels'),
-            "sport": "Billiards"
+            "@graph": [
+                generateBreadcrumbJsonLd([
+                    {name: t('Home'), url: window.location.origin},
+                    {name: t('Leagues'), url: `${window.location.origin}/leagues`}
+                ]),
+                {
+                    "@type": "CollectionPage",
+                    "name": t('Billiard Leagues Directory'),
+                    "description": t('Comprehensive directory of competitive billiard leagues'),
+                    "url": `${window.location.origin}/leagues`,
+                    "isPartOf": {
+                        "@type": "WebSite",
+                        "name": "WinnerBreak"
+                    }
+                },
+                {
+                    "@type": "SportsActivityLocation",
+                    "name": t('WinnerBreak Billiard Leagues'),
+                    "description": t('Professional and amateur billiard leagues for all skill levels'),
+                    "sport": "Billiards",
+                    "address": {
+                        "@type": "PostalAddress",
+                        "addressCountry": "Multiple Countries"
+                    },
+                    "geo": {
+                        "@type": "GeoCoordinates",
+                        "latitude": "49.839683",
+                        "longitude": "24.029717"
+                    }
+                },
+                generateGameJsonLd({
+                    name: "Billiard Leagues",
+                    description: "Competitive pool and billiard leagues",
+                    minPlayers: 2,
+                    maxPlayers: 100
+                })
+            ]
         }
     });
 
@@ -191,7 +243,6 @@ onUnmounted(() => {
                     {{ t('Create League') }}
                 </Link>
             </header>
-
 
 
             <main>

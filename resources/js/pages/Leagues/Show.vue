@@ -38,7 +38,10 @@ const props = defineProps<{
     leagueId: number | string;
 }>();
 
-const {setSeoMeta, generateBreadcrumbJsonLd, generateSportsEventJsonLd} = useSeo();
+const {
+    setSeoMeta, generateBreadcrumbJsonLd, getAlternateLanguageUrls,
+    generateSportsEventJsonLd
+} = useSeo();
 
 const {user, isAuthenticated, isAdmin} = useAuth();
 const leagues = useLeagues();
@@ -328,28 +331,79 @@ const authUserIsConfirmed = computed(() => {
 onMounted(() => {
     fetchLeague().then(() => {
         if (league.value) {
+            const currentPath = window.location.pathname;
+
             setSeoMeta({
-                title: t(':name - Billiard League Details', {name: league.value.name}),
-                description: t('league_desc', {
+                title: t('league_meta_title', {
                     name: league.value.name,
-                    details: league.value.details ? league.value.details.substring(0, 100) + '... ' : ''
+                    game: league.value.game || 'Pool'
                 }),
-                keywords: [league.value.name, 'billiard league', league.value.game || 'pool', 'league standings', 'ELO rating', 'competitive billiards'],
-                ogType: 'website',
+                description: t('league_meta_desc', {
+                    name: league.value.name,
+                    game: league.value.game || 'billiards',
+                    details: league.value.details ? league.value.details.substring(0, 100) + '... ' : '',
+                    location: 'Ukraine'
+                }),
+                keywords: [
+                    league.value.name,
+                    'billiard league', 'бильярдная лига',
+                    league.value.game || 'pool',
+                    `${league.value.game} league`, `лига ${league.value.game}`,
+                    'league standings', 'турнирная таблица',
+                    'ELO rating', 'рейтинг ELO',
+                    'competitive billiards', 'соревновательный бильярд',
+                    'challenge players', 'вызов игроков',
+                    'match results', 'результаты матчей',
+                    'league statistics', 'статистика лиги',
+                    'pool competition', 'соревнование по пулу',
+                    'billiard tournament', 'бильярдный турнир',
+                    'player rankings', 'рейтинг игроков',
+                    'WinnerBreak', 'ВиннерБрейк'
+                ],
+                ogType: 'article',
+                ogImage: league.value.picture || '/images/league-default.jpg',
+                canonicalUrl: `${window.location.origin}${currentPath}`,
+                robots: 'index, follow',
+                author: 'WinnerBreak',
+                alternateLanguages: getAlternateLanguageUrls(currentPath),
+                additionalMeta: [
+                    {property: 'article:published_time', content: league.value.started_at || new Date().toISOString()},
+                    {property: 'article:modified_time', content: league.value.updated_at || new Date().toISOString()},
+                    {property: 'article:section', content: 'Sports League'},
+                    {property: 'article:tag', content: league.value.game || 'Billiards'},
+                    {name: 'revisit-after', content: '7 days'}
+                ],
                 jsonLd: {
-                    ...generateBreadcrumbJsonLd([
-                        {name: t('Home'), url: window.location.origin},
-                        {name: t('Leagues'), url: `${window.location.origin}/leagues`},
-                        {name: league.value.name, url: `${window.location.origin}/leagues/${league.value.slug}`},
-                    ]),
-                    ...generateSportsEventJsonLd({
-                        name: league.value.name,
-                        description: league.value.details || t('Competitive billiard league'),
-                        startDate: league.value.started_at,
-                        endDate: league.value.finished_at,
-                        location: undefined,
-                        organizer: 'WinnerBreak'
-                    })
+                    "@context": "https://schema.org",
+                    "@graph": [
+                        generateBreadcrumbJsonLd([
+                            {name: t('Home'), url: window.location.origin},
+                            {name: t('Leagues'), url: `${window.location.origin}/leagues`},
+                            {name: league.value.name, url: `${window.location.origin}/leagues/${league.value.slug}`}
+                        ]),
+                        generateSportsEventJsonLd({
+                            name: league.value.name,
+                            description: league.value.details || t('Competitive billiard league'),
+                            startDate: league.value.started_at,
+                            endDate: league.value.finished_at,
+                            location: undefined,
+                            organizer: 'WinnerBreak',
+                            competitors: players.value?.map(p => ({
+                                "@type": "Person",
+                                "name": `${p.user?.firstname} ${p.user?.lastname}`
+                            })) || []
+                        }),
+                        {
+                            "@type": "SportsTeam",
+                            "name": league.value.name,
+                            "sport": league.value.game || "Billiards",
+                            "memberOf": {
+                                "@type": "SportsOrganization",
+                                "name": "WinnerBreak"
+                            },
+                            "numberOfPlayers": league.value.active_players || 0
+                        }
+                    ]
                 }
             });
         }

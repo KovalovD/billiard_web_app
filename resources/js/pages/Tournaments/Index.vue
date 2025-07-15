@@ -15,7 +15,7 @@ defineOptions({layout: AuthenticatedLayout});
 
 const {isAdmin, isAuthenticated} = useAuth();
 const {t} = useLocale();
-const {setSeoMeta, generateBreadcrumbJsonLd} = useSeo();
+const {setSeoMeta, generateBreadcrumbJsonLd, getAlternateLanguageUrls} = useSeo();
 
 const tournaments = ref<Tournament[]>([]);
 const userParticipations = ref<TournamentPlayer[]>([]);
@@ -329,21 +329,80 @@ const handleTableKeydown = (event: KeyboardEvent) => {
 };
 
 onMounted(() => {
+    const currentPath = window.location.pathname;
+
     setSeoMeta({
-        title: t('Billiard Tournaments - Professional Pool Competitions'),
-        description: t('Find and join professional billiard tournaments. Compete for prizes, earn ranking points, and advance your professional billiards career.'),
-        keywords: ['billiard tournaments', 'pool tournaments', 'professional billiards', 'tournament prizes', 'billiard competition', 'pool championship'],
+        title: t('Billiard Tournaments 2025 - Professional Pool Championships | WinnerBreak'),
+        description: t('Find and join professional billiard tournaments across Ukraine and worldwide. Compete for cash prizes, earn ranking points, qualify for championships. Register for 8-ball, 9-ball, and snooker tournaments. Entry fees from 100₴. All skill levels welcome.'),
+        keywords: [
+            'billiard tournaments 2025', 'бильярдные турниры 2025',
+            'pool tournaments Ukraine', 'турниры по пулу Украина',
+            'professional billiards championships', 'профессиональные чемпионаты по бильярду',
+            'tournament prizes', 'призы турнира',
+            'billiard competition registration', 'регистрация на соревнования по бильярду',
+            'pool championship', 'чемпионат по пулу',
+            '8-ball tournaments', 'турниры по восьмерке',
+            '9-ball competitions', 'соревнования по девятке',
+            'snooker championship', 'чемпионат по снукеру',
+            'tournament entry fees', 'вступительные взносы',
+            'cash prizes billiards', 'денежные призы бильярд',
+            'ranking points', 'рейтинговые очки',
+            'qualifier tournaments', 'квалификационные турниры',
+            'WinnerBreak tournaments', 'турниры ВиннерБрейк',
+            'Lviv billiard tournaments', 'львовские бильярдные турниры'
+        ],
         ogType: 'website',
+        ogImage: '/images/tournaments-preview.jpg',
+        canonicalUrl: `${window.location.origin}${currentPath}`,
+        robots: 'index, follow',
+        alternateLanguages: getAlternateLanguageUrls(currentPath),
+        additionalMeta: [
+            {name: 'geo.region', content: 'UA'},
+            {name: 'geo.placename', content: 'Ukraine'},
+            {name: 'geo.position', content: '49.839683;24.029717'},
+            {name: 'ICBM', content: '49.839683, 24.029717'}
+        ],
         jsonLd: {
-            ...generateBreadcrumbJsonLd([
-                {name: t('Home'), url: window.location.origin},
-                {name: t('Tournaments'), url: `${window.location.origin}/tournaments`}
-            ]),
             "@context": "https://schema.org",
-            "@type": "SportsActivityLocation",
-            "name": t('WinnerBreak Billiard Tournaments'),
-            "description": t('Professional billiard tournaments with prize pools'),
-            "sport": "Billiards"
+            "@graph": [
+                generateBreadcrumbJsonLd([
+                    {name: t('Home'), url: window.location.origin},
+                    {name: t('Tournaments'), url: `${window.location.origin}/tournaments`}
+                ]),
+                {
+                    "@type": "CollectionPage",
+                    "name": t('Billiard Tournaments Directory'),
+                    "description": t('Professional billiard tournaments with prize pools'),
+                    "url": `${window.location.origin}/tournaments`
+                },
+                {
+                    "@type": "ItemList",
+                    "itemListElement": tournaments.value.slice(0, 10).map((tournament, index) => ({
+                        "@type": "ListItem",
+                        "position": index + 1,
+                        "item": {
+                            "@type": "SportsEvent",
+                            "name": tournament.name,
+                            "startDate": tournament.start_date,
+                            "endDate": tournament.end_date,
+                            "location": tournament.city ? {
+                                "@type": "Place",
+                                "name": tournament.city.name,
+                                "address": {
+                                    "@type": "PostalAddress",
+                                    "addressLocality": tournament.city.name,
+                                    "addressCountry": tournament.city.country?.name
+                                }
+                            } : undefined,
+                            "offers": tournament.entry_fee ? {
+                                "@type": "Offer",
+                                "price": tournament.entry_fee,
+                                "priceCurrency": "UAH"
+                            } : undefined
+                        }
+                    }))
+                }
+            ]
         }
     });
 

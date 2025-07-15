@@ -25,7 +25,11 @@ defineOptions({
 
 const {user, isAuthenticated} = useAuth();
 const {t} = useLocale();
-const {setSeoMeta} = useSeo();
+const {
+    setSeoMeta, getAlternateLanguageUrls
+    , generateBreadcrumbJsonLd
+    , generateOrganizationJsonLd
+} = useSeo();
 const leagues = useLeagues();
 const recentLeagues = ref<League[]>([]);
 const isLoadingLeagues = ref(false);
@@ -62,13 +66,70 @@ const handleMatchDeclined = () => {
 };
 
 onMounted(async () => {
+    const currentPath = window.location.pathname;
+
     setSeoMeta({
-        title: isAuthenticated.value ? t('Dashboard - Your Billiard Statistics') : t('Dashboard - Billiard League Platform'),
+        title: isAuthenticated.value
+            ? t('Dashboard - Your Billiard Statistics & Performance Analytics')
+            : t('Dashboard - Professional Billiard League Management Platform'),
         description: isAuthenticated.value
-            ? t('View your billiard league statistics, upcoming matches, tournament standings, and track your progress in the competitive billiards community.')
-            : t('Access your WinnerBreak dashboard to manage leagues, tournaments, matches, and track your billiard performance.'),
-        keywords: ['billiard dashboard', 'player statistics', 'league management', 'tournament tracking', 'match history'],
-        ogType: 'website'
+            ? t('Access your comprehensive billiard statistics dashboard. Track tournament performance, league standings, ELO ratings, match history, win rates, and skill progression in real-time. Monitor your competitive billiards journey.')
+            : t('Welcome to WinnerBreak - the ultimate billiard league management platform. Join professional leagues, compete in tournaments, track rankings, challenge players, and elevate your pool game to championship level.'),
+        keywords: [
+            'billiard dashboard', 'бильярдная панель', 'pool statistics', 'статистика пула',
+            'player performance', 'производительность игрока', 'league management', 'управление лигой',
+            'tournament tracking', 'отслеживание турниров', 'match history', 'история матчей',
+            'ELO rating tracker', 'трекер рейтинга ELO', 'billiard analytics', 'аналитика бильярда',
+            'competitive pool', 'соревновательный пул', 'skill progression', 'прогресс навыков',
+            'real-time statistics', 'статистика в реальном времени', 'WinnerBreak', 'ВиннерБрейк'
+        ],
+        ogType: 'website',
+        ogImage: '/images/dashboard-preview.jpg',
+        canonicalUrl: `${window.location.origin}${currentPath}`,
+        robots: 'index, follow',
+        author: 'WinnerBreak Team',
+        publisher: 'WinnerBreak',
+        alternateLanguages: getAlternateLanguageUrls(currentPath),
+        additionalMeta: [
+            {name: 'application-name', content: 'WinnerBreak'},
+            {name: 'apple-mobile-web-app-title', content: 'WinnerBreak'},
+            {name: 'apple-mobile-web-app-capable', content: 'yes'},
+            {name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent'},
+            {name: 'format-detection', content: 'telephone=no'},
+            {name: 'mobile-web-app-capable', content: 'yes'}
+        ],
+        jsonLd: {
+            ...generateBreadcrumbJsonLd([
+                {name: t('Home'), url: window.location.origin},
+                {name: t('Dashboard'), url: `${window.location.origin}/dashboard`}
+            ]),
+            "@graph": [
+                generateOrganizationJsonLd(),
+                {
+                    "@context": "https://schema.org",
+                    "@type": "WebApplication",
+                    "name": "WinnerBreak Dashboard",
+                    "description": isAuthenticated.value
+                        ? t('Personal billiard statistics and performance tracking dashboard')
+                        : t('Professional billiard league management application'),
+                    "applicationCategory": "SportsApplication",
+                    "operatingSystem": "Web Browser",
+                    "offers": {
+                        "@type": "Offer",
+                        "price": "0",
+                        "priceCurrency": "USD"
+                    },
+                    "featureList": [
+                        t('Real-time match tracking'),
+                        t('ELO rating system'),
+                        t('Tournament management'),
+                        t('League standings'),
+                        t('Player statistics'),
+                        t('Challenge system')
+                    ]
+                }
+            ]
+        }
     });
 
     isLoadingLeagues.value = true;

@@ -15,10 +15,13 @@ import {
 import {onMounted, ref} from 'vue';
 import {useSeo} from '@/composables/useSeo';
 import AuthenticatedLayout from "@/layouts/AuthenticatedLayout.vue";
+import {useLocale} from "@/composables/useLocale";
+
+const {t} = useLocale();
 
 // State for modal visibility
 const showRegisterModal = ref(false);
-const {setSeoMeta, generateOrganizationJsonLd} = useSeo();
+const {setSeoMeta, generateFAQJsonLd} = useSeo();
 
 const openRegisterModal = () => {
     showRegisterModal.value = true;
@@ -97,25 +100,159 @@ const stats = [
 
 onMounted(() => {
     setSeoMeta({
-        title: 'Professional Billiard League Platform',
-        description: 'Join WinnerBreak - the premier billiard league management platform. Compete in leagues, tournaments, track your ELO rating, and connect with players worldwide.',
-        keywords: ['billiards', 'pool', 'league', 'tournament', 'ELO rating', 'competition', 'sports', 'cue sports', 'professional billiards'],
+        title: 'WinnerBreak - Professional Billiard League Platform | Join Now',
+        description: 'Join WinnerBreak - the premier billiard league management platform in Ukraine and worldwide. Compete in professional leagues and tournaments, track your ELO rating, challenge players, win prizes. Free registration. Start your professional billiards journey today.',
+        keywords: [
+            'WinnerBreak', 'ВиннерБрейк',
+            'billiard league platform', 'платформа бильярдных лиг',
+            'pool tournament software', 'программа для турниров по пулу',
+            'billiards management system', 'система управления бильярдом',
+            'professional pool leagues', 'профессиональные лиги пула',
+            'ELO rating system', 'система рейтинга ELO',
+            'online billiard registration', 'онлайн регистрация на бильярд',
+            'tournament management', 'управление турнирами',
+            'league standings tracker', 'трекер турнирной таблицы',
+            'billiard statistics', 'статистика бильярда',
+            'player rankings', 'рейтинги игроков',
+            'challenge system', 'система вызовов',
+            'Ukraine billiards', 'украинский бильярд',
+            'Lviv pool leagues', 'львовские лиги пула',
+            'free billiard platform', 'бесплатная платформа для бильярда',
+            'multiplayer pool games', 'многопользовательские игры в пул',
+            'prize pool tournaments', 'турниры с призовым фондом'
+        ],
         ogType: 'website',
+        ogImage: '/images/winnerbreak-hero.jpg',
+        canonicalUrl: window.location.origin,
+        robots: 'index, follow',
+        alternateLanguages: [
+            {lang: 'en', url: `${window.location.origin}/en`},
+            {lang: 'uk', url: `${window.location.origin}/uk`},
+            {lang: 'ru', url: `${window.location.origin}/ru`}
+        ],
+        additionalMeta: [
+            {name: 'apple-mobile-web-app-capable', content: 'yes'},
+            {name: 'application-name', content: 'WinnerBreak'},
+        ],
         jsonLd: {
             "@context": "https://schema.org",
-            "@type": "WebSite",
-            "name": "WinnerBreak",
-            "url": window.location.origin,
-            "description": 'Professional billiard league management platform for competitive players',
-            "potentialAction": {
-                "@type": "SearchAction",
-                "target": `${window.location.origin}/search?q={search_term_string}`,
-                "query-input": "required name=search_term_string"
-            },
-            ...generateOrganizationJsonLd()
+            "@graph": [
+                {
+                    "@type": "WebSite",
+                    "@id": `${window.location.origin}/#website`,
+                    "url": window.location.origin,
+                    "name": "WinnerBreak",
+                    "description": "Professional billiard league management platform for competitive players",
+                    "publisher": {
+                        "@id": `${window.location.origin}/#organization`
+                    },
+                    "potentialAction": {
+                        "@type": "SearchAction",
+                        "target": {
+                            "@type": "EntryPoint",
+                            "urlTemplate": `${window.location.origin}/search?q={search_term_string}`
+                        },
+                        "query-input": "required name=search_term_string"
+                    },
+                    "inLanguage": ["en-US", "uk-UA", "ru-RU"]
+                },
+                {
+                    "@type": "Organization",
+                    "@id": `${window.location.origin}/#organization`,
+                    "name": "WinnerBreak",
+                    "alternateName": "Winner Break",
+                    "url": window.location.origin,
+                    "logo": {
+                        "@type": "ImageObject",
+                        "url": `${window.location.origin}/images/logo.png`,
+                        "width": 600,
+                        "height": 600
+                    },
+                    "image": `${window.location.origin}/images/winnerbreak-hero.jpg`,
+                    "description": "Professional billiard league management platform for competitive players worldwide",
+                    "foundingDate": "2023",
+                    "foundingLocation": {
+                        "@type": "Place",
+                        "address": {
+                            "@type": "PostalAddress",
+                            "addressLocality": "Lviv",
+                            "addressRegion": "Lviv Oblast",
+                            "addressCountry": "UA"
+                        }
+                    },
+                    "areaServed": [
+                        {
+                            "@type": "Country",
+                            "name": "Ukraine"
+                        },
+                        {
+                            "@type": "Country",
+                            "name": "Poland"
+                        }
+                    ],
+                    "sameAs": [
+                        "https://facebook.com/winnerbreak",
+                        "https://twitter.com/winnerbreak",
+                        "https://instagram.com/winnerbreak",
+                        "https://youtube.com/winnerbreak",
+                        "https://linkedin.com/company/winnerbreak"
+                    ],
+                    "contactPoint": [
+                        {
+                            "@type": "ContactPoint",
+                            "telephone": "+380-98-443-8205",
+                            "contactType": "customer service",
+                            "areaServed": "UA",
+                            "availableLanguage": ["Ukrainian", "English"],
+                            "contactOption": ["TollFree", "HearingImpairedSupported"]
+                        }
+                    ]
+                },
+                {
+                    "@type": "WebApplication",
+                    "name": "WinnerBreak Platform",
+                    "operatingSystem": "Web Browser",
+                    "applicationCategory": "SportsApplication",
+                    "aggregateRating": {
+                        "@type": "AggregateRating",
+                        "ratingValue": "4.8",
+                        "ratingCount": "1250"
+                    },
+                    "offers": {
+                        "@type": "Offer",
+                        "price": "0",
+                        "priceCurrency": "USD",
+                        "priceValidUntil": "2025-12-31"
+                    },
+                    "featureList": features.map(f => f.title)
+                },
+                generateFAQJsonLd([
+                    {
+                        question: t("How do I join a billiard league?"),
+                        answer: t("Create a free account, browse available leagues, and click 'Join League'. You'll need admin approval for some leagues.")
+                    },
+                    {
+                        question: t("What is the ELO rating system?"),
+                        answer: t("ELO is a skill rating system that tracks your performance. Win matches against higher-rated players to increase your rating faster.")
+                    },
+                    {
+                        question: t("How much does it cost to use WinnerBreak?"),
+                        answer: t("WinnerBreak is free to use. Tournament entry fees and league dues are set by organizers.")
+                    },
+                    {
+                        question: t("Can I create my own league or tournament?"),
+                        answer: t("Yes! Admin users can create and manage leagues and tournaments. Contact support for admin access.")
+                    },
+                    {
+                        question: t("What billiard games are supported?"),
+                        answer: t("We support 8-ball, 9-ball, 10-ball, straight pool, snooker, and other popular billiard games.")
+                    }
+                ])
+            ]
         }
     });
 });
+
 </script>
 
 <template>

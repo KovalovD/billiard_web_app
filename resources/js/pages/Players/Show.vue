@@ -233,7 +233,7 @@ const props = defineProps<{
 
 const {isAuthenticated, user} = useAuth();
 const {t} = useLocale();
-const {setSeoMeta, generateBreadcrumbJsonLd} = useSeo();
+const {setSeoMeta, generateBreadcrumbJsonLd, getAlternateLanguageUrls} = useSeo();
 
 // State
 const player = ref<PlayerDetail | null>(null);
@@ -514,10 +514,118 @@ const matchColumns = computed(() => [
     }
 ]);
 
-// Lifecycle
 onMounted(() => {
-    fetchPlayer();
+    fetchPlayer().then(() => {
+        if (player.value) {
+            const currentPath = window.location.pathname;
+            const achievements = player.value.achievements?.map(a => a.name).join(', ') || '';
+            const topRating = player.value.official_ratings?.[0];
+
+            setSeoMeta({
+                title: t(':name - Professional Billiard Player Profile | Stats & Rankings', {
+                    name: player.value.full_name
+                }),
+                description: t('player_meta_description', {
+                    name: player.value.full_name,
+                    location: player.value.home_city ? `${player.value.home_city.name}, ${player.value.home_city.country?.name}` : 'Ukraine',
+                    wins: player.value.tournament_stats.tournaments_won,
+                    prizes: formatCurrency(player.value.tournament_stats.total_prize_won),
+                    rating: topRating ? `#${topRating.position} (${topRating.rating_points} pts)` : 'Unrated',
+                    achievements: achievements ? `Achievements: ${achievements}` : ''
+                }),
+                keywords: [
+                    player.value.full_name,
+                    `${player.value.firstname} ${player.value.lastname}`,
+                    'billiard player profile', 'профиль игрока в бильярд',
+                    'pool player statistics', 'статистика игрока в пул',
+                    player.value.home_city?.name || '',
+                    player.value.home_club?.name || '',
+                    'tournament statistics', 'турнирная статистика',
+                    'match history', 'история матчей',
+                    'player achievements', 'достижения игрока',
+                    'head to head records', 'личные встречи',
+                    'billiard equipment', 'бильярдное оборудование',
+                    'win rate statistics', 'статистика побед',
+                    'prize money earned', 'заработанные призовые',
+                    'player rankings', 'рейтинги игрока',
+                    'professional billiards', 'профессиональный бильярд',
+                    'WinnerBreak player', 'игрок ВиннерБрейк'
+                ].filter(k => k),
+                ogType: 'profile',
+                ogImage: player.value.tournament_picture || player.value.picture || player.value.avatar || '/images/player-default.jpg',
+                canonicalUrl: `${window.location.origin}${currentPath}`,
+                robots: 'index, follow',
+                author: player.value.full_name,
+                alternateLanguages: getAlternateLanguageUrls(currentPath),
+                additionalMeta: [
+                    {property: 'profile:first_name', content: player.value.firstname},
+                    {property: 'profile:last_name', content: player.value.lastname},
+                    {property: 'profile:gender', content: player.value.sex || ''},
+                    {name: 'birthdate', content: player.value.birthdate || ''},
+                    {name: 'member-since', content: player.value.created_at}
+                ],
+                jsonLd: {
+                    "@context": "https://schema.org",
+                    "@graph": [
+                        generateBreadcrumbJsonLd([
+                            {name: t('Home'), url: window.location.origin},
+                            {name: t('Players'), url: `${window.location.origin}/players`},
+                            {name: player.value.full_name, url: window.location.href}
+                        ]),
+                        {
+                            "@type": "Person",
+                            "@id": `${window.location.origin}/players/${player.value.slug}#person`,
+                            "name": player.value.full_name,
+                            "givenName": player.value.firstname,
+                            "familyName": player.value.lastname,
+                            "gender": player.value.sex,
+                            "birthDate": player.value.birthdate,
+                            "description": player.value.description || `Professional billiard player with ${player.value.tournament_stats.tournaments_won} tournament wins`,
+                            "image": player.value.tournament_picture || player.value.picture || player.value.avatar,
+                            "url": window.location.href,
+                            "homeLocation": player.value.home_city ? {
+                                "@type": "Place",
+                                "name": player.value.home_city.name,
+                                "address": {
+                                    "@type": "PostalAddress",
+                                    "addressLocality": player.value.home_city.name,
+                                    "addressCountry": player.value.home_city.country?.name
+                                }
+                            } : undefined,
+                            "affiliation": player.value.home_club ? {
+                                "@type": "SportsClub",
+                                "name": player.value.home_club.name,
+                                "address": player.value.home_club.city ? {
+                                    "@type": "PostalAddress",
+                                    "addressLocality": player.value.home_club.city.name
+                                } : undefined
+                            } : undefined,
+                            "memberOf": {
+                                "@type": "SportsOrganization",
+                                "name": "WinnerBreak"
+                            },
+                            "award": player.value.achievements?.map(a => ({
+                                "@type": "Award",
+                                "name": a.name,
+                                "description": a.description
+                            })) || [],
+                            "knowsAbout": player.value.equipment?.map(e => `${e.brand} ${e.model || ''}`).filter(Boolean) || []
+                        },
+                        {
+                            "@type": "ProfilePage",
+                            "dateCreated": player.value.created_at,
+                            "dateModified": new Date().toISOString(),
+                            "mainEntity": {
+                                "@id": `${window.location.origin}/players/${player.value.slug}#person`
+                            }
+                        }
+                    ]
+                }
+            });
+        }
+    });
 });
+
 </script>
 
 <template>

@@ -111,5 +111,11 @@ return [
     'In :days days'                                                          => 'In :days days',
     ':count matches'                                                         => ':count matches',
     'Manage your :entities'                                                  => 'Manage your :entities',
-    'Showing :count matches' => 'Showing :count matches',
+    'Showing :count matches'                                                 => 'Showing :count matches',
+    'league_meta_title'                                                      => ':name - :game Billiard League | Join & Compete',
+    'league_meta_desc'                                                       => 'Join :name league and compete in :game. :details Track your ELO rating, challenge players, view standings, and participate in competitive matches. Open to players of all skill levels in :location.',
+    ':name - :type Tournament | :date | Prize Pool :prize'                   => ':name - :type Tournament | :date | Prize Pool :prize',
+    'tournament_meta_description'                                            => 'Join :name :type billiard tournament in :city. Prize pool: :prize. :players players competing. Entry fee: :fee. Tournament dates: :dates. :details Register now and compete for cash prizes and ranking points.',
+    ':name - Professional Billiard Player Profile | Stats & Rankings'        => ':name - Professional Billiard Player Profile | Stats & Rankings',
+    'player_meta_description'                                                => ':name professional billiard player from :location. Tournament wins: :wins, Total prizes: :prizes. Official rating: :rating. View complete statistics, match history, head-to-head records, equipment, and achievements. :achievements',
 ];

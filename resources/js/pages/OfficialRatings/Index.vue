@@ -29,7 +29,7 @@ defineOptions({layout: AuthenticatedLayout});
 
 const {isAdmin, isAuthenticated, user} = useAuth();
 const {t} = useLocale();
-const {setSeoMeta, generateBreadcrumbJsonLd} = useSeo();
+const {setSeoMeta, generateBreadcrumbJsonLd, getAlternateLanguageUrls} = useSeo();
 const toastStore = useToastStore();
 
 // State
@@ -339,25 +339,83 @@ const setupTableClickHandlers = () => {
     });
 };
 
-// Lifecycle
 onMounted(() => {
+    const currentPath = window.location.pathname;
+    const tabSpecificKeywords = activeTab.value === 'one-year'
+        ? ['annual rankings', 'годовой рейтинг', 'yearly standings', 'годовая таблица', 'prize money leaders', 'лидеры по призовым']
+        : ['rating systems', 'рейтинговые системы', 'ELO rankings', 'рейтинги ELO', 'skill ratings', 'рейтинги навыков'];
+
     setSeoMeta({
-        title: activeTab.value === 'one-year' ? t('One Year Billiard Player Rankings') : t('Official Billiard Rating Systems'),
+        title: activeTab.value === 'one-year'
+            ? t('Annual Billiard Player Rankings 2025 - Top Prize Winners | WinnerBreak')
+            : t('Official Billiard Rating Systems - Professional Pool Rankings | WinnerBreak'),
         description: activeTab.value === 'one-year'
-            ? t('View the annual billiard player rankings. See top players by prize money, tournament wins, and ELO ratings across all competitions.')
-            : t('Explore official billiard rating systems and player rankings. Track professional players and their performance across different game types.'),
-        keywords: ['billiard rankings', 'pool player ratings', 'ELO rating', 'professional billiards', 'player standings', 'tournament rankings'],
+            ? t('View the 2025 annual billiard player rankings. See top players by total prize money, tournament wins, bonus points, and killer pool earnings. Track who leads the professional billiards circuit in Ukraine and worldwide.')
+            : t('Explore official billiard rating systems and professional player rankings. Track ELO ratings, tournament standings, and player performance across 8-ball, 9-ball, and snooker competitions. Join rated tournaments to improve your ranking.'),
+        keywords: [
+            ...tabSpecificKeywords,
+            'billiard rankings 2025', 'бильярдные рейтинги 2025',
+            'pool player ratings', 'рейтинги игроков в пул',
+            'professional billiards standings', 'профессиональные турнирные таблицы',
+            'tournament rankings', 'турнирные рейтинги',
+            'player statistics', 'статистика игроков',
+            'skill level ratings', 'рейтинги уровня мастерства',
+            'competitive pool rankings', 'рейтинги соревновательного пула',
+            'Ukraine billiard rankings', 'украинские бильярдные рейтинги',
+            'prize money standings', 'таблица призовых',
+            'championship points', 'чемпионские очки',
+            'WinnerBreak ratings', 'рейтинги ВиннерБрейк'
+        ],
         ogType: 'website',
+        ogImage: activeTab.value === 'one-year' ? '/images/annual-rankings.jpg' : '/images/ratings-preview.jpg',
+        canonicalUrl: `${window.location.origin}${currentPath}`,
+        robots: 'index, follow',
+        alternateLanguages: getAlternateLanguageUrls(currentPath),
+        additionalMeta: [
+            {name: 'rating:type', content: activeTab.value === 'one-year' ? 'annual' : 'systems'},
+            {name: 'sport', content: 'Billiards'},
+            {property: 'article:section', content: 'Sports Rankings'}
+        ],
         jsonLd: {
-            ...generateBreadcrumbJsonLd([
-                {name: t('Home'), url: window.location.origin},
-                {name: t('Official Ratings'), url: `${window.location.origin}/official-ratings`}
-            ]),
             "@context": "https://schema.org",
-            "@type": "SportsActivityLocation",
-            "name": t('WinnerBreak Official Ratings'),
-            "description": t('Professional billiard player rankings and rating systems'),
-            "sport": "Billiards"
+            "@graph": [
+                generateBreadcrumbJsonLd([
+                    {name: t('Home'), url: window.location.origin},
+                    {name: t('Official Ratings'), url: `${window.location.origin}/official-ratings`}
+                ]),
+                {
+                    "@type": "WebPage",
+                    "name": activeTab.value === 'one-year' ? t('Annual Player Rankings') : t('Rating Systems'),
+                    "description": activeTab.value === 'one-year'
+                        ? t('Annual billiard player rankings by prize money and achievements')
+                        : t('Official billiard rating systems and rankings'),
+                    "url": `${window.location.origin}/official-ratings${activeTab.value === 'one-year' ? '?tab=one-year' : ''}`
+                },
+                {
+                    "@type": "ItemList",
+                    "name": activeTab.value === 'one-year' ? t('Top Players by Earnings') : t('Rating Systems'),
+                    "itemListElement": activeTab.value === 'one-year'
+                        ? oneYearRatingData.value.slice(0, 10).map((player, index) => ({
+                            "@type": "ListItem",
+                            "position": index + 1,
+                            "item": {
+                                "@type": "Person",
+                                "name": player.user?.full_name || `${player.user?.firstname} ${player.user?.lastname}`,
+                                "award": `Position ${index + 1} - ${formatCurrency(player.prize_amount || 0)}`
+                            }
+                        }))
+                        : ratings.value.filter(r => r.is_active).map((rating, index) => ({
+                            "@type": "ListItem",
+                            "position": index + 1,
+                            "item": {
+                                "@type": "SportsActivityLocation",
+                                "name": rating.name,
+                                "description": rating.description,
+                                "sport": rating.game_type_name || "Billiards"
+                            }
+                        }))
+                }
+            ]
         }
     });
 
@@ -367,15 +425,6 @@ onMounted(() => {
 
 // Watch for tab changes and re-setup handlers
 watch(activeTab, (newTab) => {
-    setSeoMeta({
-        title: newTab === 'one-year' ? t('One Year Billiard Player Rankings') : t('Official Billiard Rating Systems'),
-        description: newTab === 'one-year'
-            ? t('View the annual billiard player rankings. See top players by prize money, tournament wins, and ELO ratings across all competitions.')
-            : t('Explore official billiard rating systems and player rankings. Track professional players and their performance across different game types.'),
-        keywords: ['billiard rankings', 'pool player ratings', 'ELO rating', 'professional billiards', 'player standings', 'tournament rankings'],
-        ogType: 'website'
-    });
-
     if (newTab === 'ratings') {
         nextTick(() => {
             setupTableClickHandlers();
@@ -570,12 +619,6 @@ watch(showInactiveRatings, () => {
                                                 class="h-12 w-12 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center shadow-md">
                                                 <StarIcon class="h-6 w-6 text-white"/>
                                             </div>
-                                            <UserAvatar
-                                                :user="item.user"
-                                                size="md"
-                                                priority="tournament_picture"
-                                                :exclusive-priority="true"
-                                            />
                                             <div class="ml-3">
                                                 <h3 class="text-base font-semibold text-gray-900 dark:text-white">
                                                     {{ item.name }}

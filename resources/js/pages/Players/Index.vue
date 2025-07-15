@@ -82,7 +82,7 @@ defineOptions({layout: AuthenticatedLayout});
 
 const {isAuthenticated, user} = useAuth();
 const {t} = useLocale();
-const {setSeoMeta, generateBreadcrumbJsonLd} = useSeo();
+const {setSeoMeta, generateBreadcrumbJsonLd, getAlternateLanguageUrls} = useSeo();
 
 // State
 const players = ref<Player[]>([]);
@@ -368,21 +368,94 @@ watch([
 
 // Lifecycle
 onMounted(() => {
+    const currentPath = window.location.pathname;
+
     setSeoMeta({
-        title: t('Billiard Players Directory - Find Players & Statistics'),
-        description: t('Browse professional billiard players, view statistics, tournament wins, league performance, and official ratings. Find players by location and club.'),
-        keywords: ['billiard players', 'pool players', 'player statistics', 'tournament winners', 'player rankings', 'billiard professionals'],
+        title: t('Professional Billiard Players Directory - Find Players & Stats | WinnerBreak'),
+        description: t('Browse professional billiard players directory. Search players by location, club, skill level. View detailed statistics, tournament wins, league performance, official ratings. Connect with players from Ukraine and worldwide. Find practice partners and competitors.'),
+        keywords: [
+            'billiard players directory', 'каталог игроков в бильярд',
+            'pool players database', 'база данных игроков в пул',
+            'player statistics', 'статистика игроков',
+            'tournament winners', 'победители турниров',
+            'player rankings', 'рейтинги игроков',
+            'billiard professionals', 'профессионалы бильярда',
+            'find billiard players', 'найти игроков в бильярд',
+            'player profiles', 'профили игроков',
+            'skill level search', 'поиск по уровню мастерства',
+            'club members', 'члены клуба',
+            'Ukraine billiard players', 'украинские игроки в бильярд',
+            'Lviv pool players', 'львовские игроки в пул',
+            'player achievements', 'достижения игроков',
+            'match statistics', 'статистика матчей',
+            'win rates', 'процент побед',
+            'practice partners', 'партнеры для тренировок',
+            'WinnerBreak players', 'игроки ВиннерБрейк'
+        ],
         ogType: 'website',
+        ogImage: '/images/players-directory.jpg',
+        canonicalUrl: `${window.location.origin}${currentPath}`,
+        robots: 'index, follow',
+        alternateLanguages: getAlternateLanguageUrls(currentPath),
+        additionalMeta: [
+            {name: 'total-players', content: aggregatedStats.value?.total_players?.toString() || '0'},
+            {property: 'directory:type', content: 'sports_players'},
+            {property: 'sport:name', content: 'Billiards'}
+        ],
         jsonLd: {
-            ...generateBreadcrumbJsonLd([
-                {name: t('Home'), url: window.location.origin},
-                {name: t('Players'), url: `${window.location.origin}/players`}
-            ]),
             "@context": "https://schema.org",
-            "@type": "SportsActivityLocation",
-            "name": t('WinnerBreak Players Directory'),
-            "description": t('Professional billiard players database'),
-            "sport": "Billiards"
+            "@graph": [
+                generateBreadcrumbJsonLd([
+                    {name: t('Home'), url: window.location.origin},
+                    {name: t('Players'), url: `${window.location.origin}/players`}
+                ]),
+                {
+                    "@type": "CollectionPage",
+                    "name": t('Billiard Players Directory'),
+                    "description": t('Comprehensive directory of professional billiard players'),
+                    "url": `${window.location.origin}/players`,
+                    "numberOfItems": aggregatedStats.value?.total_players || 0
+                },
+                {
+                    "@type": "Dataset",
+                    "name": "WinnerBreak Players Database",
+                    "description": "Database of professional and amateur billiard players with statistics",
+                    "license": "https://creativecommons.org/licenses/by-sa/4.0/",
+                    "creator": {
+                        "@type": "Organization",
+                        "name": "WinnerBreak"
+                    },
+                    "distribution": {
+                        "@type": "DataDownload",
+                        "encodingFormat": "application/json",
+                        "contentUrl": `${window.location.origin}/api/players`
+                    },
+                    "includedInDataCatalog": {
+                        "@type": "DataCatalog",
+                        "name": "WinnerBreak Sports Data"
+                    }
+                },
+                {
+                    "@type": "ItemList",
+                    "itemListElement": players.value.slice(0, 10).map((player, index) => ({
+                        "@type": "ListItem",
+                        "position": index + 1,
+                        "item": {
+                            "@type": "Person",
+                            "name": player.full_name,
+                            "url": `${window.location.origin}/players/${player.slug}`,
+                            "affiliation": player.home_club ? {
+                                "@type": "Organization",
+                                "name": player.home_club.name
+                            } : undefined,
+                            "homeLocation": player.home_city ? {
+                                "@type": "Place",
+                                "name": player.home_city.name
+                            } : undefined
+                        }
+                    }))
+                }
+            ]
         }
     });
 

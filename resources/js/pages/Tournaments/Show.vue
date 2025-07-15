@@ -60,7 +60,12 @@ const isLoadingMatches = ref(false);
 const isLoadingGroups = ref(false);
 const error = ref<string | null>(null);
 const showTablesModal = ref(false);
-const {setSeoMeta, generateBreadcrumbJsonLd, generateSportsEventJsonLd} = useSeo();
+const {
+    setSeoMeta,
+    generateBreadcrumbJsonLd,
+    getAlternateLanguageUrls,
+    generateGameJsonLd
+} = useSeo();
 
 // Olympic bracket tab state
 const activeOlympicTab = ref<'first-stage' | 'olympic-stage'>('first-stage');
@@ -674,48 +679,115 @@ watch([() => confirmedPlayers.value, () => isLoadingPlayers.value], () => {
 onMounted(() => {
     fetchTournament().then(() => {
         if (tournament.value) {
+            const currentPath = window.location.pathname;
+            const prizeAmount = tournament.value.prize_pool || 0;
+
             setSeoMeta({
-                title: t(':name - :type Billiard Tournament', {
+                title: t(':name - :type Tournament | :date | Prize Pool :prize', {
                     name: tournament.value.name,
-                    type: tournament.value.tournament_type_display
-                }),
-                description: t('tournament_desc', {
-                    name: tournament.value.name,
-                    city: tournament.value.city ? `${tournament.value.city.name}, ${tournament.value.city.country?.name}` : t('Multiple locations'),
                     type: tournament.value.tournament_type_display,
-                    prize: tournament.value.prize_pool,
-                    players: tournament.value.confirmed_players_count
+                    date: formatDate(tournament.value.start_date),
+                    prize: formatCurrency(prizeAmount)
+                }),
+                description: t('tournament_meta_description', {
+                    name: tournament.value.name,
+                    type: tournament.value.tournament_type_display,
+                    city: tournament.value.city ? `${tournament.value.city.name}, ${tournament.value.city.country?.name}` : t('Multiple locations'),
+                    prize: formatCurrency(prizeAmount),
+                    players: tournament.value.confirmed_players_count,
+                    fee: tournament.value.entry_fee ? formatCurrency(tournament.value.entry_fee) : t('Free'),
+                    dates: `${formatDate(tournament.value.start_date)} - ${formatDate(tournament.value.end_date)}`,
+                    details: tournament.value.details ? tournament.value.details.substring(0, 80) + '... ' : ''
                 }),
                 keywords: [
                     tournament.value.name,
-                    'billiard tournament',
+                    'billiard tournament', 'бильярдный турнир',
                     tournament.value.game?.name || 'pool tournament',
+                    tournament.value.tournament_type_display,
                     tournament.value.city?.name || '',
-                    'prize pool',
-                    'professional billiards'
+                    tournament.value.city?.country?.name || '',
+                    'prize pool ' + formatCurrency(prizeAmount),
+                    'tournament registration', 'регистрация на турнир',
+                    'professional billiards', 'профессиональный бильярд',
+                    'cash prizes', 'денежные призы',
+                    'ranking points', 'рейтинговые очки',
+                    'billiard championship', 'чемпионат по бильярду',
+                    'pool competition', 'соревнование по пулу',
+                    tournament.value.club?.name || '',
+                    'WinnerBreak tournament', 'турнир ВиннерБрейк'
                 ].filter(k => k),
-                ogType: 'website',
+                ogType: 'event',
+                ogImage: tournament.value.picture || '/images/tournament-default.jpg',
+                canonicalUrl: `${window.location.origin}${currentPath}`,
+                robots: 'index, follow',
+                author: tournament.value.organizer || 'WinnerBreak',
+                alternateLanguages: getAlternateLanguageUrls(currentPath),
+                additionalMeta: [
+                    {property: 'event:start_time', content: tournament.value.start_date},
+                    {property: 'event:end_time', content: tournament.value.end_date},
+                    {property: 'place:location:latitude', content: '49.839683'},
+                    {property: 'place:location:longitude', content: '24.029717'},
+                    {name: 'price', content: tournament.value.entry_fee?.toString() || '0'},
+                    {name: 'priceCurrency', content: 'UAH'}
+                ],
                 jsonLd: {
-                    ...generateBreadcrumbJsonLd([
-                        {name: t('Home'), url: window.location.origin},
-                        {name: t('Tournaments'), url: `${window.location.origin}/tournaments`},
+                    "@context": "https://schema.org",
+                    "@graph": [
+                        generateBreadcrumbJsonLd([
+                            {name: t('Home'), url: window.location.origin},
+                            {name: t('Tournaments'), url: `${window.location.origin}/tournaments`},
+                            {
+                                name: tournament.value.name,
+                                url: `${window.location.origin}/tournaments/${tournament.value.slug}`
+                            }
+                        ]),
                         {
-                            name: tournament.value.name,
-                            url: `${window.location.origin}/tournaments/${tournament.value.slug}`
-                        }
-                    ]),
-                    ...generateSportsEventJsonLd({
-                        name: tournament.value.name,
-                        description: tournament.value.details || t('Professional billiard tournament'),
-                        startDate: tournament.value.start_date,
-                        endDate: tournament.value.end_date,
-                        location: tournament.value.city ? {
-                            name: tournament.value.club?.name || tournament.value.city.name,
-                            city: tournament.value.city.name,
-                            country: tournament.value.city.country?.name
-                        } : undefined,
-                        organizer: tournament.value.organizer || 'WinnerBreak'
-                    })
+                            "@type": "SportsEvent",
+                            "@id": `${window.location.origin}/tournaments/${tournament.value.slug}#event`,
+                            "name": tournament.value.name,
+                            "description": tournament.value.details || t('Professional billiard tournament'),
+                            "startDate": tournament.value.start_date,
+                            "endDate": tournament.value.end_date,
+                            "eventStatus": "https://schema.org/EventScheduled",
+                            "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+                            "location": tournament.value.city ? {
+                                "@type": "Place",
+                                "name": tournament.value.club?.name || tournament.value.city.name,
+                                "address": {
+                                    "@type": "PostalAddress",
+                                    "streetAddress": tournament.value.club?.address || "",
+                                    "addressLocality": tournament.value.city.name,
+                                    "addressCountry": tournament.value.city.country?.name
+                                }
+                            } : undefined,
+                            "organizer": {
+                                "@type": "Organization",
+                                "name": tournament.value.organizer || 'WinnerBreak',
+                                "url": window.location.origin
+                            },
+                            "performer": players.value?.map(p => ({
+                                "@type": "Person",
+                                "name": `${p.user?.firstname} ${p.user?.lastname}`
+                            })) || [],
+                            "offers": {
+                                "@type": "Offer",
+                                "url": `${window.location.origin}/tournaments/${tournament.value.slug}`,
+                                "price": tournament.value.entry_fee || 0,
+                                "priceCurrency": "UAH",
+                                "availability": tournament.value.status === 'upcoming' ? "https://schema.org/InStock" : "https://schema.org/SoldOut",
+                                "validFrom": tournament.value.created_at
+                            },
+                            "sport": tournament.value.game?.name || "Billiards",
+                            "maximumAttendeeCapacity": tournament.value.max_participants || 100,
+                            "remainingAttendeeCapacity": tournament.value.max_participants ? tournament.value.max_participants - tournament.value.confirmed_players_count : 100
+                        },
+                        generateGameJsonLd({
+                            name: tournament.value.game?.name || "Billiards",
+                            description: tournament.value.tournament_type_display,
+                            minPlayers: 2,
+                            maxPlayers: tournament.value.max_participants || 64
+                        })
+                    ]
                 }
             });
         }
@@ -724,6 +796,7 @@ onMounted(() => {
     fetchMatches();
     fetchGroups();
 });
+
 </script>
 
 <template>
