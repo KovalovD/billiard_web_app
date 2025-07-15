@@ -72,47 +72,54 @@
 <body class="font-sans antialiased">
 @inertia
 
-<!-- Schema.org Organization Data -->
-{{--<script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "Organization",
-        "name": "WinnerBreak",
-        "url": "{{ url('/') }}",
-        "logo": "{{ asset('logo.png') }}",
-        "description": "Professional billiard league management platform for competitive players",
-        "sameAs": [
-            "https://facebook.com/winnerbreak",
-            "https://twitter.com/winnerbreak",
-            "https://instagram.com/winnerbreak"
+@php
+    /* ---------- Schema.org дані ---------- */
+    $organizationSchema = [
+        '@context'   => 'https://schema.org',
+        '@type'      => 'Organization',
+        'name'       => 'WinnerBreak',
+        'url'        => url('/'),
+        'logo'       => asset('logo.png'),
+        'description'=> 'Professional billiard league management platform for competitive players',
+        'sameAs'     => [
+            'https://facebook.com/winnerbreak',
+            'https://twitter.com/winnerbreak',
+            'https://instagram.com/winnerbreak',
         ],
-        "address": {
-            "@type": "PostalAddress",
-            "addressLocality": "Lviv",
-            "addressCountry": "UA"
-        }
-    }
-</script>
+        'address'    => [
+            '@type'           => 'PostalAddress',
+            'addressLocality' => 'Lviv',
+            'addressCountry'  => 'UA',
+        ],
+    ];
 
-<!-- WebSite Schema for Sitelinks Search Box -->
+    $websiteSchema = [
+        '@context'        => 'https://schema.org',
+        '@type'           => 'WebSite',
+        'name'            => 'WinnerBreak',
+        'url'             => url('/'),
+        'potentialAction' => [
+            '@type'       => 'SearchAction',
+            'target'      => [
+                '@type'       => 'EntryPoint',
+                'urlTemplate' => url('/search') . '?q={search_term_string}',
+            ],
+            'query-input' => 'required name=search_term_string',
+        ],
+    ];
+@endphp
+
+    <!-- Organization -->
 <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        "name": "WinnerBreak",
-        "url": "{{ url('/') }}",
-        "potentialAction": {
-            "@type": "SearchAction",
-            "target": {
-                "@type": "EntryPoint",
-                "urlTemplate": "{{ url('/search') }}?q={search_term_string}"
-            },
-            "query-input": "required name=search_term_string"
-        }
-    }
+    {!! json_encode($organizationSchema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) !!}
 </script>
 
-<!-- Additional Scripts for Analytics -->
+<!-- WebSite (sitelinks search box) -->
+<script type="application/ld+json">
+    {!! json_encode($websiteSchema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) !!}
+</script>
+
+
 @production
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-KVT7YEV29R"></script>
@@ -127,6 +134,6 @@
 
         gtag('config', 'G-KVT7YEV29R');
     </script>
-@endproduction--}}
+@endproduction
 </body>
 </html>
