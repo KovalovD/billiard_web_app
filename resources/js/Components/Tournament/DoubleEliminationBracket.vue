@@ -1,4 +1,3 @@
-resources/js/Components/Tournament/DoubleElimination.vue
 <script lang="ts" setup>
 import {computed, provide, ref, watch} from 'vue'
 import type {Tournament, TournamentMatch} from '@/types/api'
@@ -21,7 +20,7 @@ const emit = defineEmits<{
 
 const {t} = useLocale()
 
-// Use more compact dimensions
+// Compact dimensions
 const nodeWidth = 180
 const nodeHeight = 50
 const hGap = 100
@@ -63,7 +62,7 @@ const upperBracketMatches = computed(() => {
         round_16: 3,
         quarterfinals: 4,
         semifinals: 5,
-        finals: 6
+        finals: 6,
     }
     return props.matches
         .filter(m => m.bracket_side === 'upper' && m.round && roundMap[m.round] !== undefined)
@@ -74,7 +73,13 @@ const upperBracketMatches = computed(() => {
 const lowerBracketMatches = computed(() => {
     return props.matches
         .filter(m => m.bracket_side === 'lower')
-        .map(m => transformMatch(m, 'lower', parseInt(m.match_code.split('_R')[1]?.split('M')[0] || '0') - 1))
+        .map(m =>
+            transformMatch(
+                m,
+                'lower',
+                parseInt(m.match_code.split('_R')[1]?.split('M')[0] || '0') - 1,
+            ),
+        )
         .sort((a, b) => a.round - b.round || a.slot - b.slot)
 })
 
@@ -124,10 +129,7 @@ const positionedUpperMatches = computed(() => {
         const spacing = Math.pow(2, roundIndex) * block
         roundMatches.forEach((match, matchIndex) => {
             const x = roundIndex * (nodeWidth + hGap)
-            const y =
-                40 +
-                matchIndex * spacing +
-                (spacing - block) / 2
+            const y = 40 + matchIndex * spacing + (spacing - block) / 2
             list.push({...match, x, y})
         })
     })
@@ -154,7 +156,7 @@ const positionedGrandFinals = computed(() => {
     const maxLowerX = Math.max(...positionedLowerMatches.value.map(m => m.x), 0)
     const grandFinalX = Math.max(maxUpperX, maxLowerX) + nodeWidth + hGap * 1.5
     const upperFinal = positionedUpperMatches.value.find(
-        m => m.round === upperRounds.value.length - 1
+        m => m.round === upperRounds.value.length - 1,
     )
     const lowerFinal = positionedLowerMatches.value[positionedLowerMatches.value.length - 1]
     let centerY = 40
@@ -166,14 +168,14 @@ const positionedGrandFinals = computed(() => {
         y:
             centerY +
             index * (nodeHeight + vGap * 2) -
-            ((grandFinals.value.length - 1) * (nodeHeight + vGap)) / 2
+            ((grandFinals.value.length - 1) * (nodeHeight + vGap)) / 2,
     }))
 })
 
 const allPositionedMatches = computed(() => [
     ...positionedUpperMatches.value,
     ...positionedLowerMatches.value,
-    ...positionedGrandFinals.value
+    ...positionedGrandFinals.value,
 ])
 
 const matchPositionMap = computed(() => {
@@ -188,7 +190,7 @@ const currentUserActiveMatches = computed(() => {
         match =>
             (match.player1?.id === props.currentUserId ||
                 match.player2?.id === props.currentUserId) &&
-            match.status !== 'completed'
+            match.status !== 'completed',
     )
 })
 
@@ -211,7 +213,7 @@ const connectorSegments = computed(() => {
                     y1: fromY,
                     x2: midX,
                     y2: fromY,
-                    type: match.bracketSide === 'lower' ? 'lower' : 'upper'
+                    type: match.bracketSide === 'lower' ? 'lower' : 'upper',
                 })
                 segs.push({
                     id: `${match.id}-v`,
@@ -219,7 +221,7 @@ const connectorSegments = computed(() => {
                     y1: fromY,
                     x2: midX,
                     y2: toY,
-                    type: match.bracketSide === 'lower' ? 'lower' : 'upper'
+                    type: match.bracketSide === 'lower' ? 'lower' : 'upper',
                 })
                 segs.push({
                     id: `${match.id}-h2`,
@@ -227,7 +229,7 @@ const connectorSegments = computed(() => {
                     y1: toY,
                     x2: toX,
                     y2: toY,
-                    type: match.bracketSide === 'lower' ? 'lower' : 'upper'
+                    type: match.bracketSide === 'lower' ? 'lower' : 'upper',
                 })
             }
         }
@@ -240,7 +242,7 @@ const svgWidth = computed(() => {
         ...positionedUpperMatches.value.map(m => m.x),
         ...positionedLowerMatches.value.map(m => m.x),
         ...positionedGrandFinals.value.map(m => m.x),
-        0
+        0,
     )
     return maxX + nodeWidth + 80
 })
@@ -250,10 +252,13 @@ const svgHeight = computed(() => {
         ...positionedUpperMatches.value.map(m => m.y),
         ...positionedLowerMatches.value.map(m => m.y),
         ...positionedGrandFinals.value.map(m => m.y),
-        0
+        0,
     )
     return maxY + nodeHeight + 80
 })
+
+// Separator line Y-coordinate
+const groupSeparatorY = computed(() => upperBracketHeight.value + 30)
 
 const handleMatchClick = (matchId: number) => {
     if (props.canEdit) emit('open-match', matchId)
@@ -290,6 +295,7 @@ watch(baseBracketRef, newRef => {
         <BracketStyles/>
         <div class="p-4">
             <svg :height="svgHeight" :width="svgWidth" class="bracket-svg" style="min-width: 100%">
+                <!-- Labels -->
                 <text class="bracket-label" x="20" y="25">{{ t('Upper Bracket') }}</text>
                 <text :y="upperBracketHeight + 65" class="bracket-label" x="20">
                     {{ t('Lower Bracket') }}
@@ -302,13 +308,24 @@ watch(baseBracketRef, newRef => {
                 >
                     {{ t('Grand Finals') }}
                 </text>
+
+                <!-- Separator between upper & lower -->
+                <line
+                    class="bracket-separator"
+                    :x1="20"
+                    :x2="svgWidth - 20"
+                    :y1="groupSeparatorY"
+                    :y2="groupSeparatorY"
+                />
+
+                <!-- Connector lines -->
                 <g class="connectors">
                     <line
                         v-for="seg in connectorSegments"
                         :key="seg.id"
                         :class="[
                             'connector-line',
-                            seg.type === 'lower' ? 'connector-line-lower' : ''
+                            seg.type === 'lower' ? 'connector-line-lower' : '',
                         ]"
                         :x1="seg.x1"
                         :x2="seg.x2"
@@ -316,6 +333,8 @@ watch(baseBracketRef, newRef => {
                         :y2="seg.y2"
                     />
                 </g>
+
+                <!-- Matches -->
                 <g class="matches">
                     <MatchCard
                         v-for="m in allPositionedMatches"

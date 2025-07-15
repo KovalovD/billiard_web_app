@@ -1,7 +1,7 @@
 resources/js/Components/Tournament/MatchCard.vue
 <template>
     <g
-        :class="[canEdit ? 'cursor-pointer' : 'cursor-default']"
+        :class="[canEdit ? 'cursor-pointer' : 'cursor-not-allowed']"
         class="match-group"
         @click="$emit('click', match.id)"
     >
@@ -35,7 +35,7 @@ resources/js/Components/Tournament/MatchCard.vue
         </g>
 
         <!-- Match number - more compact positioning -->
-        <text :x="x + cardWidth - 4" :y="y + 10" class="match-number compact" text-anchor="end">
+        <text :x="x + cardWidth - 25" :y="y + 10" class="match-number compact" text-anchor="end">
             {{ match.match_code }}
         </text>
 

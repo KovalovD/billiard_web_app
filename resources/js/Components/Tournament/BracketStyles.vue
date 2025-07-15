@@ -57,24 +57,71 @@
         opacity: 0.9;
         }
 
-        /* Touch-friendly hover states */
-        @media (hover: hover) {
-        .match-group:hover .match-pending,
-        .match-group:hover .match-ready,
-        .match-group:hover .match-active,
-        .match-group:hover .match-verification,
-        .match-group:hover .match-completed {
-        filter: brightness(0.95);
+        /* Connector lines */
+        .connector-line {
+        stroke: #9ca3af;
+        stroke-width: 2;
+        }
+
+        .connector-line-lower {
+        stroke: #a78bfa;
+        stroke-dasharray: 4 2;
+        }
+
+        /* Group separator (upper vs lower) */
+        .bracket-separator {
+        stroke: #9ca3af;
+        stroke-width: 2;
+        stroke-dasharray: 6 4;
+        }
+
+        @media (max-width: 640px) {
+        .connector-line,
+        .connector-line-lower,
+        .bracket-separator {
+        stroke-width: 1.5;
+        }
+
+        .bracket-separator {
+        stroke-dasharray: 4 3;
         }
         }
 
-        /* Active/tap state for mobile */
-        .match-group:active .match-pending,
-        .match-group:active .match-ready,
-        .match-group:active .match-active,
-        .match-group:active .match-verification,
-        .match-group:active .match-completed {
-        filter: brightness(0.9);
+        /* In-progress status indicator with breathing animation */
+        .status-in-progress {
+        fill: #ef4444;
+        animation: breathe 2s ease-in-out infinite;
+        }
+
+        @keyframes breathe {
+        0%,
+        100% {
+        opacity: 1;
+        r: 4;
+        }
+        50% {
+        opacity: 0.6;
+        r: 5;
+        }
+        }
+
+        /* Mobile status indicator */
+        @media (max-width: 640px) {
+        .status-in-progress {
+        r: 3;
+        }
+
+        @keyframes breathe {
+        0%,
+        100% {
+        opacity: 1;
+        r: 3;
+        }
+        50% {
+        opacity: 0.6;
+        r: 4;
+        }
+        }
         }
 
         /* Player backgrounds */
@@ -131,60 +178,6 @@
         fill: #78350f;
         }
 
-        /* Connector lines */
-        .connector-line {
-        stroke: #9ca3af;
-        stroke-width: 2;
-        }
-
-        .connector-line-lower {
-        stroke: #a78bfa;
-        stroke-dasharray: 4 2;
-        }
-
-        /* Mobile connector adjustments */
-        @media (max-width: 640px) {
-        .connector-line,
-        .connector-line-lower {
-        stroke-width: 1.5;
-        }
-        }
-
-        /* In-progress status indicator with breathing animation */
-        .status-in-progress {
-        fill: #ef4444;
-        animation: breathe 2s ease-in-out infinite;
-        }
-
-        @keyframes breathe {
-        0%, 100% {
-        opacity: 1;
-        r: 4;
-        }
-        50% {
-        opacity: 0.6;
-        r: 5;
-        }
-        }
-
-        /* Mobile status indicator */
-        @media (max-width: 640px) {
-        .status-in-progress {
-        r: 3;
-        }
-
-        @keyframes breathe {
-        0%, 100% {
-        opacity: 1;
-        r: 3;
-        }
-        50% {
-        opacity: 0.6;
-        r: 4;
-        }
-        }
-        }
-
         .bracket-svg {
         font-family: system-ui, -apple-system, sans-serif;
         }
@@ -212,5 +205,5 @@
 </template>
 
 <script lang="ts" setup>
-// This component provides shared styles for bracket visualizations
+// No script needed – purely shared styles
 </script>
