@@ -796,6 +796,7 @@ class TournamentBracketService
         $allLowerMatches = [];
         $targetRound = 0;
         $currentPlayers = 0;
+        $dropCount = 0;  // Counter to alternate drop patterns - same as regular double elimination
 
         foreach ($fullLowerStructure as $round => $roundData) {
             $currentPlayers = $roundData['type'] === 'initial'
@@ -834,6 +835,11 @@ class TournamentBracketService
             $currentRoundMatches = [];
             $roundEnum = $this->getLowerRoundEnum($round, $targetRound);
 
+            // Increment drop counter for each phase where players drop from the upper bracket
+            if (in_array($roundData['type'], ['initial', 'drop', 'final_drop'])) {
+                $dropCount++;
+            }
+
             for ($matchNum = 0; $matchNum < $roundData['matches']; $matchNum++) {
                 $match = TournamentMatch::create([
                     'tournament_id'    => $tournament->id,
@@ -850,10 +856,18 @@ class TournamentBracketService
                 if ($roundData['type'] === 'initial') {
                     // Apply same alternating logic for Olympic stage
                     $totalUpperMatches = $roundData['matches'] * 2;
-                    $reorderedIndices = $this->getAlternatingLoserIndices($totalUpperMatches);
+                    $isReversed = ($dropCount % 2 === 0);  // dropCount=1 here, so $isReversed = false
 
-                    $u1 = $reorderedIndices[$matchNum * 2];
-                    $u2 = $reorderedIndices[$matchNum * 2 + 1];
+                    if (!$isReversed) {
+                        // Regular order: pair losers sequentially
+                        $u1 = $matchNum * 2;
+                        $u2 = $matchNum * 2 + 1;
+                    } else {
+                        // Reversed order: use alternating indices
+                        $reorderedIndices = $this->getAlternatingLoserIndices($totalUpperMatches);
+                        $u1 = $reorderedIndices[$matchNum * 2];
+                        $u2 = $reorderedIndices[$matchNum * 2 + 1];
+                    }
 
                     if (isset($upperMatches[1][$u1])) {
                         $upperMatches[1][$u1]->loser_next_match_id = $match->id;
@@ -866,6 +880,7 @@ class TournamentBracketService
                         $upperMatches[1][$u2]->save();
                     }
                 } elseif ($roundData['type'] === 'drop') {
+                    // Apply same alternating logic as regular double elimination
                     $prev = $allLowerMatches[$round - 1] ?? [];
                     if (isset($prev[$matchNum])) {
                         $match->previous_match1_id = $prev[$matchNum]->id;
@@ -873,15 +888,25 @@ class TournamentBracketService
                         $prev[$matchNum]->save();
                     }
                     $uRound = $roundData['upper_round'];
-
-                    // Reverse the order for drop rounds in Olympic stage too
                     $totalUpperMatches = $roundData['matches'];
-                    $reversedIndex = $totalUpperMatches - 1 - $matchNum;
+                    $isReversed = ($dropCount % 2 === 0);
 
-                    if (isset($upperMatches[$uRound][$reversedIndex])) {
-                        $upperMatches[$uRound][$reversedIndex]->loser_next_match_id = $match->id;
-                        $upperMatches[$uRound][$reversedIndex]->loser_next_match_position = 2;
-                        $upperMatches[$uRound][$reversedIndex]->save();
+                    if (!$isReversed) {
+                        // Regular order: take the loser from the corresponding upper bracket match
+                        $index = $matchNum;
+                        if (isset($upperMatches[$uRound][$index])) {
+                            $upperMatches[$uRound][$index]->loser_next_match_id = $match->id;
+                            $upperMatches[$uRound][$index]->loser_next_match_position = 2;
+                            $upperMatches[$uRound][$index]->save();
+                        }
+                    } else {
+                        // Reversed order: take the loser from the opposite end of the upper bracket round
+                        $reversedIndex = $totalUpperMatches - 1 - $matchNum;
+                        if (isset($upperMatches[$uRound][$reversedIndex])) {
+                            $upperMatches[$uRound][$reversedIndex]->loser_next_match_id = $match->id;
+                            $upperMatches[$uRound][$reversedIndex]->loser_next_match_position = 2;
+                            $upperMatches[$uRound][$reversedIndex]->save();
+                        }
                     }
                 } elseif ($roundData['type'] === 'regular') {
                     $prev = $allLowerMatches[$round - 1] ?? [];
