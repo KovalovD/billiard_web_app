@@ -1,3 +1,4 @@
+// composables/useBracket.ts
 import {nextTick, onMounted, onUnmounted, ref} from 'vue';
 import type {TournamentMatch} from '@/types/api';
 import {useLocale} from '@/composables/useLocale';
@@ -48,6 +49,9 @@ export function useBracket(
     const isFullscreen = ref(false);
     const bracketContainerRef = ref<HTMLDivElement | null | undefined>(null);
     const bracketScrollContainerRef = ref<HTMLDivElement | null | undefined>(null);
+
+    // Highlight state
+    const highlightMatchId = ref<number | null>(null);
 
     // Touch gesture states
     const touchState = ref({
@@ -224,7 +228,7 @@ export function useBracket(
         if (!targetMatch || !bracketScrollContainerRef.value) return;
 
         // Set zoom to comfortable level
-        setZoom(1.2);
+        //setZoom(1.2);
 
         // Scroll to match position
         nextTick(() => {
@@ -240,29 +244,69 @@ export function useBracket(
         });
     };
 
+    // Highlight match function
+    const highlightMatch = (match: BracketMatch & { x: number; y: number }) => {
+        if (!match) return;
+
+        // Scroll to match
+        scrollToMatch(match);
+
+        // Set highlight
+        highlightMatchId.value = match.id;
+
+        // Remove highlight after 3 seconds
+        setTimeout(() => {
+            highlightMatchId.value = null;
+        }, 3000);
+    };
+
     // Find and focus on user's match
     const findMyMatch = (positionedMatches: Array<BracketMatch & { x: number; y: number }>) => {
-        if (!currentUserId) return;
+        if (!currentUserId) return null;
 
-        const userMatches = positionedMatches.filter(match =>
+        // 1. Look for active or upcoming match
+        const targetMatch = positionedMatches.find(match =>
             (match.player1?.id === currentUserId || match.player2?.id === currentUserId) &&
             match.status !== 'completed'
         );
 
-        if (userMatches.length === 0) return;
-
-        // Find the most relevant match
-        const priorityOrder = ['in_progress', 'verification', 'ready', 'pending'];
-        const sortedMatches = [...userMatches].sort((a, b) => {
-            const aIndex = priorityOrder.indexOf(a.status);
-            const bIndex = priorityOrder.indexOf(b.status);
-            return aIndex - bIndex;
-        });
-
-        const targetMatch = sortedMatches[0];
         if (targetMatch) {
-            scrollToMatch(targetMatch);
+            highlightMatch(targetMatch);
+            return targetMatch;
         }
+
+        // 2. If no active matches, find last played match
+        const userMatches = positionedMatches.filter(match =>
+            (match.player1?.id === currentUserId || match.player2?.id === currentUserId) &&
+            match.status === 'completed'
+        );
+
+        if (!userMatches.length) return null;
+
+        // Determine the latest round the user participated in
+        // Priority: Grand finals (GF_RESET > GF), then lower bracket (max round), then upper bracket (max round)
+        let lastMatch = userMatches.find(m => m.match_code === 'GF_RESET') ||
+            userMatches.find(m => m.match_code === 'GF') ||
+            null;
+
+        if (!lastMatch) {
+            // Choose match from lower bracket with max round number, otherwise from upper
+            const lowerMatches = userMatches.filter(m => m.bracketSide === 'lower');
+            if (lowerMatches.length) {
+                lastMatch = lowerMatches.reduce((max, m) => m.round > max.round ? m : max);
+            } else {
+                const upperMatches = userMatches.filter(m => m.bracketSide === 'upper');
+                if (upperMatches.length) {
+                    lastMatch = upperMatches.reduce((max, m) => m.round > max.round ? m : max);
+                }
+            }
+        }
+
+        if (lastMatch) {
+            highlightMatch(lastMatch);
+        }
+
+        return lastMatch;
     };
 
     // Scroll to center
@@ -322,6 +366,7 @@ export function useBracket(
         isFullscreen,
         bracketContainerRef,
         bracketScrollContainerRef,
+        highlightMatchId,
 
         // Methods
         transformMatch,
@@ -343,5 +388,6 @@ export function useBracket(
         getMatchClass,
         isCurrentUserMatch,
         getPlayerDisplay,
+        highlightMatch,
     };
 }

@@ -1,3 +1,4 @@
+// Components/Tournament/BracketStyles.vue
 <template>
     <component :is="'style'" type="text/css">
         /* Bracket labels */
@@ -75,14 +76,24 @@
         stroke-dasharray: 6 4;
         }
 
+        /* Vertical round separators */
+        .round-separator {
+        stroke: #9ca3af;
+        stroke-width: 2;
+        stroke-dasharray: 6 4;
+        opacity: 0.5;
+        }
+
         @media (max-width: 640px) {
         .connector-line,
         .connector-line-lower,
-        .bracket-separator {
+        .bracket-separator,
+        .round-separator {
         stroke-width: 1.5;
         }
 
-        .bracket-separator {
+        .bracket-separator,
+        .round-separator {
         stroke-dasharray: 4 3;
         }
         }

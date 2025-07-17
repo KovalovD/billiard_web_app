@@ -1,3 +1,4 @@
+// Components/Tournament/DoubleEliminationBracket.vue
 <script lang="ts" setup>
 import {computed, provide, ref, watch} from 'vue'
 import type {Tournament, TournamentMatch} from '@/types/api'
@@ -42,6 +43,8 @@ const {
     toggleFullscreen,
     findMyMatch,
     scrollToMatch,
+    highlightMatchId,
+    highlightMatch,
 } = useBracket(props.currentUserId, {initialZoom: 0.8})
 
 provide('zoomIn', zoomIn)
@@ -184,17 +187,13 @@ const matchPositionMap = computed(() => {
     return map
 })
 
-const currentUserActiveMatches = computed(() => {
+// All matches where the current user participates
+const currentUserMatches = computed(() => {
     if (!props.currentUserId) return []
     return allPositionedMatches.value.filter(
-        match =>
-            (match.player1?.id === props.currentUserId ||
-                match.player2?.id === props.currentUserId) &&
-            match.status !== 'completed',
+        match => match.player1?.id === props.currentUserId || match.player2?.id === props.currentUserId
     )
 })
-
-const hasCurrentUserActiveMatch = computed(() => currentUserActiveMatches.value.length > 0)
 
 const connectorSegments = computed(() => {
     const segs: any[] = []
@@ -270,7 +269,9 @@ const handleFindMyMatch = () => {
 
 const handleLoserDropClick = (targetMatchId: number) => {
     const targetMatch = allPositionedMatches.value.find(m => m.id === targetMatchId)
-    if (targetMatch) scrollToMatch(targetMatch)
+    if (targetMatch) {
+        highlightMatch(targetMatch)
+    }
 }
 
 const baseBracketRef = ref<InstanceType<typeof BaseBracket>>()
@@ -287,7 +288,7 @@ watch(baseBracketRef, newRef => {
         ref="baseBracketRef"
         :title="t('Double Elimination Bracket')"
         :can-edit="canEdit"
-        :has-current-user-active-match="hasCurrentUserActiveMatch"
+        :has-current-user-active-match="currentUserMatches.length > 0"
         :zoom-level="zoomLevel"
         :is-fullscreen="isFullscreen"
         @find-my-match="handleFindMyMatch"
@@ -348,6 +349,7 @@ watch(baseBracketRef, newRef => {
                         :card-height="nodeHeight"
                         :show-loser-drop="true"
                         :matches-by-id="matchesById"
+                        :highlight-match-id="highlightMatchId"
                         @click="handleMatchClick"
                         @loser-drop-click="handleLoserDropClick"
                     />

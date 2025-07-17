@@ -1,4 +1,3 @@
-resources/js/Components/Tournament/MatchCard.vue
 <template>
     <g
         :class="[canEdit ? 'cursor-pointer' : 'cursor-not-allowed']"
@@ -10,7 +9,7 @@ resources/js/Components/Tournament/MatchCard.vue
             :class="[
                 getMatchClass(match),
                 match.bracketSide === 'lower' ? 'lower-bracket-match' : '',
-                isCurrentUserMatch(match) ? 'user-match' : ''
+                isHighlighted ? 'user-match' : ''
             ]"
             :height="cardHeight"
             :width="cardWidth"
@@ -122,6 +121,7 @@ resources/js/Components/Tournament/MatchCard.vue
 </template>
 
 <script lang="ts" setup>
+import {computed} from 'vue';
 import {useLocale} from '@/composables/useLocale';
 import type {TournamentMatch} from '@/types/api';
 
@@ -151,12 +151,14 @@ interface Props {
     matchesById?: Map<number, TournamentMatch>;
     cardWidth?: number;
     cardHeight?: number;
+    highlightMatchId?: number | null;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     showLoserDrop: false,
     cardWidth: 180,
-    cardHeight: 50
+    cardHeight: 50,
+    highlightMatchId: null
 });
 
 defineEmits<{
@@ -169,6 +171,18 @@ const {t} = useLocale();
 // Compact dimensions
 const headerHeight = 14;
 const playerHeight = 18;
+
+// Check if this match should be highlighted
+const isHighlighted = computed(() => {
+    // Highlight if this match is specifically highlighted
+    if (props.highlightMatchId === props.match.id) return true;
+
+    // Also highlight if it's the user's active match
+    if (!props.currentUserId) return false;
+    const isUserMatch = props.match.player1?.id === props.currentUserId ||
+        props.match.player2?.id === props.currentUserId;
+    return isUserMatch && props.match.status !== 'completed';
+});
 
 // Helper functions
 const getMatchClass = (match: TransformedMatch) => {
@@ -186,11 +200,6 @@ const getMatchClass = (match: TransformedMatch) => {
         default:
             return 'match-pending';
     }
-};
-
-const isCurrentUserMatch = (match: TransformedMatch) => {
-    if (!props.currentUserId) return false;
-    return match.player1?.id === props.currentUserId || match.player2?.id === props.currentUserId;
 };
 
 const getPlayerDisplay = (player: any, isWalkover: boolean, hasOpponent: boolean) => {
