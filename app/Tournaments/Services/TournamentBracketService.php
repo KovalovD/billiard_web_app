@@ -34,19 +34,22 @@ class TournamentBracketService
                 throw new RuntimeException('At least 2 confirmed players are required to generate a bracket');
             }
 
+            // Clear any existing bracket/match data
             $tournament->brackets()->delete();
             $tournament->matches()->delete();
 
             return match ($tournament->tournament_type) {
-                TournamentType::SINGLE_ELIMINATION => $this->generateSingleEliminationBracket($tournament,
-                    $confirmedPlayers),
+                TournamentType::SINGLE_ELIMINATION
+                => $this->generateSingleEliminationBracket($tournament, $confirmedPlayers),
                 TournamentType::DOUBLE_ELIMINATION,
-                TournamentType::DOUBLE_ELIMINATION_FULL => $this->generateDoubleEliminationBracket($tournament,
-                    $confirmedPlayers),
-                TournamentType::OLYMPIC_DOUBLE_ELIMINATION => $this->generateOlympicDoubleEliminationBracket($tournament,
-                    $confirmedPlayers),
-                TournamentType::ROUND_ROBIN => $this->generateRoundRobinBracket($tournament, $confirmedPlayers),
-                default => throw new RuntimeException("Bracket generation not supported for tournament type: {$tournament->tournament_type->value}"),
+                TournamentType::DOUBLE_ELIMINATION_FULL
+                => $this->generateDoubleEliminationBracket($tournament, $confirmedPlayers),
+                TournamentType::OLYMPIC_DOUBLE_ELIMINATION
+                => $this->generateOlympicDoubleEliminationBracket($tournament, $confirmedPlayers),
+                TournamentType::ROUND_ROBIN
+                => $this->generateRoundRobinBracket($tournament, $confirmedPlayers),
+                default
+                => throw new RuntimeException("Bracket generation not supported for tournament type: {$tournament->tournament_type->value}"),
             };
         });
     }
@@ -66,7 +69,7 @@ class TournamentBracketService
             ],
         ]);
 
-        // Initialize player stats
+        // Initialize player stats for round-robin
         foreach ($confirmedPlayers as $player) {
             $player->update([
                 'group_wins'       => 0,
@@ -75,15 +78,15 @@ class TournamentBracketService
             ]);
         }
 
-        // Create all matches (everyone plays everyone)
+        // Create all round-robin matches (every pair of players meets once)
         $matchNumber = 1;
         foreach ($confirmedPlayers as $i => $p1) {
             foreach ($confirmedPlayers->slice($i + 1) as $p2) {
                 TournamentMatch::create([
                     'tournament_id'    => $tournament->id,
                     'match_code'       => sprintf('RR_M%d', $matchNumber++),
-                    'stage'            => MatchStage::GROUP, // Use GROUP stage for round robin
-                    'round'            => EliminationRound::GROUPS, // Use GROUPS round
+                    'stage' => MatchStage::GROUP,
+                    'round' => EliminationRound::GROUPS,
                     'player1_id'       => $p1->user_id,
                     'player2_id'       => $p2->user_id,
                     'races_to'         => $tournament->races_to,
@@ -103,12 +106,14 @@ class TournamentBracketService
         $playerCount = $confirmedPlayers->count();
         $bracketSize = $this->getNextPowerOfTwo($playerCount);
         $totalRounds = (int) log($bracketSize, 2);
+
         $bracket = TournamentBracket::create([
             'tournament_id' => $tournament->id,
             'bracket_type'  => BracketType::SINGLE,
             'total_rounds' => $totalRounds,
             'players_count' => $bracketSize,
         ]);
+
         $seededBracket = $this->createSeededBracket($confirmedPlayers, $bracketSize);
         $this->createSingleEliminationMatches($tournament, $bracket, $seededBracket);
 
@@ -126,6 +131,7 @@ class TournamentBracketService
 
     private function createSeededBracket(Collection $players, int $bracketSize): array
     {
+        // Arrange players by seed number, and fill with null for byes up to bracketSize
         $seededBracket = [];
         foreach ($players as $player) {
             $seededBracket[$player->seed_number] = $player;
@@ -204,6 +210,7 @@ class TournamentBracketService
         array $currentRoundMatches,
     ): array {
         if ($round === 1) {
+            // Assign players for first round match based on seeding
             $matchup = $this->getFirstRoundMatchup($matchNum, $bracketSize);
             $player1 = $seededBracket[$matchup[0]] ?? null;
             $player2 = $seededBracket[$matchup[1]] ?? null;
@@ -216,6 +223,7 @@ class TournamentBracketService
             }
 
             if ($player1 && !$player2) {
+                // Player1 has no opponent (bye) – mark as walkover win
                 $match->winner_id = $player1->user_id;
                 $match->status = MatchStatus::COMPLETED;
                 $match->player1_score = $match->races_to;
@@ -223,6 +231,7 @@ class TournamentBracketService
                 $match->completed_at = now();
                 $match->admin_notes = 'Walkover - No opponent';
             } elseif (!$player1 && $player2) {
+                // Player2 has no opponent (bye)
                 $match->winner_id = $player2->user_id;
                 $match->status = MatchStatus::COMPLETED;
                 $match->player1_score = 0;
@@ -230,9 +239,11 @@ class TournamentBracketService
                 $match->completed_at = now();
                 $match->admin_notes = 'Walkover - No opponent';
             } elseif ($player1 && $player2) {
+                // Both players present – match is ready to be played
                 $match->status = MatchStatus::READY;
             }
         } else {
+            // Connect winners from previous round to this match
             $this->setUpProgressionFromPreviousRound($matchNum, $previousRoundMatches, $match);
         }
 
@@ -249,6 +260,7 @@ class TournamentBracketService
 
     private function generateSeedMatchups(int $bracketSize): array
     {
+        // Pair top half vs bottom half seeds
         $matchups = [];
         $seeds = range(1, $bracketSize);
         $top = array_slice($seeds, 0, $bracketSize / 2);
@@ -263,6 +275,7 @@ class TournamentBracketService
 
     private function arrangeBracketMatchups(array $matchups): array
     {
+        // Arrange matchups in bracket order to maintain seed distribution
         $arranged = [];
         $indices = $this->getBracketIndices(count($matchups));
         foreach ($indices as $i => $index) {
@@ -273,6 +286,7 @@ class TournamentBracketService
 
     private function getBracketIndices(int $size): array
     {
+        // Predefined bracket index patterns for common sizes
         if ($size === 1) {
             return [0];
         }
@@ -290,11 +304,14 @@ class TournamentBracketService
         }
         if ($size === 32) {
             return [
-                0, 31, 15, 16, 7, 24, 8, 23, 3, 28, 12, 19, 4, 27, 11, 20, 1, 30, 14, 17, 6, 25, 9, 22, 2, 29, 13, 18,
-                5, 26, 10, 21,
+                0, 31, 15, 16, 7, 24, 8, 23,
+                3, 28, 12, 19, 4, 27, 11, 20,
+                1, 30, 14, 17, 6, 25, 9, 22,
+                2, 29, 13, 18, 5, 26, 10, 21,
             ];
         }
 
+        // Recursively build bracket indices for larger sizes (64, 128)
         $half = $size / 2;
         $firstHalf = $this->getBracketIndices($half);
         $secondHalf = array_map(static fn($i) => $i + $half, $firstHalf);
@@ -311,6 +328,7 @@ class TournamentBracketService
         array $previousRoundMatches,
         TournamentMatch $match,
     ): void {
+        // Link the winners from two matches of the previous round into the current match
         $prev1 = $matchNum * 2;
         $prev2 = $matchNum * 2 + 1;
 
@@ -328,12 +346,16 @@ class TournamentBracketService
 
     private function progressWalkoverWinners(Tournament $tournament): void
     {
+        // Automatically advance winners of walkover matches to the next round
         $walkoverMatches = $tournament
             ->matches()
             ->where('status', MatchStatus::COMPLETED)
             ->whereNotNull('winner_id')
             ->where(function ($q) {
-                $q->whereNull('player1_id')->orWhereNull('player2_id');
+                $q
+                    ->whereNull('player1_id')
+                    ->orWhereNull('player2_id')
+                ;
             })
             ->get()
         ;
@@ -354,6 +376,7 @@ class TournamentBracketService
             return;
         }
 
+        // Place the winner in the correct slot of the next match
         if ($next->previous_match1_id === $match->id) {
             $next->player1_id = $match->winner_id;
         } else {
@@ -361,6 +384,7 @@ class TournamentBracketService
         }
 
         if ($next->player1_id && $next->player2_id) {
+            // Next match is ready to be played once both slots are filled
             $next->status = MatchStatus::READY;
         }
         $next->save();
@@ -368,6 +392,7 @@ class TournamentBracketService
 
     private function createThirdPlaceMatch(Tournament $tournament): void
     {
+        // If the bracket requires a third-place playoff (for single elimination)
         $thirdPlace = TournamentMatch::create([
             'tournament_id' => $tournament->id,
             'match_code'    => '3RD',
@@ -377,6 +402,7 @@ class TournamentBracketService
             'status'        => MatchStatus::PENDING,
         ]);
 
+        // Losers of the semifinals drop into the third-place match
         $semifinals = $tournament
             ->matches()
             ->where('round', EliminationRound::SEMIFINALS)
@@ -397,6 +423,7 @@ class TournamentBracketService
         $bracketSize = $this->getNextPowerOfTwo($playerCount);
         $upperRounds = (int) log($bracketSize, 2);
 
+        // Create Upper Bracket record
         $upperBracket = TournamentBracket::create([
             'tournament_id' => $tournament->id,
             'bracket_type'  => BracketType::DOUBLE_UPPER,
@@ -404,8 +431,8 @@ class TournamentBracketService
             'players_count' => $bracketSize,
         ]);
 
+        // Create Lower Bracket record
         $lowerRounds = ($upperRounds - 1) * 2;
-
         TournamentBracket::create([
             'tournament_id' => $tournament->id,
             'bracket_type'  => BracketType::DOUBLE_LOWER,
@@ -466,12 +493,14 @@ class TournamentBracketService
             $previousRoundMatches = $currentRoundMatches;
         }
 
+        // Handle any walkover winners in the upper bracket (e.g., byes) and drop losers to lower bracket
         $this->progressWalkoverWinnersInBracket($tournament);
         return $allUpperMatches;
     }
 
     private function getRoundEnumForDouble(int $round, int $totalRounds): EliminationRound
     {
+        // Similar to getRoundEnum, but for double elimination we consider remaining rounds in upper bracket
         $remaining = $totalRounds - $round + 1;
         return match ($remaining) {
             1 => EliminationRound::FINALS,
@@ -486,13 +515,17 @@ class TournamentBracketService
 
     private function progressWalkoverWinnersInBracket(Tournament $tournament): void
     {
+        // Advance winners of any walkover matches in the upper bracket and place losers into the lower bracket
         $walkoverMatches = $tournament
             ->matches()
             ->where('bracket_side', 'upper')
             ->where('status', MatchStatus::COMPLETED)
             ->whereNotNull('winner_id')
             ->where(function ($q) {
-                $q->whereNull('player1_id')->orWhereNull('player2_id');
+                $q
+                    ->whereNull('player1_id')
+                    ->orWhereNull('player2_id')
+                ;
             })
             ->get()
         ;
@@ -500,8 +533,11 @@ class TournamentBracketService
         foreach ($walkoverMatches as $match) {
             $this->progressWinnerToNextMatch($match);
 
+            // If there was a loser (i.e., one player present, one bye), drop that loser into the lower bracket
             if ($match->loser_next_match_id) {
-                $loserId = $match->winner_id === $match->player1_id ? $match->player2_id : $match->player1_id;
+                $loserId = ($match->winner_id === $match->player1_id)
+                    ? $match->player2_id
+                    : $match->player1_id;
                 if (!$loserId) {
                     continue;
                 }
@@ -511,6 +547,7 @@ class TournamentBracketService
                     continue;
                 }
 
+                // Place the loser in the designated slot (player1 or player2) of the next lower bracket match
                 $pos = $match->loser_next_match_position ?? null;
                 if ($pos === 1) {
                     $loserMatch->player1_id = $loserId;
@@ -538,10 +575,15 @@ class TournamentBracketService
     ): ?TournamentMatch {
         $lowerStructure = $this->getLowerBracketStructure($bracketSize);
         $allLowerMatches = [];
+        $dropCount = 0;  // Counter to alternate drop patterns
 
         foreach ($lowerStructure as $round => $roundData) {
             $currentRoundMatches = [];
             $roundEnum = $this->getLowerRoundEnum($round, count($lowerStructure));
+            // Increment drop counter for each phase where players drop from the upper bracket
+            if (in_array($roundData['type'], ['initial', 'drop', 'final_drop'])) {
+                $dropCount++;
+            }
 
             for ($matchNum = 0; $matchNum < $roundData['matches']; $matchNum++) {
                 $match = TournamentMatch::create([
@@ -556,13 +598,19 @@ class TournamentBracketService
                 ]);
 
                 if ($roundData['type'] === 'initial') {
-                    // Calculate which upper matches feed into this lower match
+                    // **Initial losers bracket round**: regular order pairing (no immediate rematches)
                     $totalUpperMatches = $roundData['matches'] * 2;
-                    $reorderedIndices = $this->getAlternatingLoserIndices($totalUpperMatches);
-
-                    $u1 = $reorderedIndices[$matchNum * 2];
-                    $u2 = $reorderedIndices[$matchNum * 2 + 1];
-
+                    $isReversed = ($dropCount % 2 === 0);  // dropCount=1 here, so $isReversed = false
+                    if (!$isReversed) {
+                        // Regular order: pair losers sequentially (e.g., match0 vs match1 losers, match2 vs match3 losers, etc.)
+                        $u1 = $matchNum * 2;
+                        $u2 = $matchNum * 2 + 1;
+                    } else {
+                        // Reversed order (not expected for first drop, but handling for completeness)
+                        $reorderedIndices = $this->getAlternatingLoserIndices($totalUpperMatches);
+                        $u1 = $reorderedIndices[$matchNum * 2];
+                        $u2 = $reorderedIndices[$matchNum * 2 + 1];
+                    }
                     if (isset($upperMatches[1][$u1])) {
                         $upperMatches[1][$u1]->loser_next_match_id = $match->id;
                         $upperMatches[1][$u1]->loser_next_match_position = 1;
@@ -574,34 +622,49 @@ class TournamentBracketService
                         $upperMatches[1][$u2]->save();
                     }
                 } elseif ($roundData['type'] === 'drop') {
+                    // **Intermediate losers bracket round**: alternate pairing order
                     $prev = $allLowerMatches[$round - 1] ?? [];
                     if (isset($prev[$matchNum])) {
+                        // Link the winner from the previous lower bracket round
                         $match->previous_match1_id = $prev[$matchNum]->id;
                         $prev[$matchNum]->next_match_id = $match->id;
                         $prev[$matchNum]->save();
                     }
                     $uRound = $roundData['upper_round'];
-
-                    // Reverse the order for drop rounds to maximize separation
                     $totalUpperMatches = $roundData['matches'];
-                    $reversedIndex = $totalUpperMatches - 1 - $matchNum;
-
-                    if (isset($upperMatches[$uRound][$reversedIndex])) {
-                        $upperMatches[$uRound][$reversedIndex]->loser_next_match_id = $match->id;
-                        $upperMatches[$uRound][$reversedIndex]->loser_next_match_position = 2;
-                        $upperMatches[$uRound][$reversedIndex]->save();
+                    $isReversed = ($dropCount % 2 === 0);
+                    if (!$isReversed) {
+                        // Regular order: take the loser from the corresponding upper bracket match
+                        $index = $matchNum;
+                        if (isset($upperMatches[$uRound][$index])) {
+                            $upperMatches[$uRound][$index]->loser_next_match_id = $match->id;
+                            $upperMatches[$uRound][$index]->loser_next_match_position = 2;
+                            $upperMatches[$uRound][$index]->save();
+                        }
+                    } else {
+                        // Reversed order: take the loser from the opposite end of the upper bracket round
+                        $reversedIndex = $totalUpperMatches - 1 - $matchNum;
+                        if (isset($upperMatches[$uRound][$reversedIndex])) {
+                            $upperMatches[$uRound][$reversedIndex]->loser_next_match_id = $match->id;
+                            $upperMatches[$uRound][$reversedIndex]->loser_next_match_position = 2;
+                            $upperMatches[$uRound][$reversedIndex]->save();
+                        }
                     }
                 } elseif ($roundData['type'] === 'regular') {
+                    // Regular losers bracket round (no new drops from upper bracket)
                     $prev = $allLowerMatches[$round - 1] ?? [];
                     $this->setUpProgressionFromPreviousRound($matchNum, $prev, $match);
                 } elseif ($roundData['type'] === 'final_drop') {
+                    // **Final drop**: loser of the upper bracket final drops to lower bracket final
                     $prev = $allLowerMatches[$round - 1] ?? [];
                     if (isset($prev[0])) {
+                        // Winner of previous lower bracket round goes to this match
                         $match->previous_match1_id = $prev[0]->id;
                         $prev[0]->next_match_id = $match->id;
                         $prev[0]->save();
                     }
                     if (isset($upperMatches[$upperRounds][0])) {
+                        // Loser of the upper bracket Final goes to this match (always as player2)
                         $upperMatches[$upperRounds][0]->loser_next_match_id = $match->id;
                         $upperMatches[$upperRounds][0]->loser_next_match_position = 2;
                         $upperMatches[$upperRounds][0]->save();
@@ -615,29 +678,30 @@ class TournamentBracketService
             $allLowerMatches[$round] = $currentRoundMatches;
         }
 
+        // Return the final match of the lower bracket (the Lower Bracket Final)
         $lastRound = max(array_keys($allLowerMatches));
         return $allLowerMatches[$lastRound][0] ?? null;
     }
 
     /**
-     * Get alternating indices to maximize separation between players from same upper bracket section
+     * Get alternating indices to maximize separation between players from the same upper bracket section.
+     * (Used for pairing initial drop-down matches in losers bracket)
      */
     private function getAlternatingLoserIndices(int $totalMatches): array
     {
         $indices = [];
         $half = $totalMatches / 2;
-
-        // Alternate between first half and second half
+        // Alternate between the first half and second half of the matches
         for ($i = 0; $i < $half; $i++) {
             $indices[] = $i;
             $indices[] = $totalMatches - 1 - $i;
         }
-
         return $indices;
     }
 
     private function getLowerBracketStructure(int $bracketSize): array
     {
+        // Define the structure of the lower bracket for various bracket sizes
         return match ($bracketSize) {
             4 => [
                 1 => ['matches' => 1, 'type' => 'initial'],
@@ -699,6 +763,7 @@ class TournamentBracketService
 
     private function getLowerRoundEnum(int $round, int $totalRounds): EliminationRound
     {
+        // Determine elimination round name for lower bracket rounds based on how many rounds remain after this
         $remaining = $totalRounds - $round + 1;
         if ($remaining <= 2) {
             return EliminationRound::FINALS;
