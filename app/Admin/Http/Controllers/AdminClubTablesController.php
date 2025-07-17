@@ -81,22 +81,6 @@ class AdminClubTablesController
     }
 
     /**
-     * Update a table
-     * @admin
-     */
-    public function update(ClubTableRequest $request, ClubTable $table): JsonResponse
-    {
-        $table->update($request->validated());
-        $table->load(['club.city.country']);
-
-        return response()->json([
-            'success' => true,
-            'table'   => new ClubTableResource($table),
-            'message' => 'Table updated successfully',
-        ]);
-    }
-
-    /**
      * Delete a table
      * @admin
      */
@@ -170,6 +154,22 @@ class AdminClubTablesController
         return response()->json([
             'success' => true,
             'message' => 'Tables reordered successfully',
+        ]);
+    }
+
+    /**
+     * Update a table
+     * @admin
+     */
+    public function update(ClubTableRequest $request, ClubTable $table): JsonResponse
+    {
+        $table->update($request->validated());
+        $table->load(['club.city.country']);
+
+        return response()->json([
+            'success' => true,
+            'table'   => new ClubTableResource($table),
+            'message' => 'Table updated successfully',
         ]);
     }
 }

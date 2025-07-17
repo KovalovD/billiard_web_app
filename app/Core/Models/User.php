@@ -105,6 +105,20 @@ class User extends Authenticatable
         return $this->hasMany(TournamentPlayer::class);
     }
 
+    public function officialRatingPlayers(): HasMany
+    {
+        return $this->hasMany(OfficialRatingPlayer::class);
+    }
+
+    public function getPicture(?string $path): string
+    {
+        if (!$path) {
+            return '';
+        }
+
+        return Storage::disk('r2')->url($path);
+    }
+
     /**
      * Get the attributes that should be cast.
      *
@@ -128,19 +142,5 @@ class User extends Authenticatable
         return Attribute::make(
             get: fn($value) => $this->lastname.' '.$this->firstname,
         );
-    }
-
-    public function officialRatingPlayers(): HasMany
-    {
-        return $this->hasMany(OfficialRatingPlayer::class);
-    }
-
-    public function getPicture(?string $path): string
-    {
-        if (!$path) {
-            return '';
-        }
-
-        return Storage::disk('r2')->url($path);
     }
 }

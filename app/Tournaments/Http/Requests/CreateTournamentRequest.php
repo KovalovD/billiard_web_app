@@ -21,10 +21,10 @@ class CreateTournamentRequest extends BaseFormRequest
             'club_id'                   => ['nullable', 'integer', 'exists:clubs,id'],
             'start_date'                => ['required', 'date', 'after_or_equal:today'],
             'end_date'                  => ['required', 'date', 'after_or_equal:start_date'],
-            'application_deadline' => ['nullable', 'date', 'before_or_equal:start_date', 'after_or_equal:today'],
+            'application_deadline'    => ['nullable', 'date', 'before_or_equal:start_date', 'after_or_equal:today'],
             'max_participants'          => ['nullable', 'integer', 'min:2'],
             'entry_fee'                 => ['numeric', 'min:0'],
-            'prize_pool' => ['nullable'],
+            'prize_pool'              => ['nullable'],
             'prize_distribution'        => ['nullable', 'array'],
             'place_prizes'              => ['nullable', 'array'],
             'place_prizes.*'            => ['numeric', 'min:0'],
@@ -47,10 +47,11 @@ class CreateTournamentRequest extends BaseFormRequest
             'seeding_method'            => ['nullable', new Enum(SeedingMethod::class)],
             'requires_application'      => ['boolean'],
             'auto_approve_applications' => ['boolean'],
-            'official_rating_id'   => ['nullable', 'integer', 'exists:official_ratings,id'],
-            'rating_coefficient'   => ['nullable', 'numeric', 'min:0.1', 'max:5.0'],
+            'official_rating_id'      => ['nullable', 'integer', 'exists:official_ratings,id'],
+            'rating_coefficient'      => ['nullable', 'numeric', 'min:0.1', 'max:5.0'],
         ];
     }
+
     public function messages(): array
     {
         return [

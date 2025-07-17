@@ -63,14 +63,14 @@ class Tournament extends Model
     ];
 
     protected $casts = [
-        'updated_at'         => 'datetime',
+        'updated_at'              => 'datetime',
         'start_date'                => 'datetime',
         'end_date'                  => 'datetime',
         'application_deadline'      => 'datetime',
         'seeding_completed_at'      => 'datetime',
         'groups_completed_at'       => 'datetime',
         'entry_fee'                 => 'decimal:2',
-        'prize_pool'         => 'string',
+        'prize_pool'              => 'string',
         'prize_distribution'        => 'array',
         'place_prizes'              => 'array',
         'place_bonuses'             => 'array',
@@ -80,8 +80,8 @@ class Tournament extends Model
         'auto_approve_applications' => 'boolean',
         'has_third_place_match'     => 'boolean',
         'olympic_has_third_place' => 'boolean',
-        'seeding_completed'  => 'boolean',
-        'brackets_generated' => 'boolean',
+        'seeding_completed'       => 'boolean',
+        'brackets_generated'      => 'boolean',
         'is_old'                    => 'boolean',
         'races_to'                  => 'integer',
         'olympic_phase_size'      => 'integer',

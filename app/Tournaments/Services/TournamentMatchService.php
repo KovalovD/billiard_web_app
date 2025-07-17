@@ -22,304 +22,6 @@ class TournamentMatchService
      |  ROUND-ROBIN  STANDINGS  &  TIEBREAKER  WORKFLOW
      |=============================================================================================*/
 
-    /** 1️⃣ Update normal group-stage standings after a RR match is completed
-     * @throws Throwable
-     */
-    private function updateRoundRobinStandings(TournamentMatch $match): void
-    {
-        $tournament = $match->tournament;
-        if ($tournament->tournament_type !== TournamentType::ROUND_ROBIN) {
-            return;
-        }
-
-        $winnerId = $match->winner_id;
-        $loserId = $winnerId === $match->player1_id ? $match->player2_id : $match->player1_id;
-        $diff = abs($match->player1_score - $match->player2_score);
-
-        // wins / losses / frame-diff in the **main** round-robin
-        TournamentPlayer::where('tournament_id', $tournament->id)
-            ->where('user_id', $winnerId)
-            ->incrementEach(['group_wins' => 1, 'group_games_diff' => $diff])
-        ;
-
-        TournamentPlayer::where('tournament_id', $tournament->id)
-            ->where('user_id', $loserId)
-            ->incrementEach(['group_losses' => 1, 'group_games_diff' => -$diff])
-        ;
-
-        // if no more group matches → evaluate standings / kick off TB
-        $open = $tournament
-            ->matches()
-            ->whereIn('status', [MatchStatus::PENDING, MatchStatus::READY, MatchStatus::IN_PROGRESS])
-            ->where(function ($query) {
-                $query
-                    ->whereNull('metadata->is_tiebreaker')
-                    ->orWhere(function ($q) {
-                        if ($this->isPostgres()) {
-                            $q->whereRaw("(metadata->>'is_tiebreaker')::boolean = false");
-                        } else {
-                            $q->whereRaw("JSON_EXTRACT(metadata, '$.is_tiebreaker') = false");
-                        }
-                    })
-                ;
-            })
-            ->count()
-        ;
-
-        if ($open === 0) {
-            $this->calculateRoundRobinFinalPositions($tournament);
-        }
-    }
-
-    /** 2️⃣ Final-standing calculation (entry-point & fall-back after every TB resolution)
-     * @throws Throwable
-     */
-    private function calculateRoundRobinFinalPositions(Tournament $tournament): void
-    {
-        // Wait if *any* TB matches are still open
-        $waiting = $tournament
-            ->matches()
-            ->whereJsonContains('metadata->is_tiebreaker', true)
-            ->whereIn('status', [MatchStatus::PENDING, MatchStatus::READY, MatchStatus::IN_PROGRESS])
-            ->exists()
-        ;
-        if ($waiting) {
-            return;
-        }
-
-        /** @var Collection<TournamentPlayer> $players */
-        $players = $tournament->players()->where('status', 'confirmed')->get();
-
-        /* -------------------------------------------------------------------
-         | A.  detect 3-way-or-more ties **after** taking *existing* TB stats
-         |     into account (wins & diff). Only those groups need new TB.
-         *-------------------------------------------------------------------*/
-        $tieBlocks = $players
-            ->groupBy(fn($p) => implode('_', [
-                $p->group_wins,
-                $p->group_games_diff,
-                $p->tiebreaker_wins,
-                $p->tiebreaker_games_diff,
-            ]))
-            ->filter(fn($grp) => $grp->count() >= 3)
-        ;
-
-        if ($tieBlocks->isNotEmpty()) {
-            $this->generateTiebreakerMatches($tournament, $tieBlocks);
-            return; // standings will be recalculated after TB round finishes
-        }
-
-        /* -------------------------------------------------------------------
-         | B.  order players (main wins > TB wins > TB diff > main diff > H2H
-         *-------------------------------------------------------------------*/
-        $ranked = $players->sort(function ($a, $b) use ($tournament) {
-            return
-                [$b->group_wins, $b->tiebreaker_wins, $b->tiebreaker_games_diff, $b->group_games_diff]
-                <=> [$a->group_wins, $a->tiebreaker_wins, $a->tiebreaker_games_diff, $a->group_games_diff]
-                    ?: $this->compareHeadToHead($a, $b, $tournament);
-        })->values();
-
-        /* -------------------------------------------------------------------
-         | C.  persist final positions
-         *-------------------------------------------------------------------*/
-        foreach ($ranked as $idx => $pl) {
-            $pl->update([
-                'position'              => $idx + 1,
-                'group_position'        => $idx + 1,
-                'tiebreaker_wins'       => 0,
-                'tiebreaker_games_diff' => 0,
-            ]);
-        }
-    }
-
-    /** 3️⃣ Spawn a new TB round for every tieBlock (3+ people)
-     * @throws Throwable
-     */
-    private function generateTiebreakerMatches(Tournament $tournament, Collection $blocks): void
-    {
-        DB::transaction(static function () use ($tournament, $blocks) {
-            // Get max tiebreaker round using database-agnostic approach
-            $existingRounds = $tournament
-                ->matches()
-                ->whereJsonContains('metadata->is_tiebreaker', true)
-                ->get()
-                ->pluck('metadata.tiebreaker_round')
-                ->filter()
-                ->max()
-            ;
-
-            $nextRound = ($existingRounds ?? 0) + 1;
-
-            foreach ($blocks as $key => $players) {
-
-                // do NOT reset TB stats if we already ran at least once for this block
-                if ($nextRound === 1) {
-                    foreach ($players as $p) {
-                        $p->update(['tiebreaker_wins' => 0, 'tiebreaker_games_diff' => 0]);
-                    }
-                }
-
-                $num = 1;
-                foreach ($players as $i => $p1) {
-                    foreach ($players->slice($i + 1) as $p2) {
-                        TournamentMatch::create([
-                            'tournament_id' => $tournament->id,
-                            'match_code'    => sprintf('TB_R%d_%s_M%d', $nextRound, str_replace('_', '-', $key),
-                                $num++),
-                            'stage'         => MatchStage::PLAYOFF,
-                            'round'         => EliminationRound::GROUPS,
-                            'player1_id'    => $p1->user_id,
-                            'player2_id'    => $p2->user_id,
-                            'races_to'      => $tournament->races_to,
-                            'status'        => MatchStatus::READY,
-                            'metadata'      => [
-                                'is_tiebreaker'    => true,
-                                'tiebreaker_round' => $nextRound,
-                                'tied_group'       => $key,
-                            ],
-                        ]);
-                    }
-                }
-            }
-        });
-    }
-
-    /** 4️⃣ Update TB stats after every TB match & decide if the block is resolved
-     * @throws Throwable
-     */
-    private function updateTiebreakerStandings(TournamentMatch $match): void
-    {
-        if (!($match->metadata['is_tiebreaker'] ?? false)) {
-            return;
-        }
-
-        $tournament = $match->tournament;
-        $winnerId = $match->winner_id;
-        $loserId = $winnerId === $match->player1_id ? $match->player2_id : $match->player1_id;
-        $diff = abs($match->player1_score - $match->player2_score);
-
-        TournamentPlayer::where('tournament_id', $tournament->id)
-            ->where('user_id', $winnerId)
-            ->incrementEach(['tiebreaker_wins' => 1, 'tiebreaker_games_diff' => $diff])
-        ;
-
-        TournamentPlayer::where('tournament_id', $tournament->id)
-            ->where('user_id', $loserId)
-            ->increment('tiebreaker_games_diff', -$diff)
-        ;
-
-        // all matches for *this* TB block finished?
-        $group = $match->metadata['tied_group'];
-        $round = $match->metadata['tiebreaker_round'];
-
-        $open = $tournament
-            ->matches()
-            ->whereJsonContains('metadata->is_tiebreaker', true)
-            ->whereJsonContains('metadata->tiebreaker_round', $round)
-            ->whereJsonContains('metadata->tied_group', $group)
-            ->whereIn('status', [MatchStatus::PENDING, MatchStatus::READY, MatchStatus::IN_PROGRESS])
-            ->exists()
-        ;
-
-        if (!$open) {
-            $this->resolveTiebreakerGroup($tournament, $group, $round);
-        }
-    }
-
-    /** 5️⃣ Analyse a finished TB block; spawn another round only when still 3-way-tied
-     * @throws Throwable
-     */
-    private function resolveTiebreakerGroup(Tournament $tournament, string $group, int $round): void
-    {
-        $playerIds = $tournament
-            ->matches()
-            ->whereJsonContains('metadata->is_tiebreaker', true)
-            ->whereJsonContains('metadata->tied_group', $group)
-            ->pluck('player1_id')
-            ->merge(
-                $tournament
-                    ->matches()
-                    ->whereJsonContains('metadata->is_tiebreaker', true)
-                    ->whereJsonContains('metadata->tied_group', $group)
-                    ->pluck('player2_id'),
-            )
-            ->unique()
-        ;
-
-        $players = TournamentPlayer::where('tournament_id', $tournament->id)
-            ->whereIn('user_id', $playerIds)
-            ->get()
-        ;
-
-        $stillTied = $players
-            ->groupBy(fn($p) => $p->tiebreaker_wins.'_'.$p->tiebreaker_games_diff)
-            ->filter(fn($grp) => $grp->count() >= 3)
-        ;
-
-        if ($stillTied->isNotEmpty() && $round < self::MAX_TIEBREAKER_ROUNDS) {
-            $this->generateTiebreakerMatches($tournament, $stillTied);
-        } else {
-            // either resolved or cap reached → recalc final standings
-            $this->calculateRoundRobinFinalPositions($tournament);
-        }
-    }
-
-    private function compareHeadToHead(TournamentPlayer $a, TournamentPlayer $b, Tournament $t): int
-    {
-        $tb = TournamentMatch::where('tournament_id', $t->id)
-            ->whereJsonContains('metadata->is_tiebreaker', true)
-            ->where(function ($q) use ($a, $b) {
-                $q->where(function ($s) use ($a, $b) {
-                    $s->where('player1_id', $a->user_id)->where('player2_id', $b->user_id);
-                })->orWhere(function ($s) use ($a, $b) {
-                    $s->where('player1_id', $b->user_id)->where('player2_id', $a->user_id);
-                });
-            })
-            ->where('status', MatchStatus::COMPLETED)
-            ->orderBy('created_at', 'desc')
-            ->first()
-        ;
-        if ($tb) {
-            return $tb->winner_id === $a->user_id ? -1 : 1;
-        }
-
-        $reg = TournamentMatch::where('tournament_id', $t->id)
-            ->where(function ($q) {
-                $q
-                    ->whereNull('metadata->is_tiebreaker')
-                    ->orWhere(function ($subQ) {
-                        if ($this->isPostgres()) {
-                            $subQ->whereRaw("(metadata->>'is_tiebreaker')::boolean = false");
-                        } else {
-                            $subQ->whereRaw("JSON_EXTRACT(metadata, '$.is_tiebreaker') = false");
-                        }
-                    })
-                ;
-            })
-            ->where(function ($q) use ($a, $b) {
-                $q->where(function ($s) use ($a, $b) {
-                    $s->where('player1_id', $a->user_id)->where('player2_id', $b->user_id);
-                })->orWhere(function ($s) use ($a, $b) {
-                    $s->where('player1_id', $b->user_id)->where('player2_id', $a->user_id);
-                });
-            })
-            ->where('status', MatchStatus::COMPLETED)
-            ->first()
-        ;
-        if (!$reg) {
-            return $a->seed_number - $b->seed_number;
-        }
-        return $reg->winner_id === $a->user_id ? -1 : 1;
-    }
-
-    /**
-     * Check if using PostgreSQL
-     */
-    private function isPostgres(): bool
-    {
-        return DB::connection()->getDriverName() === 'pgsql';
-    }
-
     /**
      * Start a match
      * @throws Throwable
@@ -426,66 +128,6 @@ class TournamentMatchService
     }
 
     /**
-     * Check if match advances to Olympic stage
-     */
-    private function isOlympicAdvancingMatch(TournamentMatch $match): bool
-    {
-        return isset($match->metadata['advances_to_olympic']) && $match->metadata['advances_to_olympic'] === true;
-    }
-
-    /**
-     * Progress winner to Olympic stage
-     */
-    private function progressWinnerToOlympicStage(TournamentMatch $match): ?int
-    {
-        if (!$match->winner_id || !isset($match->metadata['olympic_position'])) {
-            return null;
-        }
-
-        $olympicPosition = $match->metadata['olympic_position'];
-        $tournament = $match->tournament;
-
-        // Find the corresponding Olympic stage match
-        $olympicMatch = $this->findOlympicStageMatch($tournament, $olympicPosition);
-
-        if (!$olympicMatch) {
-            return null;
-        }
-
-        // Assign winner to the Olympic match
-        if (!$olympicMatch->player1_id) {
-            $olympicMatch->player1_id = $match->winner_id;
-        } elseif (!$olympicMatch->player2_id) {
-            $olympicMatch->player2_id = $match->winner_id;
-        }
-
-        // Update status to ready if both players are set
-        if ($olympicMatch->player1_id && $olympicMatch->player2_id) {
-            $olympicMatch->status = MatchStatus::READY;
-        }
-
-        $olympicMatch->save();
-
-        return $olympicMatch->id;
-    }
-
-    /**
-     * Find Olympic stage match by position
-     */
-    private function findOlympicStageMatch(Tournament $tournament, int $position): ?TournamentMatch
-    {
-        // Olympic matches are paired: positions 0,1 go to first match, 2,3 to second, etc.
-        $matchIndex = floor($position / 2);
-        $matchNumber = $matchIndex + 1;
-
-        return TournamentMatch::where('tournament_id', $tournament->id)
-            ->where('match_code', 'OS_R1M'.$matchNumber)
-            ->whereJsonContains('metadata->olympic_stage', 'second')
-            ->first()
-        ;
-    }
-
-    /**
      * Calculate and update player positions based on match result
      */
     private function updatePlayerPositions(TournamentMatch $match, int $winnerId, ?int $loserId): void
@@ -520,6 +162,86 @@ class TournamentMatchService
                 ])
             ;
         }
+    }
+
+    /**
+     * Handle positions for special matches (finals, third place, grand finals)
+     */
+    private function handleSpecialMatchPositions(TournamentMatch $match, int $winnerId, ?int $loserId): bool
+    {
+        $tournament = $match->tournament;
+
+        // Grand Finals
+        if ($match->match_code === 'GF' || $match->round === EliminationRound::GRAND_FINALS) {
+            TournamentPlayer::where('tournament_id', $tournament->id)
+                ->where('user_id', $winnerId)
+                ->update(['position' => 1])
+            ;
+
+            TournamentPlayer::where('tournament_id', $tournament->id)
+                ->where('user_id', $loserId)
+                ->update(['position' => 2])
+            ;
+
+            return true;
+        }
+
+        // Grand Finals Reset
+        if ($match->match_code === 'GF_RESET') {
+            // Winner is champion, loser is 2nd
+            TournamentPlayer::where('tournament_id', $tournament->id)
+                ->where('user_id', $winnerId)
+                ->update(['position' => 1])
+            ;
+
+            TournamentPlayer::where('tournament_id', $tournament->id)
+                ->where('user_id', $loserId)
+                ->update(['position' => 2])
+            ;
+
+            return true;
+        }
+
+        // Third Place Match (excluding Olympic third place which is handled separately)
+        if (($match->round === EliminationRound::THIRD_PLACE || $match->stage === MatchStage::THIRD_PLACE)
+            && !str_starts_with($match->match_code, 'OS_')) {
+            TournamentPlayer::where('tournament_id', $tournament->id)
+                ->where('user_id', $winnerId)
+                ->update(['position' => 3])
+            ;
+
+            TournamentPlayer::where('tournament_id', $tournament->id)
+                ->where('user_id', $loserId)
+                ->update(['position' => 4])
+            ;
+
+            return true;
+        }
+
+        // Single Elimination Finals (excluding Olympic)
+        if ($match->round === EliminationRound::FINALS && $match->stage === MatchStage::BRACKET
+            && $tournament->tournament_type !== TournamentType::OLYMPIC_DOUBLE_ELIMINATION) {
+            $isDoubleElim = in_array($tournament->tournament_type->value, [
+                TournamentType::DOUBLE_ELIMINATION->value,
+                TournamentType::DOUBLE_ELIMINATION_FULL->value,
+            ], true);
+
+            if (!$isDoubleElim) {
+                TournamentPlayer::where('tournament_id', $tournament->id)
+                    ->where('user_id', $winnerId)
+                    ->update(['position' => 1])
+                ;
+
+                TournamentPlayer::where('tournament_id', $tournament->id)
+                    ->where('user_id', $loserId)
+                    ->update(['position' => 2])
+                ;
+
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -620,86 +342,6 @@ class TournamentMatchService
         // Upper bracket eliminations in first stage don't get final positions
         // (they drop to lower bracket)
         return null;
-    }
-
-    /**
-     * Handle positions for special matches (finals, third place, grand finals)
-     */
-    private function handleSpecialMatchPositions(TournamentMatch $match, int $winnerId, ?int $loserId): bool
-    {
-        $tournament = $match->tournament;
-
-        // Grand Finals
-        if ($match->match_code === 'GF' || $match->round === EliminationRound::GRAND_FINALS) {
-            TournamentPlayer::where('tournament_id', $tournament->id)
-                ->where('user_id', $winnerId)
-                ->update(['position' => 1])
-            ;
-
-            TournamentPlayer::where('tournament_id', $tournament->id)
-                ->where('user_id', $loserId)
-                ->update(['position' => 2])
-            ;
-
-            return true;
-        }
-
-        // Grand Finals Reset
-        if ($match->match_code === 'GF_RESET') {
-            // Winner is champion, loser is 2nd
-            TournamentPlayer::where('tournament_id', $tournament->id)
-                ->where('user_id', $winnerId)
-                ->update(['position' => 1])
-            ;
-
-            TournamentPlayer::where('tournament_id', $tournament->id)
-                ->where('user_id', $loserId)
-                ->update(['position' => 2])
-            ;
-
-            return true;
-        }
-
-        // Third Place Match (excluding Olympic third place which is handled separately)
-        if (($match->round === EliminationRound::THIRD_PLACE || $match->stage === MatchStage::THIRD_PLACE)
-            && !str_starts_with($match->match_code, 'OS_')) {
-            TournamentPlayer::where('tournament_id', $tournament->id)
-                ->where('user_id', $winnerId)
-                ->update(['position' => 3])
-            ;
-
-            TournamentPlayer::where('tournament_id', $tournament->id)
-                ->where('user_id', $loserId)
-                ->update(['position' => 4])
-            ;
-
-            return true;
-        }
-
-        // Single Elimination Finals (excluding Olympic)
-        if ($match->round === EliminationRound::FINALS && $match->stage === MatchStage::BRACKET
-            && $tournament->tournament_type !== TournamentType::OLYMPIC_DOUBLE_ELIMINATION) {
-            $isDoubleElim = in_array($tournament->tournament_type->value, [
-                TournamentType::DOUBLE_ELIMINATION->value,
-                TournamentType::DOUBLE_ELIMINATION_FULL->value,
-            ], true);
-
-            if (!$isDoubleElim) {
-                TournamentPlayer::where('tournament_id', $tournament->id)
-                    ->where('user_id', $winnerId)
-                    ->update(['position' => 1])
-                ;
-
-                TournamentPlayer::where('tournament_id', $tournament->id)
-                    ->where('user_id', $loserId)
-                    ->update(['position' => 2])
-                ;
-
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**
@@ -855,6 +497,66 @@ class TournamentMatchService
     }
 
     /**
+     * Check if match advances to Olympic stage
+     */
+    private function isOlympicAdvancingMatch(TournamentMatch $match): bool
+    {
+        return isset($match->metadata['advances_to_olympic']) && $match->metadata['advances_to_olympic'] === true;
+    }
+
+    /**
+     * Progress winner to Olympic stage
+     */
+    private function progressWinnerToOlympicStage(TournamentMatch $match): ?int
+    {
+        if (!$match->winner_id || !isset($match->metadata['olympic_position'])) {
+            return null;
+        }
+
+        $olympicPosition = $match->metadata['olympic_position'];
+        $tournament = $match->tournament;
+
+        // Find the corresponding Olympic stage match
+        $olympicMatch = $this->findOlympicStageMatch($tournament, $olympicPosition);
+
+        if (!$olympicMatch) {
+            return null;
+        }
+
+        // Assign winner to the Olympic match
+        if (!$olympicMatch->player1_id) {
+            $olympicMatch->player1_id = $match->winner_id;
+        } elseif (!$olympicMatch->player2_id) {
+            $olympicMatch->player2_id = $match->winner_id;
+        }
+
+        // Update status to ready if both players are set
+        if ($olympicMatch->player1_id && $olympicMatch->player2_id) {
+            $olympicMatch->status = MatchStatus::READY;
+        }
+
+        $olympicMatch->save();
+
+        return $olympicMatch->id;
+    }
+
+    /**
+     * Find Olympic stage match by position
+     */
+    private function findOlympicStageMatch(Tournament $tournament, int $position): ?TournamentMatch
+    {
+        // Olympic matches are paired: positions 0,1 go to first match, 2,3 to second, etc.
+        $matchIndex = floor($position / 2);
+        $matchNumber = $matchIndex + 1;
+
+        return TournamentMatch::where('tournament_id', $tournament->id)
+            ->where('match_code', 'OS_R1M'.$matchNumber)
+            ->whereJsonContains('metadata->olympic_stage', 'second')
+            ->first()
+        ;
+    }
+
+    /**
      * Progress winner to next match
      */
     private function progressWinnerToNextMatch(TournamentMatch $match): void
@@ -889,6 +591,304 @@ class TournamentMatchService
         }
 
         $nextMatch->save();
+    }
+
+    /** 4️⃣ Update TB stats after every TB match & decide if the block is resolved
+     * @throws Throwable
+     */
+    private function updateTiebreakerStandings(TournamentMatch $match): void
+    {
+        if (!($match->metadata['is_tiebreaker'] ?? false)) {
+            return;
+        }
+
+        $tournament = $match->tournament;
+        $winnerId = $match->winner_id;
+        $loserId = $winnerId === $match->player1_id ? $match->player2_id : $match->player1_id;
+        $diff = abs($match->player1_score - $match->player2_score);
+
+        TournamentPlayer::where('tournament_id', $tournament->id)
+            ->where('user_id', $winnerId)
+            ->incrementEach(['tiebreaker_wins' => 1, 'tiebreaker_games_diff' => $diff])
+        ;
+
+        TournamentPlayer::where('tournament_id', $tournament->id)
+            ->where('user_id', $loserId)
+            ->increment('tiebreaker_games_diff', -$diff)
+        ;
+
+        // all matches for *this* TB block finished?
+        $group = $match->metadata['tied_group'];
+        $round = $match->metadata['tiebreaker_round'];
+
+        $open = $tournament
+            ->matches()
+            ->whereJsonContains('metadata->is_tiebreaker', true)
+            ->whereJsonContains('metadata->tiebreaker_round', $round)
+            ->whereJsonContains('metadata->tied_group', $group)
+            ->whereIn('status', [MatchStatus::PENDING, MatchStatus::READY, MatchStatus::IN_PROGRESS])
+            ->exists()
+        ;
+
+        if (!$open) {
+            $this->resolveTiebreakerGroup($tournament, $group, $round);
+        }
+    }
+
+    /** 5️⃣ Analyse a finished TB block; spawn another round only when still 3-way-tied
+     * @throws Throwable
+     */
+    private function resolveTiebreakerGroup(Tournament $tournament, string $group, int $round): void
+    {
+        $playerIds = $tournament
+            ->matches()
+            ->whereJsonContains('metadata->is_tiebreaker', true)
+            ->whereJsonContains('metadata->tied_group', $group)
+            ->pluck('player1_id')
+            ->merge(
+                $tournament
+                    ->matches()
+                    ->whereJsonContains('metadata->is_tiebreaker', true)
+                    ->whereJsonContains('metadata->tied_group', $group)
+                    ->pluck('player2_id'),
+            )
+            ->unique()
+        ;
+
+        $players = TournamentPlayer::where('tournament_id', $tournament->id)
+            ->whereIn('user_id', $playerIds)
+            ->get()
+        ;
+
+        $stillTied = $players
+            ->groupBy(fn($p) => $p->tiebreaker_wins.'_'.$p->tiebreaker_games_diff)
+            ->filter(fn($grp) => $grp->count() >= 3)
+        ;
+
+        if ($stillTied->isNotEmpty() && $round < self::MAX_TIEBREAKER_ROUNDS) {
+            $this->generateTiebreakerMatches($tournament, $stillTied);
+        } else {
+            // either resolved or cap reached → recalc final standings
+            $this->calculateRoundRobinFinalPositions($tournament);
+        }
+    }
+
+    /** 3️⃣ Spawn a new TB round for every tieBlock (3+ people)
+     * @throws Throwable
+     */
+    private function generateTiebreakerMatches(Tournament $tournament, Collection $blocks): void
+    {
+        DB::transaction(static function () use ($tournament, $blocks) {
+            // Get max tiebreaker round using database-agnostic approach
+            $existingRounds = $tournament
+                ->matches()
+                ->whereJsonContains('metadata->is_tiebreaker', true)
+                ->get()
+                ->pluck('metadata.tiebreaker_round')
+                ->filter()
+                ->max()
+            ;
+
+            $nextRound = ($existingRounds ?? 0) + 1;
+
+            foreach ($blocks as $key => $players) {
+
+                // do NOT reset TB stats if we already ran at least once for this block
+                if ($nextRound === 1) {
+                    foreach ($players as $p) {
+                        $p->update(['tiebreaker_wins' => 0, 'tiebreaker_games_diff' => 0]);
+                    }
+                }
+
+                $num = 1;
+                foreach ($players as $i => $p1) {
+                    foreach ($players->slice($i + 1) as $p2) {
+                        TournamentMatch::create([
+                            'tournament_id' => $tournament->id,
+                            'match_code'    => sprintf('TB_R%d_%s_M%d', $nextRound, str_replace('_', '-', $key),
+                                $num++),
+                            'stage'         => MatchStage::PLAYOFF,
+                            'round'         => EliminationRound::GROUPS,
+                            'player1_id'    => $p1->user_id,
+                            'player2_id'    => $p2->user_id,
+                            'races_to'      => $tournament->races_to,
+                            'status'        => MatchStatus::READY,
+                            'metadata'      => [
+                                'is_tiebreaker'    => true,
+                                'tiebreaker_round' => $nextRound,
+                                'tied_group'       => $key,
+                            ],
+                        ]);
+                    }
+                }
+            }
+        });
+    }
+
+    /** 2️⃣ Final-standing calculation (entry-point & fall-back after every TB resolution)
+     * @throws Throwable
+     */
+    private function calculateRoundRobinFinalPositions(Tournament $tournament): void
+    {
+        // Wait if *any* TB matches are still open
+        $waiting = $tournament
+            ->matches()
+            ->whereJsonContains('metadata->is_tiebreaker', true)
+            ->whereIn('status', [MatchStatus::PENDING, MatchStatus::READY, MatchStatus::IN_PROGRESS])
+            ->exists()
+        ;
+        if ($waiting) {
+            return;
+        }
+
+        /** @var Collection<TournamentPlayer> $players */
+        $players = $tournament->players()->where('status', 'confirmed')->get();
+
+        /* -------------------------------------------------------------------
+         | A.  detect 3-way-or-more ties **after** taking *existing* TB stats
+         |     into account (wins & diff). Only those groups need new TB.
+         *-------------------------------------------------------------------*/
+        $tieBlocks = $players
+            ->groupBy(fn($p) => implode('_', [
+                $p->group_wins,
+                $p->group_games_diff,
+                $p->tiebreaker_wins,
+                $p->tiebreaker_games_diff,
+            ]))
+            ->filter(fn($grp) => $grp->count() >= 3)
+        ;
+
+        if ($tieBlocks->isNotEmpty()) {
+            $this->generateTiebreakerMatches($tournament, $tieBlocks);
+            return; // standings will be recalculated after TB round finishes
+        }
+
+        /* -------------------------------------------------------------------
+         | B.  order players (main wins > TB wins > TB diff > main diff > H2H
+         *-------------------------------------------------------------------*/
+        $ranked = $players->sort(function ($a, $b) use ($tournament) {
+            return
+                [$b->group_wins, $b->tiebreaker_wins, $b->tiebreaker_games_diff, $b->group_games_diff]
+                <=> [$a->group_wins, $a->tiebreaker_wins, $a->tiebreaker_games_diff, $a->group_games_diff]
+                    ?: $this->compareHeadToHead($a, $b, $tournament);
+        })->values();
+
+        /* -------------------------------------------------------------------
+         | C.  persist final positions
+         *-------------------------------------------------------------------*/
+        foreach ($ranked as $idx => $pl) {
+            $pl->update([
+                'position'              => $idx + 1,
+                'group_position'        => $idx + 1,
+                'tiebreaker_wins'       => 0,
+                'tiebreaker_games_diff' => 0,
+            ]);
+        }
+    }
+
+    private function compareHeadToHead(TournamentPlayer $a, TournamentPlayer $b, Tournament $t): int
+    {
+        $tb = TournamentMatch::where('tournament_id', $t->id)
+            ->whereJsonContains('metadata->is_tiebreaker', true)
+            ->where(function ($q) use ($a, $b) {
+                $q->where(function ($s) use ($a, $b) {
+                    $s->where('player1_id', $a->user_id)->where('player2_id', $b->user_id);
+                })->orWhere(function ($s) use ($a, $b) {
+                    $s->where('player1_id', $b->user_id)->where('player2_id', $a->user_id);
+                });
+            })
+            ->where('status', MatchStatus::COMPLETED)
+            ->orderBy('created_at', 'desc')
+            ->first()
+        ;
+        if ($tb) {
+            return $tb->winner_id === $a->user_id ? -1 : 1;
+        }
+
+        $reg = TournamentMatch::where('tournament_id', $t->id)
+            ->where(function ($q) {
+                $q
+                    ->whereNull('metadata->is_tiebreaker')
+                    ->orWhere(function ($subQ) {
+                        if ($this->isPostgres()) {
+                            $subQ->whereRaw("(metadata->>'is_tiebreaker')::boolean = false");
+                        } else {
+                            $subQ->whereRaw("JSON_EXTRACT(metadata, '$.is_tiebreaker') = false");
+                        }
+                    })
+                ;
+            })
+            ->where(function ($q) use ($a, $b) {
+                $q->where(function ($s) use ($a, $b) {
+                    $s->where('player1_id', $a->user_id)->where('player2_id', $b->user_id);
+                })->orWhere(function ($s) use ($a, $b) {
+                    $s->where('player1_id', $b->user_id)->where('player2_id', $a->user_id);
+                });
+            })
+            ->where('status', MatchStatus::COMPLETED)
+            ->first()
+        ;
+        if (!$reg) {
+            return $a->seed_number - $b->seed_number;
+        }
+        return $reg->winner_id === $a->user_id ? -1 : 1;
+    }
+
+    /**
+     * Check if using PostgreSQL
+     */
+    private function isPostgres(): bool
+    {
+        return DB::connection()->getDriverName() === 'pgsql';
+    }
+
+    /** 1️⃣ Update normal group-stage standings after a RR match is completed
+     * @throws Throwable
+     */
+    private function updateRoundRobinStandings(TournamentMatch $match): void
+    {
+        $tournament = $match->tournament;
+        if ($tournament->tournament_type !== TournamentType::ROUND_ROBIN) {
+            return;
+        }
+
+        $winnerId = $match->winner_id;
+        $loserId = $winnerId === $match->player1_id ? $match->player2_id : $match->player1_id;
+        $diff = abs($match->player1_score - $match->player2_score);
+
+        // wins / losses / frame-diff in the **main** round-robin
+        TournamentPlayer::where('tournament_id', $tournament->id)
+            ->where('user_id', $winnerId)
+            ->incrementEach(['group_wins' => 1, 'group_games_diff' => $diff])
+        ;
+
+        TournamentPlayer::where('tournament_id', $tournament->id)
+            ->where('user_id', $loserId)
+            ->incrementEach(['group_losses' => 1, 'group_games_diff' => -$diff])
+        ;
+
+        // if no more group matches → evaluate standings / kick off TB
+        $open = $tournament
+            ->matches()
+            ->whereIn('status', [MatchStatus::PENDING, MatchStatus::READY, MatchStatus::IN_PROGRESS])
+            ->where(function ($query) {
+                $query
+                    ->whereNull('metadata->is_tiebreaker')
+                    ->orWhere(function ($q) {
+                        if ($this->isPostgres()) {
+                            $q->whereRaw("(metadata->>'is_tiebreaker')::boolean = false");
+                        } else {
+                            $q->whereRaw("JSON_EXTRACT(metadata, '$.is_tiebreaker') = false");
+                        }
+                    })
+                ;
+            })
+            ->count()
+        ;
+
+        if ($open === 0) {
+            $this->calculateRoundRobinFinalPositions($tournament);
+        }
     }
 
     /**

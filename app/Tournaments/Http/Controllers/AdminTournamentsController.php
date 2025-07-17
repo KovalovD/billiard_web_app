@@ -410,33 +410,6 @@ readonly class AdminTournamentsController
         ];
     }
 
-    private function calcOlympicTargetLowerRound(array $ls, int $olSize): int
-    {
-        $adv = $olSize / 2;
-        $tar = 0;
-        $p = 0;
-
-        foreach ($ls as $round => $info) {
-            $p = $info['type'] === 'initial'
-                ? $info['matches'] * 2
-                : (int) ceil($p / 2);
-
-            if ($p === $adv) {
-                $tar = $round;
-                if (
-                    isset($ls[$tar + 1]) &&
-                    $ls[$tar]['type'] !== 'drop' &&
-                    $ls[$tar + 1]['type'] === 'drop'
-                ) {
-                    ++$tar;
-                }
-                break;
-            }
-        }
-
-        return $tar;
-    }
-
     private function getRoundDisplayName(int $round, int $totalRounds): string
     {
         $remaining = $totalRounds - $round + 1;
@@ -530,5 +503,32 @@ readonly class AdminTournamentsController
             'final_drop' => "Lower Bracket Finals (w/ UB Finals loser)",
             default => "Lower Bracket Round {$round}",
         };
+    }
+
+    private function calcOlympicTargetLowerRound(array $ls, int $olSize): int
+    {
+        $adv = $olSize / 2;
+        $tar = 0;
+        $p = 0;
+
+        foreach ($ls as $round => $info) {
+            $p = $info['type'] === 'initial'
+                ? $info['matches'] * 2
+                : (int) ceil($p / 2);
+
+            if ($p === $adv) {
+                $tar = $round;
+                if (
+                    isset($ls[$tar + 1]) &&
+                    $ls[$tar]['type'] !== 'drop' &&
+                    $ls[$tar + 1]['type'] === 'drop'
+                ) {
+                    ++$tar;
+                }
+                break;
+            }
+        }
+
+        return $tar;
     }
 }

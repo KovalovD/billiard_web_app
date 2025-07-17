@@ -91,6 +91,16 @@ readonly class TournamentsController
     }
 
     /**
+     * Get tournament players
+     */
+    public function players(Tournament $tournament): AnonymousResourceCollection
+    {
+        $players = $this->tournamentService->getTournamentPlayers($tournament);
+
+        return TournamentPlayerResource::collection($players);
+    }
+
+    /**
      * Get all tournaments
      */
     public function index(Request $request): AnonymousResourceCollection
@@ -108,16 +118,6 @@ readonly class TournamentsController
         $tournament->load(['game', 'city.country', 'club', 'players.user', 'officialRatings']);
 
         return new TournamentResource($tournament);
-    }
-
-    /**
-     * Get tournament players
-     */
-    public function players(Tournament $tournament): AnonymousResourceCollection
-    {
-        $players = $this->tournamentService->getTournamentPlayers($tournament);
-
-        return TournamentPlayerResource::collection($players);
     }
 
     /**
