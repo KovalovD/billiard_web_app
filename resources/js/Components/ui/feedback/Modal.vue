@@ -16,7 +16,7 @@ const props = withDefaults(defineProps<Props>(), {
     show: false,
     maxWidth: 'md',
     closeable: true,
-    modalWrapperClass: 'bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-xl transform transition-all sm:w-full sm:mx-auto'
+    modalWrapperClass: 'bg-white dark:bg-gray-800 rounded-lg shadow-xl transform transition-all sm:w-full sm:mx-auto'
 });
 
 const {t} = useLocale();
@@ -97,7 +97,7 @@ const maxWidthClass = computed(() => {
                     <div
                         v-show="show"
                         :class="[props.modalWrapperClass, maxWidthClass]"
-                        class="relative">
+                        class="relative overflow-visible">
                         <div v-if="title || closeable"
                              class="flex justify-between items-center p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
                             <h3 v-if="title" id="modal-title"
@@ -112,7 +112,7 @@ const maxWidthClass = computed(() => {
                             </Button>
                         </div>
 
-                        <div class="p-4 sm:p-6">
+                        <div class="p-4 sm:p-6 overflow-visible">
                             <slot/>
                         </div>
 

@@ -632,8 +632,8 @@ export interface TournamentMatch {
     bracket_position?: number;
     bracket_side?: BracketSide;
     bracket_side_display?: string;
-    player1_id?: number;
-    player2_id?: number;
+    player1_id: number | null;
+    player2_id: number | null;
     winner_id?: number;
     player1_score: number;
     player2_score: number;

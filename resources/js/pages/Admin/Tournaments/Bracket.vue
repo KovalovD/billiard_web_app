@@ -273,12 +273,20 @@ const handleUpdateMatch = async (data: any) => {
     if (!selectedMatch.value) return;
 
     try {
-        const response = await apiClient<TournamentMatch>(`/api/admin/tournaments/${props.tournamentId}/matches/${selectedMatch.value.id}`, {
+        const response = await apiClient<{
+            match: TournamentMatch;
+            affected_matches?: number[];
+        }>(`/api/admin/tournaments/${props.tournamentId}/matches/${selectedMatch.value.id}`, {
             method: 'PUT',
             data
         });
 
-        updateMatchesInBracket([response]);
+        updateMatchesInBracket([response.match]);
+
+        if (response.affected_matches && response.affected_matches.length > 0) {
+            await loadSpecificMatches(response.affected_matches);
+        }
+
         closeMatchModal();
         successMessage.value = t('Match updated successfully');
     } catch (err: any) {

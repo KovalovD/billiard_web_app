@@ -127,6 +127,8 @@ readonly class AdminTournamentMatchesController
         }
 
         $validated = $request->validate([
+            'player1_id' => ['nullable', 'integer', 'exists:users,id'],
+            'player2_id' => ['nullable', 'integer', 'exists:users,id', 'different:player1_id'],
             'player1_score' => ['nullable', 'integer', 'min:0'],
             'player2_score' => ['nullable', 'integer', 'min:0'],
             'club_table_id' => ['nullable', 'integer', 'exists:club_tables,id'],
@@ -136,10 +138,40 @@ readonly class AdminTournamentMatchesController
             'admin_notes'   => ['nullable', 'string'],
         ]);
 
-        try {
-            $match = $this->matchService->updateMatch($match, $validated);
+        // Validate player changes
+        if (isset($validated['player1_id']) || isset($validated['player2_id'])) {
+            // Ensure players are registered in the tournament
+            $playerIds = array_filter([
+                $validated['player1_id'] ?? null,
+                $validated['player2_id'] ?? null,
+            ]);
 
-            return response()->json(new TournamentMatchResource($match->load(['player1', 'player2', 'clubTable'])));
+            if (!empty($playerIds)) {
+                $registeredCount = $tournament
+                    ->players()
+                    ->whereIn('user_id', $playerIds)
+                    ->where('status', 'confirmed')
+                    ->count()
+                ;
+
+                if ($registeredCount !== count($playerIds)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'All players must be registered in the tournament',
+                    ], 400);
+                }
+            }
+        }
+
+        try {
+            $result = $this->matchService->updateMatch($match, $validated);
+
+            return response()->json([
+                'match'            => new TournamentMatchResource($result['match']->load([
+                    'player1', 'player2', 'clubTable',
+                ])),
+                'affected_matches' => $result['affected_matches'] ?? [],
+            ]);
         } catch (RuntimeException|Throwable $e) {
             return response()->json([
                 'success' => false,

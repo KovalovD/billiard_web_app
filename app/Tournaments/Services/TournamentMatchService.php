@@ -938,51 +938,144 @@ class TournamentMatchService
      * Update match details
      * @throws Throwable
      */
-    public function updateMatch(TournamentMatch $match, array $data): TournamentMatch
+    public function updateMatch(TournamentMatch $match, array $data): array
     {
         return DB::transaction(function () use ($match, $data) {
-            // If updating scores and match is completed, recalculate winner
-            if (isset($data['player1_score'], $data['player2_score']) && $match->status === MatchStatus::COMPLETED) {
+            $affectedMatchIds = [];
+
+            // Handle player changes
+            if (isset($data['player1_id']) || isset($data['player2_id'])) {
+                // If match was already completed with different players, need to revert progression
+                if ($match->status === MatchStatus::COMPLETED && $match->winner_id) {
+                    $this->revertMatchProgression($match);
+                    $this->revertPlayerPositions($match);
+                }
+
+                // Clear winner if players changed
+                if (($data['player1_id'] ?? $match->player1_id) !== $match->player1_id ||
+                    ($data['player2_id'] ?? $match->player2_id) !== $match->player2_id) {
+                    $data['winner_id'] = null;
+                    $data['status'] = MatchStatus::PENDING;
+                    $data['player1_score'] = 0;
+                    $data['player2_score'] = 0;
+                    $data['started_at'] = null;
+                    $data['completed_at'] = null;
+                }
+            }
+
+            // Handle status change
+            if (isset($data['status']) && $data['status'] !== $match->status) {
+                // If changing from completed to another status, revert progression
+                if ($match->status === MatchStatus::COMPLETED) {
+                    $this->revertMatchProgression($match);
+                    $this->revertPlayerPositions($match);
+                    $data['winner_id'] = null;
+                    $data['completed_at'] = null;
+                }
+
+                // If changing to completed, validate scores
+                if ($data['status'] === MatchStatus::COMPLETED) {
+                    $player1Score = $data['player1_score'] ?? $match->player1_score;
+                    $player2Score = $data['player2_score'] ?? $match->player2_score;
+
+                    if ($player1Score === $player2Score) {
+                        throw new RuntimeException('Match cannot end in a tie');
+                    }
+
+                    $racesTo = $match->races_to ?? $match->tournament->races_to;
+                    if ($player1Score < $racesTo && $player2Score < $racesTo) {
+                        throw new RuntimeException("At least one player must reach $racesTo races to win");
+                    }
+
+                    $data['winner_id'] = $player1Score > $player2Score
+                        ? ($data['player1_id'] ?? $match->player1_id)
+                        : ($data['player2_id'] ?? $match->player2_id);
+                    $data['completed_at'] = now();
+                }
+
+                // Handle status-specific updates
+                switch ($data['status']) {
+                    case MatchStatus::IN_PROGRESS:
+                        $data['started_at'] = $data['started_at'] ?? now();
+                        break;
+                    case MatchStatus::READY:
+                        // Check if both players are set
+                        $player1Id = $data['player1_id'] ?? $match->player1_id;
+                        $player2Id = $data['player2_id'] ?? $match->player2_id;
+                        if (!$player1Id || !$player2Id) {
+                            $data['status'] = MatchStatus::PENDING;
+                        }
+                        break;
+                }
+            }
+
+            // If updating scores without status change
+            if (isset($data['player1_score'], $data['player2_score']) &&
+                !isset($data['status']) &&
+                $match->status === MatchStatus::COMPLETED) {
+
                 if ($data['player1_score'] === $data['player2_score']) {
                     throw new RuntimeException('Match cannot end in a tie');
                 }
 
-                $data['winner_id'] = $data['player1_score'] > $data['player2_score']
-                    ? $match->player1_id
-                    : $match->player2_id;
+                $racesTo = $match->races_to ?? $match->tournament->races_to;
+                if ($data['player1_score'] < $racesTo && $data['player2_score'] < $racesTo) {
+                    // If neither player reached races_to, change status back to in_progress
+                    $data['status'] = MatchStatus::IN_PROGRESS;
+                    $data['winner_id'] = null;
+                    $data['completed_at'] = null;
+                } else {
+                    $data['winner_id'] = $data['player1_score'] > $data['player2_score']
+                        ? ($data['player1_id'] ?? $match->player1_id)
+                        : ($data['player2_id'] ?? $match->player2_id);
 
-                // If winner changed, need to update bracket progression
-                if ($data['winner_id'] !== $match->winner_id) {
-                    $this->revertMatchProgression($match);
-                    $this->revertPlayerPositions($match);
+                    // If winner changed, need to update bracket progression
+                    if ($data['winner_id'] !== $match->winner_id) {
+                        $this->revertMatchProgression($match);
+                        $this->revertPlayerPositions($match);
+                    }
                 }
             }
 
+            // Update the match
             $match->update($data);
 
-            // Re-progress if winner changed
-            if (isset($data['winner_id']) && $match->status === MatchStatus::COMPLETED) {
-                $loserId = $data['winner_id'] === $match->player1_id
+            // Handle progression if match is completed
+            if ($match->status === MatchStatus::COMPLETED && $match->winner_id) {
+                $loserId = $match->winner_id === $match->player1_id
                     ? $match->player2_id
                     : $match->player1_id;
 
-                // Recalculate positions
-                $this->updatePlayerPositions($match, $data['winner_id'], $loserId);
+                // Calculate positions
+                $this->updatePlayerPositions($match, $match->winner_id, $loserId);
 
-                // Handle Olympic tournament progression
+                // Handle bracket progression
                 if ($this->isOlympicAdvancingMatch($match)) {
-                    $this->progressWinnerToOlympicStage($match);
-                } else {
+                    $olympicMatchId = $this->progressWinnerToOlympicStage($match);
+                    if ($olympicMatchId) {
+                        $affectedMatchIds[] = $olympicMatchId;
+                    }
+                } elseif ($match->next_match_id) {
                     $this->progressWinnerToNextMatch($match);
+                    $affectedMatchIds[] = $match->next_match_id;
                 }
 
-                // Always handle loser progression if defined
+                // Handle loser progression for double elimination
                 if ($match->loser_next_match_id) {
                     $this->progressLoserToNextMatch($match);
+                    $affectedMatchIds[] = $match->loser_next_match_id;
                 }
             }
 
-            return $match->fresh();
+            // If both players are set and status is pending, change to ready
+            if ($match->player1_id && $match->player2_id && $match->status === MatchStatus::PENDING) {
+                $match->update(['status' => MatchStatus::READY]);
+            }
+
+            return [
+                'match'            => $match->fresh(['player1', 'player2', 'clubTable']),
+                'affected_matches' => array_unique($affectedMatchIds),
+            ];
         });
     }
 
