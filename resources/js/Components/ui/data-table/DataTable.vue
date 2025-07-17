@@ -1,8 +1,8 @@
-<!-- resources/js/Components/ui/data-table/DataTable.vue -->
 <script generic="T" lang="ts" setup>
 import {computed, ref} from 'vue';
 import {cn} from '@/lib/utils';
 import {useLocale} from "@/composables/useLocale";
+import {ChevronDown, ChevronsUpDown, ChevronUp} from 'lucide-vue-next';
 
 export interface Column<T> {
     key: string;
@@ -15,6 +15,8 @@ export interface Column<T> {
     sticky?: boolean;
     render?: (item: T) => any;
     mobileLabel?: string; // For mobile card view
+    sortKey?: string; // Custom key for sorting (if different from key)
+    sortFn?: (a: T, b: T) => number; // Custom sort function
 }
 
 interface Props {
@@ -27,6 +29,9 @@ interface Props {
     rowClass?: string | ((item: T, index: number) => string);
     rowAttributes?: (item: T, index: number) => Record<string, string>;
     mobileCardMode?: boolean; // Enable card mode on mobile
+    showHeader?: boolean; // Show table header
+    defaultSortColumn?: string; // Default column to sort by
+    defaultSortDirection?: 'asc' | 'desc'; // Default sort direction
 }
 
 const {t} = useLocale();
@@ -37,10 +42,82 @@ const props = withDefaults(defineProps<Props>(), {
     compactMode: false,
     rowClass: '',
     rowAttributes: () => ({}),
-    mobileCardMode: true
+    mobileCardMode: true,
+    showHeader: true,
+    defaultSortColumn: '',
+    defaultSortDirection: 'asc'
 });
 
 const tableRef = ref<HTMLDivElement>();
+
+// Sorting state
+const sortColumn = ref<string>(props.defaultSortColumn);
+const sortDirection = ref<'asc' | 'desc'>(props.defaultSortDirection);
+
+// Handle sort click
+const handleSort = (column: Column<T>) => {
+    if (!column.sortable) return;
+
+    const sortKey = column.sortKey || column.key;
+
+    if (sortColumn.value === sortKey) {
+        // Toggle direction if same column
+        sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
+    } else {
+        // New column, default to ascending
+        sortColumn.value = sortKey;
+        sortDirection.value = 'asc';
+    }
+};
+
+// Get sort icon for column
+const getSortIcon = (column: Column<T>) => {
+    const sortKey = column.sortKey || column.key;
+
+    if (sortColumn.value !== sortKey) {
+        return ChevronsUpDown;
+    }
+
+    return sortDirection.value === 'asc' ? ChevronUp : ChevronDown;
+};
+
+// Sorted data
+const sortedData = computed(() => {
+    if (!sortColumn.value) return props.data;
+
+    const column = props.columns.find(col => (col.sortKey || col.key) === sortColumn.value);
+    if (!column) return props.data;
+
+    return [...props.data].sort((a, b) => {
+        // Use custom sort function if provided
+        if (column.sortFn) {
+            const result = column.sortFn(a, b);
+            return sortDirection.value === 'asc' ? result : -result;
+        }
+
+        // Default sorting
+        const aVal = column.sortKey ? a[column.sortKey] : a[column.key];
+        const bVal = column.sortKey ? b[column.sortKey] : b[column.key];
+
+        // Handle null/undefined values
+        if (aVal == null && bVal == null) return 0;
+        if (aVal == null) return sortDirection.value === 'asc' ? 1 : -1;
+        if (bVal == null) return sortDirection.value === 'asc' ? -1 : 1;
+
+        // Numeric comparison
+        if (typeof aVal === 'number' && typeof bVal === 'number') {
+            return sortDirection.value === 'asc' ? aVal - bVal : bVal - aVal;
+        }
+
+        // String comparison
+        const aStr = String(aVal).toLowerCase();
+        const bStr = String(bVal).toLowerCase();
+
+        if (aStr < bStr) return sortDirection.value === 'asc' ? -1 : 1;
+        if (aStr > bStr) return sortDirection.value === 'asc' ? 1 : -1;
+        return 0;
+    });
+});
 
 // Computed columns for mobile view (exclude hidden columns)
 const mobileColumns = computed(() =>
@@ -63,7 +140,8 @@ const getHeaderClasses = (column: Column<T>) => {
     return cn(
         getCellClasses(column),
         'text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400',
-        column.sticky && 'z-10'
+        column.sticky && 'z-10',
+        column.sortable && 'cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors'
     );
 };
 
@@ -106,7 +184,7 @@ defineExpose({
             <!-- Data cards -->
             <div v-else class="space-y-3">
                 <div
-                    v-for="(item, index) in data"
+                    v-for="(item, index) in sortedData"
                     :key="index"
                     :class="getCardClasses(item, index)"
                     v-bind="props.rowAttributes(item, index)"
@@ -173,6 +251,7 @@ defineExpose({
         >
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead
+                    v-if="showHeader"
                     :class="[
                         'bg-gray-50 dark:bg-gray-800',
                         stickyHeader && 'sticky top-0 z-10'
@@ -185,8 +264,17 @@ defineExpose({
                         :class="getHeaderClasses(column)"
                         :style="{ width: column.width }"
                         scope="col"
+                        @click="handleSort(column)"
                     >
-                        {{ column.label }}
+                        <div class="flex items-center gap-1"
+                             :class="[column.align === 'center' && 'justify-center', column.align === 'right' && 'justify-end']">
+                            <span>{{ column.label }}</span>
+                            <component
+                                v-if="column.sortable"
+                                :is="getSortIcon(column)"
+                                class="h-3 w-3 text-gray-400"
+                            />
+                        </div>
                     </th>
                 </tr>
                 </thead>
@@ -211,7 +299,7 @@ defineExpose({
                 <!-- Data rows -->
                 <template v-else>
                     <tr
-                        v-for="(item, index) in data"
+                        v-for="(item, index) in sortedData"
                         :key="index"
                         :class="getRowClasses(item, index)"
                         v-bind="props.rowAttributes(item, index)"

@@ -529,13 +529,20 @@ const columns = computed(() => [
     }
 ]);
 
-// Add this with other computed properties
+// Update the playerColumns computed property to add sorting
 const playerColumns = computed(() => [
     {
         key: 'seed',
         label: t('#seed'),
         align: 'center' as const,
         width: '60px',
+        sortable: true,
+        sortKey: 'seed_number',
+        sortFn: (a: TournamentPlayer, b: TournamentPlayer) => {
+            const aSeed = Number(a.seed_number) || 999;
+            const bSeed = Number(b.seed_number) || 999;
+            return aSeed - bSeed;
+        },
         render: (player: TournamentPlayer) => ({
             seed: player.seed_number
         })
@@ -544,6 +551,12 @@ const playerColumns = computed(() => [
         key: 'player',
         label: t('Player'),
         align: 'left' as const,
+        sortable: true,
+        sortFn: (a: TournamentPlayer, b: TournamentPlayer) => {
+            const aName = `${a.user?.lastname} ${a.user?.firstname}`;
+            const bName = `${b.user?.lastname} ${b.user?.firstname}`;
+            return aName.localeCompare(bName);
+        },
         render: (player: TournamentPlayer) => ({
             name: `${player.user?.firstname} ${player.user?.lastname}`,
             location: player.user?.home_city ?
@@ -556,15 +569,28 @@ const playerColumns = computed(() => [
         label: t('Rating'),
         align: 'center' as const,
         width: '100px',
+        sortable: true,
+        sortFn: (a: TournamentPlayer, b: TournamentPlayer) => {
+            // Convert to numbers for proper numeric sorting
+            const aRating = Number(a.rating) || 0;
+            const bRating = Number(b.rating) || 0;
+            return aRating - bRating;
+        },
         render: (player: TournamentPlayer) => ({
             rating: player.rating || null,
-            position: null // You can add position if available
+            position: null
         })
     },
     {
         key: 'club',
         label: t('Club'),
         align: 'left' as const,
+        sortable: true,
+        sortFn: (a: TournamentPlayer, b: TournamentPlayer) => {
+            const aClub = a.user?.home_club?.name || '';
+            const bClub = b.user?.home_club?.name || '';
+            return aClub.localeCompare(bClub);
+        },
         render: (player: TournamentPlayer) => ({
             name: player.user?.home_club?.name || null
         })
@@ -574,6 +600,7 @@ const playerColumns = computed(() => [
         label: t('Status'),
         align: 'center' as const,
         width: '100px',
+        sortable: true,
         render: (player: TournamentPlayer) => ({
             status: player.status,
             status_display: player.status_display
@@ -584,6 +611,12 @@ const playerColumns = computed(() => [
         label: t('Registered'),
         align: 'center' as const,
         width: '120px',
+        sortable: true,
+        sortFn: (a: TournamentPlayer, b: TournamentPlayer) => {
+            const aDate = new Date(a.confirmed_at || a.registered_at || 0).getTime();
+            const bDate = new Date(b.confirmed_at || b.registered_at || 0).getTime();
+            return aDate - bDate;
+        },
         render: (player: TournamentPlayer) => ({
             date: formatDate(player.confirmed_at || player.registered_at)
         })
