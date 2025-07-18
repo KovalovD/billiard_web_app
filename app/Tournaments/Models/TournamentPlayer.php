@@ -39,22 +39,22 @@ class TournamentPlayer extends Model
     ];
 
     protected $casts = [
-        'prize_amount'      => 'decimal:2',
-        'bonus_amount'      => 'decimal:2',
+        'prize_amount'       => 'decimal:2',
+        'bonus_amount'       => 'decimal:2',
         'achievement_amount' => 'decimal:2',
-        'registered_at'     => 'datetime',
-        'applied_at'        => 'datetime',
-        'confirmed_at'      => 'datetime',
-        'rejected_at'       => 'datetime',
-        'position'          => 'integer',
-        'seed_number'       => 'integer',
-        'group_position'    => 'integer',
-        'group_wins'        => 'integer',
-        'group_losses'      => 'integer',
-        'group_games_diff'  => 'integer',
-        'rating_points'     => 'integer',
-        'status'            => TournamentPlayerStatus::class,
-        'elimination_round' => EliminationRound::class,
+        'registered_at'      => 'datetime',
+        'applied_at'         => 'datetime',
+        'confirmed_at'       => 'datetime',
+        'rejected_at'        => 'datetime',
+        'position'           => 'integer',
+        'seed_number'        => 'integer',
+        'group_position'     => 'integer',
+        'group_wins'         => 'integer',
+        'group_losses'       => 'integer',
+        'group_games_diff'   => 'integer',
+        'rating_points'      => 'integer',
+        'status'             => TournamentPlayerStatus::class,
+        'elimination_round'  => EliminationRound::class,
     ];
 
     protected $with = ['tournament.officialRatings.players', 'user'];

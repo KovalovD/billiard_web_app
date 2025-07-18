@@ -160,7 +160,7 @@ readonly class AdminOfficialRatingsController
             $updated = $this->officialRatingService->updateRatingFromTournament($officialRating, $tournament);
 
             return response()->json([
-                'success' => true,
+                'success'         => true,
                 'message'         => "Rating updated successfully. $updated players affected.",
                 'players_updated' => $updated,
             ]);

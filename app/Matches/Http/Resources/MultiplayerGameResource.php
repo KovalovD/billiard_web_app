@@ -68,7 +68,7 @@ class MultiplayerGameResource extends JsonResource
         if ($this->resource->status === 'completed' && $this->resource->prize_pool) {
             $financialData = [
                 'entrance_fee'       => $this->resource->entrance_fee,
-                'total_prize_pool' => $this->resource->current_prize_pool ?? $this->resource->prize_pool['total'] ?? 0,
+                'total_prize_pool'   => $this->resource->current_prize_pool ?? $this->resource->prize_pool['total'] ?? 0,
                 'first_place_prize'  => $this->resource->prize_pool['first_place'] ?? 0,
                 'second_place_prize' => $this->resource->prize_pool['second_place'] ?? 0,
                 'grand_final_fund'   => $this->resource->prize_pool['grand_final_fund'] ?? 0,
@@ -147,12 +147,12 @@ class MultiplayerGameResource extends JsonResource
                         'cards'           => $player->cards,
                         'joined_at'       => $player->joined_at,
                         'is_current_turn' => $player->user_id === $currentTurnPlayerId,
-                        'rebuy_count'   => $player->rebuy_count,
-                        'rounds_played' => $player->rounds_played,
-                        'total_paid'    => $player->total_paid,
-                        'game_stats'    => $player->game_stats,
-                        'is_rebuy'      => $player->is_rebuy,
-                        'last_rebuy_at' => $player->last_rebuy_at,
+                        'rebuy_count'     => $player->rebuy_count,
+                        'rounds_played'   => $player->rounds_played,
+                        'total_paid'      => $player->total_paid,
+                        'game_stats'      => $player->game_stats,
+                        'is_rebuy'        => $player->is_rebuy,
+                        'last_rebuy_at'   => $player->last_rebuy_at,
                     ];
                 }),
             'eliminated_players'        => $eliminatedPlayers->map(

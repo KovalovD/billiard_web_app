@@ -9,11 +9,11 @@ class PerformGameActionRequest extends BaseFormRequest
     public function rules(): array
     {
         return [
-            'action'         => [
+            'action'          => [
                 'required', 'string', 'in:increment_lives,decrement_lives,use_card,record_turn,set_turn',
             ],
-            'target_user_id' => ['nullable', 'integer', 'exists:users,id'],
-            'acting_user_id' => ['nullable', 'integer', 'exists:users,id'],
+            'target_user_id'  => ['nullable', 'integer', 'exists:users,id'],
+            'acting_user_id'  => ['nullable', 'integer', 'exists:users,id'],
             'card_type'       => ['required_if:action,use_card', 'string', 'in:skip_turn,pass_turn,hand_shot,handicap'],
             'handicap_action' => ['required_if:card_type,handicap', 'string', 'in:skip_turn,take_life'],
         ];

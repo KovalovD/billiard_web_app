@@ -15,7 +15,7 @@ class RegisterRequest extends BaseFormRequest
             'firstname' => ['required', 'string', 'max:255'],
             'lastname'  => ['required', 'string', 'max:255'],
             'email'     => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'phone' => ['required', 'string', 'max:15', 'unique:'.User::class, new PhoneNumber()],
+            'phone'     => ['required', 'string', 'max:15', 'unique:'.User::class, new PhoneNumber()],
             'password'  => ['required', 'confirmed', Password::defaults()],
         ];
     }

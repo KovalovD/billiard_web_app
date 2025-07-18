@@ -18,7 +18,7 @@ class MultiplayerGameLog extends Model
     ];
     protected $casts = [
         'action_data' => 'array',
-        'created_at' => 'datetime',
+        'created_at'  => 'datetime',
     ];
 
     public function multiplayerGame(): BelongsTo

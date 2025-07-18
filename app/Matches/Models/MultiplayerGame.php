@@ -52,15 +52,15 @@ class MultiplayerGame extends Model
     ];
 
     protected $casts = [
-        'registration_ends_at' => 'datetime',
-        'started_at'           => 'datetime',
-        'completed_at'         => 'datetime',
+        'registration_ends_at'   => 'datetime',
+        'started_at'             => 'datetime',
+        'completed_at'           => 'datetime',
         'allow_player_targeting' => 'boolean',
-        'prize_pool'           => 'array',
-        'allow_rebuy'          => 'boolean',
-        'enable_penalties'     => 'boolean',
-        'rebuy_history'        => 'array',
-        'current_prize_pool'   => 'decimal:2',
+        'prize_pool'             => 'array',
+        'allow_rebuy'            => 'boolean',
+        'enable_penalties'       => 'boolean',
+        'rebuy_history'          => 'array',
+        'current_prize_pool'     => 'decimal:2',
     ];
 
     protected $with = ['officialRating'];

@@ -16,7 +16,7 @@ class MatchGameResource extends JsonResource
             'id'     => $this->id,
             'status' => $this->status,
 
-            'league_id'        => $this->league_id,
+            'league_id'  => $this->league_id,
             'stream_url' => $this->stream_url,
             'details'    => $this->details,
 
@@ -26,7 +26,7 @@ class MatchGameResource extends JsonResource
             'second_user_score' => $this->second_user_score,
             'winner_rating_id'  => $this->winner_rating_id,
             'loser_rating_id'   => $this->loser_rating_id,
-            'result_confirmed' => $this->result_confirmed,
+            'result_confirmed'  => $this->result_confirmed,
 
             'rating_change_for_winner'  => $this->rating_change_for_winner,
             'rating_change_for_loser'   => $this->rating_change_for_loser,
@@ -44,11 +44,11 @@ class MatchGameResource extends JsonResource
             'league' => new LeagueResource($this->whenLoaded('league')),
 
             'firstPlayer'  => [
-                'user' => new UserResource($this->firstRating?->user),
+                'user'   => new UserResource($this->firstRating?->user),
                 'rating' => new RatingResource($this->whenLoaded('firstRating')),
             ],
             'secondPlayer' => [
-                'user' => new UserResource($this->secondRating?->user),
+                'user'   => new UserResource($this->secondRating?->user),
                 'rating' => new RatingResource($this->whenLoaded('secondRating')),
             ],
         ];

@@ -121,7 +121,7 @@ class OfficialRatingService
                 'city'               => $tournament->city?->name,
                 'country'            => $tournament->city?->country?->name,
                 'club'               => $tournament->club?->name,
-                'game_name' => $tournament->game?->name,
+                'game_name'          => $tournament->game?->name,
                 'players_count'      => $tournament->players_count,
                 'rating_coefficient' => $tournament->pivot->rating_coefficient,
                 'is_counting'        => $tournament->pivot->is_counting,
@@ -405,7 +405,7 @@ class OfficialRatingService
                     'player_id'                => $player->id,
                     'player_name'              => $player->user->firstname.' '.$player->user->lastname,
                     'tournament_records_count' => count($player->tournament_records ?? []),
-                    'issues' => $playerIssues,
+                    'issues'                   => $playerIssues,
                 ];
             }
         }
@@ -528,10 +528,10 @@ class OfficialRatingService
                 }
 
                 $players[$player->user_id] = [
-                    'user'         => new UserResource($player->user),
+                    'user'               => new UserResource($player->user),
                     'rating'             => ($players[$player->user_id]['rating'] ?? 0) + $player->rating_points,
-                    $index         => $prize,
-                    $oppositeIndex => $oppositePrize,
+                    $index               => $prize,
+                    $oppositeIndex       => $oppositePrize,
                     'bonus_amount'       => ($players[$player->user_id]['bonus_amount'] ?? 0) + $player->bonus_amount,
                     'achievement_amount' => ($players[$player->user_id]['achievement_amount'] ?? 0) + $player->achievement_amount,
                 ];

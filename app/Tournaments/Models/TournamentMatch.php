@@ -43,7 +43,7 @@ class TournamentMatch extends Model
 
     protected $casts = [
         'scheduled_at'     => 'datetime',
-        'metadata' => 'array',
+        'metadata'         => 'array',
         'started_at'       => 'datetime',
         'completed_at'     => 'datetime',
         'player1_score'    => 'integer',

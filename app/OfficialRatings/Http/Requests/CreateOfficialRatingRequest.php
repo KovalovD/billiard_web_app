@@ -13,7 +13,7 @@ class CreateOfficialRatingRequest extends BaseFormRequest
         return [
             'name'               => ['required', 'string', 'max:255'],
             'description'        => ['nullable', 'string'],
-            'game_type' => ['required', new Enum(GameType::class)],
+            'game_type'          => ['required', new Enum(GameType::class)],
             'initial_rating'     => ['integer', 'min:0'],
             'calculation_method' => ['string', 'in:tournament_points,elo,custom'],
             'rating_rules'       => ['nullable', 'array'],

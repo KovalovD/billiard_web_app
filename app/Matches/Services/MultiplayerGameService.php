@@ -81,7 +81,7 @@ class MultiplayerGameService
             'multiplayer_game_id' => $game->id,
             'user_id'             => $user->id,
             'joined_at'           => now(),
-            'total_paid' => $game->entrance_fee ?: 0,
+            'total_paid'          => $game->entrance_fee ?: 0,
         ]);
 
         // Update current prize pool
@@ -449,7 +449,7 @@ class MultiplayerGameService
                 'turn_order'    => $turnOrders[$index],
                 'lives'         => $initialLives,
                 'eliminated_at' => null,
-                'total_paid' => $game->entrance_fee ?: 0,
+                'total_paid'    => $game->entrance_fee ?: 0,
                 'cards'         => $this->getInitialCards($game, $player),
                 'rounds_played' => 1, // Starting round 1
                 'game_stats'    => [
@@ -479,8 +479,8 @@ class MultiplayerGameService
             'initial_lives'          => $initialLives,
             'moderator_user_id'      => $moderatorUserId,
             'allow_player_targeting' => $game->allow_player_targeting ?? false,
-            'current_player_id' => $firstPlayer->user_id ?? null,
-            'next_turn_order'   => $secondPlayer->turn_order ?? null,
+            'current_player_id'      => $firstPlayer->user_id ?? null,
+            'next_turn_order'        => $secondPlayer->turn_order ?? null,
         ]);
 
         // Update current prize pool
@@ -1377,15 +1377,15 @@ class MultiplayerGameService
         return [
             'entrance_fee'          => $game->entrance_fee,
             'total_players'         => $game->players()->count(),
-            'total_prize_pool'   => $game->current_prize_pool,
+            'total_prize_pool'      => $game->current_prize_pool,
             'first_place_prize'     => $game->prize_pool['first_place'] ?? 0,
             'second_place_prize'    => $game->prize_pool['second_place'] ?? 0,
             'grand_final_fund'      => $game->prize_pool['grand_final_fund'] ?? 0,
             'penalty_fee'           => $game->penalty_fee,
             'penalty_players_count' => $game->players()->where('penalty_paid', true)->count(),
-            'time_fund_total'    => $penaltyRevenue,
-            'rebuy_history'      => $game->rebuy_history ?? [],
-            'total_rebuy_amount' => collect($game->rebuy_history ?? [])->sum('amount'),
+            'time_fund_total'       => $penaltyRevenue,
+            'rebuy_history'         => $game->rebuy_history ?? [],
+            'total_rebuy_amount'    => collect($game->rebuy_history ?? [])->sum('amount'),
         ];
     }
 
@@ -1420,9 +1420,9 @@ class MultiplayerGameService
                     ],
                     'finish_position' => $player->finish_position,
                     'rating_points'   => $player->rating_points,
-                    'game_stats'  => $player->game_stats,
-                    'rebuy_count' => $player->rebuy_count,
-                    'total_paid'  => $player->total_paid,
+                    'game_stats'      => $player->game_stats,
+                    'rebuy_count'     => $player->rebuy_count,
+                    'total_paid'      => $player->total_paid,
                 ];
             })
         ;

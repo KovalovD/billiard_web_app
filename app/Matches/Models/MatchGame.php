@@ -47,7 +47,7 @@ class MatchGame extends Model
         'invitation_available_till' => 'datetime',
         'invitation_accepted_at'    => 'datetime',
         'finished_at'               => 'datetime',
-        'result_confirmed' => 'array',
+        'result_confirmed'          => 'array',
     ];
 
     public static function newFactory(): MatchGameFactory|Factory

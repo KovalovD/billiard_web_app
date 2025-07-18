@@ -64,7 +64,7 @@ readonly class AdminTournamentMatchesController
         $validated = $request->validate([
             'club_table_id' => ['nullable', 'integer', 'exists:club_tables,id'],
             'stream_url'    => ['nullable', 'string', 'url'],
-            'admin_notes' => ['nullable', 'string'],
+            'admin_notes'   => ['nullable', 'string'],
         ]);
 
         try {
@@ -94,14 +94,14 @@ readonly class AdminTournamentMatchesController
         $validated = $request->validate([
             'player1_score' => ['required', 'integer', 'min:0'],
             'player2_score' => ['required', 'integer', 'min:0'],
-            'admin_notes' => ['nullable', 'string'],
+            'admin_notes'   => ['nullable', 'string'],
         ]);
 
         try {
             $result = $this->matchService->finishMatch($match, $validated);
 
             return response()->json([
-                'match' => new TournamentMatchResource($result['match']->load([
+                'match'            => new TournamentMatchResource($result['match']->load([
                     'player1', 'player2', 'clubTable',
                 ])),
                 'affected_matches' => $result['affected_matches'],
@@ -127,8 +127,8 @@ readonly class AdminTournamentMatchesController
         }
 
         $validated = $request->validate([
-            'player1_id' => ['nullable', 'integer', 'exists:users,id'],
-            'player2_id' => ['nullable', 'integer', 'exists:users,id', 'different:player1_id'],
+            'player1_id'    => ['nullable', 'integer', 'exists:users,id'],
+            'player2_id'    => ['nullable', 'integer', 'exists:users,id', 'different:player1_id'],
             'player1_score' => ['nullable', 'integer', 'min:0'],
             'player2_score' => ['nullable', 'integer', 'min:0'],
             'club_table_id' => ['nullable', 'integer', 'exists:club_tables,id'],

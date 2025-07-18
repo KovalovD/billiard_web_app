@@ -26,7 +26,7 @@ class Rating extends Model
         'is_confirmed',
     ];
     protected $casts = [
-        'is_active' => 'boolean',
+        'is_active'    => 'boolean',
         'is_confirmed' => 'boolean',
     ];
     protected $with = [

@@ -9,19 +9,19 @@ class PutLeagueRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name'               => ['required', 'string', 'max:255'],
+            'name'                           => ['required', 'string', 'max:255'],
             'game_id'                        => ['nullable', 'exists:games,id'],
-            'picture'            => ['nullable', 'url', 'max:255'],
-            'details'            => ['nullable', 'string'],
+            'picture'                        => ['nullable', 'url', 'max:255'],
+            'details'                        => ['nullable', 'string'],
             'has_rating'                     => ['boolean'],
             'started_at'                     => ['nullable', 'date'],
-            'finished_at'        => ['nullable', 'date', 'after_or_equal:started_at'],
-            'start_rating'       => ['required', 'integer', 'min:0'],
+            'finished_at'                    => ['nullable', 'date', 'after_or_equal:started_at'],
+            'start_rating'                   => ['required', 'integer', 'min:0'],
             'rating_change_for_winners_rule' => ['nullable', 'string'],
             'rating_change_for_losers_rule'  => ['nullable', 'string'],
-            'max_players'        => ['required', 'integer', 'min:0'],
-            'max_score'          => ['required', 'integer', 'min:0'],
-            'invite_days_expire' => ['required', 'integer', 'min:1'],
+            'max_players'                    => ['required', 'integer', 'min:0'],
+            'max_score'                      => ['required', 'integer', 'min:0'],
+            'invite_days_expire'             => ['required', 'integer', 'min:1'],
         ];
     }
 

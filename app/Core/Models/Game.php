@@ -22,7 +22,7 @@ class Game extends Model
     ];
 
     protected $casts = [
-        'type' => GameType::class,
+        'type'           => GameType::class,
         'is_multiplayer' => 'boolean',
     ];
 

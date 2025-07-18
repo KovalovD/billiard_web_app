@@ -137,10 +137,10 @@ readonly class TournamentService
                 'club_id'                   => $data['club_id'] ?? null,
                 'start_date'                => $data['start_date'],
                 'end_date'                  => $data['end_date'],
-                'olympic_phase_size'      => $data['olympic_phase_size'] ?? null,
-                'olympic_has_third_place' => $data['olympic_has_third_place'] ?? false,
-                'round_races_to'          => $data['round_races_to'] ?? null,
-                'application_deadline'    => $data['application_deadline'] ?? null,
+                'olympic_phase_size'        => $data['olympic_phase_size'] ?? null,
+                'olympic_has_third_place'   => $data['olympic_has_third_place'] ?? false,
+                'round_races_to'            => $data['round_races_to'] ?? null,
+                'application_deadline'      => $data['application_deadline'] ?? null,
                 'max_participants'          => $data['max_participants'] ?? null,
                 'entry_fee'                 => $data['entry_fee'] ?? 0,
                 'prize_pool'                => $data['prize_pool'] ?? 0,
@@ -150,7 +150,7 @@ readonly class TournamentService
                 'place_rating_points'       => $data['place_rating_points'] ?? null,
                 'organizer'                 => $data['organizer'] ?? null,
                 'format'                    => $data['format'] ?? null,
-                'tournament_type'         => $data['tournament_type'] ?? TournamentType::KILLER_POOL,
+                'tournament_type'           => $data['tournament_type'] ?? TournamentType::KILLER_POOL,
                 'group_size_min'            => $data['group_size_min'] ?? null,
                 'group_size_max'            => $data['group_size_max'] ?? null,
                 'playoff_players_per_group' => $data['playoff_players_per_group'] ?? null,
@@ -246,16 +246,16 @@ readonly class TournamentService
             ],
             'results'    => $players->map(function ($player) {
                 return [
-                    'position'      => $player->position,
-                    'player'        => [
+                    'position'           => $player->position,
+                    'player'             => [
                         'id'   => $player->user->id,
                         'name' => $player->user->firstname.' '.$player->user->lastname,
                     ],
-                    'rating_points' => $player->rating_points,
-                    'prize_amount'  => $player->prize_amount,
-                    'bonus_amount'  => $player->bonus_amount,
+                    'rating_points'      => $player->rating_points,
+                    'prize_amount'       => $player->prize_amount,
+                    'bonus_amount'       => $player->bonus_amount,
                     'achievement_amount' => $player->achievement_amount,
-                    'total_amount'  => $player->prize_amount + $player->bonus_amount + $player->achievement_amount,
+                    'total_amount'       => $player->prize_amount + $player->bonus_amount + $player->achievement_amount,
                 ];
             }),
         ];
@@ -277,15 +277,15 @@ readonly class TournamentService
 
                 return [
                     'success' => true,
-                    'user'   => $user,
-                    'player' => $player,
+                    'user'    => $user,
+                    'player'  => $player,
                     'message' => 'Player added to tournament successfully',
                 ];
             } catch (Throwable $e) {
                 return [
                     'success' => false,
-                    'user'   => $user,
-                    'player' => null,
+                    'user'    => $user,
+                    'player'  => null,
                     'message' => $e->getMessage(),
                 ];
             }
@@ -334,16 +334,16 @@ readonly class TournamentService
         $confirmedAt = $tournament->auto_approve_applications ? now() : null;
 
         return TournamentPlayer::create([
-            'tournament_id' => $tournament->id,
-            'user_id'       => $userId,
-            'status'        => $status,
-            'registered_at' => now(),
-            'applied_at'    => now(),
-            'confirmed_at'  => $confirmedAt,
-            'prize_amount'  => 0,
-            'bonus_amount'  => 0,
+            'tournament_id'      => $tournament->id,
+            'user_id'            => $userId,
+            'status'             => $status,
+            'registered_at'      => now(),
+            'applied_at'         => now(),
+            'confirmed_at'       => $confirmedAt,
+            'prize_amount'       => 0,
+            'bonus_amount'       => 0,
             'achievement_amount' => 0,
-            'rating_points' => 0,
+            'rating_points'      => 0,
         ]);
     }
 
@@ -397,12 +397,12 @@ readonly class TournamentService
                 }
 
                 $player->update([
-                    'position'      => $result['position'],
-                    'rating_points' => $result['rating_points'] ?? 0,
-                    'prize_amount'  => $result['prize_amount'] ?? 0,
-                    'bonus_amount'  => $result['bonus_amount'] ?? 0,
+                    'position'           => $result['position'],
+                    'rating_points'      => $result['rating_points'] ?? 0,
+                    'prize_amount'       => $result['prize_amount'] ?? 0,
+                    'bonus_amount'       => $result['bonus_amount'] ?? 0,
                     'achievement_amount' => $result['achievement_amount'] ?? 0,
-                    'status'        => 'confirmed',
+                    'status'             => 'confirmed',
                 ]);
             }
 
@@ -556,9 +556,9 @@ readonly class TournamentService
 
                 if ($incompleteMatches === 0) {
                     $transitions[] = [
-                        'stage'       => TournamentStage::COMPLETED,
-                        'label'       => 'Complete Tournament',
-                        'description' => 'Finalize results and update ratings',
+                        'stage'        => TournamentStage::COMPLETED,
+                        'label'        => 'Complete Tournament',
+                        'description'  => 'Finalize results and update ratings',
                         'requirements' => [],
                     ];
                 }

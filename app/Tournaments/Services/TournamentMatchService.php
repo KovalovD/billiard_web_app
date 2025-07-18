@@ -38,7 +38,7 @@ class TournamentMatchService
                 'started_at'    => now(),
                 'club_table_id' => $data['club_table_id'] ?? null,
                 'stream_url'    => $data['stream_url'] ?? null,
-                'admin_notes' => $data['admin_notes'] ?? $match->admin_notes,
+                'admin_notes'   => $data['admin_notes'] ?? $match->admin_notes,
             ]);
 
             return $match->fresh(['player1', 'player2', 'clubTable']);
@@ -82,7 +82,7 @@ class TournamentMatchService
                 'winner_id'     => $winnerId,
                 'status'        => MatchStatus::COMPLETED,
                 'completed_at'  => now(),
-                'admin_notes' => $data['admin_notes'] ?? $match->admin_notes,
+                'admin_notes'   => $data['admin_notes'] ?? $match->admin_notes,
             ]);
 
             // Track affected matches
@@ -368,6 +368,14 @@ class TournamentMatchService
     }
 
     /**
+     * Get lower bracket structure for a given bracket size
+     */
+    private function getLowerBracketStructure(int $bracketSize): array
+    {
+        return app(TournamentBracketService::class)->getLowerBracketStructure($bracketSize);
+    }
+
+    /**
      * Calculate loser's position based on match and tournament type
      */
     private function calculateLoserPosition(TournamentMatch $match, Tournament $tournament): ?int
@@ -508,14 +516,6 @@ class TournamentMatchService
             ],
             default => []
         };
-    }
-
-    /**
-     * Get lower bracket structure for a given bracket size
-     */
-    private function getLowerBracketStructure(int $bracketSize): array
-    {
-        return app(TournamentBracketService::class)->getLowerBracketStructure($bracketSize);
     }
 
     /**

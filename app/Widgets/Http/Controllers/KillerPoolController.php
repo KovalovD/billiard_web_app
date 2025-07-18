@@ -52,7 +52,7 @@ class KillerPoolController
             ],
             'current_player'     => $currentTurnPlayer ? [
                 'id'                    => $currentTurnPlayer->id,
-                'division' => $game->getDivisionForUser($currentTurnPlayer),
+                'division'              => $game->getDivisionForUser($currentTurnPlayer),
                 'user'                  => [
                     'id'        => $currentTurnPlayer->user->id,
                     'firstname' => $currentTurnPlayer->user->firstname,
@@ -123,7 +123,7 @@ class KillerPoolController
             $nextPlayer = $activePlayers[$nextIndex];
 
             $nextPlayers[] = [
-                'division' => $game->getDivisionForUser($nextPlayer),
+                'division'   => $game->getDivisionForUser($nextPlayer),
                 'user'       => [
                     'firstname' => $nextPlayer->user->firstname,
                     'lastname'  => $nextPlayer->user->lastname,

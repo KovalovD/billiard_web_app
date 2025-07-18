@@ -132,8 +132,8 @@ class User extends Authenticatable
             'is_admin'          => 'boolean',
             'is_active'         => 'boolean',
             'is_changed_once'   => 'boolean',
-            'birthdate' => 'date',
-            'equipment' => 'array',
+            'birthdate'         => 'date',
+            'equipment'         => 'array',
         ];
     }
 

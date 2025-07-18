@@ -14,7 +14,7 @@ class OfficialRatingResource extends JsonResource
     {
         return [
             'id'                 => $this->id,
-            'slug'            => $this->slug,
+            'slug'               => $this->slug,
             'name'               => $this->name,
             'description'        => $this->description,
             'is_active'          => $this->is_active,
@@ -27,9 +27,9 @@ class OfficialRatingResource extends JsonResource
             'updated_at'         => $this->updated_at,
 
             // Game type info
-            'game_type'       => $this->game_type->value,
-            'game_type_name'  => $this->game_type_name,
-            'available_games' => $this->whenLoaded('availableGames', function () {
+            'game_type'          => $this->game_type->value,
+            'game_type_name'     => $this->game_type_name,
+            'available_games'    => $this->whenLoaded('availableGames', function () {
                 return $this->getGamesOfType()->map(function ($game) {
                     return [
                         'id'   => $game->id,

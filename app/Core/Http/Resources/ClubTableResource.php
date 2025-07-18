@@ -24,7 +24,7 @@ class ClubTableResource extends JsonResource
             'updated_at' => $this->updated_at,
 
             // Relations
-            'club' => new ClubResource($this->whenLoaded('club')),
+            'club'       => new ClubResource($this->whenLoaded('club')),
         ];
     }
 }

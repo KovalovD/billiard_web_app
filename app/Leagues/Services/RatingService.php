@@ -85,11 +85,11 @@ class RatingService
                 $position = $this->getPositionByRatingOrder($league);
 
                 Rating::create([
-                    'league_id' => $league->id,
-                    'user_id'   => $user->id,
-                    'rating'    => $league->start_rating,
-                    'position'  => $position + 1,
-                    'is_active' => true,
+                    'league_id'    => $league->id,
+                    'user_id'      => $user->id,
+                    'rating'       => $league->start_rating,
+                    'position'     => $position + 1,
+                    'is_active'    => true,
                     'is_confirmed' => false, // Requires admin confirmation
                 ]);
             }

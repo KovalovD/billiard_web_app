@@ -26,12 +26,12 @@ class OfficialRatingPlayer extends Model
     ];
 
     protected $casts = [
-        'last_tournament_at'       => 'datetime',
-        'is_active'                => 'boolean',
-        'tournament_records'       => 'array',
-        'total_bonus_amount'       => 'decimal:2',
-        'total_achievement_amount' => 'decimal:2',
-        'total_prize_amount'       => 'decimal:2',
+        'last_tournament_at'             => 'datetime',
+        'is_active'                      => 'boolean',
+        'tournament_records'             => 'array',
+        'total_bonus_amount'             => 'decimal:2',
+        'total_achievement_amount'       => 'decimal:2',
+        'total_prize_amount'             => 'decimal:2',
         'total_killer_pool_prize_amount' => 'decimal:2',
     ];
 
@@ -112,28 +112,28 @@ class OfficialRatingPlayer extends Model
 
             // Update existing record
             $records[$existingTournamentIndex] = [
-                'tournament_id'      => $tournamentId,
-                'rating_points'      => $ratingPoints,
-                'prize_amount'       => $prizeAmount,
-                'bonus_amount'       => $bonusAmount,
-                'achievement_amount' => $achievementAmount,
+                'tournament_id'            => $tournamentId,
+                'rating_points'            => $ratingPoints,
+                'prize_amount'             => $prizeAmount,
+                'bonus_amount'             => $bonusAmount,
+                'achievement_amount'       => $achievementAmount,
                 'killer_pool_prize_amount' => $killerPoolPrizeAmount,
-                'tournament_date'    => $tournamentFinishDate->format('Y-m-d'),
-                'won'                => $won,
-                'updated_at'         => now()->format('Y-m-d H:i:s'),
+                'tournament_date'          => $tournamentFinishDate->format('Y-m-d'),
+                'won'                      => $won,
+                'updated_at'               => now()->format('Y-m-d H:i:s'),
             ];
         } else {
             // Add new tournament record
             $records[] = [
-                'tournament_id'      => $tournamentId,
-                'rating_points'      => $ratingPoints,
-                'prize_amount'       => $prizeAmount,
-                'bonus_amount'       => $bonusAmount,
-                'achievement_amount' => $achievementAmount,
+                'tournament_id'            => $tournamentId,
+                'rating_points'            => $ratingPoints,
+                'prize_amount'             => $prizeAmount,
+                'bonus_amount'             => $bonusAmount,
+                'achievement_amount'       => $achievementAmount,
                 'killer_pool_prize_amount' => $killerPoolPrizeAmount,
-                'tournament_date'    => $tournamentFinishDate->format('Y-m-d'),
-                'won'                => $won,
-                'added_at'           => now()->format('Y-m-d H:i:s'),
+                'tournament_date'          => $tournamentFinishDate->format('Y-m-d'),
+                'won'                      => $won,
+                'added_at'                 => now()->format('Y-m-d H:i:s'),
             ];
 
             // Increment tournaments played only if it's a new tournament

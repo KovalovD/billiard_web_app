@@ -95,7 +95,7 @@ readonly class AdminTournamentsController
 
             return response()->json([
                 'success' => true,
-                'player' => new TournamentPlayerResource($player),
+                'player'  => new TournamentPlayerResource($player),
                 'message' => 'Player added to tournament successfully',
             ]);
         } catch (Throwable $e) {
@@ -115,8 +115,8 @@ readonly class AdminTournamentsController
 
         return response()->json([
             'success' => $result['success'],
-            'user'   => new UserResource($result['user']),
-            'player' => $result['player'] ? new TournamentPlayerResource($result['player']) : null,
+            'user'    => new UserResource($result['user']),
+            'player'  => $result['player'] ? new TournamentPlayerResource($result['player']) : null,
             'message' => $result['message'],
         ]);
     }
@@ -143,21 +143,21 @@ readonly class AdminTournamentsController
         }
 
         $validated = $request->validate([
-            'position'          => 'nullable|integer|min:1',
-            'rating_points'     => 'integer|min:0',
-            'prize_amount'      => 'numeric|min:0',
-            'bonus_amount'      => 'numeric|min:0',
+            'position'           => 'nullable|integer|min:1',
+            'rating_points'      => 'integer|min:0',
+            'prize_amount'       => 'numeric|min:0',
+            'bonus_amount'       => 'numeric|min:0',
             'achievement_amount' => 'numeric|min:0',
-            'status'            => 'string|in:applied,confirmed,rejected,eliminated,dnf',
-            'seed_number'       => 'nullable|integer|min:1',
-            'group_code'        => 'nullable|string|max:10',
-            'elimination_round' => 'nullable|string',
+            'status'             => 'string|in:applied,confirmed,rejected,eliminated,dnf',
+            'seed_number'        => 'nullable|integer|min:1',
+            'group_code'         => 'nullable|string|max:10',
+            'elimination_round'  => 'nullable|string',
         ]);
 
         $player = $this->tournamentService->updateTournamentPlayer($player, $validated);
 
         return response()->json([
-            'player' => new TournamentPlayerResource($player),
+            'player'  => new TournamentPlayerResource($player),
             'message' => 'Player updated successfully',
         ]);
     }
@@ -165,12 +165,12 @@ readonly class AdminTournamentsController
     public function setResults(Request $request, Tournament $tournament): JsonResponse
     {
         $validated = $request->validate([
-            'results'                 => 'required|array',
-            'results.*.player_id'     => 'required|integer|exists:tournament_players,id',
-            'results.*.position'      => 'required|integer|min:1',
-            'results.*.rating_points' => 'integer|min:0',
-            'results.*.prize_amount'  => 'numeric|min:0',
-            'results.*.bonus_amount'  => 'numeric|min:0',
+            'results'                      => 'required|array',
+            'results.*.player_id'          => 'required|integer|exists:tournament_players,id',
+            'results.*.position'           => 'required|integer|min:1',
+            'results.*.rating_points'      => 'integer|min:0',
+            'results.*.prize_amount'       => 'numeric|min:0',
+            'results.*.bonus_amount'       => 'numeric|min:0',
             'results.*.achievement_amount' => 'numeric|min:0',
         ]);
 
@@ -193,7 +193,7 @@ readonly class AdminTournamentsController
 
         return response()->json([
             'tournament' => new TournamentResource($tournament),
-            'message' => 'Tournament status updated successfully',
+            'message'    => 'Tournament status updated successfully',
         ]);
     }
 

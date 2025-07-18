@@ -38,7 +38,7 @@ class TournamentMatchResource extends JsonResource
             'club_table_id'        => $this->club_table_id,
             'stream_url'           => $this->stream_url,
             'status'               => $this->status,
-            'status_display' => $this->status->displayValue(),
+            'status_display'       => $this->status->displayValue(),
             'scheduled_at'         => $this->scheduled_at?->format('Y-m-d H:i:s'),
             'started_at'           => $this->started_at?->format('Y-m-d H:i:s'),
             'completed_at'         => $this->completed_at?->format('Y-m-d H:i:s'),
