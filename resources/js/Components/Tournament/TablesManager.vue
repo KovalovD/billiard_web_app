@@ -92,7 +92,7 @@ const getWidgetUrl = (tableId: number): string => {
 
 const getWidgetUrlWithParams = (tableId: number): string => {
     const baseUrl = getWidgetUrl(tableId)
-    return `${baseUrl}&theme=transparent&layout=horizontal&refresh=3000&compact=true`
+    return `${baseUrl}&theme=dark&layout=horizontal&refresh=5000&compact=true`
 }
 
 const copyWidgetUrl = async (tableId: number) => {
@@ -115,7 +115,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <Modal :show="show" :title="t('Tournament Tables - OBS Widgets')" max-width="4xl" @close="emit('close')">
+    <Modal :show="show" :title="t('Tournament Tables - OBS Widgets')" max-width="3xl" @close="emit('close')">
         <div class="space-y-6">
             <!-- Instructions -->
             <div class="rounded-lg bg-blue-50 dark:bg-blue-900/20 p-4">

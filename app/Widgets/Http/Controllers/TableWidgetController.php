@@ -19,7 +19,7 @@ class TableWidgetController
         $activeMatch = TournamentMatch::where('tournament_id', $tournament->id)
             ->where('club_table_id', $table->id)
             ->whereIn('status', ['in_progress', 'verification'])
-            ->with(['player1', 'player2', 'tournament'])
+            ->with(['player1', 'player2', 'tournament.game'])
             ->first()
         ;
 
@@ -48,6 +48,7 @@ class TableWidgetController
                 'name'      => $tournament->name,
                 'races_to'  => $tournament->races_to,
                 'game_name' => $tournament->game->name ?? null,
+                'game_type' => $tournament->game->type->value ?? 'pool',
             ],
             'table'          => [
                 'id'         => $table->id,
@@ -71,6 +72,8 @@ class TableWidgetController
                 ] : null,
                 'player1_score'  => $activeMatch->player1_score,
                 'player2_score'  => $activeMatch->player2_score,
+                'frame_scores'   => $activeMatch->frame_scores ?? [],
+                'current_frame'  => $this->getCurrentFrame($activeMatch),
                 'status'         => $activeMatch->status,
                 'status_display' => $activeMatch->status->value,
                 'started_at'     => $activeMatch->started_at?->format('Y-m-d H:i:s'),
@@ -96,6 +99,42 @@ class TableWidgetController
         ];
 
         return response()->json($widgetData);
+    }
+
+    /**
+     * Get current frame info
+     */
+    private function getCurrentFrame(?TournamentMatch $match): ?array
+    {
+        if (!$match || empty($match->frame_scores)) {
+            return null;
+        }
+
+        $frames = $match->frame_scores;
+        $currentIndex = count($frames);
+
+        // Find last unfinished frame
+        foreach ($frames as $index => $frame) {
+            if (!($frame['finished'] ?? false)) {
+                $currentIndex = $index;
+                break;
+            }
+        }
+
+        // If all frames finished, we're on next frame
+        if ($currentIndex >= count($frames)) {
+            return [
+                'index' => $currentIndex + 1,
+                'player1_score' => 0,
+                'player2_score' => 0,
+            ];
+        }
+
+        return [
+            'index' => $currentIndex + 1,
+            'player1_score' => $frames[$currentIndex]['player1'] ?? 0,
+            'player2_score' => $frames[$currentIndex]['player2'] ?? 0,
+        ];
     }
 
     /**
