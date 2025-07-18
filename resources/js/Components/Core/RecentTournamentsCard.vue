@@ -1,3 +1,4 @@
+// resources/js/Components/Core/RecentTournamentsCard.vue
 <script lang="ts" setup>
 import {Card, CardContent, CardHeader, Spinner} from '@/Components/ui';
 import {apiClient} from '@/lib/apiClient';
@@ -46,7 +47,7 @@ const formatDate = (dateString: string | null) => {
     if (diffDays === 1) return t('Tomorrow');
     if (diffDays > 0 && diffDays <= 7) return t('In :days days', {days: diffDays});
 
-    return date.toLocaleDateString('uk-UK', {month: 'short', day: 'numeric', year: 'numeric'});
+    return date.toLocaleDateString('uk-UK', {month: 'short', day: 'numeric'});
 };
 
 // Get registration info
@@ -101,41 +102,45 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <!-- Recent Tournaments -->
         <Card
             class="border-0 shadow-sm hover:shadow-md transition-shadow duration-200 dark:bg-gray-800 dark:border-gray-700">
-            <CardHeader class="border-b border-gray-100 dark:border-gray-800 pb-4">
+            <CardHeader class="border-b border-gray-100 dark:border-gray-800 p-4">
                 <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-2.5">
                         <div class="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
                             <ClockIcon class="h-5 w-5 text-gray-600 dark:text-gray-400"/>
                         </div>
                         <div>
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('Recent') }}</h3>
+                            <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ t('Recent') }}</h3>
                             <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('Latest tournaments') }}</p>
                         </div>
                     </div>
+                    <Link :href="route('tournaments.index.page')"
+                          class="text-sm text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300">
+                        {{ t('View all') }}
+                    </Link>
                 </div>
             </CardHeader>
             <CardContent class="p-0">
-                <div v-if="isLoadingRecent" class="flex items-center justify-center py-12">
-                    <Spinner class="h-8 w-8 text-gray-400"/>
+                <div v-if="isLoadingRecent" class="flex items-center justify-center py-10">
+                    <Spinner class="h-7 w-7 text-gray-400"/>
                 </div>
 
-                <div v-else-if="errorRecent" class="py-12 text-center">
+                <div v-else-if="errorRecent" class="py-10 text-center">
                     <p class="text-sm text-red-600 dark:text-red-400">{{ errorRecent }}</p>
                 </div>
 
-                <div v-else-if="recentTournaments.length === 0" class="py-12 text-center">
-                    <TrophyIcon class="mx-auto h-12 w-12 text-gray-300 dark:text-gray-600 mb-3"/>
+                <div v-else-if="recentTournaments.length === 0" class="py-10 text-center">
+                    <TrophyIcon class="mx-auto h-10 w-10 text-gray-300 dark:text-gray-600 mb-3"/>
                     <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('No recent tournaments found') }}</p>
                 </div>
 
                 <div v-else class="divide-y divide-gray-100 dark:divide-gray-800">
-                    <div v-for="tournament in recentTournaments.slice(0, 5)" :key="tournament.slug"
-                         class="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                        <div class="flex items-start justify-between gap-4">
+                    <div v-for="tournament in recentTournaments.slice(0, 4)" :key="tournament.slug"
+                         class="px-5 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                        <div class="flex items-start justify-between gap-3">
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-2 mb-1">
                                     <h4 class="text-sm font-medium text-gray-900 dark:text-white truncate">
@@ -170,31 +175,35 @@ onMounted(() => {
         <!-- Upcoming Tournaments -->
         <Card
             class="border-0 shadow-sm hover:shadow-md transition-shadow duration-200 dark:bg-gray-800 dark:border-gray-700">
-            <CardHeader class="border-b border-gray-100 dark:border-gray-800 pb-4">
+            <CardHeader class="border-b border-gray-100 dark:border-gray-800 p-4">
                 <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-2.5">
                         <div class="p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
                             <CalendarIcon class="h-5 w-5 text-emerald-600 dark:text-emerald-400"/>
                         </div>
                         <div>
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('Upcoming') }}</h3>
+                            <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ t('Upcoming') }}</h3>
                             <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('Open for registration') }}</p>
                         </div>
                     </div>
+                    <Link :href="route('tournaments.index.page')"
+                          class="text-sm text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300">
+                        {{ t('View all') }}
+                    </Link>
                 </div>
             </CardHeader>
             <CardContent class="p-0">
-                <div v-if="isLoadingUpcoming" class="flex items-center justify-center py-12">
-                    <Spinner class="h-8 w-8 text-gray-400"/>
+                <div v-if="isLoadingUpcoming" class="flex items-center justify-center py-10">
+                    <Spinner class="h-7 w-7 text-gray-400"/>
                 </div>
 
-                <div v-else-if="errorUpcoming" class="py-12 text-center">
+                <div v-else-if="errorUpcoming" class="py-10 text-center">
                     <p class="text-sm text-red-600 dark:text-red-400">{{ errorUpcoming }}</p>
                 </div>
 
-                <div v-else-if="upcomingTournaments.length === 0" class="py-12 text-center">
-                    <CalendarIcon class="mx-auto h-12 w-12 text-gray-300 dark:text-gray-600 mb-3"/>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">{{ t('No upcoming tournaments') }}</p>
+                <div v-else-if="upcomingTournaments.length === 0" class="py-10 text-center">
+                    <CalendarIcon class="mx-auto h-10 w-10 text-gray-300 dark:text-gray-600 mb-3"/>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">{{ t('No upcoming tournaments') }}</p>
                     <Link :href="route('tournaments.index.page')"
                           class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300">
                         {{ t('Browse all') }} →
@@ -202,9 +211,9 @@ onMounted(() => {
                 </div>
 
                 <div v-else class="divide-y divide-gray-100 dark:divide-gray-800">
-                    <div v-for="tournament in upcomingTournaments.slice(0, 5)" :key="tournament.slug"
-                         class="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                        <div class="flex items-start justify-between gap-4">
+                    <div v-for="tournament in upcomingTournaments.slice(0, 4)" :key="tournament.slug"
+                         class="px-5 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                        <div class="flex items-start justify-between gap-3">
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-2 mb-1">
                                     <h4 class="text-sm font-medium text-gray-900 dark:text-white truncate">
@@ -238,8 +247,8 @@ onMounted(() => {
                 </div>
 
                 <!-- View More -->
-                <div v-if="upcomingTournaments.length > 5"
-                     class="px-6 py-3 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800 text-center">
+                <div v-if="upcomingTournaments.length > 4"
+                     class="px-5 py-3 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800 text-center">
                     <Link :href="route('tournaments.index.page')"
                           class="text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300">
                         {{ t('View all upcoming') }} ({{ upcomingTournaments.length }})

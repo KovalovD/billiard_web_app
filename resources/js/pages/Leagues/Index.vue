@@ -1,3 +1,4 @@
+// resources/js/Pages/Leagues/Index.vue
 <script lang="ts" setup>
 import {Card, CardContent, CardHeader, CardTitle} from '@/Components/ui';
 import DataTable from '@/Components/ui/data-table/DataTable.vue';
@@ -95,7 +96,7 @@ const fetchLeagues = async () => {
 
 const formatDate = (dateString: string | null | undefined): string => {
     if (!dateString) return t('N/A');
-    return new Date(dateString).toLocaleDateString();
+    return new Date(dateString).toLocaleDateString('uk-UK', {day: '2-digit', month: 'short'});
 };
 
 const getRowClass = (): string => {
@@ -221,15 +222,15 @@ onUnmounted(() => {
 
 <template>
     <Head :title="t('Billiard Leagues - Join Competitive Pool Leagues')"/>
-    <div class="py-6 sm:py-8 lg:py-12">
+    <div class="py-4 sm:py-6">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <!-- Header -->
-            <header class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <!-- Header - Compact -->
+            <header class="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
-                    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+                    <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                         {{ t('Leagues') }}
                     </h1>
-                    <p class="text-gray-600 dark:text-gray-400 mt-1">
+                    <p class="text-sm text-gray-600 dark:text-gray-400">
                         {{ t('Discover and join competitive billiard leagues') }}
                     </p>
                 </div>
@@ -238,64 +239,63 @@ onUnmounted(() => {
                 <Link v-if="isAuthenticated && isAdmin"
                       href="/admin/leagues/create"
                       aria-label="Create new billiard league"
-                      class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
-                    <PlusIcon class="mr-2 h-4 w-4" aria-hidden="true"/>
+                      class="inline-flex items-center px-3 py-1.5 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
+                    <PlusIcon class="mr-1.5 h-3.5 w-3.5" aria-hidden="true"/>
                     {{ t('Create League') }}
                 </Link>
             </header>
 
-
             <main>
-                <Card class="shadow-lg">
-                    <CardHeader class="bg-gradient-to-r from-gray-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700">
-                        <CardTitle class="flex items-center gap-2">
-                            <TrophyIcon class="h-5 w-5 text-indigo-600 dark:text-indigo-400" aria-hidden="true"/>
+                <Card class="shadow-sm">
+                    <CardHeader class="bg-gradient-to-r from-gray-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 p-4">
+                        <CardTitle class="flex items-center gap-2 text-base">
+                            <TrophyIcon class="h-4 w-4 text-indigo-600 dark:text-indigo-400" aria-hidden="true"/>
                             {{ t('Leagues Directory') }}
                         </CardTitle>
                     </CardHeader>
                     <CardContent class="p-0">
                         <!-- Loading State -->
-                        <div v-if="isLoading" class="flex justify-center py-12">
+                        <div v-if="isLoading" class="flex justify-center py-8">
                             <div class="text-center">
                                 <div
-                                    class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-                                <p class="mt-2 text-gray-500">{{ t('Loading leagues...') }}</p>
+                                    class="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600 mx-auto"></div>
+                                <p class="mt-2 text-sm text-gray-500">{{ t('Loading leagues...') }}</p>
                             </div>
                         </div>
 
                         <!-- Error State -->
-                        <div v-else-if="loadingError" class="p-6 text-center text-red-600">
+                        <div v-else-if="loadingError" class="p-4 text-center text-sm text-red-600">
                             {{ loadingError.message }}
                         </div>
 
                         <!-- Empty State -->
-                        <div v-else-if="sortedLeagues.length === 0" class="p-6 text-center text-gray-500">
+                        <div v-else-if="sortedLeagues.length === 0" class="p-8 text-center text-sm text-gray-500">
                             {{ t('No leagues have been created yet.') }}
                         </div>
 
-                        <!-- Mobile Cards View -->
-                        <div v-else class="block lg:hidden space-y-4 p-4">
+                        <!-- Mobile Cards View - Compact -->
+                        <div v-else class="block lg:hidden space-y-3 p-3">
                             <div
                                 v-for="league in sortedLeagues"
                                 :key="league.id"
-                                class="relative rounded-lg border p-4 cursor-pointer transition-colors bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
+                                class="relative rounded-md border p-3 cursor-pointer transition-colors bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
                                 @click="router.visit(`/leagues/${league.slug}`)"
                             >
                                 <!-- League Header -->
-                                <div class="flex items-start justify-between mb-3">
+                                <div class="flex items-start justify-between mb-2">
                                     <div class="flex-1 min-w-0">
-                                        <h3 class="font-semibold text-gray-900 dark:text-gray-100 truncate">
+                                        <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
                                             {{ league.name }}
                                         </h3>
                                         <p v-if="league.details"
-                                           class="text-sm text-gray-600 dark:text-gray-400 truncate">
+                                           class="text-xs text-gray-600 dark:text-gray-400 truncate">
                                             {{ league.details }}
                                         </p>
                                     </div>
                                     <span
                                         v-if="getLeagueStatus(league)"
                                         :class="[
-                                            'inline-flex px-2 py-1 text-xs font-medium rounded-full flex-shrink-0',
+                                            'inline-flex px-1.5 py-0.5 text-xs font-medium rounded-full flex-shrink-0',
                                             getLeagueStatus(league)?.class
                                         ]"
                                     >
@@ -303,30 +303,30 @@ onUnmounted(() => {
                                     </span>
                                 </div>
 
-                                <!-- League Info Grid -->
-                                <div class="grid grid-cols-2 gap-3 text-sm">
+                                <!-- League Info Grid - Compact -->
+                                <div class="grid grid-cols-2 gap-2 text-xs">
                                     <!-- Game & Players -->
                                     <div>
-                                        <div class="flex items-center text-gray-600 dark:text-gray-400 mb-1">
-                                            <GamepadIcon class="h-4 w-4 mr-1 flex-shrink-0"/>
+                                        <div class="flex items-center text-gray-600 dark:text-gray-400">
+                                            <GamepadIcon class="h-3 w-3 mr-0.5 flex-shrink-0"/>
                                             <span class="truncate">{{ league.game || t('N/A') }}</span>
                                         </div>
-                                        <div class="flex items-center text-gray-600 dark:text-gray-400">
-                                            <UsersIcon class="h-4 w-4 mr-1 flex-shrink-0"/>
+                                        <div class="flex items-center text-gray-600 dark:text-gray-400 mt-0.5">
+                                            <UsersIcon class="h-3 w-3 mr-0.5 flex-shrink-0"/>
                                             <span class="truncate">{{ getPlayersText(league) }}</span>
                                         </div>
                                     </div>
 
                                     <!-- Matches & Date -->
                                     <div>
-                                        <div class="flex items-center text-gray-600 dark:text-gray-400 mb-1">
-                                            <TrophyIcon class="h-4 w-4 mr-1 flex-shrink-0"/>
+                                        <div class="flex items-center text-gray-600 dark:text-gray-400">
+                                            <TrophyIcon class="h-3 w-3 mr-0.5 flex-shrink-0"/>
                                             <span class="truncate">{{ league.matches_count || 0 }} {{
                                                     t('Matches')
                                                 }}</span>
                                         </div>
-                                        <div class="flex items-center text-gray-600 dark:text-gray-400">
-                                            <CalendarIcon class="h-4 w-4 mr-1 flex-shrink-0"/>
+                                        <div class="flex items-center text-gray-600 dark:text-gray-400 mt-0.5">
+                                            <CalendarIcon class="h-3 w-3 mr-0.5 flex-shrink-0"/>
                                             <span class="truncate">{{ formatDate(league.started_at) }}</span>
                                         </div>
                                     </div>
@@ -334,7 +334,7 @@ onUnmounted(() => {
                             </div>
                         </div>
 
-                        <!-- Desktop Table View -->
+                        <!-- Desktop Table View - Compact -->
                         <div class="hidden lg:block" data-league-table>
                             <DataTable
                                 :columns="columns"
@@ -349,23 +349,24 @@ onUnmounted(() => {
                                     'tabindex': '0',
                                     'aria-label': `View ${league.name} league details`
                                 })"
+                                :row-height="'compact'"
                             >
                                 <!-- Custom cell renderers -->
                                 <template #cell-name="{ value }">
                                     <div class="flex items-center">
-                                        <div class="flex-shrink-0 h-8 w-8">
+                                        <div class="flex-shrink-0 h-7 w-7">
                                             <div
-                                                class="h-8 w-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shadow-md">
-                                                <TrophyIcon class="h-4 w-4 text-white"
+                                                class="h-7 w-7 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shadow-sm">
+                                                <TrophyIcon class="h-3.5 w-3.5 text-white"
                                                             aria-hidden="true"/>
                                             </div>
                                         </div>
-                                        <div class="ml-4">
+                                        <div class="ml-3">
                                             <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
                                                 {{ value.name }}
                                             </div>
                                             <div v-if="value.details"
-                                                 class="text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">
+                                                 class="text-xs text-gray-500 dark:text-gray-400 truncate max-w-xs">
                                                 {{ value.details }}
                                             </div>
                                         </div>
@@ -374,7 +375,7 @@ onUnmounted(() => {
 
                                 <template #cell-game="{ value }">
                                     <div class="flex items-center text-sm text-gray-900 dark:text-gray-100">
-                                        <GamepadIcon class="h-4 w-4 mr-2 text-gray-400" aria-hidden="true"/>
+                                        <GamepadIcon class="h-3.5 w-3.5 mr-1.5 text-gray-400" aria-hidden="true"/>
                                         {{ value }}
                                     </div>
                                 </template>
@@ -383,33 +384,33 @@ onUnmounted(() => {
                                     <span
                                         v-if="value"
                                         :class="[
-                                            'inline-flex px-2 py-1 text-xs font-medium rounded-full',
+                                            'inline-flex px-1.5 py-0.5 text-xs font-medium rounded-full',
                                             value.class
                                         ]"
                                     >
                                         {{ value.text }}
                                     </span>
-                                    <span v-else class="text-sm text-gray-500 dark:text-gray-400">{{
+                                    <span v-else class="text-xs text-gray-500 dark:text-gray-400">{{
                                             t('Unknown')
                                         }}</span>
                                 </template>
 
                                 <template #cell-players="{ value }">
                                     <div class="flex items-center text-sm text-gray-900 dark:text-gray-100">
-                                        <UsersIcon class="h-4 w-4 mr-2 text-gray-400" aria-hidden="true"/>
+                                        <UsersIcon class="h-3.5 w-3.5 mr-1.5 text-gray-400" aria-hidden="true"/>
                                         {{ value }}
                                     </div>
                                 </template>
 
                                 <template #cell-matches="{ value }">
                                     <div class="text-sm text-gray-900 dark:text-gray-100">
-                                        {{ value }} {{ t('Matches') }}
+                                        {{ value }}
                                     </div>
                                 </template>
 
                                 <template #cell-startDate="{ value }">
                                     <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                                        <CalendarIcon class="h-4 w-4 mr-2" aria-hidden="true"/>
+                                        <CalendarIcon class="h-3.5 w-3.5 mr-1.5" aria-hidden="true"/>
                                         <time :datetime="value">{{ formatDate(value) }}</time>
                                     </div>
                                 </template>

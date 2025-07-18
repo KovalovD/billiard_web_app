@@ -1,3 +1,4 @@
+// resources/js/Pages/Admin/Settings/Index.vue
 <script lang="ts" setup>
 import {computed, onMounted, ref, watch} from 'vue';
 import {Head} from '@inertiajs/vue3';
@@ -620,21 +621,21 @@ const currentTabData = computed(() => {
 <template>
     <Head :title="t('Admin Settings')"/>
 
-    <div class="py-6 sm:py-8 lg:py-12">
+    <div class="py-4 sm:py-6">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <!-- Header -->
-            <div class="mb-8">
-                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+            <!-- Header - Compact -->
+            <div class="mb-4">
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                     {{ t('System Settings') }}
                 </h1>
-                <p class="mt-2 text-gray-600 dark:text-gray-400">
+                <p class="text-sm text-gray-600 dark:text-gray-400">
                     {{ t('Manage countries, cities, clubs, tables, and games') }}
                 </p>
             </div>
 
-            <!-- Tabs -->
-            <div class="mb-6 border-b border-gray-200 dark:border-gray-700">
-                <nav class="-mb-px flex space-x-8">
+            <!-- Tabs - Compact -->
+            <div class="mb-3 border-b border-gray-200 dark:border-gray-700">
+                <nav class="-mb-px flex space-x-4 sm:space-x-6">
                     <button
                         v-for="(config, tab) in tabConfig"
                         :key="tab"
@@ -643,7 +644,7 @@ const currentTabData = computed(() => {
                             activeTab === tab
                                 ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300',
-                            'group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm'
+                            'group inline-flex items-center py-2 px-1 border-b-2 font-medium text-sm'
                         ]"
                     >
                         <component
@@ -652,7 +653,7 @@ const currentTabData = computed(() => {
                                 activeTab === tab
                                     ? 'text-indigo-500 dark:text-indigo-400'
                                     : 'text-gray-400 group-hover:text-gray-500 dark:group-hover:text-gray-300',
-                                '-ml-0.5 mr-2 h-5 w-5'
+                                'mr-1.5 h-3.5 w-3.5'
                             ]"
                         />
                         {{ config.label }}
@@ -661,38 +662,38 @@ const currentTabData = computed(() => {
             </div>
 
             <!-- Content -->
-            <Card>
-                <CardHeader>
+            <Card class="shadow-sm">
+                <CardHeader class="p-3 sm:p-4">
                     <div class="flex items-center justify-between">
                         <div>
-                            <CardTitle>{{ tabConfig[activeTab].label }}</CardTitle>
-                            <CardDescription>
+                            <CardTitle class="text-base">{{ tabConfig[activeTab].label }}</CardTitle>
+                            <CardDescription class="text-xs">
                                 {{ t('Manage your :entities', {entities: tabConfig[activeTab].label.toLowerCase()}) }}
                             </CardDescription>
                         </div>
-                        <Button @click="openCreateModal" class="gap-2">
-                            <PlusIcon class="h-4 w-4"/>
+                        <Button @click="openCreateModal" class="gap-1.5" size="sm">
+                            <PlusIcon class="h-3.5 w-3.5"/>
                             {{ t('Add New') }}
                         </Button>
                     </div>
                 </CardHeader>
 
-                <CardContent>
+                <CardContent class="p-3 sm:p-4 pt-0 sm:pt-0">
                     <!-- Countries Content -->
                     <template v-if="activeTab === 'countries'">
-                        <div class="mb-6">
+                        <div class="mb-3">
                             <div class="relative">
-                                <SearchIcon class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"/>
+                                <SearchIcon class="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400"/>
                                 <Input
                                     v-model="countriesData.searchQuery"
                                     :placeholder="t('Search countries...')"
-                                    class="pl-10"
+                                    class="pl-8 h-8 text-sm"
                                 />
                             </div>
                         </div>
 
-                        <div v-if="countriesData.loading" class="flex justify-center py-8">
-                            <Spinner class="h-8 w-8"/>
+                        <div v-if="countriesData.loading" class="flex justify-center py-6">
+                            <Spinner class="h-6 w-6"/>
                         </div>
 
                         <DataTable
@@ -700,23 +701,25 @@ const currentTabData = computed(() => {
                             :columns="countryColumns"
                             :data="countriesData.items"
                             :empty-message="t('No countries found')"
+                            :compact-mode="true"
+                            :row-height="'compact'"
                         >
                             <template #cell-flag_path="{ value }">
-                                <span v-if="value" class="text-2xl">{{ value }}</span>
-                                <span v-else class="text-gray-400">—</span>
+                                <span v-if="value" class="text-lg">{{ value }}</span>
+                                <span v-else class="text-gray-400 text-sm">—</span>
                             </template>
 
                             <template #cell-cities_count="{ value }">
-                                <span class="font-medium">{{ value || 0 }}</span>
+                                <span class="font-medium text-sm">{{ value || 0 }}</span>
                             </template>
 
                             <template #cell-actions="{ item }">
-                                <div class="flex items-center justify-end gap-2">
-                                    <Button size="sm" variant="ghost" @click="openEditModal(item)">
-                                        <EditIcon class="h-4 w-4"/>
+                                <div class="flex items-center justify-end gap-1">
+                                    <Button size="icon" variant="ghost" @click="openEditModal(item)" class="h-7 w-7">
+                                        <EditIcon class="h-3.5 w-3.5"/>
                                     </Button>
-                                    <Button size="sm" variant="ghost" @click="openDeleteModal(item)">
-                                        <Trash2Icon class="h-4 w-4"/>
+                                    <Button size="icon" variant="ghost" @click="openDeleteModal(item)" class="h-7 w-7">
+                                        <Trash2Icon class="h-3.5 w-3.5"/>
                                     </Button>
                                 </div>
                             </template>
@@ -725,22 +728,22 @@ const currentTabData = computed(() => {
 
                     <!-- Cities Content -->
                     <template v-if="activeTab === 'cities'">
-                        <div class="mb-6 space-y-4">
-                            <div class="flex flex-col sm:flex-row gap-4">
+                        <div class="mb-3 space-y-2">
+                            <div class="flex flex-col sm:flex-row gap-2">
                                 <div class="flex-1">
                                     <div class="relative">
                                         <SearchIcon
-                                            class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"/>
+                                            class="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400"/>
                                         <Input
                                             v-model="citiesData.searchQuery"
                                             :placeholder="t('Search cities...')"
-                                            class="pl-10"
+                                            class="pl-8 h-8 text-sm"
                                         />
                                     </div>
                                 </div>
-                                <div class="w-full sm:w-64">
+                                <div class="w-full sm:w-48">
                                     <Select v-model="citiesData.countryFilter">
-                                        <SelectTrigger>
+                                        <SelectTrigger class="h-8 text-sm">
                                             <SelectValue :placeholder="t('All Countries')"/>
                                         </SelectTrigger>
                                         <SelectContent>
@@ -758,8 +761,8 @@ const currentTabData = computed(() => {
                             </div>
                         </div>
 
-                        <div v-if="citiesData.loading" class="flex justify-center py-8">
-                            <Spinner class="h-8 w-8"/>
+                        <div v-if="citiesData.loading" class="flex justify-center py-6">
+                            <Spinner class="h-6 w-6"/>
                         </div>
 
                         <DataTable
@@ -767,22 +770,24 @@ const currentTabData = computed(() => {
                             :columns="cityColumns"
                             :data="citiesData.items"
                             :empty-message="t('No cities found')"
+                            :compact-mode="true"
+                            :row-height="'compact'"
                         >
                             <template #cell-country="{ item }">
-                                {{ item.country?.name }}
+                                <span class="text-sm">{{ item.country?.name }}</span>
                             </template>
 
                             <template #cell-clubs_count="{ value }">
-                                <span class="font-medium">{{ value || 0 }}</span>
+                                <span class="font-medium text-sm">{{ value || 0 }}</span>
                             </template>
 
                             <template #cell-actions="{ item }">
-                                <div class="flex items-center justify-end gap-2">
-                                    <Button size="sm" variant="ghost" @click="openEditModal(item)">
-                                        <EditIcon class="h-4 w-4"/>
+                                <div class="flex items-center justify-end gap-1">
+                                    <Button size="icon" variant="ghost" @click="openEditModal(item)" class="h-7 w-7">
+                                        <EditIcon class="h-3.5 w-3.5"/>
                                     </Button>
-                                    <Button size="sm" variant="ghost" @click="openDeleteModal(item)">
-                                        <Trash2Icon class="h-4 w-4"/>
+                                    <Button size="icon" variant="ghost" @click="openDeleteModal(item)" class="h-7 w-7">
+                                        <Trash2Icon class="h-3.5 w-3.5"/>
                                     </Button>
                                 </div>
                             </template>
@@ -791,22 +796,22 @@ const currentTabData = computed(() => {
 
                     <!-- Clubs Content -->
                     <template v-if="activeTab === 'clubs'">
-                        <div class="mb-6 space-y-4">
-                            <div class="flex flex-col sm:flex-row gap-4">
+                        <div class="mb-3 space-y-2">
+                            <div class="flex flex-col sm:flex-row gap-2">
                                 <div class="flex-1">
                                     <div class="relative">
                                         <SearchIcon
-                                            class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"/>
+                                            class="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400"/>
                                         <Input
                                             v-model="clubsData.searchQuery"
                                             :placeholder="t('Search clubs...')"
-                                            class="pl-10"
+                                            class="pl-8 h-8 text-sm"
                                         />
                                     </div>
                                 </div>
-                                <div class="w-full sm:w-64">
+                                <div class="w-full sm:w-48">
                                     <Select v-model="clubsData.cityFilter">
-                                        <SelectTrigger>
+                                        <SelectTrigger class="h-8 text-sm">
                                             <SelectValue :placeholder="t('All Cities')"/>
                                         </SelectTrigger>
                                         <SelectContent>
@@ -824,8 +829,8 @@ const currentTabData = computed(() => {
                             </div>
                         </div>
 
-                        <div v-if="clubsData.loading" class="flex justify-center py-8">
-                            <Spinner class="h-8 w-8"/>
+                        <div v-if="clubsData.loading" class="flex justify-center py-6">
+                            <Spinner class="h-6 w-6"/>
                         </div>
 
                         <DataTable
@@ -833,30 +838,32 @@ const currentTabData = computed(() => {
                             :columns="clubColumns"
                             :data="clubsData.items"
                             :empty-message="t('No clubs found')"
+                            :compact-mode="true"
+                            :row-height="'compact'"
                         >
                             <template #cell-city="{ item }">
-                                {{ item.city?.name }} ({{ item.city?.country?.name }})
+                                <span class="text-sm">{{ item.city?.name }} <span class="text-xs text-gray-500">({{ item.city?.country?.name }})</span></span>
                             </template>
 
                             <template #cell-tables_count="{ value }">
-                                <span class="font-medium">{{ value || 0 }}</span>
+                                <span class="font-medium text-sm">{{ value || 0 }}</span>
                             </template>
 
                             <template #cell-leagues_count="{ value }">
-                                <span class="font-medium">{{ value || 0 }}</span>
+                                <span class="font-medium text-sm">{{ value || 0 }}</span>
                             </template>
 
                             <template #cell-tournaments_count="{ value }">
-                                <span class="font-medium">{{ value || 0 }}</span>
+                                <span class="font-medium text-sm">{{ value || 0 }}</span>
                             </template>
 
                             <template #cell-actions="{ item }">
-                                <div class="flex items-center justify-end gap-2">
-                                    <Button size="sm" variant="ghost" @click="openEditModal(item)">
-                                        <EditIcon class="h-4 w-4"/>
+                                <div class="flex items-center justify-end gap-1">
+                                    <Button size="icon" variant="ghost" @click="openEditModal(item)" class="h-7 w-7">
+                                        <EditIcon class="h-3.5 w-3.5"/>
                                     </Button>
-                                    <Button size="sm" variant="ghost" @click="openDeleteModal(item)">
-                                        <Trash2Icon class="h-4 w-4"/>
+                                    <Button size="icon" variant="ghost" @click="openDeleteModal(item)" class="h-7 w-7">
+                                        <Trash2Icon class="h-3.5 w-3.5"/>
                                     </Button>
                                 </div>
                             </template>
@@ -865,22 +872,22 @@ const currentTabData = computed(() => {
 
                     <!-- Tables Content -->
                     <template v-if="activeTab === 'tables'">
-                        <div class="mb-6 space-y-4">
-                            <div class="flex flex-col sm:flex-row gap-4">
+                        <div class="mb-3 space-y-2">
+                            <div class="flex flex-col sm:flex-row gap-2">
                                 <div class="flex-1">
                                     <div class="relative">
                                         <SearchIcon
-                                            class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"/>
+                                            class="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400"/>
                                         <Input
                                             v-model="tablesData.searchQuery"
                                             :placeholder="t('Search tables...')"
-                                            class="pl-10"
+                                            class="pl-8 h-8 text-sm"
                                         />
                                     </div>
                                 </div>
-                                <div class="w-full sm:w-64">
+                                <div class="w-full sm:w-48">
                                     <Select v-model="tablesData.clubFilter">
-                                        <SelectTrigger>
+                                        <SelectTrigger class="h-8 text-sm">
                                             <SelectValue :placeholder="t('All Clubs')"/>
                                         </SelectTrigger>
                                         <SelectContent>
@@ -898,8 +905,8 @@ const currentTabData = computed(() => {
                             </div>
                         </div>
 
-                        <div v-if="tablesData.loading" class="flex justify-center py-8">
-                            <Spinner class="h-8 w-8"/>
+                        <div v-if="tablesData.loading" class="flex justify-center py-6">
+                            <Spinner class="h-6 w-6"/>
                         </div>
 
                         <DataTable
@@ -907,38 +914,42 @@ const currentTabData = computed(() => {
                             :columns="tableColumns"
                             :data="tablesData.items"
                             :empty-message="t('No tables found')"
+                            :compact-mode="true"
+                            :row-height="'compact'"
                         >
                             <template #cell-club="{ item }">
-                                {{ item.club?.name }} ({{ item.club?.city?.name }})
+                                <span class="text-sm">{{ item.club?.name }} <span class="text-xs text-gray-500">({{ item.club?.city?.name }})</span></span>
                             </template>
 
                             <template #cell-stream_url="{ value }">
-                                <span v-if="value" class="text-xs text-gray-600 dark:text-gray-400">
+                                <span v-if="value" class="text-xs text-gray-600 dark:text-gray-400 truncate block max-w-[150px]">
                                     {{ value }}
                                 </span>
-                                <span v-else class="text-gray-400">—</span>
+                                <span v-else class="text-gray-400 text-sm">—</span>
                             </template>
 
                             <template #cell-is_active="{ value }">
-                                <CheckCircleIcon v-if="value" class="h-5 w-5 text-green-500"/>
-                                <XCircleIcon v-else class="h-5 w-5 text-red-500"/>
+                                <CheckCircleIcon v-if="value" class="h-4 w-4 text-green-500"/>
+                                <XCircleIcon v-else class="h-4 w-4 text-red-500"/>
                             </template>
 
                             <template #cell-actions="{ item }">
-                                <div class="flex items-center justify-end gap-2">
+                                <div class="flex items-center justify-end gap-1">
                                     <Button
-                                        size="sm"
+                                        size="icon"
                                         variant="ghost"
                                         @click="openEditModal(item)"
+                                        class="h-7 w-7"
                                     >
-                                        <EditIcon class="h-4 w-4"/>
+                                        <EditIcon class="h-3.5 w-3.5"/>
                                     </Button>
                                     <Button
-                                        size="sm"
+                                        size="icon"
                                         variant="ghost"
                                         @click="openDeleteModal(item)"
+                                        class="h-7 w-7"
                                     >
-                                        <Trash2Icon class="h-4 w-4"/>
+                                        <Trash2Icon class="h-3.5 w-3.5"/>
                                     </Button>
                                 </div>
                             </template>
@@ -947,22 +958,22 @@ const currentTabData = computed(() => {
 
                     <!-- Games Content -->
                     <template v-if="activeTab === 'games'">
-                        <div class="mb-6 space-y-4">
-                            <div class="flex flex-col sm:flex-row gap-4">
+                        <div class="mb-3 space-y-2">
+                            <div class="flex flex-col sm:flex-row gap-2">
                                 <div class="flex-1">
                                     <div class="relative">
                                         <SearchIcon
-                                            class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"/>
+                                            class="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400"/>
                                         <Input
                                             v-model="gamesData.searchQuery"
                                             :placeholder="t('Search games...')"
-                                            class="pl-10"
+                                            class="pl-8 h-8 text-sm"
                                         />
                                     </div>
                                 </div>
-                                <div class="w-full sm:w-64">
+                                <div class="w-full sm:w-48">
                                     <Select v-model="gamesData.typeFilter">
-                                        <SelectTrigger>
+                                        <SelectTrigger class="h-8 text-sm">
                                             <SelectValue :placeholder="t('All Types')"/>
                                         </SelectTrigger>
                                         <SelectContent>
@@ -980,8 +991,8 @@ const currentTabData = computed(() => {
                             </div>
                         </div>
 
-                        <div v-if="gamesData.loading" class="flex justify-center py-8">
-                            <Spinner class="h-8 w-8"/>
+                        <div v-if="gamesData.loading" class="flex justify-center py-6">
+                            <Spinner class="h-6 w-6"/>
                         </div>
 
                         <DataTable
@@ -989,50 +1000,53 @@ const currentTabData = computed(() => {
                             :columns="gameColumns"
                             :data="gamesData.items"
                             :empty-message="t('No games found')"
+                            :compact-mode="true"
+                            :row-height="'compact'"
                         >
                             <template #cell-type="{ value }">
-                                <span class="capitalize">{{ value }}</span>
+                                <span class="capitalize text-sm">{{ value }}</span>
                             </template>
 
                             <template #cell-is_multiplayer="{ value }">
-                                <CheckCircleIcon v-if="value" class="h-5 w-5 text-green-500"/>
-                                <XCircleIcon v-else class="h-5 w-5 text-gray-400"/>
+                                <CheckCircleIcon v-if="value" class="h-4 w-4 text-green-500"/>
+                                <XCircleIcon v-else class="h-4 w-4 text-gray-400"/>
                             </template>
 
                             <template #cell-leagues_count="{ value }">
-                                <span class="font-medium">{{ value || 0 }}</span>
+                                <span class="font-medium text-sm">{{ value || 0 }}</span>
                             </template>
 
                             <template #cell-tournaments_count="{ value }">
-                                <span class="font-medium">{{ value || 0 }}</span>
+                                <span class="font-medium text-sm">{{ value || 0 }}</span>
                             </template>
 
                             <template #cell-actions="{ item }">
-                                <div class="flex items-center justify-end gap-2">
-                                    <Button size="sm" variant="ghost" @click="openEditModal(item)">
-                                        <EditIcon class="h-4 w-4"/>
+                                <div class="flex items-center justify-end gap-1">
+                                    <Button size="icon" variant="ghost" @click="openEditModal(item)" class="h-7 w-7">
+                                        <EditIcon class="h-3.5 w-3.5"/>
                                     </Button>
-                                    <Button size="sm" variant="ghost" @click="openDeleteModal(item)">
-                                        <Trash2Icon class="h-4 w-4"/>
+                                    <Button size="icon" variant="ghost" @click="openDeleteModal(item)" class="h-7 w-7">
+                                        <Trash2Icon class="h-3.5 w-3.5"/>
                                     </Button>
                                 </div>
                             </template>
                         </DataTable>
                     </template>
 
-                    <!-- Pagination -->
+                    <!-- Pagination - Compact -->
                     <div
-                        v-if="currentTabData.totalPages > 1"
-                        class="mt-6 flex items-center justify-between"
+                        v-if="currentTabData && currentTabData.totalPages > 1"
+                        class="mt-3 flex items-center justify-between"
                     >
                         <Button
                             variant="outline"
+                            size="sm"
                             :disabled="currentTabData.currentPage === 1"
                             @click="currentTabData.currentPage--"
                         >
                             {{ t('Previous') }}
                         </Button>
-                        <span class="text-sm text-gray-600 dark:text-gray-400">
+                        <span class="text-xs text-gray-600 dark:text-gray-400">
                             {{
                                 t('Page :page of :total', {
                                     page: currentTabData.currentPage,
@@ -1042,6 +1056,7 @@ const currentTabData = computed(() => {
                         </span>
                         <Button
                             variant="outline"
+                            size="sm"
                             :disabled="currentTabData.currentPage === currentTabData.totalPages"
                             @click="currentTabData.currentPage++"
                         >
@@ -1053,30 +1068,32 @@ const currentTabData = computed(() => {
         </div>
     </div>
 
-    <!-- Create Modal -->
+    <!-- Create Modal - Compact -->
     <Modal :show="showCreateModal" @close="showCreateModal = false">
-        <div class="p-6">
-            <h3 class="text-lg font-semibold mb-4">
+        <div class="p-4">
+            <h3 class="text-base font-semibold mb-3">
                 {{ t('Create :type', {type: tabConfig[activeTab].label}) }}
             </h3>
 
-            <form @submit.prevent="createItem" class="space-y-4">
+            <form @submit.prevent="createItem" class="space-y-3">
                 <!-- Country form -->
                 <template v-if="activeTab === 'countries'">
                     <div>
-                        <Label for="country-name">{{ t('Name') }}</Label>
+                        <Label for="country-name" class="text-sm">{{ t('Name') }}</Label>
                         <Input
                             id="country-name"
                             v-model="countryForm.name"
                             required
+                            class="h-8 text-sm"
                         />
                     </div>
                     <div>
-                        <Label for="country-flag">{{ t('Flag Emoji') }}</Label>
+                        <Label for="country-flag" class="text-sm">{{ t('Flag Emoji') }}</Label>
                         <Input
                             id="country-flag"
                             v-model="countryForm.flag_path"
                             placeholder="🇺🇦"
+                            class="h-8 text-sm"
                         />
                     </div>
                 </template>
@@ -1084,17 +1101,18 @@ const currentTabData = computed(() => {
                 <!-- City form -->
                 <template v-else-if="activeTab === 'cities'">
                     <div>
-                        <Label for="city-name">{{ t('Name') }}</Label>
+                        <Label for="city-name" class="text-sm">{{ t('Name') }}</Label>
                         <Input
                             id="city-name"
                             v-model="cityForm.name"
                             required
+                            class="h-8 text-sm"
                         />
                     </div>
                     <div>
-                        <Label for="city-country">{{ t('Country') }}</Label>
+                        <Label for="city-country" class="text-sm">{{ t('Country') }}</Label>
                         <Select v-model="cityForm.country_id" required>
-                            <SelectTrigger id="city-country">
+                            <SelectTrigger id="city-country" class="h-8 text-sm">
                                 <SelectValue :placeholder="t('Select country')"/>
                             </SelectTrigger>
                             <SelectContent>
@@ -1113,17 +1131,18 @@ const currentTabData = computed(() => {
                 <!-- Club form -->
                 <template v-else-if="activeTab === 'clubs'">
                     <div>
-                        <Label for="club-name">{{ t('Name') }}</Label>
+                        <Label for="club-name" class="text-sm">{{ t('Name') }}</Label>
                         <Input
                             id="club-name"
                             v-model="clubForm.name"
                             required
+                            class="h-8 text-sm"
                         />
                     </div>
                     <div>
-                        <Label for="club-city">{{ t('City') }}</Label>
+                        <Label for="club-city" class="text-sm">{{ t('City') }}</Label>
                         <Select v-model="clubForm.city_id" required>
-                            <SelectTrigger id="club-city">
+                            <SelectTrigger id="club-city" class="h-8 text-sm">
                                 <SelectValue :placeholder="t('Select city')"/>
                             </SelectTrigger>
                             <SelectContent>
@@ -1142,9 +1161,9 @@ const currentTabData = computed(() => {
                 <!-- Table form -->
                 <template v-else-if="activeTab === 'tables'">
                     <div>
-                        <Label for="table-club">{{ t('Club') }}</Label>
+                        <Label for="table-club" class="text-sm">{{ t('Club') }}</Label>
                         <Select v-model="tableForm.club_id" required>
-                            <SelectTrigger id="table-club">
+                            <SelectTrigger id="table-club" class="h-8 text-sm">
                                 <SelectValue :placeholder="t('Select club')"/>
                             </SelectTrigger>
                             <SelectContent>
@@ -1159,45 +1178,49 @@ const currentTabData = computed(() => {
                         </Select>
                     </div>
                     <div>
-                        <Label for="table-name">{{ t('Name') }}</Label>
+                        <Label for="table-name" class="text-sm">{{ t('Name') }}</Label>
                         <Input
                             id="table-name"
                             v-model="tableForm.name"
                             required
+                            class="h-8 text-sm"
                         />
                     </div>
                     <div>
-                        <Label for="table-stream">{{ t('Stream URL') }}</Label>
+                        <Label for="table-stream" class="text-sm">{{ t('Stream URL') }}</Label>
                         <Input
                             id="table-stream"
                             v-model="tableForm.stream_url"
                             type="url"
                             placeholder="https://..."
+                            class="h-8 text-sm"
                         />
                     </div>
                     <div class="flex items-center gap-2">
                         <Checkbox
                             id="table-active"
                             v-model="tableForm.is_active"
+                            class="h-3.5 w-3.5"
                         />
-                        <Label for="table-active">{{ t('Active') }}</Label>
+                        <Label for="table-active" class="text-sm">{{ t('Active') }}</Label>
                     </div>
                 </template>
 
                 <!-- Game form -->
                 <template v-else-if="activeTab === 'games'">
                     <div>
-                        <Label for="game-name">{{ t('Name') }}</Label>
+                        <Label for="game-name" class="text-sm">{{ t('Name') }}</Label>
                         <Input
                             id="game-name"
                             v-model="gameForm.name"
                             required
+                            class="h-8 text-sm"
                         />
                     </div>
                     <div>
-                        <Label for="game-type">{{ t('Type') }}</Label>
+                        <Label for="game-type" class="text-sm">{{ t('Type') }}</Label>
                         <Select v-model="gameForm.type" required>
-                            <SelectTrigger id="game-type">
+                            <SelectTrigger id="game-type" class="h-8 text-sm">
                                 <SelectValue/>
                             </SelectTrigger>
                             <SelectContent>
@@ -1212,35 +1235,39 @@ const currentTabData = computed(() => {
                         </Select>
                     </div>
                     <div>
-                        <Label for="game-rules">{{ t('Rules') }}</Label>
+                        <Label for="game-rules" class="text-sm">{{ t('Rules') }}</Label>
                         <Textarea
                             id="game-rules"
                             v-model="gameForm.rules"
-                            rows="3"
+                            rows="2"
+                            class="text-sm"
                         />
                     </div>
                     <div class="flex items-center gap-2">
                         <Checkbox
                             id="game-multiplayer"
                             v-model="gameForm.is_multiplayer"
+                            class="h-3.5 w-3.5"
                         />
-                        <Label for="game-multiplayer">{{ t('Multiplayer') }}</Label>
+                        <Label for="game-multiplayer" class="text-sm">{{ t('Multiplayer') }}</Label>
                     </div>
                 </template>
 
-                <div class="flex justify-end gap-3 pt-4">
+                <div class="flex justify-end gap-2 pt-2">
                     <Button
                         type="button"
                         variant="outline"
+                        size="sm"
                         @click="showCreateModal = false"
                     >
                         {{ t('Cancel') }}
                     </Button>
                     <Button
                         type="submit"
+                        size="sm"
                         :disabled="adminSettings.isLoading.value"
                     >
-                        <Spinner v-if="adminSettings.isLoading.value" class="mr-2 h-4 w-4"/>
+                        <Spinner v-if="adminSettings.isLoading.value" class="mr-1.5 h-3.5 w-3.5"/>
                         {{ t('Create') }}
                     </Button>
                 </div>
@@ -1248,31 +1275,33 @@ const currentTabData = computed(() => {
         </div>
     </Modal>
 
-    <!-- Edit Modal -->
+    <!-- Edit Modal - Compact -->
     <Modal :show="showEditModal" @close="showEditModal = false">
-        <div class="p-6">
-            <h3 class="text-lg font-semibold mb-4">
+        <div class="p-4">
+            <h3 class="text-base font-semibold mb-3">
                 {{ t('Edit :type', {type: tabConfig[activeTab].label}) }}
             </h3>
 
-            <form @submit.prevent="updateItem" class="space-y-4">
+            <form @submit.prevent="updateItem" class="space-y-3">
                 <!-- Same form fields as create modal -->
                 <!-- Country form -->
                 <template v-if="activeTab === 'countries'">
                     <div>
-                        <Label for="edit-country-name">{{ t('Name') }}</Label>
+                        <Label for="edit-country-name" class="text-sm">{{ t('Name') }}</Label>
                         <Input
                             id="edit-country-name"
                             v-model="countryForm.name"
                             required
+                            class="h-8 text-sm"
                         />
                     </div>
                     <div>
-                        <Label for="edit-country-flag">{{ t('Flag Emoji') }}</Label>
+                        <Label for="edit-country-flag" class="text-sm">{{ t('Flag Emoji') }}</Label>
                         <Input
                             id="edit-country-flag"
                             v-model="countryForm.flag_path"
                             placeholder="🇺🇦"
+                            class="h-8 text-sm"
                         />
                     </div>
                 </template>
@@ -1280,17 +1309,18 @@ const currentTabData = computed(() => {
                 <!-- City form -->
                 <template v-else-if="activeTab === 'cities'">
                     <div>
-                        <Label for="edit-city-name">{{ t('Name') }}</Label>
+                        <Label for="edit-city-name" class="text-sm">{{ t('Name') }}</Label>
                         <Input
                             id="edit-city-name"
                             v-model="cityForm.name"
                             required
+                            class="h-8 text-sm"
                         />
                     </div>
                     <div>
-                        <Label for="edit-city-country">{{ t('Country') }}</Label>
+                        <Label for="edit-city-country" class="text-sm">{{ t('Country') }}</Label>
                         <Select v-model="cityForm.country_id" required>
-                            <SelectTrigger id="edit-city-country">
+                            <SelectTrigger id="edit-city-country" class="h-8 text-sm">
                                 <SelectValue :placeholder="t('Select country')"/>
                             </SelectTrigger>
                             <SelectContent>
@@ -1309,17 +1339,18 @@ const currentTabData = computed(() => {
                 <!-- Club form -->
                 <template v-else-if="activeTab === 'clubs'">
                     <div>
-                        <Label for="edit-club-name">{{ t('Name') }}</Label>
+                        <Label for="edit-club-name" class="text-sm">{{ t('Name') }}</Label>
                         <Input
                             id="edit-club-name"
                             v-model="clubForm.name"
                             required
+                            class="h-8 text-sm"
                         />
                     </div>
                     <div>
-                        <Label for="edit-club-city">{{ t('City') }}</Label>
+                        <Label for="edit-club-city" class="text-sm">{{ t('City') }}</Label>
                         <Select v-model="clubForm.city_id" required>
-                            <SelectTrigger id="edit-club-city">
+                            <SelectTrigger id="edit-club-city" class="h-8 text-sm">
                                 <SelectValue :placeholder="t('Select city')"/>
                             </SelectTrigger>
                             <SelectContent>
@@ -1338,9 +1369,9 @@ const currentTabData = computed(() => {
                 <!-- Table form -->
                 <template v-else-if="activeTab === 'tables'">
                     <div>
-                        <Label for="edit-table-club">{{ t('Club') }}</Label>
+                        <Label for="edit-table-club" class="text-sm">{{ t('Club') }}</Label>
                         <Select v-model="tableForm.club_id" required>
-                            <SelectTrigger id="edit-table-club">
+                            <SelectTrigger id="edit-table-club" class="h-8 text-sm">
                                 <SelectValue :placeholder="t('Select club')"/>
                             </SelectTrigger>
                             <SelectContent>
@@ -1355,45 +1386,49 @@ const currentTabData = computed(() => {
                         </Select>
                     </div>
                     <div>
-                        <Label for="edit-table-name">{{ t('Name') }}</Label>
+                        <Label for="edit-table-name" class="text-sm">{{ t('Name') }}</Label>
                         <Input
                             id="edit-table-name"
                             v-model="tableForm.name"
                             required
+                            class="h-8 text-sm"
                         />
                     </div>
                     <div>
-                        <Label for="edit-table-stream">{{ t('Stream URL') }}</Label>
+                        <Label for="edit-table-stream" class="text-sm">{{ t('Stream URL') }}</Label>
                         <Input
                             id="edit-table-stream"
                             v-model="tableForm.stream_url"
                             type="url"
                             placeholder="https://..."
+                            class="h-8 text-sm"
                         />
                     </div>
                     <div class="flex items-center gap-2">
                         <Checkbox
                             id="edit-table-active"
                             v-model="tableForm.is_active"
+                            class="h-3.5 w-3.5"
                         />
-                        <Label for="edit-table-active">{{ t('Active') }}</Label>
+                        <Label for="edit-table-active" class="text-sm">{{ t('Active') }}</Label>
                     </div>
                 </template>
 
                 <!-- Game form -->
                 <template v-else-if="activeTab === 'games'">
                     <div>
-                        <Label for="edit-game-name">{{ t('Name') }}</Label>
+                        <Label for="edit-game-name" class="text-sm">{{ t('Name') }}</Label>
                         <Input
                             id="edit-game-name"
                             v-model="gameForm.name"
                             required
+                            class="h-8 text-sm"
                         />
                     </div>
                     <div>
-                        <Label for="edit-game-type">{{ t('Type') }}</Label>
+                        <Label for="edit-game-type" class="text-sm">{{ t('Type') }}</Label>
                         <Select v-model="gameForm.type" required>
-                            <SelectTrigger id="edit-game-type">
+                            <SelectTrigger id="edit-game-type" class="h-8 text-sm">
                                 <SelectValue/>
                             </SelectTrigger>
                             <SelectContent>
@@ -1408,35 +1443,39 @@ const currentTabData = computed(() => {
                         </Select>
                     </div>
                     <div>
-                        <Label for="edit-game-rules">{{ t('Rules') }}</Label>
+                        <Label for="edit-game-rules" class="text-sm">{{ t('Rules') }}</Label>
                         <Textarea
                             id="edit-game-rules"
                             v-model="gameForm.rules"
-                            rows="3"
+                            rows="2"
+                            class="text-sm"
                         />
                     </div>
                     <div class="flex items-center gap-2">
                         <Checkbox
                             id="edit-game-multiplayer"
                             v-model="gameForm.is_multiplayer"
+                            class="h-3.5 w-3.5"
                         />
-                        <Label for="edit-game-multiplayer">{{ t('Multiplayer') }}</Label>
+                        <Label for="edit-game-multiplayer" class="text-sm">{{ t('Multiplayer') }}</Label>
                     </div>
                 </template>
 
-                <div class="flex justify-end gap-3 pt-4">
+                <div class="flex justify-end gap-2 pt-2">
                     <Button
                         type="button"
                         variant="outline"
+                        size="sm"
                         @click="showEditModal = false"
                     >
                         {{ t('Cancel') }}
                     </Button>
                     <Button
                         type="submit"
+                        size="sm"
                         :disabled="adminSettings.isLoading.value"
                     >
-                        <Spinner v-if="adminSettings.isLoading.value" class="mr-2 h-4 w-4"/>
+                        <Spinner v-if="adminSettings.isLoading.value" class="mr-1.5 h-3.5 w-3.5"/>
                         {{ t('Update') }}
                     </Button>
                 </div>
@@ -1444,14 +1483,14 @@ const currentTabData = computed(() => {
         </div>
     </Modal>
 
-    <!-- Delete Modal -->
+    <!-- Delete Modal - Compact -->
     <Modal :show="showDeleteModal" @close="showDeleteModal = false">
-        <div class="p-6">
-            <h3 class="text-lg font-semibold mb-4 text-red-600">
+        <div class="p-4">
+            <h3 class="text-base font-semibold mb-3 text-red-600">
                 {{ t('Delete :type', {type: tabConfig[activeTab].label}) }}
             </h3>
 
-            <p class="text-gray-600 dark:text-gray-400 mb-6">
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
                 {{
                     t('Are you sure you want to delete :name? This action cannot be undone.', {
                         name: deletingItem?.name
@@ -1459,19 +1498,21 @@ const currentTabData = computed(() => {
                 }}
             </p>
 
-            <div class="flex justify-end gap-3">
+            <div class="flex justify-end gap-2">
                 <Button
                     variant="outline"
+                    size="sm"
                     @click="showDeleteModal = false"
                 >
                     {{ t('Cancel') }}
                 </Button>
                 <Button
                     variant="destructive"
+                    size="sm"
                     @click="deleteItem"
                     :disabled="adminSettings.isLoading.value"
                 >
-                    <Spinner v-if="adminSettings.isLoading.value" class="mr-2 h-4 w-4"/>
+                    <Spinner v-if="adminSettings.isLoading.value" class="mr-1.5 h-3.5 w-3.5"/>
                     {{ t('Delete') }}
                 </Button>
             </div>

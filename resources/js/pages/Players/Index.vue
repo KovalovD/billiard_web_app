@@ -1,3 +1,4 @@
+// resources/js/Pages/Players/Index.vue
 <script lang="ts" setup>
 import {
     Button,
@@ -151,7 +152,7 @@ const columns = computed(() => [
     },
     {
         key: 'tournaments',
-        label: t('Tournaments'),
+        label: t('T'),
         align: 'center' as const,
         render: (player: Player) => ({
             total: player.stats.tournaments_count,
@@ -160,7 +161,7 @@ const columns = computed(() => [
     },
     {
         key: 'matches',
-        label: t('League Matches'),
+        label: t('M'),
         align: 'center' as const,
         hideOnMobile: true,
         render: (player: Player) => ({
@@ -173,7 +174,7 @@ const columns = computed(() => [
     },
     {
         key: 'rating',
-        label: t('Official Rating'),
+        label: t('Rating'),
         align: 'center' as const,
         render: (player: Player) => ({
             points: player.stats.official_rating_points,
@@ -485,15 +486,15 @@ onUnmounted(() => {
 <template>
     <Head :title="t('Billiard Players Directory - Find Players & Statistics')"/>
 
-    <div class="py-6 sm:py-12">
+    <div class="py-4 sm:py-6">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <!-- Mobile-optimized Header -->
-            <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <!-- Header - Compact -->
+            <div class="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
                     <h1 class="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-200">
                         {{ t('Players Directory') }}
                     </h1>
-                    <p class="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+                    <p class="text-sm text-gray-600 dark:text-gray-400">
                         {{ t('Find and explore billiard players statistics') }}
                     </p>
                 </div>
@@ -503,22 +504,22 @@ onUnmounted(() => {
                     size="sm"
                     @click="showFilters = !showFilters"
                 >
-                    <FilterIcon class="mr-2 h-4 w-4"/>
+                    <FilterIcon class="mr-1.5 h-3.5 w-3.5"/>
                     <span class="hidden sm:inline">{{ t('Filters') }}</span>
-                    <ChevronDownIcon v-if="!showFilters" class="ml-2 h-4 w-4"/>
-                    <ChevronUpIcon v-else class="ml-2 h-4 w-4"/>
+                    <ChevronDownIcon v-if="!showFilters" class="ml-1 h-3.5 w-3.5"/>
+                    <ChevronUpIcon v-else class="ml-1 h-3.5 w-3.5"/>
                 </Button>
             </div>
 
-            <!-- Stats Cards - Mobile optimized -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mb-6">
+            <!-- Stats Cards - Compact -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4">
                 <Card>
-                    <CardContent class="pt-4 sm:pt-6">
+                    <CardContent class="pt-3 pb-3">
                         <div class="text-center">
-                            <div class="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400">
+                            <div class="text-lg sm:text-xl font-bold text-blue-600 dark:text-blue-400">
                                 {{ aggregatedStats?.total_players || total }}
                             </div>
-                            <div class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{{
+                            <div class="text-xs text-gray-600 dark:text-gray-400">{{
                                     t('Total Players')
                                 }}
                             </div>
@@ -526,67 +527,65 @@ onUnmounted(() => {
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardContent class="pt-4 sm:pt-6">
+                    <CardContent class="pt-3 pb-3">
                         <div class="text-center">
-                            <div class="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">
+                            <div class="text-lg sm:text-xl font-bold text-green-600 dark:text-green-400">
                                 {{ aggregatedStats?.tournament_winners || 0 }}
                             </div>
-                            <div class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{{
-                                    t('Tournament Winners')
+                            <div class="text-xs text-gray-600 dark:text-gray-400">{{
+                                    t('Winners')
                                 }}
                             </div>
                         </div>
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardContent class="pt-4 sm:pt-6">
+                    <CardContent class="pt-3 pb-3">
                         <div class="text-center">
-                            <div class="text-xl sm:text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                            <div class="text-lg sm:text-xl font-bold text-yellow-600 dark:text-yellow-400">
                                 {{ aggregatedStats?.top_10_rated || 0 }}
                             </div>
-                            <div class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{{
-                                    t('Top 10 Rated')
+                            <div class="text-xs text-gray-600 dark:text-gray-400">{{
+                                    t('Top 10')
                                 }}
                             </div>
                         </div>
                     </CardContent>
                 </Card>
                 <Card class="col-span-2 sm:col-span-1">
-                    <CardContent class="pt-4 sm:pt-6">
+                    <CardContent class="pt-3 pb-3">
                         <div class="text-center">
-                            <div class="text-xl sm:text-2xl font-bold text-purple-600 dark:text-purple-400">
-                                {{ aggregatedStats?.players_with_club || 0 }}
-                                <span class="text-sm text-gray-500">/{{ aggregatedStats?.unique_clubs || 0 }}</span>
+                            <div class="text-lg sm:text-xl font-bold text-purple-600 dark:text-purple-400">
+                                {{ aggregatedStats?.unique_clubs || 0 }}
                             </div>
-                            <div class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                                {{ t('Players/Clubs') }}
+                            <div class="text-xs text-gray-600 dark:text-gray-400">
+                                {{ t('Clubs') }}
                             </div>
                         </div>
                     </CardContent>
                 </Card>
             </div>
 
-            <!-- Search and Filters - Mobile optimized -->
-            <Card v-if="showFilters" class="mb-6">
-                <CardHeader>
-                    <CardTitle class="flex items-center gap-2 text-lg">
-                        <FilterIcon class="h-5 w-5"/>
+            <!-- Search and Filters - Compact -->
+            <Card v-if="showFilters" class="mb-4">
+                <CardHeader class="p-3">
+                    <CardTitle class="flex items-center gap-2 text-base">
+                        <FilterIcon class="h-4 w-4"/>
                         {{ t('Search & Filters') }}
                     </CardTitle>
-                    <CardDescription>{{ t('Find players by name, location, and club') }}</CardDescription>
                 </CardHeader>
-                <CardContent>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <CardContent class="p-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                         <!-- Search -->
                         <div class="lg:col-span-2">
-                            <Label for="search" class="text-sm">{{ t('Search by name') }}</Label>
+                            <Label for="search" class="text-xs">{{ t('Search by name') }}</Label>
                             <div class="relative mt-1">
-                                <SearchIcon class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"/>
+                                <SearchIcon class="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400"/>
                                 <Input
                                     id="search"
                                     type="text"
                                     :placeholder="t('Enter player name...')"
-                                    class="pl-10"
+                                    class="pl-8 h-8 text-sm"
                                     :model-value="filters.name"
                                     @update:model-value="debouncedSearch"
                                 />
@@ -595,9 +594,9 @@ onUnmounted(() => {
 
                         <!-- Country -->
                         <div>
-                            <Label for="country" class="text-sm">{{ t('Country') }}</Label>
+                            <Label for="country" class="text-xs">{{ t('Country') }}</Label>
                             <Select v-model="filters.country_id" class="mt-1">
-                                <SelectTrigger id="country">
+                                <SelectTrigger id="country" class="h-8 text-sm">
                                     <SelectValue :placeholder="t('All countries')"/>
                                 </SelectTrigger>
                                 <SelectContent>
@@ -615,13 +614,13 @@ onUnmounted(() => {
 
                         <!-- City -->
                         <div>
-                            <Label for="city" class="text-sm">{{ t('City') }}</Label>
+                            <Label for="city" class="text-xs">{{ t('City') }}</Label>
                             <Select
                                 v-model="filters.city_id"
                                 :disabled="!filters.country_id"
                                 class="mt-1"
                             >
-                                <SelectTrigger id="city">
+                                <SelectTrigger id="city" class="h-8 text-sm">
                                     <SelectValue :placeholder="t('All cities')"/>
                                 </SelectTrigger>
                                 <SelectContent>
@@ -639,13 +638,13 @@ onUnmounted(() => {
 
                         <!-- Club -->
                         <div>
-                            <Label for="club" class="text-sm">{{ t('Club') }}</Label>
+                            <Label for="club" class="text-xs">{{ t('Club') }}</Label>
                             <Select
                                 v-model="filters.club_id"
                                 :disabled="!filters.city_id"
                                 class="mt-1"
                             >
-                                <SelectTrigger id="club">
+                                <SelectTrigger id="club" class="h-8 text-sm">
                                     <SelectValue :placeholder="t('All clubs')"/>
                                 </SelectTrigger>
                                 <SelectContent>
@@ -663,9 +662,9 @@ onUnmounted(() => {
 
                         <!-- Results per page -->
                         <div>
-                            <Label for="per_page" class="text-sm">{{ t('Results per page') }}</Label>
+                            <Label for="per_page" class="text-xs">{{ t('Per page') }}</Label>
                             <Select v-model="filters.per_page" class="mt-1">
-                                <SelectTrigger id="per_page">
+                                <SelectTrigger id="per_page" class="h-8 text-sm">
                                     <SelectValue/>
                                 </SelectTrigger>
                                 <SelectContent>
@@ -677,7 +676,7 @@ onUnmounted(() => {
                         </div>
                     </div>
 
-                    <div class="mt-4 flex justify-end">
+                    <div class="mt-3 flex justify-end">
                         <Button variant="outline" size="sm" @click="resetFilters">
                             {{ t('Reset filters') }}
                         </Button>
@@ -685,14 +684,14 @@ onUnmounted(() => {
                 </CardContent>
             </Card>
 
-            <!-- Players Table - Mobile optimized -->
-            <Card>
-                <CardHeader>
-                    <CardTitle class="flex items-center gap-2">
-                        <UsersIcon class="h-5 w-5"/>
+            <!-- Players Table - Compact -->
+            <Card class="shadow-sm">
+                <CardHeader class="p-4">
+                    <CardTitle class="flex items-center gap-2 text-base">
+                        <UsersIcon class="h-4 w-4"/>
                         {{ t('Players') }} ({{ aggregatedStats?.total_players || total }})
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription class="text-xs">
                         {{ t('Showing :count players', {count: players.length}) }}
                     </CardDescription>
                 </CardHeader>
@@ -711,22 +710,23 @@ onUnmounted(() => {
                                 'tabindex': '0',
                                 'aria-label': `View ${player.full_name} profile`
                             })"
+                            :row-height="'compact'"
                         >
                             <!-- Custom cell renderers -->
                             <template #cell-player="{ value }">
                                 <div class="flex items-center">
-                                    <div class="flex-shrink-0 h-10 w-10">
+                                    <div class="flex-shrink-0 h-8 w-8">
                                         <UserAvatar
                                             :user="value.player"
-                                            size="md"
+                                            size="sm"
                                             priority="picture"
                                         />
                                     </div>
-                                    <div class="ml-4">
+                                    <div class="ml-3">
                                         <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
                                             {{ value.name }}
                                             <span v-if="value.isCurrentUser"
-                                                  class="ml-2 text-xs text-blue-600 dark:text-blue-400">
+                                                  class="ml-1 text-xs text-blue-600 dark:text-blue-400">
                                                 ({{ t('You') }})
                                             </span>
                                         </div>
@@ -736,20 +736,17 @@ onUnmounted(() => {
 
                             <template #cell-location="{ value }">
                                 <div v-if="value.city || value.country"
-                                     class="flex items-center text-sm text-gray-900 dark:text-gray-100">
-                                    <MapPinIcon class="h-4 w-4 mr-2 text-gray-400"/>
-                                    <div>
-                                        <div v-if="value.city">{{ value.city }}</div>
-                                        <div v-if="value.country" class="text-xs text-gray-500 dark:text-gray-400">
-                                            {{ value.country }}
-                                        </div>
+                                     class="text-sm text-gray-900 dark:text-gray-100">
+                                    <div v-if="value.city" class="truncate">{{ value.city }}</div>
+                                    <div v-if="value.country" class="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                        {{ value.country }}
                                     </div>
                                 </div>
-                                <span v-else class="text-gray-400">{{ t('N/A') }}</span>
+                                <span v-else class="text-gray-400 text-sm">{{ t('N/A') }}</span>
                             </template>
 
                             <template #cell-club="{ value }">
-                                <span v-if="value" class="text-sm text-gray-900 dark:text-gray-100">
+                                <span v-if="value" class="text-sm text-gray-900 dark:text-gray-100 truncate">
                                     {{ value }}
                                 </span>
                                 <span v-else class="text-sm text-gray-400">{{ t('No club') }}</span>
@@ -760,11 +757,11 @@ onUnmounted(() => {
                                     <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
                                         {{ value.total }}
                                     </div>
-                                    <div v-if="value.won > 0" class="mt-1">
+                                    <div v-if="value.won > 0" class="mt-0.5">
                                         <span
-                                            :class="['inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium', getStatsBadgeClass(value.won, 'won')]">
-                                            <TrophyIcon class="h-3 w-3 mr-1"/>
-                                            {{ value.won }} {{ t('won') }}
+                                            :class="['inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium', getStatsBadgeClass(value.won, 'won')]">
+                                            <TrophyIcon class="h-3 w-3 mr-0.5"/>
+                                            {{ value.won }}
                                         </span>
                                     </div>
                                 </div>
@@ -775,10 +772,10 @@ onUnmounted(() => {
                                     <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
                                         {{ value.total }}
                                     </div>
-                                    <div v-if="value.total > 0" class="text-xs mt-1">
+                                    <div v-if="value.total > 0" class="text-xs mt-0.5">
                                         <span
                                             :class="['font-medium', getStatsBadgeClass(value.winRate, 'winRate')]">
-                                            {{ value.winRate }}% {{ t('win rate') }}
+                                            {{ value.winRate }}%
                                         </span>
                                     </div>
                                 </div>
@@ -787,11 +784,11 @@ onUnmounted(() => {
                             <template #cell-rating="{ value }">
                                 <div v-if="value.position" class="text-center">
                                     <span
-                                        :class="['inline-flex px-2 py-1 text-xs font-medium rounded-full', getRatingBadgeClass(value.position)]">
+                                        :class="['inline-flex px-1.5 py-0.5 text-xs font-medium rounded-full', getRatingBadgeClass(value.position)]">
                                         #{{ value.position }}
                                     </span>
-                                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                        {{ value.points }} {{ t('pts') }}
+                                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                        {{ value.points }}
                                     </div>
                                 </div>
                                 <span v-else class="text-gray-400">—</span>
@@ -801,8 +798,8 @@ onUnmounted(() => {
                             <template #mobile-primary="{ item }">
                                 <div class="flex items-start justify-between">
                                     <div class="flex-1 min-w-0">
-                                        <div class="flex items-center gap-3">
-                                            <div class="flex-shrink-0 h-10 w-10">
+                                        <div class="flex items-center gap-2.5">
+                                            <div class="flex-shrink-0 h-9 w-9">
                                                 <UserAvatar
                                                     :user="item"
                                                     size="sm"
@@ -810,16 +807,16 @@ onUnmounted(() => {
                                                 />
                                             </div>
                                             <div class="flex-1 min-w-0">
-                                                <p class="font-medium truncate">
+                                                <p class="text-sm font-medium truncate">
                                                     {{ item.full_name }}
                                                     <span v-if="isAuthenticated && user?.id === item.id"
-                                                          class="ml-2 text-xs text-blue-600 dark:text-blue-400">
+                                                          class="ml-1 text-xs text-blue-600 dark:text-blue-400">
                                                         ({{ t('You') }})
                                                     </span>
                                                 </p>
                                                 <p v-if="item.home_city"
                                                    class="text-xs text-gray-600 dark:text-gray-400 truncate">
-                                                    <MapPinIcon class="inline h-3 w-3 mr-1"/>
+                                                    <MapPinIcon class="inline h-3 w-3 mr-0.5"/>
                                                     {{
                                                         item.home_city.name
                                                     }}{{
@@ -837,17 +834,17 @@ onUnmounted(() => {
 
                             <!-- Mobile actions -->
                             <template #mobile-actions="{ item }">
-                                <div class="mt-3 pt-3 border-t dark:border-gray-700">
-                                    <div class="grid grid-cols-2 gap-2 text-xs mb-3">
+                                <div class="mt-2 pt-2 border-t dark:border-gray-700">
+                                    <div class="grid grid-cols-2 gap-2 text-xs">
                                         <div>
-                                            <span class="text-gray-500">{{ t('Tournaments') }}:</span>
+                                            <span class="text-gray-500">{{ t('T') }}:</span>
                                             <span class="font-medium ml-1">{{ item.stats.tournaments_count }}</span>
                                             <span v-if="item.stats.tournaments_won > 0" class="text-green-600 ml-1">
-                                                ({{ item.stats.tournaments_won }} {{ t('won') }})
+                                                ({{ item.stats.tournaments_won }})
                                             </span>
                                         </div>
                                         <div>
-                                            <span class="text-gray-500">{{ t('Matches') }}:</span>
+                                            <span class="text-gray-500">{{ t('M') }}:</span>
                                             <span class="font-medium ml-1">{{ item.stats.league_matches_count }}</span>
                                             <span v-if="item.stats.league_matches_count > 0" class="text-blue-600 ml-1">
                                                 ({{
@@ -862,25 +859,17 @@ onUnmounted(() => {
                                                 }}</span>
                                             <span class="text-gray-500 ml-1">({{
                                                     item.stats.official_rating_points
-                                                }} {{ t('pts') }})</span>
+                                                }})</span>
                                         </div>
                                     </div>
-                                    <Button
-                                        size="sm"
-                                        variant="outline"
-                                        class="w-full"
-                                        @click="router.visit(`/players/${item.slug}`)"
-                                    >
-                                        {{ t('View Profile') }}
-                                    </Button>
                                 </div>
                             </template>
                         </DataTable>
                     </div>
 
-                    <!-- Pagination - Mobile optimized -->
+                    <!-- Pagination - Compact -->
                     <div v-if="totalPages > 1"
-                         class="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-700">
+                         class="flex items-center justify-between px-4 py-2.5 border-t border-gray-200 dark:border-gray-700">
                         <div class="flex items-center gap-2">
                             <Button
                                 variant="outline"
@@ -890,7 +879,7 @@ onUnmounted(() => {
                             >
                                 {{ t('Previous') }}
                             </Button>
-                            <span class="text-sm text-gray-700 dark:text-gray-300">
+                            <span class="text-xs text-gray-700 dark:text-gray-300">
                                 {{ t('Page :current of :total', {current: currentPage, total: totalPages}) }}
                             </span>
                             <Button

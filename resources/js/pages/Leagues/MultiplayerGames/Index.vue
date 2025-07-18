@@ -1,3 +1,4 @@
+// resources/js/Pages/League/MultiplayerGames/Index.vue
 <script lang="ts" setup>
 import CreateMultiplayerGameModal from '@/Components/League/MultiplayerGame/CreateMultiplayerGameModal.vue';
 import {Button, Card, CardContent, CardHeader, CardTitle} from '@/Components/ui';
@@ -42,9 +43,9 @@ const showCreateModal = ref(false);
 const selectedStatus = ref<string>('all');
 
 const statusOptions = [
-    {value: 'all', label: t('All Games')},
+    {value: 'all', label: t('All')},
     {value: 'registration', label: t('Registration')},
-    {value: 'in_progress', label: t('In Progress')},
+    {value: 'in_progress', label: t('Active')},
     {value: 'completed', label: t('Completed')},
     {value: 'cancelled', label: t('Cancelled')}
 ];
@@ -82,20 +83,20 @@ const columns = computed(() => [
     },
     {
         key: 'date',
-        label: t('Date Info'),
+        label: t('Date'),
         hideOnMobile: true,
         render: (game: MultiplayerGame) => getGameDateInfo(game)
     },
     {
         key: 'entryFee',
-        label: t('Entry Fee'),
+        label: t('Fee'),
         align: 'right' as const,
         hideOnTablet: true,
         render: (game: MultiplayerGame) => formatPrizePool(game.entrance_fee || 0)
     },
     {
         key: 'registration',
-        label: t('Registration'),
+        label: t('Reg'),
         align: 'center' as const,
         hideOnTablet: true,
         render: (game: MultiplayerGame) => game.is_registration_open
@@ -105,7 +106,7 @@ const columns = computed(() => [
         label: t('Actions'),
         align: 'right' as const,
         sticky: true,
-        width: '80px'
+        width: '60px'
     }
 ]);
 
@@ -157,7 +158,7 @@ const getStatusBadgeClass = (status: string): string => {
 
 const formatDate = (dateString: string | null): string => {
     if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString();
+    return new Date(dateString).toLocaleDateString('uk-UK', {day: '2-digit', month: 'short'});
 };
 
 const formatDateTime = (dateString: string | null): string => {
@@ -165,29 +166,28 @@ const formatDateTime = (dateString: string | null): string => {
     return new Date(dateString).toLocaleString('uk-UA', {
         day: '2-digit',
         month: '2-digit',
-        year: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
     });
 };
 
 const formatPrizePool = (amount: number): string => {
-    if (amount <= 0) return t('N/A');
+    if (amount <= 0) return t('Free');
     return amount.toLocaleString('uk-UA', {
-        style: 'currency',
-        currency: 'UAH'
-    }).replace('UAH', '₴');
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    }) + '₴';
 };
 
 const getGameDateInfo = (game: MultiplayerGame): string => {
     if (game.completed_at) {
-        return `${t('Completed:')} ${formatDateTime(game.completed_at)}`;
+        return formatDateTime(game.completed_at);
     } else if (game.started_at) {
-        return `${t('Started:')} ${formatDateTime(game.started_at)}`;
+        return formatDateTime(game.started_at);
     } else if (game.registration_ends_at) {
-        return `${t('Reg. ends:')} ${formatDateTime(game.registration_ends_at)}`;
+        return formatDateTime(game.registration_ends_at);
     } else {
-        return `${t('Created:')} ${formatDate(game.created_at)}`;
+        return formatDate(game.created_at);
     }
 };
 
@@ -356,16 +356,16 @@ onUnmounted(() => {
 
 <template>
     <Head :title="league ? t('Multiplayer Games - :league', { league: league.name }) : t('Multiplayer Games')"/>
-    <div class="py-6 sm:py-8 lg:py-12">
+    <div class="py-4 sm:py-6">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <!-- Header with back button -->
-            <header class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <!-- Header with back button - Compact -->
+            <header class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <!-- Left: Title and subtitle -->
                 <div class="flex-1 flex flex-col items-start justify-center">
-                    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+                    <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                         {{ t('Multiplayer Games') }}
                     </h1>
-                    <p v-if="league" class="text-gray-600 dark:text-gray-400 mt-1">
+                    <p v-if="league" class="text-sm text-gray-600 dark:text-gray-400">
                         {{ league.name }}
                     </p>
                 </div>
@@ -374,7 +374,7 @@ onUnmounted(() => {
                 <div class="flex flex-col sm:flex-row items-center justify-end gap-2 flex-1">
                     <Link :href="`/leagues/${league?.slug}`" aria-label="Navigate back to league page">
                         <Button variant="outline" size="sm">
-                            <ArrowLeftIcon class="mr-2 h-4 w-4" aria-hidden="true"/>
+                            <ArrowLeftIcon class="mr-1.5 h-3.5 w-3.5" aria-hidden="true"/>
                             <span class="hidden sm:inline">{{ t('Back to League') }}</span>
                             <span class="sm:hidden">{{ t('Back') }}</span>
                         </Button>
@@ -383,9 +383,9 @@ onUnmounted(() => {
                         v-if="isAuthenticated && isAdmin && league?.game_multiplayer"
                         @click="openCreateModal"
                         aria-label="Create new multiplayer game"
-                        class="cursor-pointer inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+                        class="cursor-pointer inline-flex items-center px-3 py-1.5 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
                     >
-                        <PlusIcon class="mr-2 h-4 w-4" aria-hidden="true"/>
+                        <PlusIcon class="mr-1.5 h-3.5 w-3.5" aria-hidden="true"/>
                         {{ t('Create Game') }}
                     </button>
                 </div>
@@ -393,18 +393,18 @@ onUnmounted(() => {
 
             <!-- Error message -->
             <div v-if="error"
-                 class="mb-6 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4"
+                 class="mb-4 rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3"
                  role="alert" aria-live="polite">
-                <p class="text-red-600 dark:text-red-400">{{ error }}</p>
+                <p class="text-sm text-red-600 dark:text-red-400">{{ error }}</p>
             </div>
 
-            <!-- Filters -->
-            <nav class="mb-6 flex flex-wrap gap-2">
+            <!-- Filters - Compact -->
+            <nav class="mb-4 flex flex-wrap gap-2">
                 <button
                     v-for="option in statusOptions"
                     :key="option.value"
                     :class="[
-                        'px-3 py-2 rounded-md text-sm font-medium transition-colors',
+                        'px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors',
                         selectedStatus === option.value
                             ? 'bg-indigo-600 text-white'
                             : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
@@ -416,59 +416,59 @@ onUnmounted(() => {
             </nav>
 
             <main>
-                <Card class="shadow-lg">
-                    <CardHeader class="bg-gradient-to-r from-gray-50 to-purple-50 dark:from-gray-800 dark:to-gray-700">
-                        <CardTitle class="flex items-center gap-2">
-                            <GamepadIcon class="h-5 w-5 text-purple-600 dark:text-purple-400" aria-hidden="true"/>
+                <Card class="shadow-sm">
+                    <CardHeader class="bg-gradient-to-r from-gray-50 to-purple-50 dark:from-gray-800 dark:to-gray-700 p-4">
+                        <CardTitle class="flex items-center gap-2 text-base">
+                            <GamepadIcon class="h-4 w-4 text-purple-600 dark:text-purple-400" aria-hidden="true"/>
                             {{ t('Multiplayer Games') }}
                         </CardTitle>
                     </CardHeader>
                     <CardContent class="p-0">
                         <!-- No multiplayer support message -->
                         <div v-if="!isLoadingGames && league && !league.game_multiplayer"
-                             class="py-10 text-center text-gray-500 dark:text-gray-400">
-                            <GamepadIcon class="mx-auto h-12 w-12 mb-4 opacity-50" aria-hidden="true"/>
-                            <p class="text-lg">{{ t('Multiplayer Not Supported') }}</p>
+                             class="py-8 text-center text-gray-500 dark:text-gray-400">
+                            <GamepadIcon class="mx-auto h-10 w-10 mb-3 opacity-50" aria-hidden="true"/>
+                            <p class="text-base">{{ t('Multiplayer Not Supported') }}</p>
                             <p class="text-sm">{{ t('This league does not support multiplayer games.') }}</p>
                         </div>
 
                         <!-- Loading State -->
-                        <div v-else-if="isLoadingGames" class="flex justify-center py-12">
+                        <div v-else-if="isLoadingGames" class="flex justify-center py-8">
                             <div class="text-center">
                                 <div
-                                    class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-                                <p class="mt-2 text-gray-500">{{ t('Loading games...') }}</p>
+                                    class="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600 mx-auto"></div>
+                                <p class="mt-2 text-sm text-gray-500">{{ t('Loading games...') }}</p>
                             </div>
                         </div>
 
                         <!-- Empty State -->
-                        <div v-else-if="filteredGames.length === 0" class="p-6 text-center text-gray-500">
+                        <div v-else-if="filteredGames.length === 0" class="p-8 text-center text-sm text-gray-500">
                             {{
                                 selectedStatus === 'all' ? t('No multiplayer games for this league.') : t('No :status games.', {status: selectedStatus})
                             }}
                         </div>
 
-                        <!-- Mobile Cards View -->
-                        <div v-else class="block lg:hidden space-y-4 p-4">
+                        <!-- Mobile Cards View - Compact -->
+                        <div v-else class="block lg:hidden space-y-3 p-3">
                             <div
                                 v-for="game in filteredGames"
                                 :key="game.id"
-                                class="relative rounded-lg border p-4 cursor-pointer transition-colors bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
+                                class="relative rounded-md border p-3 cursor-pointer transition-colors bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
                                 @click="router.visit(`/leagues/${league?.slug}/multiplayer-games/${game.slug}`)"
                             >
                                 <!-- Game Header -->
-                                <div class="flex items-start justify-between mb-3">
+                                <div class="flex items-start justify-between mb-2">
                                     <div class="flex-1 min-w-0">
-                                        <h3 class="font-semibold text-gray-900 dark:text-gray-100 truncate">
+                                        <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
                                             {{ game.name }}
                                         </h3>
-                                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                                        <p class="text-xs text-gray-600 dark:text-gray-400">
                                             ID: {{ game.id }}
                                         </p>
                                     </div>
                                     <span
                                         :class="[
-                                            'inline-flex px-2 py-1 text-xs font-medium rounded-full flex-shrink-0',
+                                            'inline-flex px-1.5 py-0.5 text-xs font-medium rounded-full flex-shrink-0',
                                             getStatusBadgeClass(game.status)
                                         ]"
                                     >
@@ -476,41 +476,39 @@ onUnmounted(() => {
                                     </span>
                                 </div>
 
-                                <!-- Game Info Grid -->
-                                <div class="grid grid-cols-2 gap-3 text-sm">
+                                <!-- Game Info Grid - Compact -->
+                                <div class="grid grid-cols-2 gap-2 text-xs">
                                     <!-- Players & Entry Fee -->
                                     <div>
-                                        <div class="flex items-center text-gray-600 dark:text-gray-400 mb-1">
-                                            <UsersIcon class="h-4 w-4 mr-1 flex-shrink-0"/>
+                                        <div class="flex items-center text-gray-600 dark:text-gray-400">
+                                            <UsersIcon class="h-3 w-3 mr-0.5 flex-shrink-0"/>
                                             <span class="truncate">{{ game.total_players_count }} {{
                                                     t('Players')
                                                 }}</span>
                                         </div>
-                                        <div class="flex items-center text-gray-600 dark:text-gray-400">
-                                            <span class="text-green-600 dark:text-green-400 font-medium">
-                                                {{ formatPrizePool(game.entrance_fee || 0) }}
-                                            </span>
+                                        <div class="text-green-600 dark:text-green-400 font-medium mt-0.5">
+                                            {{ formatPrizePool(game.entrance_fee || 0) }}
                                         </div>
                                     </div>
 
                                     <!-- Date & Registration -->
                                     <div>
-                                        <div class="flex items-center text-gray-600 dark:text-gray-400 mb-1">
-                                            <CalendarIcon class="h-4 w-4 mr-1 flex-shrink-0"/>
+                                        <div class="flex items-center text-gray-600 dark:text-gray-400">
+                                            <CalendarIcon class="h-3 w-3 mr-0.5 flex-shrink-0"/>
                                             <span class="truncate">{{ getGameDateInfo(game) }}</span>
                                         </div>
-                                        <div class="flex items-center text-gray-600 dark:text-gray-400">
+                                        <div class="flex items-center text-gray-600 dark:text-gray-400 mt-0.5">
                                             <div v-if="game.is_registration_open" class="flex items-center">
-                                                <div class="h-2 w-2 bg-green-400 rounded-full mr-2"
+                                                <div class="h-2 w-2 bg-green-400 rounded-full mr-1"
                                                      aria-hidden="true"></div>
-                                                <span class="text-sm text-green-600 dark:text-green-400">{{
+                                                <span class="text-xs text-green-600 dark:text-green-400">{{
                                                         t('Open')
                                                     }}</span>
                                             </div>
                                             <div v-else class="flex items-center">
-                                                <div class="h-2 w-2 bg-red-400 rounded-full mr-2"
+                                                <div class="h-2 w-2 bg-red-400 rounded-full mr-1"
                                                      aria-hidden="true"></div>
-                                                <span class="text-sm text-red-600 dark:text-red-400">{{
+                                                <span class="text-xs text-red-600 dark:text-red-400">{{
                                                         t('Closed')
                                                     }}</span>
                                             </div>
@@ -520,7 +518,7 @@ onUnmounted(() => {
                             </div>
                         </div>
 
-                        <!-- Desktop Table View -->
+                        <!-- Desktop Table View - Compact -->
                         <div class="hidden lg:block" data-multiplayer-games-table>
                             <DataTable
                                 :columns="columns"
@@ -535,22 +533,23 @@ onUnmounted(() => {
                                     'tabindex': '0',
                                     'aria-label': `View ${game.name} game details`
                                 })"
+                                :row-height="'compact'"
                             >
                                 <!-- Custom cell renderers -->
                                 <template #cell-name="{ value }">
                                     <div class="flex items-center">
-                                        <div class="flex-shrink-0 h-8 w-8">
+                                        <div class="flex-shrink-0 h-7 w-7">
                                             <div
-                                                class="h-8 w-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center shadow-md">
-                                                <GamepadIcon class="h-4 w-4 text-white"
+                                                class="h-7 w-7 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center shadow-sm">
+                                                <GamepadIcon class="h-3.5 w-3.5 text-white"
                                                              aria-hidden="true"/>
                                             </div>
                                         </div>
-                                        <div class="ml-4">
+                                        <div class="ml-3">
                                             <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
                                                 {{ value.name }}
                                             </div>
-                                            <div class="text-sm text-gray-500 dark:text-gray-400">
+                                            <div class="text-xs text-gray-500 dark:text-gray-400">
                                                 ID: {{ value.id }}
                                             </div>
                                         </div>
@@ -560,7 +559,7 @@ onUnmounted(() => {
                                 <template #cell-status="{ value }">
                                     <span
                                         :class="[
-                                            'inline-flex px-2 py-1 text-xs font-medium rounded-full',
+                                            'inline-flex px-1.5 py-0.5 text-xs font-medium rounded-full',
                                             getStatusBadgeClass(value)
                                         ]"
                                     >
@@ -569,33 +568,30 @@ onUnmounted(() => {
                                 </template>
 
                                 <template #cell-players="{ value }">
-                                    <div class="flex items-center text-sm text-gray-900 dark:text-gray-100">
-                                        <UsersIcon class="h-4 w-4 mr-2 text-gray-400" aria-hidden="true"/>
+                                    <div class="flex items-center justify-center text-sm text-gray-900 dark:text-gray-100">
+                                        <UsersIcon class="h-3.5 w-3.5 mr-1.5 text-gray-400" aria-hidden="true"/>
                                         <div>{{ value }}</div>
                                     </div>
                                 </template>
 
                                 <template #cell-date="{ value }">
-                                    <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                                        <CalendarIcon class="h-4 w-4 mr-2" aria-hidden="true"/>
-                                        <div class="text-xs">{{ value }}</div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">
+                                        {{ value }}
                                     </div>
                                 </template>
 
                                 <template #cell-entryFee="{ value }">
-                                    <span class="text-green-600 dark:text-green-400 font-medium">
+                                    <span class="text-sm text-green-600 dark:text-green-400 font-medium">
                                         {{ value }}
                                     </span>
                                 </template>
 
                                 <template #cell-registration="{ value }">
-                                    <div v-if="value" class="flex items-center">
-                                        <div class="h-2 w-2 bg-green-400 rounded-full mr-2" aria-hidden="true"></div>
-                                        <span class="text-sm text-green-600 dark:text-green-400">{{ t('Open') }}</span>
+                                    <div v-if="value" class="flex items-center justify-center">
+                                        <div class="h-2 w-2 bg-green-400 rounded-full" aria-hidden="true"></div>
                                     </div>
-                                    <div v-else class="flex items-center">
-                                        <div class="h-2 w-2 bg-red-400 rounded-full mr-2" aria-hidden="true"></div>
-                                        <span class="text-sm text-red-600 dark:text-red-400">{{ t('Closed') }}</span>
+                                    <div v-else class="flex items-center justify-center">
+                                        <div class="h-2 w-2 bg-red-400 rounded-full" aria-hidden="true"></div>
                                     </div>
                                 </template>
 
