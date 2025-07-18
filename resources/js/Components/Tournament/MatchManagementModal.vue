@@ -27,6 +27,7 @@ import {
     UserXIcon,
 } from 'lucide-vue-next';
 import {computed, ref, watch} from 'vue';
+import FrameScores from './FrameScores.vue';
 
 interface Props {
     show: boolean;
@@ -54,6 +55,7 @@ const {t} = useLocale();
 const matchForm = ref({
     player1_id: null as number | null,
     player2_id: null as number | null,
+    frame_scores: [] as Array<{ player1: number; player2: number }>,
     player1_score: 0,
     player2_score: 0,
     club_table_id: null as number | null,
@@ -90,6 +92,8 @@ const canStartMatch = computed(() => {
         props.match.player2_id &&
         matchForm.value.club_table_id !== null;
 });
+
+const gameType = computed(() => props.tournament?.game_type || 'pool');
 
 const canFinishMatch = computed(() => {
     if (!props.match || !props.canEditTournament) return false;
@@ -165,6 +169,7 @@ watch(() => props.match, (newMatch) => {
         matchForm.value = {
             player1_id: newMatch.player1_id,
             player2_id: newMatch.player2_id,
+            frame_scores: newMatch.frame_scores || [],
             player1_score: newMatch.player1_score || 0,
             player2_score: newMatch.player2_score || 0,
             club_table_id: newMatch.club_table_id || null,
@@ -237,6 +242,7 @@ const updateMatch = async () => {
         emit('update-match', {
             player1_id: matchForm.value.player1_id,
             player2_id: matchForm.value.player2_id,
+            frame_scores: matchForm.value.frame_scores,
             player1_score: matchForm.value.player1_score,
             player2_score: matchForm.value.player2_score,
             club_table_id: matchForm.value.club_table_id,
@@ -260,6 +266,8 @@ const updateScores = async () => {
         emit('update-match', {
             player1_score: matchForm.value.player1_score,
             player2_score: matchForm.value.player2_score,
+            frame_scores: matchForm.value.frame_scores,
+            admin_notes: matchForm.value.admin_notes
         });
         // Update original scores after successful update
         originalScores.value = {
@@ -281,6 +289,7 @@ const finishMatch = async () => {
         emit('finish-match', {
             player1_score: matchForm.value.player1_score,
             player2_score: matchForm.value.player2_score,
+            frame_scores: matchForm.value.frame_scores,
             admin_notes: matchForm.value.admin_notes
         });
     } finally {
@@ -421,6 +430,17 @@ defineExpose({setError});
                     </div>
                 </div>
 
+                <div v-if="!isEditMode && (match.status === 'in_progress' || match.status === 'verification' || match.status === 'completed')"
+                     class="border-t pt-3">
+                    <FrameScores
+                        v-model="matchForm.frame_scores"
+                        :player1-score="matchForm.player1_score"
+                        :player2-score="matchForm.player2_score"
+                        :game-type="gameType"
+                        :disabled="match.status === 'completed'"
+                    />
+                </div>
+
                 <!-- Winner Display -->
                 <div v-if="canFinishMatch && !isWalkoverMatch"
                      class="px-3 py-2 bg-green-50 dark:bg-green-900/20 border-t dark:border-gray-700">
@@ -532,6 +552,16 @@ defineExpose({setError});
                             </SelectContent>
                         </Select>
                     </div>
+                </div>
+
+                <div v-if="isEditMode && matchForm.player1_id && matchForm.player2_id" class="border-t pt-3">
+                    <FrameScores
+                        v-model="matchForm.frame_scores"
+                        :player1-score="matchForm.player1_score"
+                        :player2-score="matchForm.player2_score"
+                        :game-type="gameType"
+                        :disabled="false"
+                    />
                 </div>
 
                 <!-- Status & Score Override -->

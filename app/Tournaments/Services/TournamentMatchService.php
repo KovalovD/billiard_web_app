@@ -76,9 +76,14 @@ class TournamentMatchService
                 ? $match->player2_id
                 : $match->player1_id;
 
+            if (!empty($data['frame_scores'])) {
+                $this->validateFrameScores($match, $data);
+            }
+
             $match->update([
                 'player1_score' => $data['player1_score'],
                 'player2_score' => $data['player2_score'],
+                'frame_scores'  => $data['frame_scores'] ?? null,
                 'winner_id'     => $winnerId,
                 'status'        => MatchStatus::COMPLETED,
                 'completed_at'  => now(),
@@ -120,6 +125,50 @@ class TournamentMatchService
                 'affected_matches' => array_unique($affectedMatchIds),
             ];
         });
+    }
+
+    private function validateFrameScores(TournamentMatch $match, array $data): void
+    {
+        $frameScores = $data['frame_scores'] ?? [];
+        $gameType = $match->tournament->game->type->value ?? 'pool';
+
+        $player1Frames = 0;
+        $player2Frames = 0;
+
+        foreach ($frameScores as $frame) {
+            if ($gameType === 'pyramid') {
+                // In pyramid, one player must reach 8
+                if ($frame['player1'] === 8 && $frame['player2'] < 8) {
+                    $player1Frames++;
+                } elseif ($frame['player2'] === 8 && $frame['player1'] < 8) {
+                    $player2Frames++;
+                } else {
+                    throw new RuntimeException('Invalid pyramid frame score: one player must reach 8 balls');
+                }
+            } elseif ($gameType === 'snooker') {
+                // In snooker, max is 147
+                if ($frame['player1'] > 147 || $frame['player2'] > 147) {
+                    throw new RuntimeException('Invalid snooker frame score: maximum is 147');
+                }
+                if ($frame['player1'] > $frame['player2']) {
+                    $player1Frames++;
+                } else {
+                    $player2Frames++;
+                }
+            } else {
+                // Pool or other games
+                if ($frame['player1'] > $frame['player2']) {
+                    $player1Frames++;
+                } else {
+                    $player2Frames++;
+                }
+            }
+        }
+
+        // Validate frame count matches score
+        if ($player1Frames !== $data['player1_score'] || $player2Frames !== $data['player2_score']) {
+            throw new RuntimeException('Frame scores do not match the match score');
+        }
     }
 
     /**
@@ -964,6 +1013,14 @@ class TournamentMatchService
     {
         return DB::transaction(function () use ($match, $data) {
             $affectedMatchIds = [];
+
+            if (!empty($data['frame_scores'])) {
+                $this->validateFrameScores($match, [
+                    'frame_scores'  => $data['frame_scores'],
+                    'player1_score' => $data['player1_score'] ?? $match->player1_score,
+                    'player2_score' => $data['player2_score'] ?? $match->player2_score,
+                ]);
+            }
 
             // Handle player changes
             if (isset($data['player1_id']) || isset($data['player2_id'])) {

@@ -26,11 +26,13 @@ class TournamentMatch extends Model
         'winner_id',
         'player1_score',
         'player2_score',
+        'frame_scores',  // Added
         'races_to',
         'previous_match1_id',
         'previous_match2_id',
         'next_match_id',
         'loser_next_match_id',
+        'loser_next_match_position',
         'club_table_id',
         'stream_url',
         'status',
@@ -44,6 +46,7 @@ class TournamentMatch extends Model
     protected $casts = [
         'scheduled_at'     => 'datetime',
         'metadata'         => 'array',
+        'frame_scores'     => 'array',  // Added
         'started_at'       => 'datetime',
         'completed_at'     => 'datetime',
         'player1_score'    => 'integer',

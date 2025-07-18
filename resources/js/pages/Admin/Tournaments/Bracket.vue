@@ -297,7 +297,8 @@ const handleUpdateMatch = async (data: any) => {
 const handleFinishMatch = async (data: {
     player1_score: number;
     player2_score: number;
-    admin_notes: string | null
+    frame_scores: Array<any>;
+    admin_notes: string | null;
 }) => {
     if (!selectedMatch.value) return;
 

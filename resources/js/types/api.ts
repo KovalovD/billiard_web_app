@@ -507,6 +507,7 @@ export interface Tournament {
     status_display: string;
     stage_display: string;
     game_id: number;
+    game_type: 'pool' | 'pyramid' | 'snooker';
     is_registration_open: boolean;
     city_id?: number;
     club_id?: number;
@@ -629,6 +630,7 @@ export interface TournamentMatch {
     stage_display: string;
     round?: EliminationRound;
     round_display?: string;
+    frame_scores?: Array<any>;
     bracket_position?: number;
     bracket_side?: BracketSide;
     bracket_side_display?: string;

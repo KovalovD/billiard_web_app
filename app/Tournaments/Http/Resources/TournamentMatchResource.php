@@ -27,6 +27,7 @@ class TournamentMatchResource extends JsonResource
             'bracket_side_display' => $this->bracket_side?->name,
             'player1_id'           => $this->player1_id,
             'player2_id'           => $this->player2_id,
+            'frame_scores'         => $this->frame_scores,
             'winner_id'            => $this->winner_id,
             'player1_score'        => $this->player1_score,
             'player2_score'        => $this->player2_score,

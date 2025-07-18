@@ -94,6 +94,9 @@ readonly class AdminTournamentMatchesController
         $validated = $request->validate([
             'player1_score' => ['required', 'integer', 'min:0'],
             'player2_score' => ['required', 'integer', 'min:0'],
+            'frame_scores'  => ['nullable', 'array'],
+            'frame_scores.*.player1' => ['required_with:frame_scores', 'integer', 'min:0'],
+            'frame_scores.*.player2' => ['required_with:frame_scores', 'integer', 'min:0'],
             'admin_notes'   => ['nullable', 'string'],
         ]);
 
@@ -135,6 +138,9 @@ readonly class AdminTournamentMatchesController
             'stream_url'    => ['nullable', 'string', 'url'],
             'status'        => ['nullable', 'string', 'in:pending,ready,in_progress,verification,completed,cancelled'],
             'scheduled_at'  => ['nullable', 'date'],
+            'frame_scores'  => ['nullable', 'array'],
+            'frame_scores.*.player1' => ['required_with:frame_scores', 'integer', 'min:0'],
+            'frame_scores.*.player2' => ['required_with:frame_scores', 'integer', 'min:0'],
             'admin_notes'   => ['nullable', 'string'],
         ]);
 
