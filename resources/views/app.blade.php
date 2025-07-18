@@ -21,7 +21,7 @@
     <meta property="og:title" content="{{ config('app.name', 'WinnerBreak') }} - Professional Billiard League Platform">
     <meta property="og:description"
           content="Join competitive billiard leagues, participate in tournaments, and track your progress with our advanced ELO rating system.">
-    <meta property="og:image" content="{{ asset('og-image.jpg') }}">
+    <meta property="og:image" content="{{ asset('og-default.jpg') }}">
     <meta property="og:site_name" content="WinnerBreak">
     <meta property="og:locale" content="{{ str_replace('_', '-', app()->getLocale()) }}">
 
@@ -32,7 +32,7 @@
           content="{{ config('app.name', 'WinnerBreak') }} - Professional Billiard League Platform">
     <meta property="twitter:description"
           content="Join competitive billiard leagues, participate in tournaments, and track your progress with our advanced ELO rating system.">
-    <meta property="twitter:image" content="{{ asset('og-image.jpg') }}">
+    <meta property="twitter:image" content="{{ asset('og-default.jpg') }}">
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
@@ -70,55 +70,61 @@
     @inertiaHead
 </head>
 <body class="font-sans antialiased">
-@php
-    /* ---------- Schema.org дані ---------- */
-    $organizationSchema = [
-        '@context'   => 'https://schema.org',
-        '@type'      => 'Organization',
-        'name'       => 'WinnerBreak',
-        'url'        => url('/'),
-        'logo'       => asset('logo.png'),
-        'description'=> 'Professional billiard league management platform for competitive players',
-        'sameAs'     => [
-            'https://facebook.com/winnerbreak',
-            'https://twitter.com/winnerbreak',
-            'https://instagram.com/winnerbreak',
-        ],
-        'address'    => [
-            '@type'           => 'PostalAddress',
-            'addressLocality' => 'Lviv',
-            'addressCountry'  => 'UA',
-        ],
-    ];
-
-    $websiteSchema = [
-        '@context'        => 'https://schema.org',
-        '@type'           => 'WebSite',
-        'name'            => 'WinnerBreak',
-        'url'             => url('/'),
-        'potentialAction' => [
-            '@type'       => 'SearchAction',
-            'target'      => [
-                '@type'       => 'EntryPoint',
-                'urlTemplate' => url('/search') . '?q={search_term_string}',
-            ],
-            'query-input' => 'required name=search_term_string',
-        ],
-    ];
-@endphp
-
-    <!-- Organization -->
-<script type="application/ld+json">
-    {!! json_encode($organizationSchema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) !!}
-</script>
-
-<!-- WebSite (sitelinks search box) -->
-<script type="application/ld+json">
-    {!! json_encode($websiteSchema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) !!}
-</script>
-
-
 @production
+    <noscript>
+        <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PH5826PT"
+                height="0" width="0" style="display:none;visibility:hidden">
+        </iframe>
+    </noscript>
+
+    @php
+        /* ---------- Schema.org дані ---------- */
+        $organizationSchema = [
+            '@context'   => 'https://schema.org',
+            '@type'      => 'Organization',
+            'name'       => 'WinnerBreak',
+            'url'        => url('/'),
+            'logo'       => asset('logo.png'),
+            'description'=> 'Professional billiard league management platform for competitive players',
+            'sameAs'     => [
+                'https://facebook.com/winnerbreak',
+                'https://twitter.com/winnerbreak',
+                'https://instagram.com/winnerbreak',
+            ],
+            'address'    => [
+                '@type'           => 'PostalAddress',
+                'addressLocality' => 'Lviv',
+                'addressCountry'  => 'UA',
+            ],
+        ];
+
+        $websiteSchema = [
+            '@context'        => 'https://schema.org',
+            '@type'           => 'WebSite',
+            'name'            => 'WinnerBreak',
+            'url'             => url('/'),
+            'potentialAction' => [
+                '@type'       => 'SearchAction',
+                'target'      => [
+                    '@type'       => 'EntryPoint',
+                    'urlTemplate' => url('/search') . '?q={search_term_string}',
+                ],
+                'query-input' => 'required name=search_term_string',
+            ],
+        ];
+    @endphp
+
+        <!-- Organization -->
+    <script type="application/ld+json">
+        {!! json_encode($organizationSchema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) !!}
+    </script>
+
+    <!-- WebSite (sitelinks search box) -->
+    <script type="application/ld+json">
+        {!! json_encode($websiteSchema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) !!}
+    </script>
+
+
     <script>
         (function (w, d, s, l, i) {
             w[l] = w[l] || [];
