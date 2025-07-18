@@ -30,6 +30,7 @@ import {
     ChartBarIcon,
     ChevronRightIcon,
     ClockIcon,
+    EditIcon,
     GamepadIcon,
     InfoIcon,
     MapPinIcon,
@@ -41,7 +42,7 @@ import {
     TrendingUpIcon,
     TrophyIcon,
     UserIcon,
-    XCircleIcon,
+    XCircleIcon
 } from 'lucide-vue-next';
 import {computed, onMounted, ref} from 'vue';
 import DetailedMatchStats from "@/Components/Players/DetailedMatchStats.vue";
@@ -656,6 +657,18 @@ onMounted(() => {
                     <SwordsIcon class="mr-1.5 h-3.5 w-3.5"/>
                     <span class="hidden sm:inline">{{ t('Head to Head') }}</span>
                     <span class="sm:hidden">{{ t('H2H') }}</span>
+                </Button>
+
+                <Button
+                    v-if="user?.is_admin"
+                    variant="secondary"
+                    size="sm"
+                    @click="router.visit(`/admin/players/${player.slug}/edit`)"
+                    class="ml-2"
+                >
+                    <EditIcon class="mr-1.5 h-3.5 w-3.5"/>
+                    <span class="hidden sm:inline">{{ t('Edit Player') }}</span>
+                    <span class="sm:hidden">{{ t('Edit') }}</span>
                 </Button>
             </div>
 

@@ -156,6 +156,14 @@ Route::middleware('auth')->group(function () {
     })->name('profile.stats');
     // --- Admin routes ---
     Route::middleware(AdminMiddleware::class)->prefix('admin')->group(function () {
+        Route::get('/players/{player:slug}/edit', static function ($playerSlug) {
+            $player = User::where('slug', $playerSlug)->firstOrFail();
+            return Inertia::render('Admin/Players/Edit', [
+                'playerId' => $player->id,
+                'playerSlug' => $player->slug,
+            ]);
+        })->name('admin.players.edit');
+
         Route::get('/settings', static function () {
             return Inertia::render('Admin/Settings/Index');
         })->name('admin.settings');

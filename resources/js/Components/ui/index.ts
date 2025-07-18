@@ -30,6 +30,7 @@ import CardFooter from './layout/CardFooter.vue';
 import Alert from './alert/Alert.vue';
 import AlertDescription from './alert/AlertDescription.vue';
 import AlertTitle from './alert/AlertTitle.vue';
+import Badge from './badge/Badge.vue';
 
 // Switch component
 import Switch from './switch/Switch.vue';
@@ -73,6 +74,7 @@ export {
     CardContent,
     CardFooter,
     Alert,
+    Badge,
     AlertDescription,
     AlertTitle,
     Switch,
@@ -116,7 +118,7 @@ export default {
     Modal,
     Toast,
     Spinner,
-
+    Badge,
     Accordion,
     AccordionItem,
     AccordionTrigger,

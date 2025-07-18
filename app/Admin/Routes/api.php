@@ -4,6 +4,7 @@ use App\Admin\Http\Controllers\AdminCitiesController;
 use App\Admin\Http\Controllers\AdminClubsController;
 use App\Admin\Http\Controllers\AdminClubTablesController;
 use App\Admin\Http\Controllers\AdminCountriesController;
+use App\Admin\Http\Controllers\AdminEditPlayersController;
 use App\Admin\Http\Controllers\AdminGamesController;
 use App\Admin\Http\Controllers\AdminPlayersController;
 use App\Admin\Http\Controllers\AdminUserSearchController;
@@ -11,6 +12,20 @@ use App\Core\Http\Middleware\AdminMiddleware;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(AdminMiddleware::class)->prefix('admin')->group(function () {
+
+    Route::apiResource('players', AdminEditPlayersController::class)->names([
+        'index'   => 'admin.edit-players.index',
+        'show'    => 'admin.edit-players.show',
+        'update'  => 'admin.edit-players.update',
+    ])->except(['store', 'destroy']);
+
+    Route::prefix('players/{player}')->group(function () {
+        Route::put('equipment', [AdminEditPlayersController::class, 'updateEquipment'])->name('admin.edit-players.update-equipment');
+        Route::delete('picture', [AdminEditPlayersController::class, 'deletePicture'])->name('admin.edit-players.delete-picture');
+        Route::post('toggle-active', [AdminEditPlayersController::class, 'toggleActive'])->name('admin.edit-players.toggle-active');
+        Route::post('toggle-admin', [AdminEditPlayersController::class, 'toggleAdmin'])->name('admin.edit-players.toggle-admin');
+        Route::post('reset-password', [AdminEditPlayersController::class, 'resetPassword'])->name('admin.edit-players.reset-password');
+    });
 
     // Country management
     Route::apiResource('countries', AdminCountriesController::class)->names([

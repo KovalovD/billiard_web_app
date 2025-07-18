@@ -22,7 +22,10 @@ export interface User {
         description?: string;
     }>;
     is_admin: boolean;
+    is_active: boolean;
     avatar?: string;
+    created_at?: string;
+    email_verified_at?: string;
     home_city?: City | null;
     home_club?: Club | null;
 }
