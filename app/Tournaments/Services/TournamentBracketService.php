@@ -65,7 +65,7 @@ class TournamentBracketService
         $bracket = TournamentBracket::create([
             'tournament_id' => $tournament->id,
             'bracket_type'  => BracketType::SINGLE,
-            'total_rounds' => $totalRounds,
+            'total_rounds'  => $totalRounds,
             'players_count' => $bracketSize,
         ]);
 
@@ -114,12 +114,12 @@ class TournamentBracketService
             for ($matchNum = 0; $matchNum < $matchesInRound; $matchNum++) {
                 $match = TournamentMatch::create([
                     'tournament_id'    => $tournament->id,
-                    'match_code' => sprintf('R%sM%s', $round, $matchNum + 1),
+                    'match_code'       => sprintf('R%sM%s', $round, $matchNum + 1),
                     'stage'            => MatchStage::BRACKET,
                     'round'            => $roundEnum,
                     'bracket_position' => $matchNum,
                     'bracket_side'     => 'upper',
-                    'races_to'   => $this->getRaceToForRound($tournament, sprintf('UB_R%s', $round)),
+                    'races_to'         => $this->getRaceToForRound($tournament, sprintf('UB_R%s', $round)),
                     'status'           => MatchStatus::PENDING,
                 ]);
 
@@ -362,7 +362,7 @@ class TournamentBracketService
             'match_code'    => '3RD',
             'stage'         => MatchStage::THIRD_PLACE,
             'round'         => EliminationRound::THIRD_PLACE,
-            'races_to' => $this->getRaceToForRound($tournament, '3RD'),
+            'races_to'      => $this->getRaceToForRound($tournament, '3RD'),
             'status'        => MatchStatus::PENDING,
         ]);
 
@@ -432,12 +432,12 @@ class TournamentBracketService
             for ($matchNum = 0; $matchNum < $matchesInRound; $matchNum++) {
                 $match = TournamentMatch::create([
                     'tournament_id'    => $tournament->id,
-                    'match_code' => sprintf('UB_R%sM%s', $round, $matchNum + 1),
+                    'match_code'       => sprintf('UB_R%sM%s', $round, $matchNum + 1),
                     'stage'            => MatchStage::BRACKET,
                     'round'            => $roundEnum,
                     'bracket_position' => $matchNum,
                     'bracket_side'     => 'upper',
-                    'races_to'   => $this->getRaceToForRound($tournament, sprintf('UB_R%s', $round)),
+                    'races_to'         => $this->getRaceToForRound($tournament, sprintf('UB_R%s', $round)),
                     'status'           => MatchStatus::PENDING,
                 ]);
 
@@ -552,12 +552,12 @@ class TournamentBracketService
             for ($matchNum = 0; $matchNum < $roundData['matches']; $matchNum++) {
                 $match = TournamentMatch::create([
                     'tournament_id'    => $tournament->id,
-                    'match_code' => sprintf('LB_R%sM%s', $round, $matchNum + 1),
-                    'stage'      => MatchStage::LOWER_BRACKET,
-                    'round'      => $roundEnum,
+                    'match_code'       => sprintf('LB_R%sM%s', $round, $matchNum + 1),
+                    'stage'            => MatchStage::LOWER_BRACKET,
+                    'round'            => $roundEnum,
                     'bracket_position' => $matchNum,
                     'bracket_side'     => 'lower',
-                    'races_to'   => $this->getRaceToForRound($tournament, sprintf('LB_R%s', $round)),
+                    'races_to'         => $this->getRaceToForRound($tournament, sprintf('LB_R%s', $round)),
                     'status'           => MatchStatus::PENDING,
                 ]);
 
@@ -934,12 +934,12 @@ class TournamentBracketService
             for ($matchNum = 0; $matchNum < $roundData['matches']; $matchNum++) {
                 $match = TournamentMatch::create([
                     'tournament_id'    => $tournament->id,
-                    'match_code' => sprintf('FS_LB_R%sM%s', $round, $matchNum + 1),
+                    'match_code'       => sprintf('FS_LB_R%sM%s', $round, $matchNum + 1),
                     'stage'            => MatchStage::LOWER_BRACKET,
                     'round'            => $roundEnum,
                     'bracket_position' => $matchNum,
                     'bracket_side'     => 'lower',
-                    'races_to'   => $this->getRaceToForRound($tournament, sprintf('LB_R%s', $round)),
+                    'races_to'         => $this->getRaceToForRound($tournament, sprintf('LB_R%s', $round)),
                     'status'           => MatchStatus::PENDING,
                     'metadata'         => ['olympic_stage' => 'first'],
                 ]);
@@ -1208,14 +1208,14 @@ class TournamentBracketService
             for ($matchNum = 0; $matchNum < $matchesInRound; $matchNum++) {
                 $match = TournamentMatch::create([
                     'tournament_id'    => $tournament->id,
-                    'match_code' => sprintf('OS_R%sM%s', $round, $matchNum + 1),
+                    'match_code'       => sprintf('OS_R%sM%s', $round, $matchNum + 1),
                     'stage'            => MatchStage::BRACKET,
                     'round'            => $roundEnum,
                     'bracket_position' => $matchNum,
                     'bracket_side'     => 'upper',
-                    'races_to'   => $this->getRaceToForRound($tournament, sprintf('O_R%s', $round)),
+                    'races_to'         => $this->getRaceToForRound($tournament, sprintf('O_R%s', $round)),
                     'status'           => MatchStatus::PENDING,
-                    'metadata'   => ['olympic_stage' => 'second'],
+                    'metadata'         => ['olympic_stage' => 'second'],
                 ]);
 
                 if ($round > 1) {
@@ -1238,12 +1238,12 @@ class TournamentBracketService
     {
         $thirdPlace = TournamentMatch::create([
             'tournament_id' => $tournament->id,
-            'match_code' => 'OS_3RD',
+            'match_code'    => 'OS_3RD',
             'stage'         => MatchStage::THIRD_PLACE,
             'round'         => EliminationRound::THIRD_PLACE,
-            'races_to'   => $this->getRaceToForRound($tournament, 'O_3RD'),
+            'races_to'      => $this->getRaceToForRound($tournament, 'O_3RD'),
             'status'        => MatchStatus::PENDING,
-            'metadata'   => ['olympic_stage' => 'second'],
+            'metadata'      => ['olympic_stage' => 'second'],
         ]);
 
         $semis = $tournament
@@ -1337,8 +1337,8 @@ class TournamentBracketService
             foreach ($groupConfig as $idx => $size) {
                 $code = chr(65 + $idx);
                 $group = $tournament->groups()->create([
-                    'group_code' => $code,
-                    'group_size' => $size,
+                    'group_code'    => $code,
+                    'group_size'    => $size,
                     'advance_count' => $tournament->playoff_players_per_group ?? 2,
                 ]);
 
@@ -1396,11 +1396,11 @@ class TournamentBracketService
             foreach ($players->slice($i + 1) as $p2) {
                 TournamentMatch::create([
                     'tournament_id' => $tournament->id,
-                    'match_code' => sprintf('%s_%sv%s', $group->group_code, $p1->seed_number, $p2->seed_number),
+                    'match_code'    => sprintf('%s_%sv%s', $group->group_code, $p1->seed_number, $p2->seed_number),
                     'stage'         => MatchStage::GROUP,
                     'round'         => EliminationRound::GROUPS,
-                    'player1_id' => $p1->user_id,
-                    'player2_id' => $p2->user_id,
+                    'player1_id'    => $p1->user_id,
+                    'player2_id'    => $p2->user_id,
                     'races_to'      => $tournament->races_to,
                     'status'        => MatchStatus::READY,
                 ]);
