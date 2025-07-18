@@ -18,10 +18,6 @@ class TournamentMatchService
 {
     private const int MAX_TIEBREAKER_ROUNDS = 3;
 
-    /* =============================================================================================
-     |  ROUND-ROBIN  STANDINGS  &  TIEBREAKER  WORKFLOW
-     |=============================================================================================*/
-
     /**
      * Start a match
      * @throws Throwable
@@ -114,7 +110,6 @@ class TournamentMatchService
             }
 
             // Handle loser progression for double elimination
-            // For Olympic tournaments, only prevent loser progression if this specific match advances to Olympic stage
             if ($match->loser_next_match_id) {
                 $this->progressLoserToNextMatch($match);
                 $affectedMatchIds[] = $match->loser_next_match_id;
@@ -188,7 +183,6 @@ class TournamentMatchService
 
         // Grand Finals Reset
         if ($match->match_code === 'GF_RESET') {
-            // Winner is champion, loser is 2nd
             TournamentPlayer::where('tournament_id', $tournament->id)
                 ->where('user_id', $winnerId)
                 ->update(['position' => 1])
@@ -279,7 +273,7 @@ class TournamentMatchService
                 ;
             } // Other Olympic stage eliminations
             else {
-                $position = $this->calculateOlympicStagePosition($match->round);
+                $position = $this->calculateOlympicStagePosition($match);
                 if ($position !== null) {
                     TournamentPlayer::where('tournament_id', $tournament->id)
                         ->where('user_id', $loserId)
@@ -308,13 +302,23 @@ class TournamentMatchService
     /**
      * Calculate position for Olympic stage elimination
      */
-    private function calculateOlympicStagePosition(?EliminationRound $round): ?int
+    private function calculateOlympicStagePosition(TournamentMatch $match): ?int
     {
-        return match ($round) {
-            EliminationRound::SEMIFINALS => 3, // 3-4 handled by third place match
-            EliminationRound::QUARTERFINALS => 5, // 5-8
-            EliminationRound::ROUND_16 => 9, // 9-16
-            default => null,
+        // Extract round number from match code
+        preg_match('/OS_R(\d+)M/', $match->match_code, $matches);
+        $roundNumber = isset($matches[1]) ? (int) $matches[1] : 0;
+
+        // Get the Olympic phase size from tournament
+        $olympicPhaseSize = $match->tournament->olympic_phase_size ?? 8;
+        $totalRounds = (int) log($olympicPhaseSize, 2);
+
+        // Calculate position based on when eliminated
+        $roundsFromEnd = $totalRounds - $roundNumber;
+
+        return match ($roundsFromEnd) {
+            2 => 5,  // Eliminated in quarterfinals (5-8)
+            3 => 9,  // Eliminated in round of 16 (9-16)
+            default => null
         };
     }
 
@@ -331,12 +335,31 @@ class TournamentMatchService
 
         // If eliminated from lower bracket in first stage
         if ($match->bracket_side === 'lower') {
+            // Get total confirmed players to calculate proper position range
+            $totalPlayers = $tournament->players()->where('status', 'confirmed')->count();
+
             // Extract round number
             preg_match('/FS_LB_R(\d+)M/', $match->match_code, $matches);
             $roundNumber = isset($matches[1]) ? (int) $matches[1] : 0;
 
-            // Later rounds get better positions
-            return $basePosition + (10 - $roundNumber);
+            // Get bracket structure to understand position better
+            $bracketSize = 2 ** ceil(log($totalPlayers, 2));
+            $lowerStructure = $this->getLowerBracketStructure($bracketSize);
+
+            // Find total rounds in first stage lower bracket
+            $maxFirstStageRound = 0;
+            foreach ($lowerStructure as $round => $data) {
+                if (isset($data['upper_round']) && $data['upper_round'] < (log($bracketSize,
+                            2) - log($olympicPhaseSize / 2, 2))) {
+                    $maxFirstStageRound = $round;
+                }
+            }
+
+            // Calculate position based on elimination round in first stage
+            $roundsFromStart = $roundNumber - 1;
+            $positionOffset = floor($roundsFromStart * (($totalPlayers - $olympicPhaseSize) / $maxFirstStageRound));
+
+            return min($basePosition + $positionOffset, $totalPlayers);
         }
 
         // Upper bracket eliminations in first stage don't get final positions
@@ -374,7 +397,7 @@ class TournamentMatchService
     {
         return match ($round) {
             EliminationRound::FINALS => 2,
-            EliminationRound::SEMIFINALS => 3, // 3-4
+            EliminationRound::SEMIFINALS => 3, // 3-4 (third place match determines exact position)
             EliminationRound::QUARTERFINALS => 5, // 5-8
             EliminationRound::ROUND_16 => 9, // 9-16
             EliminationRound::ROUND_32 => 17, // 17-32
@@ -416,84 +439,83 @@ class TournamentMatchService
         // Get total confirmed players to determine bracket size
         $totalPlayers = $tournament->players()->where('status', 'confirmed')->count();
         $bracketSize = 2 ** ceil(log($totalPlayers, 2));
-        $upperRounds = (int) log($bracketSize, 2);
-        $totalLowerRounds = ($upperRounds - 1) * 2;
 
-        // Position mapping based on elimination round in lower bracket
-        // The later you're eliminated in lower bracket, the higher your position
-        $positionMap = $this->getLowerBracketPositionMap($bracketSize, $totalLowerRounds);
+        // Get position mapping based on bracket size
+        $positionMap = $this->getCompleteLowerBracketPositionMap($bracketSize);
 
         return $positionMap[$lowerRoundNumber] ?? null;
     }
 
     /**
-     * Get position mapping for lower bracket rounds
+     * Get complete position mapping for lower bracket rounds
      */
-    private function getLowerBracketPositionMap(int $bracketSize, int $totalLowerRounds): array
+    private function getCompleteLowerBracketPositionMap(int $bracketSize): array
     {
-        $map = [];
-        $currentPosition = 3; // Start at 3rd place (lower bracket final loser)
+        return match ($bracketSize) {
+            4 => [
+                1 => 4,  // LB Round 1 (initial)
+                2 => 3,  // LB Round 2 (final)
+            ],
+            8 => [
+                1 => 7,  // LB Round 1 (initial) - losers get 7-8
+                2 => 6,  // LB Round 2 (drop) - losers get 6
+                3 => 5,  // LB Round 3 (regular) - losers get 5
+                4 => 3,  // LB Round 4 (final) - loser gets 3
+            ],
+            16 => [
+                1 => 13, // LB Round 1 (initial) - losers get 13-16
+                2 => 11, // LB Round 2 (drop) - losers get 11-12
+                3 => 9,  // LB Round 3 (regular) - losers get 9-10
+                4 => 7,  // LB Round 4 (drop) - losers get 7-8
+                5 => 5,  // LB Round 5 (regular) - losers get 5-6
+                6 => 3,  // LB Round 6 (final) - loser gets 3
+            ],
+            32 => [
+                1 => 25, // LB Round 1 (initial) - losers get 25-32
+                2 => 21, // LB Round 2 (drop) - losers get 21-24
+                3 => 17, // LB Round 3 (regular) - losers get 17-20
+                4 => 13, // LB Round 4 (drop) - losers get 13-16
+                5 => 9,  // LB Round 5 (regular) - losers get 9-12
+                6 => 7,  // LB Round 6 (drop) - losers get 7-8
+                7 => 5,  // LB Round 7 (regular) - losers get 5-6
+                8 => 3,  // LB Round 8 (final) - loser gets 3
+            ],
+            64 => [
+                1  => 49, // LB Round 1 - losers get 49-64
+                2  => 41, // LB Round 2 - losers get 41-48
+                3  => 33, // LB Round 3 - losers get 33-40
+                4  => 25, // LB Round 4 - losers get 25-32
+                5  => 17, // LB Round 5 - losers get 17-24
+                6  => 13, // LB Round 6 - losers get 13-16
+                7  => 9,  // LB Round 7 - losers get 9-12
+                8  => 7,  // LB Round 8 - losers get 7-8
+                9  => 5,  // LB Round 9 - losers get 5-6
+                10 => 3,  // LB Round 10 - loser gets 3
+            ],
+            128 => [
+                1  => 97, // LB Round 1 - losers get 97-128
+                2  => 81, // LB Round 2 - losers get 81-96
+                3  => 65, // LB Round 3 - losers get 65-80
+                4  => 49, // LB Round 4 - losers get 49-64
+                5  => 33, // LB Round 5 - losers get 33-48
+                6  => 25, // LB Round 6 - losers get 25-32
+                7  => 17, // LB Round 7 - losers get 17-24
+                8  => 13, // LB Round 8 - losers get 13-16
+                9  => 9,  // LB Round 9 - losers get 9-12
+                10 => 7,  // LB Round 10 - losers get 7-8
+                11 => 5,  // LB Round 11 - losers get 5-6
+                12 => 3,  // LB Round 12 - loser gets 3
+            ],
+            default => []
+        };
+    }
 
-        // Map positions from last round to first round
-        for ($round = $totalLowerRounds; $round >= 1; $round--) {
-            if ($round === $totalLowerRounds) {
-                // Lower bracket finals - loser gets 3rd
-                $map[$round] = 3;
-            } elseif ($round === $totalLowerRounds - 1) {
-                // Lower bracket semifinals - loser gets 4th
-                $map[$round] = 4;
-            } else {
-                // Calculate positions for earlier rounds
-                // Positions increase as we go back in rounds
-                $isDropRound = $round % 2 === 1;
-
-                if ($bracketSize <= 4) {
-                    // For 4-player bracket
-                    $map[1] = 4; // LB_R1 loser gets 4th
-                    $map[2] = 3; // LB_R2 loser gets 3rd
-                } elseif ($bracketSize <= 8) {
-                    // For 8-player bracket
-                    $positionsByRound = [
-                        1 => 5, // LB_R1 losers get 5-6
-                        2 => 5, // LB_R2 losers get 5-6
-                        3 => 4, // LB_R3 loser gets 4th
-                        4 => 3, // LB_R4 loser gets 3rd
-                    ];
-                    $map[$round] = $positionsByRound[$round] ?? 7;
-                } elseif ($bracketSize <= 16) {
-                    // For 16-player bracket
-                    $positionsByRound = [
-                        1 => 7, // LB_R1 losers get 7-8
-                        2 => 7, // LB_R2 losers get 7-8
-                        3 => 5, // LB_R3 losers get 5-6
-                        4 => 5, // LB_R4 losers get 5-6
-                        5 => 4, // LB_R5 loser gets 4th
-                        6 => 3, // LB_R6 loser gets 3rd
-                    ];
-                    $map[$round] = $positionsByRound[$round] ?? 9;
-                } else {
-                    // For larger brackets, use a formula
-                    $roundsFromEnd = $totalLowerRounds - $round;
-                    if ($roundsFromEnd === 0) {
-                        $map[$round] = 3;
-                    } elseif ($roundsFromEnd === 1) {
-                        $map[$round] = 4;
-                    } elseif ($roundsFromEnd <= 3) {
-                        $map[$round] = 5;
-                    } elseif ($roundsFromEnd <= 5) {
-                        $map[$round] = 7;
-                    } elseif ($roundsFromEnd <= 7) {
-                        $map[$round] = 9;
-                    } elseif ($roundsFromEnd <= 9) {
-                        $map[$round] = 13;
-                    } else {
-                        $map[$round] = 17;
-                    }
-                }
-            }
-        }
-
-        return $map;
+    /**
+     * Get lower bracket structure for a given bracket size
+     */
+    private function getLowerBracketStructure(int $bracketSize): array
+    {
+        return app(TournamentBracketService::class)->getLowerBracketStructure($bracketSize);
     }
 
     /**

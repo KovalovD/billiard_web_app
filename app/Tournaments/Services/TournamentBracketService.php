@@ -647,7 +647,7 @@ class TournamentBracketService
         return $allLowerMatches[$lastRound][0] ?? null;
     }
 
-    private function getLowerBracketStructure(int $bracketSize): array
+    public function getLowerBracketStructure(int $bracketSize): array
     {
         // Define the structure of the lower bracket for various bracket sizes
         return match ($bracketSize) {
