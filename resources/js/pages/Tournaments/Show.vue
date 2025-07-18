@@ -31,7 +31,7 @@ import {
     UserPlusIcon,
     UsersIcon
 } from 'lucide-vue-next';
-import {computed, nextTick, onMounted, ref, watch} from 'vue';
+import {computed, onMounted, ref} from 'vue';
 import DataTable from '@/Components/ui/data-table/DataTable.vue';
 import StageTransition from "@/Components/Tournament/StageTransition.vue";
 import {useSeo} from "@/composables/useSeo";
@@ -623,91 +623,33 @@ const playerColumns = computed(() => [
     }
 ]);
 
+const getPlayerRowAttributes = (player: TournamentPlayer): Record<string, any> => {
+    const playerSlug = player.user?.slug || '';
+    const openPlayer = () => window.open(`/players/${playerSlug}`, '_blank', 'noopener');
+
+    return {
+        'data-player-slug': playerSlug,
+        role: 'button',
+        tabindex: '0',
+        'aria-label': `${t('View')} ${player.user?.firstname} ${player.user?.lastname} ${t('profile')}`,
+        onClick: (e: MouseEvent) => {
+            const target = e.target as HTMLElement;
+            if (target.closest('button,a,input,select,textarea')) return;
+            openPlayer();
+        },
+        onKeydown: (e: KeyboardEvent) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                openPlayer();
+            }
+        }
+    };
+};
+
 // Get row class with click handling
 const getPlayerRowClass = (): string => {
     return 'cursor-pointer transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-700/50';
 };
-
-// Get row attributes for player
-const getPlayerRowAttributes = (player: TournamentPlayer): Record<string, string> => {
-    return {
-        'data-player-slug': player.user?.slug || '',
-        'role': 'button',
-        'tabindex': '0',
-        'aria-label': `${t('View')} ${player.user?.firstname} ${player.user?.lastname} ${t('profile')}`
-    };
-};
-
-// Handle table click handlers (similar to official ratings)
-const setupTableClickHandlers = () => {
-    // Only setup handlers for players tab
-    if (activeTab.value !== 'players') return;
-
-    nextTick(() => {
-        // ===== Desktop table rows =====
-        const tableContainer = document.querySelector('[data-players-table]');
-        if (tableContainer) {
-            const rows = tableContainer.querySelectorAll('tbody tr[data-player-slug]');
-            rows.forEach(row => {
-                const playerSlug = row.getAttribute('data-player-slug');
-                if (!playerSlug) return;
-
-                const newRow = row.cloneNode(true) as HTMLElement;
-                row.parentNode?.replaceChild(newRow, row);
-
-                const openPlayer = () => window.open(`/players/${playerSlug}`, '_blank', 'noopener');
-
-                newRow.addEventListener('click', openPlayer);
-                newRow.addEventListener('keydown', (e: KeyboardEvent) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        openPlayer();
-                    }
-                });
-            });
-        }
-
-        // ===== Mobile cards =====
-        const mobileCards = document.querySelectorAll('.mobile-card[data-player-slug]');
-        mobileCards.forEach(card => {
-            const playerSlug = card.getAttribute('data-player-slug');
-            if (!playerSlug) return;
-
-            const newCard = card.cloneNode(true) as HTMLElement;
-            card.parentNode?.replaceChild(newCard, card);
-
-            const openPlayer = () => window.open(`/players/${playerSlug}`, '_blank', 'noopener');
-
-            newCard.addEventListener('click', (e) => {
-                const target = e.target as HTMLElement;
-                if (target.closest('button, a, input, select, textarea')) return; // интерактив внутри карточки
-                openPlayer();
-            });
-            newCard.addEventListener('keydown', (e: KeyboardEvent) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    openPlayer();
-                }
-            });
-        });
-    });
-};
-
-// Watch for tab changes and re-setup handlers
-watch(activeTab, (newTab) => {
-    if (newTab === 'players') {
-        nextTick(() => {
-            setupTableClickHandlers();
-        });
-    }
-});
-
-// Watch for data changes and loading state
-watch([() => confirmedPlayers.value, () => isLoadingPlayers.value], () => {
-    if (!isLoadingPlayers.value && confirmedPlayers.value.length > 0 && activeTab.value === 'players') {
-        setupTableClickHandlers();
-    }
-});
 
 onMounted(() => {
     fetchTournament().then(() => {

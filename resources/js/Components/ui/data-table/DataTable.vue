@@ -1,7 +1,7 @@
-<script generic="T" lang="ts" setup>
+<script generic="T" setup lang="ts">
 import {computed, ref} from 'vue';
 import {cn} from '@/lib/utils';
-import {useLocale} from "@/composables/useLocale";
+import {useLocale} from '@/composables/useLocale';
 import {ChevronDown, ChevronsUpDown, ChevronUp} from 'lucide-vue-next';
 
 export interface Column<T> {
@@ -14,9 +14,9 @@ export interface Column<T> {
     width?: string;
     sticky?: boolean;
     render?: (item: T) => any;
-    mobileLabel?: string; // For mobile card view
-    sortKey?: string; // Custom key for sorting (if different from key)
-    sortFn?: (a: T, b: T) => number; // Custom sort function
+    mobileLabel?: string;
+    sortKey?: string;
+    sortFn?: (a: T, b: T) => number;
 }
 
 interface Props {
@@ -27,11 +27,11 @@ interface Props {
     stickyHeader?: boolean;
     compactMode?: boolean;
     rowClass?: string | ((item: T, index: number) => string);
-    rowAttributes?: (item: T, index: number) => Record<string, string>;
-    mobileCardMode?: boolean; // Enable card mode on mobile
-    showHeader?: boolean; // Show table header
-    defaultSortColumn?: string; // Default column to sort by
-    defaultSortDirection?: 'asc' | 'desc'; // Default sort direction
+    rowAttributes?: (item: T, index: number) => Record<string, any>; //  ⚠️  changed `string` -> `any`
+    mobileCardMode?: boolean;
+    showHeader?: boolean;
+    defaultSortColumn?: string;
+    defaultSortDirection?: 'asc' | 'desc';
 }
 
 const {t} = useLocale();
@@ -50,121 +50,89 @@ const props = withDefaults(defineProps<Props>(), {
 
 const tableRef = ref<HTMLDivElement>();
 
-// Sorting state
 const sortColumn = ref<string>(props.defaultSortColumn);
 const sortDirection = ref<'asc' | 'desc'>(props.defaultSortDirection);
 
-// Handle sort click
 const handleSort = (column: Column<T>) => {
     if (!column.sortable) return;
-
     const sortKey = column.sortKey || column.key;
-
     if (sortColumn.value === sortKey) {
-        // Toggle direction if same column
         sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
     } else {
-        // New column, default to ascending
         sortColumn.value = sortKey;
         sortDirection.value = 'asc';
     }
 };
 
-// Get sort icon for column
 const getSortIcon = (column: Column<T>) => {
     const sortKey = column.sortKey || column.key;
-
-    if (sortColumn.value !== sortKey) {
-        return ChevronsUpDown;
-    }
-
+    if (sortColumn.value !== sortKey) return ChevronsUpDown;
     return sortDirection.value === 'asc' ? ChevronUp : ChevronDown;
 };
 
-// Sorted data
 const sortedData = computed(() => {
     if (!sortColumn.value) return props.data;
-
     const column = props.columns.find(col => (col.sortKey || col.key) === sortColumn.value);
     if (!column) return props.data;
-
     return [...props.data].sort((a, b) => {
-        // Use custom sort function if provided
         if (column.sortFn) {
             const result = column.sortFn(a, b);
             return sortDirection.value === 'asc' ? result : -result;
         }
-
-        // Default sorting
         const aVal = column.sortKey ? a[column.sortKey] : a[column.key];
         const bVal = column.sortKey ? b[column.sortKey] : b[column.key];
-
-        // Handle null/undefined values
         if (aVal == null && bVal == null) return 0;
         if (aVal == null) return sortDirection.value === 'asc' ? 1 : -1;
         if (bVal == null) return sortDirection.value === 'asc' ? -1 : 1;
-
-        // Numeric comparison
         if (typeof aVal === 'number' && typeof bVal === 'number') {
             return sortDirection.value === 'asc' ? aVal - bVal : bVal - aVal;
         }
-
-        // String comparison
         const aStr = String(aVal).toLowerCase();
         const bStr = String(bVal).toLowerCase();
-
         if (aStr < bStr) return sortDirection.value === 'asc' ? -1 : 1;
         if (aStr > bStr) return sortDirection.value === 'asc' ? 1 : -1;
         return 0;
     });
 });
 
-// Computed columns for mobile view (exclude hidden columns)
-const mobileColumns = computed(() =>
-    props.columns.filter(col => !col.hideOnMobile)
-);
+const mobileColumns = computed(() => props.columns.filter(col => !col.hideOnMobile));
 
-const getCellClasses = (column: Column<T>) => {
-    return cn(
+const getCellClasses = (column: Column<T>) =>
+    cn(
         'whitespace-nowrap',
         column.hideOnMobile && 'hidden sm:table-cell',
         column.hideOnTablet && 'hidden lg:table-cell',
         column.align === 'center' && 'text-center',
         column.align === 'right' && 'text-right',
-        column.sticky && 'sticky right-0 bg-white dark:bg-gray-900 shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)]',
+        column.sticky &&
+        'sticky right-0 bg-white dark:bg-gray-900 shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)]',
         props.compactMode ? 'px-3 py-2' : 'px-6 py-4'
     );
-};
 
-const getHeaderClasses = (column: Column<T>) => {
-    return cn(
+const getHeaderClasses = (column: Column<T>) =>
+    cn(
         getCellClasses(column),
         'text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400',
         column.sticky && 'z-10',
-        column.sortable && 'cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors'
+        column.sortable &&
+        'cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors'
     );
-};
 
-const getRowClasses = (item: T, index: number) => {
-    return cn(
+const getRowClasses = (item: T, index: number) =>
+    cn(
         'hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors',
         typeof props.rowClass === 'function' ? props.rowClass(item, index) : props.rowClass
     );
-};
 
-const getCardClasses = (item: T, index: number) => {
-    return cn(
-        'mobile-card', // Add consistent class for mobile cards
-        'border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors',
+const getCardClasses = (item: T, index: number) =>
+    cn(
+        'mobile-card border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors',
         typeof props.rowClass === 'function' ? props.rowClass(item, index) : props.rowClass
     );
-};
 
-// Expose the table ref to parent components
-defineExpose({
-    tableRef
-});
+defineExpose({tableRef});
 </script>
+
 
 <template>
     <div ref="tableRef" class="relative">
