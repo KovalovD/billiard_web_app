@@ -14,7 +14,7 @@ interface Props {
     modelValue: FrameScore[];
     player1Score: number;
     player2Score: number;
-    gameType: 'pyramid' | 'snooker' | 'pool';
+    gameType: 'pyramid' | 'snooker';
     disabled?: boolean;
 }
 
@@ -44,15 +44,9 @@ const gameConfigs = {
         label: t('Points'),
         description: t('Maximum 147 points per frame')
     },
-    pool: {
-        maxPerFrame: null, // No specific limit
-        winScore: null,
-        label: t('Score'),
-        description: t('Frame score')
-    }
 };
 
-const currentConfig = computed(() => gameConfigs[props.gameType] || gameConfigs.pool);
+const currentConfig = computed(() => gameConfigs[props.gameType]);
 
 // Validate frame scores match the current match score
 const isValid = computed(() => {

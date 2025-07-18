@@ -76,8 +76,14 @@ class TournamentMatchService
                 ? $match->player2_id
                 : $match->player1_id;
 
-            if (!empty($data['frame_scores'])) {
+            $gameType = $match->tournament->game->type->value ?? 'pool';
+            if (!empty($data['frame_scores']) && $gameType !== 'pool') {
                 $this->validateFrameScores($match, $data);
+            }
+
+            // Clear frame_scores for pool games
+            if ($gameType === 'pool') {
+                $data['frame_scores'] = null;
             }
 
             $match->update([
@@ -132,6 +138,11 @@ class TournamentMatchService
         $frameScores = $data['frame_scores'] ?? [];
         $gameType = $match->tournament->game->type->value ?? 'pool';
 
+        // Skip validation for pool games
+        if ($gameType === 'pool') {
+            return;
+        }
+
         $player1Frames = 0;
         $player2Frames = 0;
 
@@ -150,13 +161,6 @@ class TournamentMatchService
                 if ($frame['player1'] > 147 || $frame['player2'] > 147) {
                     throw new RuntimeException('Invalid snooker frame score: maximum is 147');
                 }
-                if ($frame['player1'] > $frame['player2']) {
-                    $player1Frames++;
-                } else {
-                    $player2Frames++;
-                }
-            } else {
-                // Pool or other games
                 if ($frame['player1'] > $frame['player2']) {
                     $player1Frames++;
                 } else {
@@ -1014,12 +1018,19 @@ class TournamentMatchService
         return DB::transaction(function () use ($match, $data) {
             $affectedMatchIds = [];
 
-            if (!empty($data['frame_scores'])) {
-                $this->validateFrameScores($match, [
-                    'frame_scores'  => $data['frame_scores'],
-                    'player1_score' => $data['player1_score'] ?? $match->player1_score,
-                    'player2_score' => $data['player2_score'] ?? $match->player2_score,
-                ]);
+            if (isset($data['frame_scores'])) {
+                $gameType = $match->tournament->game->type->value ?? 'pool';
+
+                // Clear frame_scores for pool games
+                if ($gameType === 'pool') {
+                    $data['frame_scores'] = null;
+                } elseif (!empty($data['frame_scores'])) {
+                    $this->validateFrameScores($match, [
+                        'frame_scores' => $data['frame_scores'],
+                        'player1_score' => $data['player1_score'] ?? $match->player1_score,
+                        'player2_score' => $data['player2_score'] ?? $match->player2_score,
+                    ]);
+                }
             }
 
             // Handle player changes

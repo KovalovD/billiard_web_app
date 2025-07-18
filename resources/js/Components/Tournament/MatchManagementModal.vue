@@ -1,3 +1,4 @@
+<!-- resources/js/Components/Tournament/MatchManagementModal.vue -->
 <script lang="ts" setup>
 import {
     Button,
@@ -42,7 +43,7 @@ interface Emits {
     (e: 'close'): void;
     (e: 'start-match', data: { club_table_id: number | null; stream_url: string; admin_notes: string | null }): void;
     (e: 'update-match', data: any): void;
-    (e: 'finish-match', data: { player1_score: number; player2_score: number; admin_notes: string | null }): void;
+    (e: 'finish-match', data: { player1_score: number; player2_score: number; frame_scores?: Array<{ player1: number; player2: number }>; admin_notes: string | null }): void;
     (e: 'process-walkover'): void;
 }
 
@@ -94,6 +95,24 @@ const canStartMatch = computed(() => {
 });
 
 const gameType = computed(() => props.tournament?.game_type || 'pool');
+
+// Check if frame scores should be shown
+const showFrameScores = computed(() => {
+    return gameType.value !== 'pool' && (
+        !isEditMode.value && (
+            props.match?.status === 'in_progress' ||
+            props.match?.status === 'verification' ||
+            props.match?.status === 'completed'
+        )
+    );
+});
+
+const showFrameScoresInEditMode = computed(() => {
+    return gameType.value !== 'pool' &&
+        isEditMode.value &&
+        matchForm.value.player1_id &&
+        matchForm.value.player2_id;
+});
 
 const canFinishMatch = computed(() => {
     if (!props.match || !props.canEditTournament) return false;
@@ -239,10 +258,9 @@ const updateMatch = async () => {
     matchError.value = null;
 
     try {
-        emit('update-match', {
+        const data: any = {
             player1_id: matchForm.value.player1_id,
             player2_id: matchForm.value.player2_id,
-            frame_scores: matchForm.value.frame_scores,
             player1_score: matchForm.value.player1_score,
             player2_score: matchForm.value.player2_score,
             club_table_id: matchForm.value.club_table_id,
@@ -250,7 +268,14 @@ const updateMatch = async () => {
             status: matchForm.value.status,
             scheduled_at: matchForm.value.scheduled_at,
             admin_notes: matchForm.value.admin_notes
-        });
+        };
+
+        // Only include frame_scores for non-pool games
+        if (gameType.value !== 'pool') {
+            data.frame_scores = matchForm.value.frame_scores;
+        }
+
+        emit('update-match', data);
     } finally {
         isUpdatingMatch.value = false;
     }
@@ -263,12 +288,19 @@ const updateScores = async () => {
     matchError.value = null;
 
     try {
-        emit('update-match', {
+        const data: any = {
             player1_score: matchForm.value.player1_score,
             player2_score: matchForm.value.player2_score,
-            frame_scores: matchForm.value.frame_scores,
             admin_notes: matchForm.value.admin_notes
-        });
+        };
+
+        // Only include frame_scores for non-pool games
+        if (gameType.value !== 'pool') {
+            data.frame_scores = matchForm.value.frame_scores;
+        }
+
+        emit('update-match', data);
+
         // Update original scores after successful update
         originalScores.value = {
             player1_score: matchForm.value.player1_score,
@@ -286,12 +318,18 @@ const finishMatch = async () => {
     matchError.value = null;
 
     try {
-        emit('finish-match', {
+        const data: any = {
             player1_score: matchForm.value.player1_score,
             player2_score: matchForm.value.player2_score,
-            frame_scores: matchForm.value.frame_scores,
             admin_notes: matchForm.value.admin_notes
-        });
+        };
+
+        // Only include frame_scores for non-pool games
+        if (gameType.value !== 'pool') {
+            data.frame_scores = matchForm.value.frame_scores;
+        }
+
+        emit('finish-match', data);
     } finally {
         isUpdatingMatch.value = false;
     }
@@ -430,8 +468,8 @@ defineExpose({setError});
                     </div>
                 </div>
 
-                <div v-if="!isEditMode && (match.status === 'in_progress' || match.status === 'verification' || match.status === 'completed')"
-                     class="border-t pt-3">
+                <!-- Frame Scores (only for pyramid and snooker) -->
+                <div v-if="showFrameScores" class="border-t pt-3 px-3 pb-3">
                     <FrameScores
                         v-model="matchForm.frame_scores"
                         :player1-score="matchForm.player1_score"
@@ -554,7 +592,8 @@ defineExpose({setError});
                     </div>
                 </div>
 
-                <div v-if="isEditMode && matchForm.player1_id && matchForm.player2_id" class="border-t pt-3">
+                <!-- Frame Scores in Edit Mode (only for pyramid and snooker) -->
+                <div v-if="showFrameScoresInEditMode" class="border-t pt-3">
                     <FrameScores
                         v-model="matchForm.frame_scores"
                         :player1-score="matchForm.player1_score"

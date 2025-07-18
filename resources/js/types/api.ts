@@ -630,7 +630,10 @@ export interface TournamentMatch {
     stage_display: string;
     round?: EliminationRound;
     round_display?: string;
-    frame_scores?: Array<any>;
+    frame_scores?: Array<{
+        player1: number;
+        player2: number;
+    }> | null;
     bracket_position?: number;
     bracket_side?: BracketSide;
     bracket_side_display?: string;
