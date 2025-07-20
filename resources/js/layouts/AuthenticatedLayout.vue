@@ -192,12 +192,6 @@ onMounted(() => {
 
                         <!-- Desktop Right Side -->
                         <div class="hidden lg:flex lg:items-center lg:space-x-4">
-                            <MonoDonate
-                                :show-card="false"
-                                :show-qr="false"
-                                class="text-sm px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-md hover:from-amber-600 hover:to-orange-600 transition-all"
-                            />
-
                             <LocaleSwitcher/>
 
                             <div v-if="user" class="relative ml-3">
@@ -402,13 +396,6 @@ onMounted(() => {
                                     >
                                         {{ t('Register') }}
                                     </button>
-                                </div>
-
-                                <!-- Donate and language switcher -->
-                                <div class="mt-6 space-y-3">
-                                    <MonoDonate :show-card="false" :show-qr="false"
-                                                class="w-full justify-center bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg py-2.5 hover:from-amber-600 hover:to-orange-600 transition-all"/>
-                                    <LocaleSwitcher :is-mobile="true"/>
                                 </div>
                             </div>
                         </div>

@@ -109,6 +109,13 @@ const handleRegistrationSuccess = () => {
 // Get current user ID
 const currentUserId = user.value?.id;
 
+// Helper function to get birth year from birthdate
+const getBirthYear = (birthdate: string | null | undefined): string | null => {
+    if (!birthdate) return null;
+    const year = new Date(birthdate).getFullYear();
+    return !isNaN(year) ? year.toString() : null;
+};
+
 const sortedPlayers = computed(() => {
     return [...players.value].sort((a, b) => {
         const statusOrder = {confirmed: 1, applied: 2, rejected: 3};
@@ -529,7 +536,7 @@ const columns = computed(() => [
     }
 ]);
 
-// Update the playerColumns computed property to add sorting
+// Update the playerColumns computed property to add birth year and location
 const playerColumns = computed(() => [
     {
         key: 'seed',
@@ -559,6 +566,7 @@ const playerColumns = computed(() => [
         },
         render: (player: TournamentPlayer) => ({
             name: `${player.user?.firstname} ${player.user?.lastname}`,
+            birthYear: getBirthYear(player.user?.birthdate),
             location: player.user?.home_city ?
                 `${player.user.home_city.name}${player.user.home_city.country ? ', ' + player.user.home_city.country.name : ''}`
                 : null
@@ -693,6 +701,8 @@ onMounted(() => {
                 ].filter(k => k),
                 ogType: 'event',
                 ogImage: tournament.value.picture || '/images/tournament-default.jpg',
+                ogTitle: tournament.value.name,
+                ogDescription: tournament.value.short_description || tournament.value.details,
                 canonicalUrl: `${window.location.origin}${currentPath}`,
                 robots: 'index, follow',
                 author: tournament.value.organizer || 'WinnerBreak',
@@ -1389,9 +1399,14 @@ onMounted(() => {
                                                     :exclusive-priority="true"
                                                 />
                                                 <div class="min-w-0">
-                                                    <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
-                                                        {{ value.name }}
-                                                    </p>
+                                                    <div class="flex items-center gap-2">
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                                            {{ value.name }}
+                                                        </p>
+                                                        <span v-if="value.birthYear" class="text-xs text-gray-500 dark:text-gray-400">
+                                                            ({{ value.birthYear }})
+                                                        </span>
+                                                    </div>
                                                     <p v-if="value.location"
                                                        class="text-xs text-gray-500 dark:text-gray-400 truncate">
                                                         {{ value.location }}

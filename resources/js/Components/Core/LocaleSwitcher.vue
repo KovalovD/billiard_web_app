@@ -14,9 +14,6 @@ resources/js/Components/Core/LocaleSwitcher.vue
             @click="toggleDropdown"
         >
             <div class="flex items-center space-x-2">
-                <!-- Current language flag -->
-                <span class="text-lg">{{ getLanguageFlag(currentLocale) }}</span>
-
                 <!-- Current language name -->
                 <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
                     {{ currentLanguageName }}
@@ -54,7 +51,6 @@ resources/js/Components/Core/LocaleSwitcher.vue
             @click="toggleDropdown"
         >
             <div class="flex items-center space-x-3">
-                <span class="text-lg">{{ getLanguageFlag(currentLocale) }}</span>
                 <span class="text-base font-medium text-gray-700 dark:text-gray-300">
                     {{ currentLanguageName }}
                 </span>
@@ -111,9 +107,6 @@ resources/js/Components/Core/LocaleSwitcher.vue
                         class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                         @click="handleLocaleChange(locale)"
                     >
-                        <!-- Language flag -->
-                        <span class="text-lg mr-3">{{ getLanguageFlag(locale) }}</span>
-
                         <!-- Language name -->
                         <span>{{ getLanguageName(locale) }}</span>
 
@@ -171,22 +164,6 @@ const {
 // Local component state
 const isDropdownOpen = ref(false);
 
-// Language flags mapping
-const languageFlags: Record<string, string> = {
-    en: '🇬🇧',
-    uk: '🇺🇦',
-    es: '🇪🇸',
-    de: '🇩🇪',
-    fr: '🇫🇷',
-    it: '🇮🇹',
-    pl: '🇵🇱',
-    ru: '🇷🇺'
-};
-
-// Get flag for language
-const getLanguageFlag = (locale: string): string => {
-    return languageFlags[locale] || '🌐';
-};
 
 // Methods for dropdown menu
 const toggleDropdown = () => {

@@ -3,6 +3,7 @@
 namespace App\Core\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Core\Traits\HasFiles;
 use App\Core\Traits\HasSlug;
 use App\Leagues\Models\Rating;
 use App\OfficialRatings\Models\OfficialRatingPlayer;
@@ -15,12 +16,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use Storage;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, HasApiTokens, HasSlug;
+    use HasFactory, Notifiable, HasApiTokens, HasSlug, HasFiles;
 
     protected string $slugSource = 'full_name';
 
@@ -108,15 +108,6 @@ class User extends Authenticatable
     public function officialRatingPlayers(): HasMany
     {
         return $this->hasMany(OfficialRatingPlayer::class);
-    }
-
-    public function getPicture(?string $path): string
-    {
-        if (!$path) {
-            return '';
-        }
-
-        return Storage::disk('r2')->url($path);
     }
 
     /**

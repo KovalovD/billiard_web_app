@@ -5,6 +5,7 @@ namespace App\Tournaments\Models;
 use App\Core\Models\City;
 use App\Core\Models\Club;
 use App\Core\Models\Game;
+use App\Core\Traits\HasFiles;
 use App\Core\Traits\HasSlug;
 use App\OfficialRatings\Models\OfficialRating;
 use App\Tournaments\Enums\SeedingMethod;
@@ -19,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Tournament extends Model
 {
-    use HasSlug;
+    use HasSlug, HasFiles;
 
     protected $fillable = [
         'name',
@@ -60,9 +61,13 @@ class Tournament extends Model
         'groups_completed_at',
         'seeding_completed',
         'brackets_generated',
+        'is_main_event',
+        'picture',
+        'short_description',
     ];
 
     protected $casts = [
+        'is_main_event'             => 'boolean',
         'updated_at'                => 'datetime',
         'start_date'                => 'datetime',
         'end_date'                  => 'datetime',

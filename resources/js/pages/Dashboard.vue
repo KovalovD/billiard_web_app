@@ -8,16 +8,23 @@ import {useAuth} from '@/composables/useAuth';
 import {useLeagues} from '@/composables/useLeagues';
 import {useSeo} from '@/composables/useSeo';
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
-import type {League, MatchGame, TournamentPlayer} from '@/types/api';
+import type {League, MatchGame, Tournament, TournamentPlayer} from '@/types/api';
 import {Head, Link} from '@inertiajs/vue3';
 import {useLocale} from '@/composables/useLocale';
 import {ArrowRightIcon, LogInIcon, StarIcon, TrophyIcon, UsersIcon} from 'lucide-vue-next';
 import {onMounted, ref} from 'vue';
+import TournamentMainEvent from "@/Components/Core/TournamentMainEvent.vue";
 
 interface TournamentWithParticipation {
     tournament: any;
     participation: TournamentPlayer;
 }
+
+// eslint-disable-next-line
+const props = defineProps<{
+    mainEventTournament: Tournament | null,
+}>();
+
 
 defineOptions({
     layout: AuthenticatedLayout,
@@ -152,6 +159,9 @@ onMounted(async () => {
 <template>
     <Head
         :title="isAuthenticated ? t('Dashboard - Your Billiard Statistics') : t('Dashboard - Billiard League Platform')"/>
+
+    <!-- Main Event Tournament Banner -->
+    <TournamentMainEvent v-if="mainEventTournament" :tournament="mainEventTournament" />
 
     <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">

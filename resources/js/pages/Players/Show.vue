@@ -1210,7 +1210,7 @@ onMounted(() => {
                                                 :class="['text-sm font-medium', value.won ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400']">
                                                 {{ value.score }}
                                             </div>
-                                            <div class="text-xs text-gray-500">{{ t('Best of') }} {{
+                                            <div class="text-xs text-gray-500">{{ t('Race To') }} {{
                                                     value.racesTo
                                                 }}
                                             </div>

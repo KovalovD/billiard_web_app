@@ -12,6 +12,7 @@ use App\Tournaments\Http\Controllers\AdminTournamentBracketController;
 use App\Tournaments\Http\Controllers\AdminTournamentGroupsController;
 use App\Tournaments\Http\Controllers\AdminTournamentMatchesController;
 use App\Tournaments\Http\Controllers\AdminTournamentSeedingController;
+use App\Tournaments\Http\Resources\TournamentResource;
 use App\Tournaments\Models\Tournament;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -58,8 +59,15 @@ Route::get('/service-agreement', static function () {
 
 // Dashboard as home for authenticated users
 Route::get('/dashboard', static function () {
+    $mainEventTournament = Tournament::query()
+        ->with('players.user')
+        ->where('is_main_event', true)
+        ->where('end_date', '>', now())
+        ->first()
+    ;
+
     return Inertia::render('Dashboard', [
-        'header' => 'Dashboard',
+        'mainEventTournament' => $mainEventTournament ? new TournamentResource($mainEventTournament) : null,
     ]);
 })->name('dashboard');
 
@@ -159,7 +167,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/players/{player:slug}/edit', static function ($playerSlug) {
             $player = User::where('slug', $playerSlug)->firstOrFail();
             return Inertia::render('Admin/Players/Edit', [
-                'playerId' => $player->id,
+                'playerId'   => $player->id,
                 'playerSlug' => $player->slug,
             ]);
         })->name('admin.players.edit');
@@ -188,7 +196,7 @@ Route::middleware('auth')->group(function () {
                 return Inertia::render('Leagues/Edit', [
                     'leagueId'   => $league->id,
                     'leagueSlug' => $league->slug,
-                    'header'   => 'Edit League',
+                    'header'     => 'Edit League',
                 ]);
             })->name('leagues.edit');
 

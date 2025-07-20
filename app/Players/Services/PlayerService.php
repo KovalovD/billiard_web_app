@@ -315,7 +315,7 @@ class PlayerService
             ->with(['tournament.city.country', 'tournament.club', 'tournament.game'])
             ->join('tournaments', 'tournament_players.tournament_id', '=', 'tournaments.id')
             ->orderBy('tournaments.end_date', 'desc')
-            ->limit($limit)
+            //->limit($limit)
             ->get()
         ;
 
@@ -356,7 +356,7 @@ class PlayerService
                 'clubTable.club',
             ])
             ->orderBy('completed_at', 'desc')
-            ->limit($limit)
+            //->limit($limit)
             ->get()
         ;
 

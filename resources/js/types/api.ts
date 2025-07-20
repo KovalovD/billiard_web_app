@@ -550,6 +550,9 @@ export interface Tournament {
     groups_completed_at?: string;
     created_at: string;
     updated_at: string;
+    is_main_event: boolean;
+    picture?: string;
+    short_description?: string;
 
     // Relations
     game?: Game;
