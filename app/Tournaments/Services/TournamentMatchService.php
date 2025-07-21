@@ -383,36 +383,76 @@ class TournamentMatchService
         $olympicPhaseSize = $tournament->olympic_phase_size ?? 8;
 
         // Players eliminated in first stage are positioned after Olympic stage participants
-        // Base position starts after Olympic phase size
         $basePosition = $olympicPhaseSize + 1;
 
         // If eliminated from lower bracket in first stage
         if ($match->bracket_side === 'lower') {
-            // Get total confirmed players to calculate proper position range
+            // Get total confirmed players
             $totalPlayers = $tournament->players()->where('status', 'confirmed')->count();
 
-            // Extract round number
+            // Extract round number from match code
             preg_match('/FS_LB_R(\d+)M/', $match->match_code, $matches);
             $roundNumber = isset($matches[1]) ? (int) $matches[1] : 0;
 
-            // Get bracket structure to understand position better
+            if ($roundNumber === 0) {
+                return $basePosition;
+            }
+
+            // Calculate bracket size
             $bracketSize = 2 ** ceil(log($totalPlayers, 2));
+
+            // Get the number of upper bracket rounds before Olympic phase
+            $upperRoundsBeforeOlympic = (int) (log($bracketSize, 2) - log($olympicPhaseSize / 2, 2));
+
+            // Get lower bracket structure
             $lowerStructure = $this->getLowerBracketStructure($bracketSize);
 
-            // Find total rounds in first stage lower bracket
-            $maxFirstStageRound = 0;
+            // Count first stage lower bracket rounds
+            $firstStageLowerRounds = 0;
+
             foreach ($lowerStructure as $round => $data) {
-                if (isset($data['upper_round']) && $data['upper_round'] < (log($bracketSize,
-                            2) - log($olympicPhaseSize / 2, 2))) {
-                    $maxFirstStageRound = $round;
+                // Check if this round is part of first stage
+                $isFirstStage = false;
+
+                if ($data['type'] === 'initial') {
+                    // Initial round is always first stage
+                    $isFirstStage = true;
+                } elseif (isset($data['upper_round'])) {
+                    // Check if the corresponding upper round is before Olympic phase
+                    $isFirstStage = $data['upper_round'] <= $upperRoundsBeforeOlympic;
+                } else {
+                    // Regular rounds between drops - check if we're still in first stage
+                    // by looking at the previous drop round
+                    for ($r = $round - 1; $r >= 1; $r--) {
+                        if (isset($lowerStructure[$r]['upper_round'])) {
+                            $isFirstStage = $lowerStructure[$r]['upper_round'] <= $upperRoundsBeforeOlympic;
+                            break;
+                        }
+                    }
+                }
+
+                if ($isFirstStage) {
+                    $firstStageLowerRounds++;
+                } else {
+                    break;
                 }
             }
 
-            // Calculate position based on elimination round in first stage
-            $roundsFromStart = $roundNumber - 1;
-            $positionOffset = floor($roundsFromStart * (($totalPlayers - $olympicPhaseSize) / $maxFirstStageRound));
+            // Calculate position based on which round of first stage lower bracket
+            if ($firstStageLowerRounds > 0) {
+                // Players eliminated later get higher positions (closer to Olympic phase)
+                $positionRange = $totalPlayers - $olympicPhaseSize;
+                $positionIncrement = floor($positionRange / $firstStageLowerRounds);
 
-            return min($basePosition + $positionOffset, $totalPlayers);
+                // Calculate position based on round number
+                $roundFromStart = $roundNumber - 1;
+                $position = $basePosition + ($roundFromStart * $positionIncrement);
+
+                // Ensure position doesn't exceed total players
+                return min($position, $totalPlayers);
+            }
+
+            return $basePosition;
         }
 
         // Upper bracket eliminations in first stage don't get final positions
