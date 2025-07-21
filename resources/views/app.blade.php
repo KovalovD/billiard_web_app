@@ -21,7 +21,6 @@
     <meta property="og:title" content="{{ config('app.name', 'WinnerBreak') }} - Professional Billiard League Platform">
     <meta property="og:description"
           content="Join competitive billiard leagues, participate in tournaments, and track your progress with our advanced ELO rating system.">
-    <meta property="og:image" content="{{ asset('og-default.jpg') }}">
     <meta property="og:site_name" content="WinnerBreak">
     <meta property="og:locale" content="{{ str_replace('_', '-', app()->getLocale()) }}">
 
@@ -32,7 +31,6 @@
           content="{{ config('app.name', 'WinnerBreak') }} - Professional Billiard League Platform">
     <meta property="twitter:description"
           content="Join competitive billiard leagues, participate in tournaments, and track your progress with our advanced ELO rating system.">
-    <meta property="twitter:image" content="{{ asset('og-default.jpg') }}">
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
