@@ -361,7 +361,7 @@ onMounted(() => {
                     'WinnerBreak', 'ВиннерБрейк'
                 ],
                 ogType: 'article',
-                ogImage: league.value.picture || '/images/league-default.jpg',
+                ogImage: `${window.location.origin}/images/og/Leagues.png`,
                 canonicalUrl: `${window.location.origin}${currentPath}`,
                 robots: 'index, follow',
                 author: 'WinnerBreak',

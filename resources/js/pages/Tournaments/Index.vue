@@ -340,7 +340,7 @@ onMounted(() => {
             'Lviv billiard tournaments', 'львовские бильярдные турниры'
         ],
         ogType: 'website',
-        ogImage: '/images/tournaments-preview.jpg',
+        ogImage: `${window.location.origin}/images/og/Tournaments.png`,
         canonicalUrl: `${window.location.origin}${currentPath}`,
         robots: 'index, follow',
         alternateLanguages: getAlternateLanguageUrls(currentPath),

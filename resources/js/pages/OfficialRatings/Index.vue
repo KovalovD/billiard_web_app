@@ -382,7 +382,7 @@ onMounted(() => {
             'WinnerBreak ratings', 'рейтинги ВиннерБрейк'
         ],
         ogType: 'website',
-        ogImage: activeTab.value === 'one-year' ? '/images/annual-rankings.jpg' : '/images/ratings-preview.jpg',
+        ogImage: `${window.location.origin}/images/og/Ratings.png`,
         canonicalUrl: `${window.location.origin}${currentPath}`,
         robots: 'index, follow',
         alternateLanguages: getAlternateLanguageUrls(currentPath),

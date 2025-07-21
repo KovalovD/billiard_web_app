@@ -91,7 +91,6 @@ onMounted(async () => {
             'real-time statistics', 'статистика в реальном времени', 'WinnerBreak', 'ВиннерБрейк'
         ],
         ogType: 'website',
-        ogImage: '/images/dashboard-preview.jpg',
         canonicalUrl: `${window.location.origin}${currentPath}`,
         robots: 'index, follow',
         author: 'WinnerBreak Team',

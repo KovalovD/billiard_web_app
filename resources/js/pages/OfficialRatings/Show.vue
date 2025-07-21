@@ -392,6 +392,7 @@ onMounted(() => {
                 }),
                 keywords: [rating.value.name, 'billiard rating', rating.value.game_type_name || 'pool', 'player rankings', 'ELO rating', 'tournament standings'],
                 ogType: 'website',
+                ogImage: `${window.location.origin}/images/og/Ratings.png`,
                 jsonLd: {
                     ...generateBreadcrumbJsonLd([
                         {name: t('Home'), url: window.location.origin},

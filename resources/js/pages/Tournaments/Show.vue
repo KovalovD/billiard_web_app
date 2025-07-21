@@ -700,7 +700,7 @@ onMounted(() => {
                     'WinnerBreak tournament', 'турнир ВиннерБрейк'
                 ].filter(k => k),
                 ogType: 'event',
-                ogImage: tournament.value.picture || '/images/tournament-default.jpg',
+                ogImage: tournament.value.picture || `${window.location.origin}/images/og/Tournaments.png`,
                 ogTitle: tournament.value.name,
                 ogDescription: tournament.value.short_description || tournament.value.details,
                 canonicalUrl: `${window.location.origin}${currentPath}`,

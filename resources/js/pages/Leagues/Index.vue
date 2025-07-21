@@ -148,7 +148,7 @@ onMounted(() => {
             'professional billiards', 'профессиональный бильярд', 'WinnerBreak leagues', 'лиги ВиннерБрейк'
         ],
         ogType: 'website',
-        ogImage: '/images/leagues-preview.jpg',
+        ogImage: `${window.location.origin}/images/og/Leagues.png`,
         canonicalUrl: `${window.location.origin}${currentPath}`,
         robots: 'index, follow',
         alternateLanguages: getAlternateLanguageUrls(currentPath),

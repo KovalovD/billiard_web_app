@@ -394,7 +394,7 @@ onMounted(() => {
             'WinnerBreak players', 'игроки ВиннерБрейк'
         ],
         ogType: 'website',
-        ogImage: '/images/players-directory.jpg',
+        ogImage: `${window.location.origin}/images/og/Players.png`,
         canonicalUrl: `${window.location.origin}${currentPath}`,
         robots: 'index, follow',
         alternateLanguages: getAlternateLanguageUrls(currentPath),

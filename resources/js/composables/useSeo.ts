@@ -16,6 +16,8 @@ interface SeoMeta {
     additionalMeta?: Array<{ name?: string; property?: string; content: string }>;
 }
 
+const baseUrl = window.location.origin;
+
 export function useSeo() {
     const setSeoMeta = (meta: SeoMeta) => {
         // Set document title
@@ -63,7 +65,7 @@ export function useSeo() {
         const ogTags = {
             'og:title': meta.ogTitle || meta.title,
             'og:description': meta.ogDescription || meta.description,
-            'og:image': meta.ogImage || '/images/og-default.jpg',
+            'og:image': meta.ogImage || `${baseUrl}/images/og/Default.png`,
             'og:type': meta.ogType || 'website',
             'og:url': meta.canonicalUrl || window.location.href,
             'og:site_name': 'WinnerBreak',
@@ -85,7 +87,7 @@ export function useSeo() {
             'twitter:card': meta.twitterCard || 'summary_large_image',
             'twitter:title': meta.ogTitle || meta.title,
             'twitter:description': meta.ogDescription || meta.description,
-            'twitter:image': meta.ogImage || '/images/og-default.jpg',
+            'twitter:image': meta.ogImage || `${baseUrl}/images/og/Default.png`,
             'twitter:site': '@winnerbreak',
             'twitter:creator': '@winnerbreak'
         };
@@ -283,7 +285,6 @@ export function useSeo() {
     };
 
     const getAlternateLanguageUrls = (currentPath: string) => {
-        const baseUrl = window.location.origin;
         const currentLang = document.documentElement.lang || 'en';
 
         return [

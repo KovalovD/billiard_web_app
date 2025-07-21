@@ -553,7 +553,7 @@ onMounted(() => {
                     'WinnerBreak player', 'игрок ВиннерБрейк'
                 ].filter(k => k),
                 ogType: 'profile',
-                ogImage: player.value.tournament_picture || player.value.picture || player.value.avatar || '/images/player-default.jpg',
+                ogImage: player.value.tournament_picture || `${window.location.origin}/images/og/Players.png`,
                 canonicalUrl: `${window.location.origin}${currentPath}`,
                 robots: 'index, follow',
                 author: player.value.full_name,
