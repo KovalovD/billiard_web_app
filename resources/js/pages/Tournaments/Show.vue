@@ -166,6 +166,13 @@ const completedPlayers = computed(() => {
     return sortedPlayers.value.filter(p => p.position !== null);
 });
 
+// Get top 3 winners
+const topWinners = computed(() => {
+    return completedPlayers.value
+        .filter(p => p.position && p.position <= 3)
+        .sort((a, b) => (a.position || 0) - (b.position || 0));
+});
+
 // Computed properties for stage-based navigation
 const showSeedingButton = computed(() => {
     return isAuthenticated.value &&
@@ -980,8 +987,9 @@ onMounted(() => {
                 <Card class="mb-6 shadow-lg">
                     <div
                         class="bg-gradient-to-r from-gray-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 p-4 sm:p-6">
-                        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                            <div class="flex-1">
+                        <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                            <!-- Tournament Info Section -->
+                            <div class="flex-1 lg:max-w-2xl">
                                 <div class="flex items-center gap-2.5 mb-2">
                                     <div
                                         class="h-10 w-10 rounded-full bg-indigo-600 flex items-center justify-center shadow-md">
@@ -992,12 +1000,12 @@ onMounted(() => {
                                             {{ tournament.name }}
                                             <span
                                                 :class="[
-                                                'inline-flex px-2.5 py-0.5 text-xs font-medium rounded-full',
-                                                getStatusBadgeClass(tournament.status)
-                                            ]"
+                                'inline-flex px-2.5 py-0.5 text-xs font-medium rounded-full',
+                                getStatusBadgeClass(tournament.status)
+                            ]"
                                             >
-                                            {{ tournament.status_display }}
-                                        </span>
+                            {{ tournament.status_display }}
+                        </span>
                                         </h1>
                                         <p class="text-sm text-gray-600 dark:text-gray-400">
                                             {{ tournament.game?.name || 'N/A' }}
@@ -1006,7 +1014,7 @@ onMounted(() => {
                                 </div>
 
                                 <!-- Tournament Info -->
-                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-3">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
                                     <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
                                         <CalendarIcon class="h-3.5 w-3.5 mr-1.5"/>
                                         <span>{{ formatDateTime(tournament.start_date) }}</span>
@@ -1040,6 +1048,87 @@ onMounted(() => {
                                             {{ tournament.stage_display }}
                                         </div>
                                         <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('Stage') }}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Winners Podium - Show when tournament is completed -->
+                            <div v-if="tournament.status === 'completed' && topWinners.length > 0"
+                                 class="flex-shrink-0 w-full lg:w-auto lg:min-w-[280px] mt-6 lg:mt-0">
+                                <div class="flex items-end gap-2 justify-center">
+                                    <!-- 2nd place -->
+                                    <div v-if="topWinners[1]" class="flex flex-col items-center flex-1 max-w-[90px]">
+                                        <div class="relative">
+                                            <UserAvatar
+                                                :user="topWinners[1].user"
+                                                size="md"
+                                                priority="tournament_picture"
+                                                :exclusive-priority="true"
+                                                class="ring-4 ring-gray-300 dark:ring-gray-600"
+                                            />
+                                            <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-6 h-6 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-md">
+                                                2
+                                            </div>
+                                        </div>
+                                        <div class="mt-2 text-center w-full">
+                                            <p class="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
+                                                {{ topWinners[1].user?.firstname }}
+                                            </p>
+                                            <p class="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
+                                                {{ topWinners[1].user?.lastname }}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <!-- 1st place -->
+                                    <div v-if="topWinners[0]" class="flex flex-col items-center flex-1 max-w-[100px] -mt-3">
+                                        <div class="relative">
+                                            <UserAvatar
+                                                :user="topWinners[0].user"
+                                                size="lg"
+                                                priority="tournament_picture"
+                                                :exclusive-priority="true"
+                                                class="ring-4 ring-yellow-400 dark:ring-yellow-500"
+                                            />
+                                            <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-7 h-7 bg-yellow-400 dark:bg-yellow-500 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-lg">
+                                                1
+                                            </div>
+                                            <div class="absolute -top-3 left-1/2 -translate-x-1/2">
+                                                <span class="text-2xl">🏆</span>
+                                            </div>
+                                        </div>
+                                        <div class="mt-2 text-center w-full">
+                                            <p class="text-sm font-bold text-gray-900 dark:text-white truncate">
+                                                {{ topWinners[0].user?.firstname }}
+                                            </p>
+                                            <p class="text-sm font-bold text-gray-900 dark:text-white truncate">
+                                                {{ topWinners[0].user?.lastname }}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <!-- 3rd place -->
+                                    <div v-if="topWinners[2]" class="flex flex-col items-center flex-1 max-w-[90px]">
+                                        <div class="relative">
+                                            <UserAvatar
+                                                :user="topWinners[2].user"
+                                                size="md"
+                                                priority="tournament_picture"
+                                                :exclusive-priority="true"
+                                                class="ring-4 ring-orange-400 dark:ring-orange-500"
+                                            />
+                                            <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-6 h-6 bg-orange-400 dark:bg-orange-500 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-md">
+                                                3
+                                            </div>
+                                        </div>
+                                        <div class="mt-2 text-center w-full">
+                                            <p class="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
+                                                {{ topWinners[2].user?.firstname }}
+                                            </p>
+                                            <p class="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
+                                                {{ topWinners[2].user?.lastname }}
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1231,6 +1320,15 @@ onMounted(() => {
                                 </CardHeader>
                                 <CardContent class="p-4">
                                     <div class="space-y-3">
+                                        <!-- Tournament Picture -->
+                                        <div v-if="tournament.picture" class="mb-4">
+                                            <img
+                                                :src="tournament.picture"
+                                                :alt="tournament.name"
+                                                class="w-full h-48 object-cover rounded-lg shadow-md"
+                                            >
+                                        </div>
+
                                         <div>
                                             <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100">{{
                                                     t('Tournament Type')

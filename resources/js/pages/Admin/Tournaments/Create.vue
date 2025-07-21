@@ -239,7 +239,26 @@ const handleSubmit = async () => {
             if (key === 'picture' && value instanceof File) {
                 (payload as FormData).append(key, value);
             } else if (value !== null && value !== undefined) {
-                (payload as FormData).append(key, String(value));
+                // Handle arrays
+                if (Array.isArray(value)) {
+                    value.forEach((item, index) => {
+                        (payload as FormData).append(`${key}[${index}]`, String(item));
+                    });
+                }
+                // Handle objects (like round_races_to)
+                else if (typeof value === 'object' && !(value instanceof Date)) {
+                    Object.entries(value).forEach(([subKey, subValue]) => {
+                        (payload as FormData).append(`${key}[${subKey}]`, String(subValue));
+                    });
+                }
+                // Handle booleans - send as 1 or 0
+                else if (typeof value === 'boolean') {
+                    (payload as FormData).append(key, value ? '1' : '0');
+                }
+                // Handle other values
+                else {
+                    (payload as FormData).append(key, String(value));
+                }
             }
         });
     }
