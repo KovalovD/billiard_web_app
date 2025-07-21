@@ -1,4 +1,3 @@
-<!-- resources/js/pages/Admin/Tournaments/Edit.vue -->
 <script lang="ts" setup>
 import {
     Accordion,
@@ -19,6 +18,7 @@ import {
     Switch,
     Textarea
 } from '@/Components/ui';
+import PictureUpload from '@/Components/profile/PictureUpload.vue';
 import {useProfileApi} from '@/composables/useProfileApi';
 import {useTournaments} from '@/composables/useTournaments';
 import {useLocale} from '@/composables/useLocale';
@@ -34,6 +34,7 @@ import {
     LayersIcon,
     MapPinIcon,
     SettingsIcon,
+    StarIcon,
     TrophyIcon,
     UsersIcon
 } from 'lucide-vue-next';
@@ -85,6 +86,11 @@ const form = ref({
     auto_approve_applications: false,
     official_rating_id: undefined as number | undefined,
     rating_coefficient: 1.0,
+    is_main_event: false,
+    picture: null as File | null,
+    current_picture: '',
+    delete_picture: false,
+    short_description: '',
 });
 
 // Data
@@ -311,6 +317,11 @@ const loadTournament = async () => {
             auto_approve_applications: tournament.value.auto_approve_applications || false,
             official_rating_id: tournament.value.official_ratings?.[0]?.id,
             rating_coefficient: tournament.value.official_ratings?.[0]?.rating_coefficient || 1.0,
+            is_main_event: tournament.value.is_main_event || false,
+            picture: null,
+            current_picture: tournament.value.picture || '',
+            delete_picture: false,
+            short_description: tournament.value.short_description || '',
         };
 
         // Set up filtered games based on existing rating if any
@@ -343,12 +354,33 @@ const loadCitiesAndClubs = async () => {
     }
 };
 
+const handlePictureDelete = () => {
+    form.value.delete_picture = true;
+    form.value.current_picture = '';
+};
+
 const handleSubmit = async () => {
     if (!isFormValid.value) return;
 
     isSubmitting.value = true;
 
-    const success = await updateApi.execute(form.value);
+    // Create FormData if we have a picture or need to delete it
+    const payload = (form.value.picture || form.value.delete_picture) ? new FormData() : form.value;
+
+    if (form.value.picture || form.value.delete_picture) {
+        // Add all form fields to FormData
+        Object.entries(form.value).forEach(([key, value]) => {
+            if (key === 'picture' && value instanceof File) {
+                (payload as FormData).append(key, value);
+            } else if (key === 'delete_picture' && value === true) {
+                (payload as FormData).append(key, '1');
+            } else if (key !== 'current_picture' && value !== null && value !== undefined) {
+                (payload as FormData).append(key, String(value));
+            }
+        });
+    }
+
+    const success = await updateApi.execute(payload);
 
     if (success) {
         router.visit(`/tournaments/${tournament.value?.slug}`);
@@ -909,6 +941,32 @@ onMounted(async () => {
                                 </AccordionTrigger>
                                 <AccordionContent value="additional">
                                     <div class="space-y-6 pt-4">
+                                        <!-- Main Event Toggle -->
+                                        <div class="flex items-center space-x-3">
+                                            <Switch
+                                                id="is_main_event"
+                                                v-model="form.is_main_event"
+                                            />
+                                            <Label for="is_main_event" class="cursor-pointer flex items-center gap-2">
+                                                <StarIcon class="h-4 w-4 text-yellow-500"/>
+                                                {{ t('Mark as Main Event') }}
+                                            </Label>
+                                        </div>
+
+                                        <!-- Picture Upload -->
+                                        <div class="space-y-2">
+                                            <PictureUpload
+                                                v-model="form.picture"
+                                                :current-picture="form.current_picture"
+                                                :label="t('Tournament Picture')"
+                                                :max-size="10"
+                                                @delete="handlePictureDelete"
+                                            />
+                                            <p class="text-sm text-gray-500 dark:text-gray-400">
+                                                {{ t('Upload a picture to represent your tournament') }}
+                                            </p>
+                                        </div>
+
                                         <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
                                             <div class="space-y-2">
                                                 <Label for="organizer">{{ t('Organizer') }}</Label>
@@ -930,7 +988,22 @@ onMounted(async () => {
                                         </div>
 
                                         <div class="space-y-2">
-                                            <Label for="details">{{ t('Description') }}</Label>
+                                            <Label for="short_description">{{ t('Short Description') }}</Label>
+                                            <Textarea
+                                                id="short_description"
+                                                v-model="form.short_description"
+                                                :placeholder="t('Brief description for tournament listings (150 characters)')"
+                                                rows="2"
+                                                maxlength="150"
+                                                class="resize-none"
+                                            />
+                                            <p class="text-sm text-gray-500 dark:text-gray-400">
+                                                {{ form.short_description.length }}/150 {{ t('characters') }}
+                                            </p>
+                                        </div>
+
+                                        <div class="space-y-2">
+                                            <Label for="details">{{ t('Full Description') }}</Label>
                                             <Textarea
                                                 id="details"
                                                 v-model="form.details"

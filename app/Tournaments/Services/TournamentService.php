@@ -1,5 +1,4 @@
 <?php
-// app/Tournaments/Services/TournamentService.php
 
 namespace App\Tournaments\Services;
 
@@ -15,8 +14,10 @@ use App\Tournaments\Enums\TournamentType;
 use App\Tournaments\Models\Tournament;
 use App\Tournaments\Models\TournamentPlayer;
 use Exception;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 use Throwable;
 
@@ -124,6 +125,13 @@ readonly class TournamentService
             $data['requires_application'] = $data['requires_application'] ?? true;
             $data['auto_approve_applications'] = $data['auto_approve_applications'] ?? false;
             $data['has_third_place_match'] = $data['has_third_place_match'] ?? false;
+            $data['is_main_event'] = $data['is_main_event'] ?? false;
+
+            // Handle picture upload if present
+            $picturePath = null;
+            if (isset($data['picture']) && $data['picture'] instanceof UploadedFile) {
+                $picturePath = $data['picture']->store('tournaments', 'r2');
+            }
 
             // Create tournament
             $tournament = Tournament::create([
@@ -132,6 +140,7 @@ readonly class TournamentService
                 'stage'                     => $data['stage'],
                 'regulation'                => $data['regulation'] ?? null,
                 'details'                   => $data['details'] ?? null,
+                'short_description'         => $data['short_description'] ?? null,
                 'game_id'                   => $data['game_id'],
                 'city_id'                   => $data['city_id'] ?? null,
                 'club_id'                   => $data['club_id'] ?? null,
@@ -159,6 +168,8 @@ readonly class TournamentService
                 'seeding_method'            => $data['seeding_method'],
                 'requires_application'      => $data['requires_application'],
                 'auto_approve_applications' => $data['auto_approve_applications'],
+                'is_main_event'             => $data['is_main_event'],
+                'picture'                   => $picturePath,
             ]);
 
             // If official rating is selected, associate it with the tournament
@@ -188,8 +199,34 @@ readonly class TournamentService
      */
     public function updateTournament(Tournament $tournament, array $data): Tournament
     {
-        $tournament->update($data);
-        return $tournament->refresh();
+        return DB::transaction(function () use ($tournament, $data) {
+            // Handle picture upload/deletion
+            if (isset($data['delete_picture']) && $data['delete_picture']) {
+                // Delete existing picture
+                if ($tournament->picture && Storage::disk('r2')->exists($tournament->picture)) {
+                    Storage::disk('r2')->delete($tournament->picture);
+                }
+                $data['picture'] = null;
+            } elseif (isset($data['picture']) && $data['picture'] instanceof UploadedFile) {
+                // Delete old picture if exists
+                if ($tournament->picture && Storage::disk('r2')->exists($tournament->picture)) {
+                    Storage::disk('r2')->delete($tournament->picture);
+                }
+                // Store new picture
+                $data['picture'] = $data['picture']->store('tournaments', 'r2');
+            } else {
+                // Keep existing picture
+                unset($data['picture']);
+            }
+
+            // Remove fields that shouldn't be updated directly
+            unset($data['delete_picture']);
+
+            // Update tournament
+            $tournament->update($data);
+
+            return $tournament->refresh();
+        });
     }
 
     /**
@@ -197,6 +234,11 @@ readonly class TournamentService
      */
     public function deleteTournament(Tournament $tournament): void
     {
+        // Delete picture if exists
+        if ($tournament->picture && Storage::disk('r2')->exists($tournament->picture)) {
+            Storage::disk('r2')->delete($tournament->picture);
+        }
+
         $tournament->delete();
     }
 

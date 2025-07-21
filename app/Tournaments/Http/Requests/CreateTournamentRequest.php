@@ -49,6 +49,9 @@ class CreateTournamentRequest extends BaseFormRequest
             'auto_approve_applications' => ['boolean'],
             'official_rating_id'        => ['nullable', 'integer', 'exists:official_ratings,id'],
             'rating_coefficient'        => ['nullable', 'numeric', 'min:0.1', 'max:5.0'],
+            'short_description'         => ['nullable', 'string', 'max:150'],
+            'picture'                   => ['nullable', 'image', 'max:5120'],
+            'is_main_event'             => ['boolean'],
         ];
     }
 
