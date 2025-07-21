@@ -19,7 +19,7 @@ class TournamentResource extends JsonResource
             'slug'                       => $this->slug,
             'is_main_event'              => $this->is_main_event,
             'picture'                    => $this->picture,
-            'short_description'          => $this->short_description ?: substr($this->details, 0, 150),
+            'short_description'          => $this->short_description,
             'name'                       => $this->name,
             'game_id'                    => $this->game_id,
             'game_type'                  => $this->game->type->value,
