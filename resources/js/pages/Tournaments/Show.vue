@@ -1066,11 +1066,11 @@ onMounted(() => {
                                                 :exclusive-priority="true"
                                                 class="ring-4 ring-gray-300 dark:ring-gray-600"
                                             />
-                                            <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-6 h-6 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-md">
+                                            <div class="absolute -bottom-5 left-1/2 -translate-x-1/2 w-6 h-6 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-md">
                                                 2
                                             </div>
                                         </div>
-                                        <div class="mt-2 text-center w-full">
+                                        <div class="mt-5 text-center w-full">
                                             <p class="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
                                                 {{ topWinners[1].user?.firstname }}
                                             </p>
@@ -1090,14 +1090,14 @@ onMounted(() => {
                                                 :exclusive-priority="true"
                                                 class="ring-4 ring-yellow-400 dark:ring-yellow-500"
                                             />
-                                            <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-7 h-7 bg-yellow-400 dark:bg-yellow-500 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-lg">
+                                            <div class="absolute -bottom-5 left-1/2 -translate-x-1/2 w-7 h-7 bg-yellow-400 dark:bg-yellow-500 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-lg">
                                                 1
                                             </div>
-                                            <div class="absolute -top-3 left-1/2 -translate-x-1/2">
+                                            <div class="absolute -top-4 left-1/2 -translate-x-1/2">
                                                 <span class="text-2xl">🏆</span>
                                             </div>
                                         </div>
-                                        <div class="mt-2 text-center w-full">
+                                        <div class="mt-5 text-center w-full">
                                             <p class="text-sm font-bold text-gray-900 dark:text-white truncate">
                                                 {{ topWinners[0].user?.firstname }}
                                             </p>
@@ -1117,11 +1117,11 @@ onMounted(() => {
                                                 :exclusive-priority="true"
                                                 class="ring-4 ring-orange-400 dark:ring-orange-500"
                                             />
-                                            <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-6 h-6 bg-orange-400 dark:bg-orange-500 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-md">
+                                            <div class="absolute -bottom-5 left-1/2 -translate-x-1/2 w-6 h-6 bg-orange-400 dark:bg-orange-500 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-md">
                                                 3
                                             </div>
                                         </div>
-                                        <div class="mt-2 text-center w-full">
+                                        <div class="mt-5 text-center w-full">
                                             <p class="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
                                                 {{ topWinners[2].user?.firstname }}
                                             </p>

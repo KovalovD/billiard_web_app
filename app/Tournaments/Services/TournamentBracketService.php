@@ -190,7 +190,7 @@ class TournamentBracketService
                 // Player1 has no opponent (bye) – mark as walkover win
                 $match->winner_id = $player1->user_id;
                 $match->status = MatchStatus::COMPLETED;
-                $match->player1_score = $match->races_to;
+                $match->player1_score = 0;
                 $match->player2_score = 0;
                 $match->completed_at = now();
                 $match->admin_notes = 'Walkover - No opponent';
@@ -199,7 +199,7 @@ class TournamentBracketService
                 $match->winner_id = $player2->user_id;
                 $match->status = MatchStatus::COMPLETED;
                 $match->player1_score = 0;
-                $match->player2_score = $match->races_to;
+                $match->player2_score = 0;
                 $match->completed_at = now();
                 $match->admin_notes = 'Walkover - No opponent';
             } elseif ($player1 && $player2) {
@@ -1099,17 +1099,46 @@ class TournamentBracketService
             throw new RuntimeException('Advancing match count mismatch between upper and lower brackets');
         }
 
-        $pos = 0;
-        for ($i = 0; $i < $upperAdvancing; $i++) {
-            $m = $upperAdv[$i];
-            $m->metadata = array_merge($m->metadata ?? [],
-                ['advances_to_olympic' => true, 'olympic_position' => $pos++]);
-            $m->save();
+        // Check how many rounds are in the first stage upper bracket
+        $upperBracketRounds = $olympicPhaseRound - 1;
 
-            $m = $lowerAdv[$i];
-            $m->metadata = array_merge($m->metadata ?? [],
-                ['advances_to_olympic' => true, 'olympic_position' => $pos++]);
-            $m->save();
+        if ($upperBracketRounds <= 2) {
+            // For 2 or fewer rounds in upper bracket, use simple sequential pairing
+            $pos = 0;
+            for ($i = 0; $i < $upperAdvancing; $i++) {
+                $m = $upperAdv[$i];
+                $m->metadata = array_merge($m->metadata ?? [],
+                    ['advances_to_olympic' => true, 'olympic_position' => $pos++]);
+                $m->save();
+
+                $m = $lowerAdv[$i];
+                $m->metadata = array_merge($m->metadata ?? [],
+                    ['advances_to_olympic' => true, 'olympic_position' => $pos++]);
+                $m->save();
+            }
+        } else {
+            // For more than 2 rounds, use cross-pairing to avoid immediate rematches
+            // Upper bracket winners get even positions: 0, 2, 4, 6...
+            // Lower bracket winners get odd positions that create cross-pairing
+
+            for ($i = 0; $i < $upperAdvancing; $i++) {
+                // Upper bracket match i gets position i*2
+                $upperMatch = $upperAdv[$i];
+                $upperMatch->metadata = array_merge($upperMatch->metadata ?? [],
+                    ['advances_to_olympic' => true, 'olympic_position' => $i * 2]);
+                $upperMatch->save();
+
+                // Lower bracket match i gets position that pairs with opposite upper bracket match
+                // For 4 matches: LB match 0 -> position 7 (pairs with UB match 3)
+                //                LB match 1 -> position 5 (pairs with UB match 2)
+                //                LB match 2 -> position 3 (pairs with UB match 1)
+                //                LB match 3 -> position 1 (pairs with UB match 0)
+                $lowerMatch = $lowerAdv[$i];
+                $crossPairPosition = (($upperAdvancing - 1 - $i) * 2) + 1;
+                $lowerMatch->metadata = array_merge($lowerMatch->metadata ?? [],
+                    ['advances_to_olympic' => true, 'olympic_position' => $crossPairPosition]);
+                $lowerMatch->save();
+            }
         }
     }
 
