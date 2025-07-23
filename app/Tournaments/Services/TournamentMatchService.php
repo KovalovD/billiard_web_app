@@ -124,6 +124,10 @@ class TournamentMatchService
             if ($match->loser_next_match_id) {
                 $this->progressLoserToNextMatch($match);
                 $affectedMatchIds[] = $match->loser_next_match_id;
+
+                // Check for walkovers in the lower bracket after loser progression
+                $walkoverMatchIds = $this->checkAndProcessLowerBracketWalkovers($match->loser_next_match_id);
+                $affectedMatchIds = array_merge($affectedMatchIds, $walkoverMatchIds);
             }
 
             return [
@@ -131,6 +135,92 @@ class TournamentMatchService
                 'affected_matches' => array_unique($affectedMatchIds),
             ];
         });
+    }
+
+    /**
+     * Check and process walkovers in lower bracket matches
+     */
+    private function checkAndProcessLowerBracketWalkovers(int $lowerMatchId): array
+    {
+        $affectedMatchIds = [];
+        $lowerMatch = TournamentMatch::find($lowerMatchId);
+
+        if (!$lowerMatch) {
+            return $affectedMatchIds;
+        }
+
+        // Find all matches that feed into this lower bracket match
+        $feederMatches = TournamentMatch::where('tournament_id', $lowerMatch->tournament_id)
+            ->where('loser_next_match_id', $lowerMatchId)
+            ->get();
+
+        // If we have exactly 2 feeder matches and both are completed
+        if ($feederMatches->count() === 2 &&
+            $feederMatches->every(fn($m) => $m->status === MatchStatus::COMPLETED)) {
+
+            // Check if lower bracket match has both players
+            $hasPlayer1 = !is_null($lowerMatch->player1_id);
+            $hasPlayer2 = !is_null($lowerMatch->player2_id);
+
+            // If missing at least one player, it's a walkover
+            if (!$hasPlayer1 || !$hasPlayer2) {
+                // Determine the winner (the only player present)
+                $winnerId = $hasPlayer1 ? $lowerMatch->player1_id : $lowerMatch->player2_id;
+
+                if ($winnerId) {
+                    // Process walkover
+                    $walkoverResult = $this->processWalkover($lowerMatch, $winnerId);
+                    $affectedMatchIds = array_merge($affectedMatchIds, $walkoverResult['affected_matches']);
+                }
+            }
+        }
+
+        return $affectedMatchIds;
+    }
+
+    /**
+     * Process a walkover match
+     */
+    private function processWalkover(TournamentMatch $match, int $winnerId): array
+    {
+        $affectedMatchIds = [];
+
+        // Update match as walkover
+        $match->update([
+            'winner_id'     => $winnerId,
+            'status'        => MatchStatus::COMPLETED,
+            'completed_at'  => now(),
+            'admin_notes'   => 'Walkover - opponent did not show',
+            'player1_score' => $match->player1_id === $winnerId ? ($match->races_to ?? $match->tournament->races_to) : 0,
+            'player2_score' => $match->player2_id === $winnerId ? ($match->races_to ?? $match->tournament->races_to) : 0,
+        ]);
+
+        // Update player position for walkover
+        $this->updatePlayerPositions($match, $winnerId, null);
+
+        // Progress winner to next match
+        if ($match->next_match_id) {
+            $this->progressWinnerToNextMatch($match);
+            $affectedMatchIds[] = $match->next_match_id;
+
+            // Recursively check for more walkovers
+            $additionalWalkovers = $this->checkAndProcessLowerBracketWalkovers($match->next_match_id);
+            $affectedMatchIds = array_merge($affectedMatchIds, $additionalWalkovers);
+        }
+
+        // If this match also has a loser progression (shouldn't happen for walkover, but just in case)
+        if ($match->loser_next_match_id) {
+            $affectedMatchIds[] = $match->loser_next_match_id;
+
+            // Check for walkovers in that match too
+            $additionalWalkovers = $this->checkAndProcessLowerBracketWalkovers($match->loser_next_match_id);
+            $affectedMatchIds = array_merge($affectedMatchIds, $additionalWalkovers);
+        }
+
+        return [
+            'match' => $match,
+            'affected_matches' => array_unique($affectedMatchIds),
+        ];
     }
 
     private function validateFrameScores(TournamentMatch $match, array $data): void
@@ -201,7 +291,7 @@ class TournamentMatchService
         // Calculate loser's position based on tournament type
         $loserPosition = $this->calculateLoserPosition($match, $tournament);
 
-        if ($loserPosition !== null) {
+        if ($loserPosition !== null && $loserId !== null) {
             TournamentPlayer::where('tournament_id', $tournament->id)
                 ->where('user_id', $loserId)
                 ->update([
@@ -226,10 +316,12 @@ class TournamentMatchService
                 ->update(['position' => 1])
             ;
 
-            TournamentPlayer::where('tournament_id', $tournament->id)
-                ->where('user_id', $loserId)
-                ->update(['position' => 2])
-            ;
+            if ($loserId) {
+                TournamentPlayer::where('tournament_id', $tournament->id)
+                    ->where('user_id', $loserId)
+                    ->update(['position' => 2])
+                ;
+            }
 
             return true;
         }
@@ -241,10 +333,12 @@ class TournamentMatchService
                 ->update(['position' => 1])
             ;
 
-            TournamentPlayer::where('tournament_id', $tournament->id)
-                ->where('user_id', $loserId)
-                ->update(['position' => 2])
-            ;
+            if ($loserId) {
+                TournamentPlayer::where('tournament_id', $tournament->id)
+                    ->where('user_id', $loserId)
+                    ->update(['position' => 2])
+                ;
+            }
 
             return true;
         }
@@ -257,10 +351,12 @@ class TournamentMatchService
                 ->update(['position' => 3])
             ;
 
-            TournamentPlayer::where('tournament_id', $tournament->id)
-                ->where('user_id', $loserId)
-                ->update(['position' => 4])
-            ;
+            if ($loserId) {
+                TournamentPlayer::where('tournament_id', $tournament->id)
+                    ->where('user_id', $loserId)
+                    ->update(['position' => 4])
+                ;
+            }
 
             return true;
         }
@@ -279,10 +375,12 @@ class TournamentMatchService
                     ->update(['position' => 1])
                 ;
 
-                TournamentPlayer::where('tournament_id', $tournament->id)
-                    ->where('user_id', $loserId)
-                    ->update(['position' => 2])
-                ;
+                if ($loserId) {
+                    TournamentPlayer::where('tournament_id', $tournament->id)
+                        ->where('user_id', $loserId)
+                        ->update(['position' => 2])
+                    ;
+                }
 
                 return true;
             }
@@ -309,10 +407,12 @@ class TournamentMatchService
                     ->update(['position' => 1])
                 ;
 
-                TournamentPlayer::where('tournament_id', $tournament->id)
-                    ->where('user_id', $loserId)
-                    ->update(['position' => 2])
-                ;
+                if ($loserId) {
+                    TournamentPlayer::where('tournament_id', $tournament->id)
+                        ->where('user_id', $loserId)
+                        ->update(['position' => 2])
+                    ;
+                }
             } // Olympic stage third place
             elseif ($match->match_code === 'OS_3RD' || $match->stage === MatchStage::THIRD_PLACE) {
                 TournamentPlayer::where('tournament_id', $tournament->id)
@@ -320,14 +420,16 @@ class TournamentMatchService
                     ->update(['position' => 3])
                 ;
 
-                TournamentPlayer::where('tournament_id', $tournament->id)
-                    ->where('user_id', $loserId)
-                    ->update(['position' => 4])
-                ;
+                if ($loserId) {
+                    TournamentPlayer::where('tournament_id', $tournament->id)
+                        ->where('user_id', $loserId)
+                        ->update(['position' => 4])
+                    ;
+                }
             } // Other Olympic stage eliminations
             else {
                 $position = $this->calculateOlympicStagePosition($match);
-                if ($position !== null) {
+                if ($position !== null && $loserId !== null) {
                     TournamentPlayer::where('tournament_id', $tournament->id)
                         ->where('user_id', $loserId)
                         ->update([
@@ -340,7 +442,7 @@ class TournamentMatchService
         } else {
             // First stage eliminations
             $position = $this->calculateOlympicFirstStagePosition($match, $tournament);
-            if ($position !== null) {
+            if ($position !== null && $loserId !== null) {
                 TournamentPlayer::where('tournament_id', $tournament->id)
                     ->where('user_id', $loserId)
                     ->update([
@@ -1194,6 +1296,10 @@ class TournamentMatchService
                 if ($match->loser_next_match_id) {
                     $this->progressLoserToNextMatch($match);
                     $affectedMatchIds[] = $match->loser_next_match_id;
+
+                    // Check for walkovers in the lower bracket
+                    $walkoverMatchIds = $this->checkAndProcessLowerBracketWalkovers($match->loser_next_match_id);
+                    $affectedMatchIds = array_merge($affectedMatchIds, $walkoverMatchIds);
                 }
             }
 
