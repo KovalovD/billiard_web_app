@@ -1258,7 +1258,7 @@ class TournamentBracketService
             $previousRoundMatches = $currentRoundMatches;
         }
 
-        if ($olympicPhaseSize > 4 && $tournament->olympic_has_third_place) {
+        if ($olympicPhaseSize > 2 && $tournament->olympic_has_third_place) {
             $this->createOlympicThirdPlaceMatch($tournament);
         }
     }
@@ -1266,13 +1266,14 @@ class TournamentBracketService
     private function createOlympicThirdPlaceMatch(Tournament $tournament): void
     {
         $thirdPlace = TournamentMatch::create([
-            'tournament_id' => $tournament->id,
-            'match_code'    => 'OS_3RD',
-            'stage'         => MatchStage::THIRD_PLACE,
-            'round'         => EliminationRound::THIRD_PLACE,
-            'races_to'      => $this->getRaceToForRound($tournament, 'O_3RD'),
-            'status'        => MatchStatus::PENDING,
-            'metadata'      => ['olympic_stage' => 'second'],
+            'tournament_id'    => $tournament->id,
+            'match_code'       => 'OS_3RD',
+            'bracket_position' => '2',
+            'stage'            => MatchStage::THIRD_PLACE,
+            'round'            => EliminationRound::THIRD_PLACE,
+            'races_to'         => $this->getRaceToForRound($tournament, 'O_3RD'),
+            'status'           => MatchStatus::PENDING,
+            'metadata'         => ['olympic_stage' => 'second'],
         ]);
 
         $semis = $tournament

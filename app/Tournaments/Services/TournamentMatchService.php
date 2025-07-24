@@ -1160,6 +1160,12 @@ class TournamentMatchService
         return DB::transaction(function () use ($match, $data) {
             $affectedMatchIds = [];
 
+            // Store original values for comparison
+            $originalWinnerId = $match->winner_id;
+            $originalStatus = $match->status;
+            $originalPlayer1Id = $match->player1_id;
+            $originalPlayer2Id = $match->player2_id;
+
             if (isset($data['frame_scores'])) {
                 $gameType = $match->tournament->game->type->value ?? 'pool';
 
@@ -1177,15 +1183,18 @@ class TournamentMatchService
 
             // Handle player changes
             if (isset($data['player1_id']) || isset($data['player2_id'])) {
-                // If match was already completed with different players, need to revert progression
-                if ($match->status === MatchStatus::COMPLETED && $match->winner_id) {
-                    $this->revertMatchProgression($match);
-                    $this->revertPlayerPositions($match);
-                }
+                // Check if players actually changed
+                $playersChanged = ($data['player1_id'] ?? $originalPlayer1Id) !== $originalPlayer1Id ||
+                    ($data['player2_id'] ?? $originalPlayer2Id) !== $originalPlayer2Id;
 
-                // Clear winner if players changed
-                if (($data['player1_id'] ?? $match->player1_id) !== $match->player1_id ||
-                    ($data['player2_id'] ?? $match->player2_id) !== $match->player2_id) {
+                if ($playersChanged) {
+                    // If match was already completed with different players, need to revert progression
+                    if ($match->status === MatchStatus::COMPLETED && $match->winner_id) {
+                        $this->revertMatchProgression($match);
+                        $this->revertPlayerPositions($match);
+                    }
+
+                    // Clear winner if players changed
                     $data['winner_id'] = null;
                     $data['status'] = MatchStatus::PENDING;
                     $data['player1_score'] = 0;
@@ -1260,20 +1269,27 @@ class TournamentMatchService
                     $data['winner_id'] = $data['player1_score'] > $data['player2_score']
                         ? ($data['player1_id'] ?? $match->player1_id)
                         : ($data['player2_id'] ?? $match->player2_id);
-
-                    // If winner changed, need to update bracket progression
-                    if ($data['winner_id'] !== $match->winner_id) {
-                        $this->revertMatchProgression($match);
-                        $this->revertPlayerPositions($match);
-                    }
                 }
+            }
+
+            // Check if winner actually changed
+            $winnerChanged = isset($data['winner_id']) && $data['winner_id'] !== $originalWinnerId;
+
+            // Only revert progression if winner changed
+            if ($winnerChanged && $originalStatus === MatchStatus::COMPLETED) {
+                $this->revertMatchProgression($match);
+                $this->revertPlayerPositions($match);
             }
 
             // Update the match
             $match->update($data);
 
-            // Handle progression if match is completed
-            if ($match->status === MatchStatus::COMPLETED && $match->winner_id) {
+            // Only handle progression if:
+            // 1. Match is completed AND
+            // 2. Either the winner changed OR match wasn't completed before
+            if ($match->status === MatchStatus::COMPLETED && $match->winner_id &&
+                ($winnerChanged || $originalStatus !== MatchStatus::COMPLETED)) {
+
                 $loserId = $match->winner_id === $match->player1_id
                     ? $match->player2_id
                     : $match->player1_id;

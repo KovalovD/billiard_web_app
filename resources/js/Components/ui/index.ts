@@ -41,6 +41,7 @@ import DialogFooter from './dialog/DialogFooter.vue';
 import Modal from './feedback/Modal.vue';
 import Toast from './feedback/Toast.vue';
 import Spinner from './feedback/Spinner.vue';
+import Separator from './separator/Separator.vue';
 
 export {default as Checkbox} from './checkbox/Checkbox.vue';
 
@@ -81,6 +82,7 @@ export {
     DialogFooter,
     Modal,
     Toast,
+    Separator,
     Spinner,
     Accordion,
     AccordionItem,
@@ -103,6 +105,7 @@ export default {
     SelectItem,
     SelectLabel,
     SelectSeparator,
+    Separator,
     SelectTrigger,
     SelectValue,
 
