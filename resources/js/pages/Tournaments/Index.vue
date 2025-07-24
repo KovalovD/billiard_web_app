@@ -1,4 +1,3 @@
-// resources/js/Pages/Tournaments/Index.vue
 <script lang="ts" setup>
 import {Card, CardContent, CardHeader, CardTitle} from '@/Components/ui';
 import DataTable from '@/Components/ui/data-table/DataTable.vue';
@@ -9,7 +8,19 @@ import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 import {apiClient} from '@/lib/apiClient';
 import type {Tournament, TournamentPlayer} from '@/types/api';
 import {Head, Link, router} from '@inertiajs/vue3';
-import {CalendarIcon, CrownIcon, MapPinIcon, PlusIcon, TrophyIcon, UsersIcon,} from 'lucide-vue-next';
+import {
+    CalendarClockIcon,
+    CalendarIcon,
+    CheckCircleIcon,
+    CircleDotIcon,
+    CrownIcon,
+    GamepadIcon,
+    MapPinIcon,
+    PlusIcon,
+    TrophyIcon,
+    UsersIcon,
+    XCircleIcon,
+} from 'lucide-vue-next';
 import {computed, onMounted, onUnmounted, ref} from 'vue';
 
 defineOptions({layout: AuthenticatedLayout});
@@ -31,11 +42,91 @@ const statusOptions = [
     {value: 'completed', label: t('Completed')}
 ];
 
+// Get icon for tournament status
+const getTournamentIcon = (tournament: Tournament) => {
+    switch (tournament.status) {
+        case 'upcoming':
+            return CalendarClockIcon;
+        case 'active':
+            return CircleDotIcon;
+        case 'completed':
+            return CheckCircleIcon;
+        case 'cancelled':
+            return XCircleIcon;
+        default:
+            return GamepadIcon;
+    }
+};
+
+// Get icon color for tournament status
+const getTournamentIconClass = (tournament: Tournament) => {
+    switch (tournament.status) {
+        case 'upcoming':
+            return 'text-blue-500 dark:text-blue-400';
+        case 'active':
+            return 'text-green-500 dark:text-green-400';
+        case 'completed':
+            return 'text-gray-400 dark:text-gray-500';
+        case 'cancelled':
+            return 'text-red-500 dark:text-red-400';
+        default:
+            return 'text-gray-400 dark:text-gray-500';
+    }
+};
+
+// Group tournaments into upcoming (includes active) and past
+const groupedTournaments = computed(() => {
+    if (selectedStatus.value !== 'all') {
+        return { upcoming: filteredTournaments.value, past: [] };
+    }
+
+    const upcoming: Tournament[] = [];
+    const past: Tournament[] = [];
+
+    filteredTournaments.value.forEach(tournament => {
+        // Active and upcoming tournaments go to upcoming section
+        if (tournament.status === 'active' || tournament.status === 'upcoming') {
+            upcoming.push(tournament);
+        } else {
+            // Completed and cancelled tournaments go to past section
+            past.push(tournament);
+        }
+    });
+
+    // Sort upcoming by date (earliest first)
+    upcoming.sort((a, b) => {
+        // Active tournaments first
+        if (a.status === 'active' && b.status !== 'active') return -1;
+        if (b.status === 'active' && a.status !== 'active') return 1;
+
+        // Then by start date
+        const dateA = new Date(a.start_date || '9999-12-31').getTime();
+        const dateB = new Date(b.start_date || '9999-12-31').getTime();
+        return dateA - dateB;
+    });
+
+    // Sort past by date (most recent first)
+    past.sort((a, b) => {
+        const dateA = new Date(a.end_date || a.start_date || 0).getTime();
+        const dateB = new Date(b.end_date || b.start_date || 0).getTime();
+        return dateB - dateA;
+    });
+
+    return { upcoming, past };
+});
+
 const filteredTournaments = computed(() => {
     if (selectedStatus.value === 'all') {
         return tournaments.value;
     }
     return tournaments.value.filter(t => t.status === selectedStatus.value);
+});
+
+// Check if we should show the separator
+const shouldShowSeparator = computed(() => {
+    return selectedStatus.value === 'all' &&
+        groupedTournaments.value.upcoming.length > 0 &&
+        groupedTournaments.value.past.length > 0;
 });
 
 // Create a map of tournament IDs where user participated
@@ -49,17 +140,20 @@ const userTournamentMap = computed(() => {
     return map;
 });
 
-// Define table columns for desktop
+// Define table columns for desktop - made more compact
 const columns = computed(() => [
     {
         key: 'name',
         label: t('Tournament'),
         align: 'left' as const,
+        width: '35%', // Reduced width
         render: (tournament: Tournament) => ({
             name: tournament.name || t('Unnamed Tournament'),
             organizer: tournament.organizer || null,
             participation: getUserParticipation(tournament.id),
-            isParticipant: isUserParticipant(tournament.id)
+            isParticipant: isUserParticipant(tournament.id),
+            icon: getTournamentIcon(tournament),
+            iconClass: getTournamentIconClass(tournament)
         })
     },
     {
@@ -67,7 +161,7 @@ const columns = computed(() => [
         label: t('You'),
         align: 'center' as const,
         hideOnTablet: true,
-        width: '80px',
+        width: '60px', // Reduced from 80px
         render: (tournament: Tournament) => {
             const participation = getUserParticipation(tournament.id);
             if (!participation) return null;
@@ -83,6 +177,7 @@ const columns = computed(() => [
         key: 'game',
         label: t('Game'),
         hideOnMobile: true,
+        width: '15%', // Reduced width
         render: (tournament: Tournament) => {
             if (!tournament.game) {
                 return null;
@@ -94,6 +189,7 @@ const columns = computed(() => [
         key: 'status',
         label: t('Status'),
         align: 'center' as const,
+        width: '10%',
         render: (tournament: Tournament) => ({
             status: tournament.status,
             status_display: tournament.status_display
@@ -129,6 +225,7 @@ const columns = computed(() => [
         label: t('Players'),
         align: 'center' as const,
         hideOnMobile: true,
+        width: '8%',
         render: (tournament: Tournament) => {
             const count = tournament.players_count ?? 0;
             const max = tournament.max_participants ?? null;
@@ -137,18 +234,6 @@ const columns = computed(() => [
                 max,
                 hasMax: max !== null
             };
-        }
-    },
-    {
-        key: 'prize',
-        label: t('Prize'),
-        align: 'right' as const,
-        hideOnTablet: true,
-        render: (tournament: Tournament) => {
-            if (!tournament.prize_pool) {
-                return null;
-            }
-            return formatPrizePool(tournament.prize_pool);
         }
     }
 ]);
@@ -265,14 +350,6 @@ const formatDateRange = (startDate: string, endDate: string): string => {
     const start = formatDate(startDate);
     const end = formatDate(endDate);
     return start === end ? start : `${start}-${end}`;
-};
-
-const formatPrizePool = (amount: number): string => {
-    if (amount <= 0) return t('N/A');
-    return amount.toLocaleString('uk-UA', {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
-    }) + '₴';
 };
 
 const getRowClass = (tournament: Tournament): string => {
@@ -494,199 +571,578 @@ onUnmounted(() => {
 
                         <!-- Mobile Cards View - Compact -->
                         <div v-else class="block lg:hidden space-y-3 p-3">
-                            <div
-                                v-for="tournament in filteredTournaments"
-                                :key="tournament.id"
-                                :class="[
-                                    'relative rounded-md border p-3 cursor-pointer transition-colors',
-                                    isUserParticipant(tournament.id)
-                                        ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800'
-                                        : 'bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700'
-                                ]"
-                                @click="navigateToTournament(tournament)"
-                            >
-                                <!-- Tournament Header -->
-                                <div class="flex items-start justify-between mb-2">
-                                    <div class="flex-1 min-w-0">
-                                        <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 break-words line-clamp-2">
-                                            {{ tournament.name }}
-                                            <CrownIcon v-if="isUserParticipant(tournament.id)"
-                                                       class="inline h-3 w-3 text-yellow-500 ml-0.5"/>
-                                        </h3>
-                                        <p v-if="tournament.organizer"
-                                           class="text-xs text-gray-600 dark:text-gray-400 truncate">
-                                            {{ tournament.organizer }}
-                                        </p>
-                                    </div>
-                                    <span
+                            <!-- Group by date for "All" view on mobile -->
+                            <template v-if="selectedStatus === 'all'">
+                                <!-- Upcoming tournaments (includes active) -->
+                                <div v-if="groupedTournaments.upcoming.length > 0" class="space-y-2">
+                                    <div
+                                        v-for="tournament in groupedTournaments.upcoming"
+                                        :key="tournament.id"
                                         :class="[
-                                            'inline-flex px-1.5 py-0.5 text-xs font-medium rounded-full flex-shrink-0',
-                                            getStatusBadgeClass(tournament.status)
+                                            'relative rounded-md border p-3 cursor-pointer transition-colors',
+                                            isUserParticipant(tournament.id)
+                                                ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800'
+                                                : 'bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700'
                                         ]"
+                                        @click="navigateToTournament(tournament)"
                                     >
-                                        {{ tournament.status_display }}
-                                    </span>
-                                </div>
+                                        <!-- Tournament Header -->
+                                        <div class="flex items-start justify-between mb-2">
+                                            <div class="flex items-start gap-2 flex-1 min-w-0">
+                                                <component :is="getTournamentIcon(tournament)"
+                                                           :class="['h-4 w-4 mt-0.5 flex-shrink-0', getTournamentIconClass(tournament)]"/>
+                                                <div class="flex-1 min-w-0">
+                                                    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 break-words line-clamp-2">
+                                                        {{ tournament.name }}
+                                                        <CrownIcon v-if="isUserParticipant(tournament.id)"
+                                                                   class="inline h-3 w-3 text-yellow-500 ml-0.5"/>
+                                                    </h3>
+                                                    <p v-if="tournament.organizer"
+                                                       class="text-xs text-gray-600 dark:text-gray-400 truncate">
+                                                        {{ tournament.organizer }}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <span
+                                                :class="[
+                                                    'inline-flex px-1.5 py-0.5 text-xs font-medium rounded-full flex-shrink-0 ml-2',
+                                                    getStatusBadgeClass(tournament.status)
+                                                ]"
+                                            >
+                                                {{ tournament.status_display }}
+                                            </span>
+                                        </div>
 
-                                <!-- Tournament Info Grid - Compact -->
-                                <div class="grid grid-cols-2 gap-2 text-xs">
-                                    <!-- Game & Date -->
-                                    <div>
-                                        <div v-if="tournament.game"
-                                             class="flex items-center text-gray-600 dark:text-gray-400">
-                                            <TrophyIcon class="h-3 w-3 mr-0.5 flex-shrink-0"/>
-                                            <span class="truncate">{{ tournament.game.name }}</span>
-                                        </div>
-                                        <div v-if="tournament.start_date"
-                                             class="flex items-center text-gray-600 dark:text-gray-400 mt-0.5">
-                                            <CalendarIcon class="h-3 w-3 mr-0.5 flex-shrink-0"/>
-                                            <span class="truncate">{{
-                                                    formatDateRange(tournament.start_date, tournament.end_date)
-                                                }}</span>
-                                        </div>
-                                    </div>
+                                        <!-- Tournament Info Grid - Compact -->
+                                        <div class="grid grid-cols-2 gap-2 text-xs">
+                                            <!-- Game & Date -->
+                                            <div>
+                                                <div v-if="tournament.game"
+                                                     class="flex items-center text-gray-600 dark:text-gray-400">
+                                                    <TrophyIcon class="h-3 w-3 mr-0.5 flex-shrink-0"/>
+                                                    <span class="truncate">{{ tournament.game.name }}</span>
+                                                </div>
+                                                <div v-if="tournament.start_date"
+                                                     class="flex items-center text-gray-600 dark:text-gray-400 mt-0.5">
+                                                    <CalendarIcon class="h-3 w-3 mr-0.5 flex-shrink-0"/>
+                                                    <span class="truncate">{{
+                                                            formatDateRange(tournament.start_date, tournament.end_date)
+                                                        }}</span>
+                                                </div>
+                                            </div>
 
-                                    <!-- Location & Players -->
-                                    <div>
-                                        <div v-if="tournament.city"
-                                             class="flex items-center text-gray-600 dark:text-gray-400">
-                                            <MapPinIcon class="h-3 w-3 mr-0.5 flex-shrink-0"/>
-                                            <span class="truncate">{{ tournament.city.name }}</span>
+                                            <!-- Location & Players -->
+                                            <div>
+                                                <div v-if="tournament.city"
+                                                     class="flex items-center text-gray-600 dark:text-gray-400">
+                                                    <MapPinIcon class="h-3 w-3 mr-0.5 flex-shrink-0"/>
+                                                    <span class="truncate">{{ tournament.city.name }}</span>
+                                                </div>
+                                                <div class="flex items-center text-gray-600 dark:text-gray-400 mt-0.5">
+                                                    <UsersIcon class="h-3 w-3 mr-0.5 flex-shrink-0"/>
+                                                    <span>
+                                                        {{ tournament.players_count || 0 }}
+                                                        <span v-if="tournament.max_participants">/{{
+                                                                tournament.max_participants
+                                                            }}</span>
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div class="flex items-center text-gray-600 dark:text-gray-400 mt-0.5">
-                                            <UsersIcon class="h-3 w-3 mr-0.5 flex-shrink-0"/>
-                                            <span>
-                                                {{ tournament.players_count || 0 }}
-                                                <span v-if="tournament.max_participants">/{{
-                                                        tournament.max_participants
-                                                    }}</span>
+
+                                        <!-- User Participation Badge -->
+                                        <div v-if="isUserParticipant(tournament.id)"
+                                             class="absolute top-2 right-12">
+                                            <span
+                                                :class="[
+                                                    'inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full',
+                                                    getParticipationBadgeClass(getUserParticipation(tournament.id)!)
+                                                ]"
+                                            >
+                                                {{ getParticipationBadgeText(getUserParticipation(tournament.id)!) }}
                                             </span>
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- Prize Pool -->
-                                <div v-if="tournament.prize_pool > 0"
-                                     class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                                    <span class="text-xs text-gray-600 dark:text-gray-400">{{
-                                            t('Prize')
-                                        }}</span>
-                                    <div class="text-sm font-bold text-green-600 dark:text-green-400">
-                                        {{ formatPrizePool(tournament.prize_pool) }}
+                                <!-- Past tournaments separator -->
+                                <div v-if="shouldShowSeparator" class="relative py-3 my-2">
+                                    <div class="absolute inset-0 flex items-center px-3" aria-hidden="true">
+                                        <div class="w-full border-t border-gray-300 dark:border-gray-600"></div>
+                                    </div>
+                                    <div class="relative flex justify-center">
+                                        <span class="bg-gray-50 dark:bg-gray-900 px-3 py-1 text-xs font-medium text-gray-500 dark:text-gray-400 rounded-full">
+                                            {{ t('Past Tournaments') }}
+                                        </span>
                                     </div>
                                 </div>
 
-                                <!-- User Participation Badge -->
-                                <div v-if="isUserParticipant(tournament.id)"
-                                     class="absolute top-2 right-12">
-                                    <span
+                                <!-- Past tournaments -->
+                                <div v-if="groupedTournaments.past.length > 0" class="space-y-2">
+                                    <div
+                                        v-for="tournament in groupedTournaments.past"
+                                        :key="tournament.id"
                                         :class="[
-                                            'inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full',
-                                            getParticipationBadgeClass(getUserParticipation(tournament.id)!)
+                                            'relative rounded-md border p-3 cursor-pointer transition-colors opacity-75',
+                                            isUserParticipant(tournament.id)
+                                                ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800'
+                                                : 'bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700'
                                         ]"
+                                        @click="navigateToTournament(tournament)"
                                     >
-                                        {{ getParticipationBadgeText(getUserParticipation(tournament.id)!) }}
-                                    </span>
+                                        <!-- Same structure as upcoming tournaments -->
+                                        <div class="flex items-start justify-between mb-2">
+                                            <div class="flex items-start gap-2 flex-1 min-w-0">
+                                                <component :is="getTournamentIcon(tournament)"
+                                                           :class="['h-4 w-4 mt-0.5 flex-shrink-0', getTournamentIconClass(tournament)]"/>
+                                                <div class="flex-1 min-w-0">
+                                                    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 break-words line-clamp-2">
+                                                        {{ tournament.name }}
+                                                        <CrownIcon v-if="isUserParticipant(tournament.id)"
+                                                                   class="inline h-3 w-3 text-yellow-500 ml-0.5"/>
+                                                    </h3>
+                                                    <p v-if="tournament.organizer"
+                                                       class="text-xs text-gray-600 dark:text-gray-400 truncate">
+                                                        {{ tournament.organizer }}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <span
+                                                :class="[
+                                                    'inline-flex px-1.5 py-0.5 text-xs font-medium rounded-full flex-shrink-0 ml-2',
+                                                    getStatusBadgeClass(tournament.status)
+                                                ]"
+                                            >
+                                                {{ tournament.status_display }}
+                                            </span>
+                                        </div>
+
+                                        <div class="grid grid-cols-2 gap-2 text-xs">
+                                            <div>
+                                                <div v-if="tournament.game"
+                                                     class="flex items-center text-gray-600 dark:text-gray-400">
+                                                    <TrophyIcon class="h-3 w-3 mr-0.5 flex-shrink-0"/>
+                                                    <span class="truncate">{{ tournament.game.name }}</span>
+                                                </div>
+                                                <div v-if="tournament.start_date"
+                                                     class="flex items-center text-gray-600 dark:text-gray-400 mt-0.5">
+                                                    <CalendarIcon class="h-3 w-3 mr-0.5 flex-shrink-0"/>
+                                                    <span class="truncate">{{
+                                                            formatDateRange(tournament.start_date, tournament.end_date)
+                                                        }}</span>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <div v-if="tournament.city"
+                                                     class="flex items-center text-gray-600 dark:text-gray-400">
+                                                    <MapPinIcon class="h-3 w-3 mr-0.5 flex-shrink-0"/>
+                                                    <span class="truncate">{{ tournament.city.name }}</span>
+                                                </div>
+                                                <div class="flex items-center text-gray-600 dark:text-gray-400 mt-0.5">
+                                                    <UsersIcon class="h-3 w-3 mr-0.5 flex-shrink-0"/>
+                                                    <span>
+                                                        {{ tournament.players_count || 0 }}
+                                                        <span v-if="tournament.max_participants">/{{
+                                                                tournament.max_participants
+                                                            }}</span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div v-if="isUserParticipant(tournament.id)"
+                                             class="absolute top-2 right-12">
+                                            <span
+                                                :class="[
+                                                    'inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full',
+                                                    getParticipationBadgeClass(getUserParticipation(tournament.id)!)
+                                                ]"
+                                            >
+                                                {{ getParticipationBadgeText(getUserParticipation(tournament.id)!) }}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
+                            </template>
+
+                            <!-- Non-all status - show regular list -->
+                            <template v-else>
+                                <div
+                                    v-for="tournament in filteredTournaments"
+                                    :key="tournament.id"
+                                    :class="[
+                                        'relative rounded-md border p-3 cursor-pointer transition-colors',
+                                        isUserParticipant(tournament.id)
+                                            ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800'
+                                            : 'bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700'
+                                    ]"
+                                    @click="navigateToTournament(tournament)"
+                                >
+                                    <!-- Tournament Header -->
+                                    <div class="flex items-start justify-between mb-2">
+                                        <div class="flex items-start gap-2 flex-1 min-w-0">
+                                            <component :is="getTournamentIcon(tournament)"
+                                                       :class="['h-4 w-4 mt-0.5 flex-shrink-0', getTournamentIconClass(tournament)]"/>
+                                            <div class="flex-1 min-w-0">
+                                                <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 break-words line-clamp-2">
+                                                    {{ tournament.name }}
+                                                    <CrownIcon v-if="isUserParticipant(tournament.id)"
+                                                               class="inline h-3 w-3 text-yellow-500 ml-0.5"/>
+                                                </h3>
+                                                <p v-if="tournament.organizer"
+                                                   class="text-xs text-gray-600 dark:text-gray-400 truncate">
+                                                    {{ tournament.organizer }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <span
+                                            :class="[
+                                                'inline-flex px-1.5 py-0.5 text-xs font-medium rounded-full flex-shrink-0 ml-2',
+                                                getStatusBadgeClass(tournament.status)
+                                            ]"
+                                        >
+                                            {{ tournament.status_display }}
+                                        </span>
+                                    </div>
+
+                                    <!-- Tournament Info Grid - Compact -->
+                                    <div class="grid grid-cols-2 gap-2 text-xs">
+                                        <!-- Game & Date -->
+                                        <div>
+                                            <div v-if="tournament.game"
+                                                 class="flex items-center text-gray-600 dark:text-gray-400">
+                                                <TrophyIcon class="h-3 w-3 mr-0.5 flex-shrink-0"/>
+                                                <span class="truncate">{{ tournament.game.name }}</span>
+                                            </div>
+                                            <div v-if="tournament.start_date"
+                                                 class="flex items-center text-gray-600 dark:text-gray-400 mt-0.5">
+                                                <CalendarIcon class="h-3 w-3 mr-0.5 flex-shrink-0"/>
+                                                <span class="truncate">{{
+                                                        formatDateRange(tournament.start_date, tournament.end_date)
+                                                    }}</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Location & Players -->
+                                        <div>
+                                            <div v-if="tournament.city"
+                                                 class="flex items-center text-gray-600 dark:text-gray-400">
+                                                <MapPinIcon class="h-3 w-3 mr-0.5 flex-shrink-0"/>
+                                                <span class="truncate">{{ tournament.city.name }}</span>
+                                            </div>
+                                            <div class="flex items-center text-gray-600 dark:text-gray-400 mt-0.5">
+                                                <UsersIcon class="h-3 w-3 mr-0.5 flex-shrink-0"/>
+                                                <span>
+                                                    {{ tournament.players_count || 0 }}
+                                                    <span v-if="tournament.max_participants">/{{
+                                                            tournament.max_participants
+                                                        }}</span>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- User Participation Badge -->
+                                    <div v-if="isUserParticipant(tournament.id)"
+                                         class="absolute top-2 right-12">
+                                        <span
+                                            :class="[
+                                                'inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full',
+                                                getParticipationBadgeClass(getUserParticipation(tournament.id)!)
+                                            ]"
+                                        >
+                                            {{ getParticipationBadgeText(getUserParticipation(tournament.id)!) }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </template>
                         </div>
 
-                        <!-- Desktop Table View - Compact -->
+                        <!-- Desktop Table View - Compact with Date Groups -->
                         <div class="hidden lg:block" data-tournament-table>
-                            <DataTable
-                                :columns="columns"
-                                :compact-mode="true"
-                                :data="filteredTournaments"
-                                :empty-message="selectedStatus === 'all' ? t('No tournaments have been created yet.') : t('No :status tournaments.', {status: selectedStatus})"
-                                :loading="isLoading"
-                                :row-class="getRowClass"
-                                :row-attributes="(tournament) => ({
-                                    'data-tournament-slug': tournament.slug?.toString(),
-                                    'role': 'button',
-                                    'tabindex': '0',
-                                    'aria-label': `View ${tournament.name} tournament details`
-                                })"
-                                :row-height="'compact'"
-                            >
-                                <!-- Custom cell renderers -->
-                                <template #cell-name="{ value }">
-                                    <div class="flex items-center gap-2">
-                                        <div class="min-w-0 flex-1 max-w-100">
-                                            <p class="text-sm font-medium break-words line-clamp-2">{{ value.name }}</p>
-                                            <p v-if="value.organizer"
-                                               class="text-xs text-gray-600 dark:text-gray-400 truncate">
-                                                {{ value.organizer }}
-                                            </p>
+                            <template v-if="selectedStatus === 'all'">
+                                <!-- Upcoming tournaments (includes active) -->
+                                <DataTable
+                                    v-if="groupedTournaments.upcoming.length > 0"
+                                    :columns="columns"
+                                    :compact-mode="true"
+                                    :data="groupedTournaments.upcoming"
+                                    :empty-message="t('No upcoming or active tournaments.')"
+                                    :loading="false"
+                                    :row-class="getRowClass"
+                                    :row-attributes="(tournament) => ({
+                                        'data-tournament-slug': tournament.slug?.toString(),
+                                        'role': 'button',
+                                        'tabindex': '0',
+                                        'aria-label': `View ${tournament.name} tournament details`
+                                    })"
+                                    :row-height="'compact'"
+                                >
+                                    <!-- Custom cell renderers -->
+                                    <template #cell-name="{ value }">
+                                        <div class="flex items-center gap-1.5">
+                                            <component :is="value.icon" :class="['h-3.5 w-3.5 flex-shrink-0', value.iconClass]"/>
+                                            <div class="min-w-0 flex-1 max-w-xs">
+                                                <p class="text-sm font-medium break-words line-clamp-1">{{ value.name }}</p>
+                                                <p v-if="value.organizer"
+                                                   class="text-xs text-gray-600 dark:text-gray-400 truncate">
+                                                    {{ value.organizer }}
+                                                </p>
+                                            </div>
+                                            <div v-if="value.isParticipant" class="flex-shrink-0">
+                                                <CrownIcon class="h-3.5 w-3.5 text-yellow-500"/>
+                                            </div>
                                         </div>
-                                        <div v-if="value.isParticipant" class="flex-shrink-0">
-                                            <CrownIcon class="h-3.5 w-3.5 text-yellow-500"/>
+                                    </template>
+
+                                    <template #cell-participation="{ value }">
+                                        <span v-if="value"
+                                              :class="['inline-flex rounded-full px-1.5 py-0.5 text-xs font-semibold', value.badgeClass]">
+                                            {{ value.badgeText }}
+                                        </span>
+                                        <span v-else class="text-gray-400">—</span>
+                                    </template>
+
+                                    <template #cell-game="{ value }">
+                                        <div v-if="value" class="text-sm text-gray-900 dark:text-gray-100 truncate max-w-[120px]">
+                                            {{ value }}
                                         </div>
+                                        <div v-else class="text-xs text-gray-400">{{ t('N/A') }}</div>
+                                    </template>
+
+                                    <template #cell-status="{ value }">
+                                        <span
+                                            :class="[
+                                                'inline-flex px-1.5 py-0.5 text-xs font-medium rounded-full',
+                                                getStatusBadgeClass(value.status)
+                                            ]"
+                                        >
+                                            {{ value.status_display }}
+                                        </span>
+                                    </template>
+
+                                    <template #cell-date="{ value }">
+                                        <div v-if="value"
+                                             class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                                            <CalendarIcon class="h-3.5 w-3.5 mr-1.5 flex-shrink-0"/>
+                                            <span class="truncate">{{ value }}</span>
+                                        </div>
+                                        <div v-else class="text-xs text-gray-400">{{ t('N/A') }}</div>
+                                    </template>
+
+                                    <template #cell-location="{ value }">
+                                        <div v-if="value && value.hasLocation"
+                                             class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                                            <MapPinIcon class="h-3.5 w-3.5 mr-1.5 flex-shrink-0"/>
+                                            <div class="min-w-0">
+                                                <div class="truncate">{{ value.city.name }}</div>
+                                            </div>
+                                        </div>
+                                        <div v-else class="text-xs text-gray-400">{{ t('N/A') }}</div>
+                                    </template>
+
+                                    <template #cell-players="{ value }">
+                                        <div v-if="value"
+                                             class="text-sm text-gray-900 dark:text-gray-100 text-center">
+                                            {{ value.count }}<span v-if="value.hasMax" class="text-gray-500">/{{ value.max }}</span>
+                                        </div>
+                                        <div v-else class="text-xs text-gray-400">{{ t('N/A') }}</div>
+                                    </template>
+                                </DataTable>
+
+                                <!-- Past tournaments separator -->
+                                <div v-if="shouldShowSeparator" class="relative py-4 px-4">
+                                    <div class="absolute inset-0 flex items-center px-4" aria-hidden="true">
+                                        <div class="w-full border-t border-gray-200 dark:border-gray-700"></div>
                                     </div>
-                                </template>
-
-                                <template #cell-participation="{ value }">
-                                    <span v-if="value"
-                                          :class="['inline-flex rounded-full px-1.5 py-0.5 text-xs font-semibold', value.badgeClass]">
-                                        {{ value.badgeText }}
-                                    </span>
-                                    <span v-else class="text-gray-400">—</span>
-                                </template>
-
-                                <template #cell-game="{ value }">
-                                    <div v-if="value"
-                                         class="flex items-center text-sm text-gray-900 dark:text-gray-100">
-                                        <TrophyIcon class="h-3.5 w-3.5 mr-1.5 text-gray-400 flex-shrink-0"/>
-                                        <span class="truncate">{{ value }}</span>
+                                    <div class="relative flex justify-center">
+                                        <span class="bg-white dark:bg-gray-900 px-4 py-1 text-sm font-medium text-gray-500 dark:text-gray-400 rounded-full">
+                                            {{ t('Past Tournaments') }}
+                                        </span>
                                     </div>
-                                    <div v-else class="text-xs text-gray-400">{{ t('N/A') }}</div>
-                                </template>
+                                </div>
 
-                                <template #cell-status="{ value }">
-                                    <span
-                                        :class="[
-                                            'inline-flex px-1.5 py-0.5 text-xs font-medium rounded-full',
-                                            getStatusBadgeClass(value.status)
-                                        ]"
+                                <!-- Past tournaments with opacity -->
+                                <div v-if="groupedTournaments.past.length > 0" class="opacity-75">
+                                    <DataTable
+                                        :columns="columns"
+                                        :compact-mode="true"
+                                        :data="groupedTournaments.past"
+                                        :empty-message="t('No past tournaments.')"
+                                        :loading="false"
+                                        :row-class="getRowClass"
+                                        :row-attributes="(tournament) => ({
+                                            'data-tournament-slug': tournament.slug?.toString(),
+                                            'role': 'button',
+                                            'tabindex': '0',
+                                            'aria-label': `View ${tournament.name} tournament details`
+                                        })"
+                                        :row-height="'compact'"
                                     >
-                                        {{ value.status_display }}
-                                    </span>
-                                </template>
+                                        <!-- Same custom cell renderers -->
+                                        <template #cell-name="{ value }">
+                                            <div class="flex items-center gap-1.5">
+                                                <component :is="value.icon" :class="['h-3.5 w-3.5 flex-shrink-0', value.iconClass]"/>
+                                                <div class="min-w-0 flex-1 max-w-xs">
+                                                    <p class="text-sm font-medium break-words line-clamp-1">{{ value.name }}</p>
+                                                    <p v-if="value.organizer"
+                                                       class="text-xs text-gray-600 dark:text-gray-400 truncate">
+                                                        {{ value.organizer }}
+                                                    </p>
+                                                </div>
+                                                <div v-if="value.isParticipant" class="flex-shrink-0">
+                                                    <CrownIcon class="h-3.5 w-3.5 text-yellow-500"/>
+                                                </div>
+                                            </div>
+                                        </template>
 
-                                <template #cell-date="{ value }">
-                                    <div v-if="value"
-                                         class="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                                        <CalendarIcon class="h-3.5 w-3.5 mr-1.5 flex-shrink-0"/>
-                                        <span class="truncate">{{ value }}</span>
-                                    </div>
-                                    <div v-else class="text-xs text-gray-400">{{ t('N/A') }}</div>
-                                </template>
+                                        <template #cell-participation="{ value }">
+                                            <span v-if="value"
+                                                  :class="['inline-flex rounded-full px-1.5 py-0.5 text-xs font-semibold', value.badgeClass]">
+                                                {{ value.badgeText }}
+                                            </span>
+                                            <span v-else class="text-gray-400">—</span>
+                                        </template>
 
-                                <template #cell-location="{ value }">
-                                    <div v-if="value && value.hasLocation"
-                                         class="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                                        <MapPinIcon class="h-3.5 w-3.5 mr-1.5 flex-shrink-0"/>
-                                        <div class="min-w-0">
-                                            <div class="truncate">{{ value.city.name }}</div>
+                                        <template #cell-game="{ value }">
+                                            <div v-if="value" class="text-sm text-gray-900 dark:text-gray-100 truncate max-w-[120px]">
+                                                {{ value }}
+                                            </div>
+                                            <div v-else class="text-xs text-gray-400">{{ t('N/A') }}</div>
+                                        </template>
+
+                                        <template #cell-status="{ value }">
+                                            <span
+                                                :class="[
+                                                    'inline-flex px-1.5 py-0.5 text-xs font-medium rounded-full',
+                                                    getStatusBadgeClass(value.status)
+                                                ]"
+                                            >
+                                                {{ value.status_display }}
+                                            </span>
+                                        </template>
+
+                                        <template #cell-date="{ value }">
+                                            <div v-if="value"
+                                                 class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                                                <CalendarIcon class="h-3.5 w-3.5 mr-1.5 flex-shrink-0"/>
+                                                <span class="truncate">{{ value }}</span>
+                                            </div>
+                                            <div v-else class="text-xs text-gray-400">{{ t('N/A') }}</div>
+                                        </template>
+
+                                        <template #cell-location="{ value }">
+                                            <div v-if="value && value.hasLocation"
+                                                 class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                                                <MapPinIcon class="h-3.5 w-3.5 mr-1.5 flex-shrink-0"/>
+                                                <div class="min-w-0">
+                                                    <div class="truncate">{{ value.city.name }}</div>
+                                                </div>
+                                            </div>
+                                            <div v-else class="text-xs text-gray-400">{{ t('N/A') }}</div>
+                                        </template>
+
+                                        <template #cell-players="{ value }">
+                                            <div v-if="value"
+                                                 class="text-sm text-gray-900 dark:text-gray-100 text-center">
+                                                {{ value.count }}<span v-if="value.hasMax" class="text-gray-500">/{{ value.max }}</span>
+                                            </div>
+                                            <div v-else class="text-xs text-gray-400">{{ t('N/A') }}</div>
+                                        </template>
+                                    </DataTable>
+                                </div>
+                            </template>
+
+                            <!-- Non-all status - show regular table -->
+                            <template v-else>
+                                <DataTable
+                                    :columns="columns"
+                                    :compact-mode="true"
+                                    :data="filteredTournaments"
+                                    :empty-message="selectedStatus === 'all' ? t('No tournaments have been created yet.') : t('No :status tournaments.', {status: selectedStatus})"
+                                    :loading="isLoading"
+                                    :row-class="getRowClass"
+                                    :row-attributes="(tournament) => ({
+                                        'data-tournament-slug': tournament.slug?.toString(),
+                                        'role': 'button',
+                                        'tabindex': '0',
+                                        'aria-label': `View ${tournament.name} tournament details`
+                                    })"
+                                    :row-height="'compact'"
+                                >
+                                    <!-- Custom cell renderers -->
+                                    <template #cell-name="{ value }">
+                                        <div class="flex items-center gap-1.5">
+                                            <component :is="value.icon" :class="['h-3.5 w-3.5 flex-shrink-0', value.iconClass]"/>
+                                            <div class="min-w-0 flex-1 max-w-xs">
+                                                <p class="text-sm font-medium break-words line-clamp-1">{{ value.name }}</p>
+                                                <p v-if="value.organizer"
+                                                   class="text-xs text-gray-600 dark:text-gray-400 truncate">
+                                                    {{ value.organizer }}
+                                                </p>
+                                            </div>
+                                            <div v-if="value.isParticipant" class="flex-shrink-0">
+                                                <CrownIcon class="h-3.5 w-3.5 text-yellow-500"/>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div v-else class="text-xs text-gray-400">{{ t('N/A') }}</div>
-                                </template>
+                                    </template>
 
-                                <template #cell-players="{ value }">
-                                    <div v-if="value"
-                                         class="text-sm text-gray-900 dark:text-gray-100 text-center">
-                                        {{ value.count }}<span v-if="value.hasMax" class="text-gray-500">/{{ value.max }}</span>
-                                    </div>
-                                    <div v-else class="text-xs text-gray-400">{{ t('N/A') }}</div>
-                                </template>
+                                    <template #cell-participation="{ value }">
+                                        <span v-if="value"
+                                              :class="['inline-flex rounded-full px-1.5 py-0.5 text-xs font-semibold', value.badgeClass]">
+                                            {{ value.badgeText }}
+                                        </span>
+                                        <span v-else class="text-gray-400">—</span>
+                                    </template>
 
-                                <template #cell-prize="{ value }">
-                                    <span v-if="value" class="text-sm text-green-600 dark:text-green-400 font-medium truncate">
-                                        {{ value }}
-                                    </span>
-                                    <span v-else class="text-xs text-gray-400">{{ t('N/A') }}</span>
-                                </template>
-                            </DataTable>
+                                    <template #cell-game="{ value }">
+                                        <div v-if="value" class="text-sm text-gray-900 dark:text-gray-100 truncate max-w-[120px]">
+                                            {{ value }}
+                                        </div>
+                                        <div v-else class="text-xs text-gray-400">{{ t('N/A') }}</div>
+                                    </template>
+
+                                    <template #cell-status="{ value }">
+                                        <span
+                                            :class="[
+                                                'inline-flex px-1.5 py-0.5 text-xs font-medium rounded-full',
+                                                getStatusBadgeClass(value.status)
+                                            ]"
+                                        >
+                                            {{ value.status_display }}
+                                        </span>
+                                    </template>
+
+                                    <template #cell-date="{ value }">
+                                        <div v-if="value"
+                                             class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                                            <CalendarIcon class="h-3.5 w-3.5 mr-1.5 flex-shrink-0"/>
+                                            <span class="truncate">{{ value }}</span>
+                                        </div>
+                                        <div v-else class="text-xs text-gray-400">{{ t('N/A') }}</div>
+                                    </template>
+
+                                    <template #cell-location="{ value }">
+                                        <div v-if="value && value.hasLocation"
+                                             class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                                            <MapPinIcon class="h-3.5 w-3.5 mr-1.5 flex-shrink-0"/>
+                                            <div class="min-w-0">
+                                                <div class="truncate">{{ value.city.name }}</div>
+                                            </div>
+                                        </div>
+                                        <div v-else class="text-xs text-gray-400">{{ t('N/A') }}</div>
+                                    </template>
+
+                                    <template #cell-players="{ value }">
+                                        <div v-if="value"
+                                             class="text-sm text-gray-900 dark:text-gray-100 text-center">
+                                            {{ value.count }}<span v-if="value.hasMax" class="text-gray-500">/{{ value.max }}</span>
+                                        </div>
+                                        <div v-else class="text-xs text-gray-400">{{ t('N/A') }}</div>
+                                    </template>
+                                </DataTable>
+                            </template>
                         </div>
                     </CardContent>
                 </Card>
