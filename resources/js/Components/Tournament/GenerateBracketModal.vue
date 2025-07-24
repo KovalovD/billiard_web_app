@@ -53,6 +53,7 @@ const olympicStageRacesTo = ref<Record<string, number>>({});
 const specialMatchesRacesTo = ref<Record<string, number>>({});
 const olympicPhaseSize = ref<number>(8);
 const olympicHasThirdPlace = ref(false);
+const olympicThirdPlaceRacesTo = ref<number>(7);
 
 // Load bracket options when modal opens
 watch(() => props.show, async (newVal) => {
@@ -60,6 +61,40 @@ watch(() => props.show, async (newVal) => {
         await loadBracketOptions();
     }
 });
+
+// Watch Olympic phase size changes to update rounds
+watch(() => olympicPhaseSize.value, (newSize) => {
+    if (isOlympicTournament.value && bracketOptions.value) {
+        updateOlympicRounds(newSize);
+    }
+});
+
+const updateOlympicRounds = (phaseSize: number) => {
+    const defaultRacesTo = bracketOptions.value.default_races_to || 7;
+    const bracketSize = bracketOptions.value.bracket_size;
+
+    // Calculate how many upper bracket rounds based on Olympic phase
+    const totalUpperRounds = Math.log2(bracketSize);
+    const olympicStartRound = totalUpperRounds - Math.log2(phaseSize / 2) + 1;
+    const actualUpperRounds = olympicStartRound - 1;
+
+    // Update upper bracket rounds
+    const newUpperRounds: Record<string, number> = {};
+    for (let i = 1; i <= actualUpperRounds; i++) {
+        const key = `UB_R${i}`;
+        newUpperRounds[key] = upperBracketRacesTo.value[key] || defaultRacesTo;
+    }
+    upperBracketRacesTo.value = newUpperRounds;
+
+    // Update Olympic stage rounds
+    const olympicRounds = Math.log2(phaseSize);
+    const newOlympicRounds: Record<string, number> = {};
+    for (let i = 1; i <= olympicRounds; i++) {
+        const key = `O_R${i}`;
+        newOlympicRounds[key] = olympicStageRacesTo.value[key] || defaultRacesTo;
+    }
+    olympicStageRacesTo.value = newOlympicRounds;
+};
 
 const loadBracketOptions = async () => {
     isLoading.value = true;
@@ -76,6 +111,7 @@ const loadBracketOptions = async () => {
         olympicStageRacesTo.value = {};
         specialMatchesRacesTo.value = {};
         lowerBracketRacesTo.value = defaultRacesTo;
+        olympicThirdPlaceRacesTo.value = defaultRacesTo;
 
         // Parse rounds into categories
         if (response.rounds) {
@@ -90,7 +126,11 @@ const loadBracketOptions = async () => {
                         lowerBracketRacesTo.value = currentValue;
                     }
                 } else if (roundKey.startsWith('O_')) {
-                    olympicStageRacesTo.value[roundKey] = currentValue;
+                    if (roundKey === 'O_3RD') {
+                        olympicThirdPlaceRacesTo.value = currentValue;
+                    } else {
+                        olympicStageRacesTo.value[roundKey] = currentValue;
+                    }
                 } else {
                     // Special matches (GF, GF_RESET, 3RD)
                     specialMatchesRacesTo.value[roundKey] = currentValue;
@@ -101,6 +141,8 @@ const loadBracketOptions = async () => {
         // Set Olympic defaults
         if (response.tournament_type === 'olympic_double_elimination' && response.available_olympic_phases?.length > 0) {
             olympicPhaseSize.value = response.olympic_phase_size || response.available_olympic_phases[0];
+            // Update rounds based on initial Olympic phase size
+            updateOlympicRounds(olympicPhaseSize.value);
         }
     } catch (err: any) {
         error.value = err.message || t('Failed to load bracket options');
@@ -151,6 +193,13 @@ const olympicStageRounds = computed(() => {
 // Count lower bracket rounds
 const lowerBracketRoundCount = computed(() => {
     if (!bracketOptions.value?.rounds) return 0;
+
+    if (isOlympicTournament.value) {
+        // For Olympic tournaments, calculate based on upper bracket rounds
+        const upperRounds = upperBracketRounds.value.length;
+        return upperRounds > 0 ? (upperRounds * 2 - 1) : 0;
+    }
+
     return Object.keys(bracketOptions.value.rounds).filter(key => key.startsWith('LB_')).length;
 });
 
@@ -174,6 +223,11 @@ const handleGenerate = () => {
     Object.entries(olympicStageRacesTo.value).forEach(([key, value]) => {
         allRoundsRacesTo[key] = value;
     });
+
+    // Add Olympic third place if enabled
+    if (isOlympicTournament.value && olympicHasThirdPlace.value) {
+        allRoundsRacesTo['O_3RD'] = olympicThirdPlaceRacesTo.value;
+    }
 
     // Add special matches
     Object.entries(specialMatchesRacesTo.value).forEach(([key, value]) => {
@@ -228,7 +282,7 @@ const formatRoundName = (roundKey: string): string => {
                 <div v-if="isOlympicTournament && bracketOptions.available_olympic_phases" class="space-y-4">
                     <div>
                         <Label class="text-base font-medium mb-3 block">{{ t('Olympic Stage Configuration') }}</Label>
-                        <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-4">
                             <div>
                                 <Label class="text-sm text-muted-foreground mb-2">{{ t('Switch to Single Elimination at') }}</Label>
                                 <Select v-model="olympicPhaseSize">
@@ -246,7 +300,8 @@ const formatRoundName = (roundKey: string): string => {
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div v-if="showThirdPlaceOption" class="flex items-end pb-2">
+
+                            <div v-if="showThirdPlaceOption" class="space-y-3">
                                 <div class="flex items-center">
                                     <Switch
                                         v-model="olympicHasThirdPlace"
@@ -255,6 +310,21 @@ const formatRoundName = (roundKey: string): string => {
                                     <Label for="olympic-3rd" class="ml-3 cursor-pointer">
                                         {{ t('Include 3rd Place Match') }}
                                     </Label>
+                                </div>
+
+                                <div v-if="olympicHasThirdPlace" class="pl-7">
+                                    <Label for="olympic-3rd-races" class="text-sm mb-1.5 block">
+                                        {{ t('3rd Place Match - Races to Win') }}
+                                    </Label>
+                                    <Input
+                                        id="olympic-3rd-races"
+                                        v-model.number="olympicThirdPlaceRacesTo"
+                                        type="number"
+                                        min="1"
+                                        max="99"
+                                        class="w-32"
+                                        :placeholder="t('Races to win')"
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -265,7 +335,12 @@ const formatRoundName = (roundKey: string): string => {
                 <!-- Upper Bracket -->
                 <div v-if="upperBracketRounds.length > 0">
                     <div class="mb-3">
-                        <h4 class="text-sm font-medium uppercase text-muted-foreground">{{ t('Upper Bracket') }}</h4>
+                        <h4 class="text-sm font-medium uppercase text-muted-foreground">
+                            {{ t('Upper Bracket') }}
+                            <span v-if="isOlympicTournament" class="normal-case text-xs">
+                                ({{ upperBracketRounds.length }} {{ t('rounds') }})
+                            </span>
+                        </h4>
                         <p class="text-xs text-muted-foreground mt-1">{{ t('Set races to win for each round') }}</p>
                     </div>
                     <div class="grid grid-cols-3 gap-3">
@@ -322,7 +397,12 @@ const formatRoundName = (roundKey: string): string => {
                     <Separator/>
                     <div>
                         <div class="mb-3">
-                            <h4 class="text-sm font-medium uppercase text-muted-foreground">{{ t('Olympic Stage') }}</h4>
+                            <h4 class="text-sm font-medium uppercase text-muted-foreground">
+                                {{ t('Olympic Stage') }}
+                                <span class="normal-case text-xs">
+                                    ({{ olympicStageRounds.length }} {{ t('rounds') }})
+                                </span>
+                            </h4>
                             <p class="text-xs text-muted-foreground mt-1">{{ t('Single elimination rounds - Set races to win') }}</p>
                         </div>
                         <div class="grid grid-cols-3 gap-3">
@@ -402,24 +482,6 @@ const formatRoundName = (roundKey: string): string => {
                                 <Input
                                     id="3rd"
                                     v-model.number="specialMatchesRacesTo['3RD']"
-                                    type="number"
-                                    min="1"
-                                    max="99"
-                                    class="w-full"
-                                    :placeholder="t('Races to win')"
-                                />
-                            </div>
-
-                            <!-- Olympic Third Place -->
-                            <div v-if="specialMatchesRacesTo['O_3RD'] !== undefined"
-                                 class="space-y-1.5">
-                                <Label for="o3rd" class="text-sm flex items-center gap-1.5">
-                                    <span>🥉</span>
-                                    {{ t('Olympic 3rd Place') }}
-                                </Label>
-                                <Input
-                                    id="o3rd"
-                                    v-model.number="specialMatchesRacesTo['O_3RD']"
                                     type="number"
                                     min="1"
                                     max="99"
