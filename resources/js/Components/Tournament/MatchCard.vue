@@ -1,4 +1,3 @@
-// Components/Tournament/MatchCard.vue
 <template>
     <g
         :class="[canEdit ? 'cursor-pointer' : 'cursor-not-allowed']"
@@ -118,6 +117,31 @@
                 {{ t('Drops to') }} {{ loserDropTargetMatch.displayNumber }}
             </text>
         </g>
+
+        <!-- Drops from indicator (for lower bracket matches) -->
+        <g v-if="showLoserDrop && match.bracketSide === 'lower' && dropsFromMatches.length > 0">
+            <rect
+                :x="x"
+                :y="y + cardHeight + (match.loser_next_match_id && loserDropTargetMatch ? 22 : 3)"
+                :width="cardWidth"
+                height="16"
+                fill="#e0e7ff"
+                stroke="#c7d2fe"
+                stroke-width="1"
+                rx="3"
+                class="cursor-pointer hover:fill-indigo-200 transition-colors"
+                @click.stop="$emit('drops-from-click', dropsFromMatches.map(m => m.id))"
+            />
+            <text
+                :x="x + cardWidth / 2"
+                :y="y + cardHeight + (match.loser_next_match_id && loserDropTargetMatch ? 32 : 13)"
+                text-anchor="middle"
+                class="drops-from-text"
+                font-size="9"
+            >
+                {{ t('From') }} {{ dropsFromMatches.map(m => m.displayNumber).join(', ') }}
+            </text>
+        </g>
     </g>
 </template>
 
@@ -154,19 +178,20 @@ interface Props {
     allPositionedMatches?: Array<TransformedMatch & { x: number; y: number }>;
     cardWidth?: number;
     cardHeight?: number;
-    highlightMatchId?: number | null;
+    highlightMatchIds?: Set<number>;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     showLoserDrop: false,
     cardWidth: 180,
     cardHeight: 50,
-    highlightMatchId: null
+    highlightMatchIds: () => new Set()
 });
 
 defineEmits<{
     'click': [matchId: number];
     'loser-drop-click': [targetMatchId: number];
+    'drops-from-click': [matchIds: number[]];
 }>();
 
 const {t} = useLocale();
@@ -178,7 +203,7 @@ const playerHeight = 18;
 // Check if this match should be highlighted
 const isHighlighted = computed(() => {
     // Highlight if this match is specifically highlighted
-    if (props.highlightMatchId === props.match.id) return true;
+    if (props.highlightMatchIds.has(props.match.id)) return true;
 
     // Also highlight if it's the user's active match
     if (!props.currentUserId) return false;
@@ -191,6 +216,17 @@ const isHighlighted = computed(() => {
 const loserDropTargetMatch = computed(() => {
     if (!props.match.loser_next_match_id || !props.allPositionedMatches) return null;
     return props.allPositionedMatches.find(m => m.id === props.match.loser_next_match_id);
+});
+
+// Get matches that drop to this lower bracket match
+const dropsFromMatches = computed(() => {
+    if (!props.allPositionedMatches || props.match.bracketSide !== 'lower') return [];
+
+    // Find all upper bracket matches that have this match as their loser destination
+    return props.allPositionedMatches.filter(m =>
+        m.bracketSide === 'upper' &&
+        m.loser_next_match_id === props.match.id
+    );
 });
 
 // Helper functions
@@ -251,9 +287,18 @@ const getPlayerDisplay = (player: any, isWalkover: boolean, hasOpponent: boolean
     pointer-events: none;
 }
 
+.drops-from-text {
+    fill: #4f46e5;
+    pointer-events: none;
+}
+
 /* Hover effects */
 .hover\:fill-gray-300:hover {
     fill: #d1d5db;
+}
+
+.hover\:fill-indigo-200:hover {
+    fill: #c7d2fe;
 }
 
 .transition-colors {

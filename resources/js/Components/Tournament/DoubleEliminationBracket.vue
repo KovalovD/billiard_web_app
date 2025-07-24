@@ -1,4 +1,3 @@
-// Components/Tournament/DoubleEliminationBracket.vue
 <script lang="ts" setup>
 import {computed, provide, ref, watch} from 'vue'
 import type {Tournament, TournamentMatch} from '@/types/api'
@@ -43,8 +42,9 @@ const {
     toggleFullscreen,
     findMyMatch,
     scrollToMatch,
-    highlightMatchId,
+    highlightMatchIds,
     highlightMatch,
+    highlightMatches,
 } = useBracket(props.currentUserId, {initialZoom: 0.8})
 
 provide('zoomIn', zoomIn)
@@ -286,6 +286,13 @@ const handleLoserDropClick = (targetMatchId: number) => {
     }
 }
 
+const handleDropsFromClick = (matchIds: number[]) => {
+    const sourceMatches = allPositionedMatches.value.filter(m => matchIds.includes(m.id))
+    if (sourceMatches.length > 0) {
+        highlightMatches(sourceMatches)
+    }
+}
+
 const baseBracketRef = ref<InstanceType<typeof BaseBracket>>()
 watch(baseBracketRef, newRef => {
     if (newRef) {
@@ -362,9 +369,10 @@ watch(baseBracketRef, newRef => {
                         :show-loser-drop="true"
                         :matches-by-id="matchesById"
                         :all-positioned-matches="allPositionedMatches"
-                        :highlight-match-id="highlightMatchId"
+                        :highlight-match-ids="highlightMatchIds"
                         @click="handleMatchClick"
                         @loser-drop-click="handleLoserDropClick"
+                        @drops-from-click="handleDropsFromClick"
                     />
                 </g>
             </svg>

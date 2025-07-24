@@ -1,4 +1,3 @@
-// composables/useBracket.ts
 import {nextTick, onMounted, onUnmounted, ref} from 'vue';
 import type {TournamentMatch} from '@/types/api';
 import {useLocale} from '@/composables/useLocale';
@@ -51,8 +50,9 @@ export function useBracket(
     const bracketContainerRef = ref<HTMLDivElement | null | undefined>(null);
     const bracketScrollContainerRef = ref<HTMLDivElement | null | undefined>(null);
 
-    // Highlight state
-    const highlightMatchId = ref<number | null>(null);
+    // Highlight state - now supports multiple matches with independent timers
+    const highlightMatchIds = ref<Set<number>>(new Set());
+    const highlightTimers = new Map<number, NodeJS.Timeout>();
 
     // Touch gesture states
     const touchState = ref({
@@ -266,20 +266,70 @@ export function useBracket(
         });
     };
 
-    // Highlight match function
+    // Helper function to add highlight with independent timer
+    const addHighlightWithTimer = (matchId: number, duration: number = 3000) => {
+        // Clear existing timer for this match if any
+        if (highlightTimers.has(matchId)) {
+            clearTimeout(highlightTimers.get(matchId)!);
+        }
+
+        // Add match to highlight set
+        highlightMatchIds.value.add(matchId);
+
+        // Set new timer for this specific match
+        const timer = setTimeout(() => {
+            highlightMatchIds.value.delete(matchId);
+            highlightTimers.delete(matchId);
+            // Trigger reactivity
+            highlightMatchIds.value = new Set(highlightMatchIds.value);
+        }, duration);
+
+        highlightTimers.set(matchId, timer);
+    };
+
+    // Highlight single match function
     const highlightMatch = (match: BracketMatch & { x: number; y: number }) => {
         if (!match) return;
 
         // Scroll to match
         scrollToMatch(match);
 
-        // Set highlight
-        highlightMatchId.value = match.id;
+        // Clear all previous highlights and timers
+        highlightMatchIds.value.clear();
+        highlightTimers.forEach(timer => clearTimeout(timer));
+        highlightTimers.clear();
 
-        // Remove highlight after 3 seconds
-        setTimeout(() => {
-            highlightMatchId.value = null;
-        }, 3000);
+        // Add highlight with timer
+        addHighlightWithTimer(match.id);
+    };
+
+    // Highlight multiple matches function
+    const highlightMatches = (matches: Array<BracketMatch & { x: number; y: number }>) => {
+        if (!matches || matches.length === 0) return;
+
+        // Clear all previous highlights and timers
+        highlightMatchIds.value.clear();
+        highlightTimers.forEach(timer => clearTimeout(timer));
+        highlightTimers.clear();
+
+        // Add all matches with independent timers
+        matches.forEach(match => {
+            addHighlightWithTimer(match.id);
+        });
+
+        // Calculate center position of all matches for scrolling
+        const avgX = matches.reduce((sum, m) => sum + m.x, 0) / matches.length;
+        const avgY = matches.reduce((sum, m) => sum + m.y, 0) / matches.length;
+
+        // Scroll to center of highlighted matches
+        if (bracketScrollContainerRef.value) {
+            const container = bracketScrollContainerRef.value;
+            const centerX = avgX * zoomLevel.value;
+            const centerY = avgY * zoomLevel.value;
+
+            container.scrollLeft = centerX - container.clientWidth / 2 + (nodeWidth * zoomLevel.value) / 2;
+            container.scrollTop = centerY - container.clientHeight / 2 + (nodeHeight * zoomLevel.value) / 2;
+        }
     };
 
     // Find and focus on user's match
@@ -374,6 +424,9 @@ export function useBracket(
     onUnmounted(() => {
         document.removeEventListener('keydown', handleKeyboard);
         document.removeEventListener('fullscreenchange', handleFullscreenChange);
+        // Clear all highlight timers on unmount
+        highlightTimers.forEach(timer => clearTimeout(timer));
+        highlightTimers.clear();
     });
 
     return {
@@ -388,7 +441,7 @@ export function useBracket(
         isFullscreen,
         bracketContainerRef,
         bracketScrollContainerRef,
-        highlightMatchId,
+        highlightMatchIds,
 
         // Methods
         transformMatch,
@@ -411,5 +464,6 @@ export function useBracket(
         isCurrentUserMatch,
         getPlayerDisplay,
         highlightMatch,
+        highlightMatches,
     };
 }
