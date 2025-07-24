@@ -9,7 +9,8 @@
             :class="[
                 getMatchClass(match),
                 match.bracketSide === 'lower' ? 'lower-bracket-match' : '',
-                isHighlighted ? 'user-match' : ''
+                isHighlighted ? 'user-match' : '',
+                olympicDestination ? 'olympic-qualifier' : ''
             ]"
             :height="cardHeight"
             :width="cardWidth"
@@ -92,6 +93,46 @@
             class="status-in-progress compact"
             r="3"
         />
+
+        <!-- Olympic Stage indicator - displayed next to match -->
+        <g v-if="olympicDestination">
+            <!-- Arrow line -->
+            <line
+                :x1="x + cardWidth"
+                :y1="y + cardHeight / 2"
+                :x2="x + cardWidth + 20"
+                :y2="y + cardHeight / 2"
+                stroke="#f59e0b"
+                stroke-width="2"
+            />
+            <!-- Arrow head -->
+            <polygon
+                :points="`${x + cardWidth + 20},${y + cardHeight / 2} ${x + cardWidth + 15},${y + cardHeight / 2 - 3} ${x + cardWidth + 15},${y + cardHeight / 2 + 3}`"
+                fill="#f59e0b"
+            />
+            <!-- Olympic destination box -->
+            <rect
+                :x="x + cardWidth + 25"
+                :y="y + cardHeight / 2 - 12"
+                width="90"
+                height="24"
+                fill="#fef3c7"
+                stroke="#f59e0b"
+                stroke-width="1"
+                rx="4"
+            />
+            <text
+                :x="x + cardWidth + 70"
+                :y="y + cardHeight / 2 + 4"
+                text-anchor="middle"
+                class="olympic-text"
+                font-size="11"
+                font-weight="600"
+                fill="#92400e"
+            >
+                {{ t('Olympic') }} {{ olympicDestination }}
+            </text>
+        </g>
 
         <!-- Loser drop indicator (for double elimination) -->
         <g v-if="showLoserDrop && match.loser_next_match_id && loserDropTargetMatch">
@@ -179,13 +220,15 @@ interface Props {
     cardWidth?: number;
     cardHeight?: number;
     highlightMatchIds?: Set<number>;
+    olympicDestination?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     showLoserDrop: false,
     cardWidth: 180,
     cardHeight: 50,
-    highlightMatchIds: () => new Set()
+    highlightMatchIds: () => new Set(),
+    olympicDestination: undefined
 });
 
 defineEmits<{
@@ -290,6 +333,16 @@ const getPlayerDisplay = (player: any, isWalkover: boolean, hasOpponent: boolean
 .drops-from-text {
     fill: #4f46e5;
     pointer-events: none;
+}
+
+.olympic-text {
+    pointer-events: none;
+}
+
+/* Olympic qualifier match styling */
+.olympic-qualifier {
+    stroke: #f59e0b;
+    stroke-width: 2;
 }
 
 /* Hover effects */

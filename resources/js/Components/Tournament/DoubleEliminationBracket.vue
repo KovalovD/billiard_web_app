@@ -131,6 +131,62 @@ const matchesById = computed(() => {
     return map
 })
 
+// Map Olympic qualifying matches to their destination Olympic matches
+const olympicQualifyingMap = computed(() => {
+    const map = new Map<number, string>()
+
+    // Find all matches that advance to Olympic stage
+    // These are matches that don't have a next_match_id within the double elimination bracket
+    const allMatches = [...upperBracketMatches.value, ...lowerBracketMatches.value]
+    const matchIds = new Set(allMatches.map(m => m.id))
+
+    // Collect all Olympic qualifying matches
+    const upperOlympicMatches: typeof allMatches = []
+    const lowerOlympicMatches: typeof allMatches = []
+
+    allMatches.forEach(match => {
+        // A match goes to Olympic if it has no next_match_id or next_match_id is not in our bracket
+        if (!match.next_match_id || !matchIds.has(match.next_match_id)) {
+            // Skip if it goes to grand finals
+            if (grandFinals.value.some(gf => gf.id === match.next_match_id)) {
+                return
+            }
+
+            if (match.bracketSide === 'upper') {
+                upperOlympicMatches.push(match)
+            } else if (match.bracketSide === 'lower') {
+                lowerOlympicMatches.push(match)
+            }
+        }
+    })
+
+    // Sort matches by round and slot to ensure consistent ordering
+    upperOlympicMatches.sort((a, b) => {
+        if (a.round !== b.round) return a.round - b.round
+        return a.slot - b.slot
+    })
+
+    lowerOlympicMatches.sort((a, b) => {
+        if (a.round !== b.round) return a.round - b.round
+        return a.slot - b.slot
+    })
+
+    // Map upper bracket matches: 1, 2, 3, ...
+    upperOlympicMatches.forEach((match, index) => {
+        map.set(match.id, `1-${index + 1}`)
+    })
+
+    // Map lower bracket matches: count down from total upper matches
+    // If upper has 4 matches (1-1 to 1-4), lower starts from 1-4 and goes down
+    const upperCount = upperOlympicMatches.length
+    lowerOlympicMatches.forEach((match, index) => {
+        const olympicSlot = upperCount - index
+        map.set(match.id, `1-${olympicSlot}`)
+    })
+
+    return map
+})
+
 const upperBracketHeight = computed(() => {
     if (upperRounds.value.length === 0) return 0
     const firstRoundMatches = upperRounds.value[0]?.length || 0
@@ -255,7 +311,7 @@ const svgWidth = computed(() => {
         ...positionedGrandFinals.value.map(m => m.x),
         0,
     )
-    return maxX + nodeWidth + 80
+    return maxX + nodeWidth + 140 // Extra space for Olympic indicator
 })
 
 const svgHeight = computed(() => {
@@ -370,6 +426,7 @@ watch(baseBracketRef, newRef => {
                         :matches-by-id="matchesById"
                         :all-positioned-matches="allPositionedMatches"
                         :highlight-match-ids="highlightMatchIds"
+                        :olympic-destination="olympicQualifyingMap.get(m.id)"
                         @click="handleMatchClick"
                         @loser-drop-click="handleLoserDropClick"
                         @drops-from-click="handleDropsFromClick"
