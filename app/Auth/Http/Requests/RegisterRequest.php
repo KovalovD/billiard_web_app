@@ -9,6 +9,13 @@ use Illuminate\Validation\Rules\Password;
 
 class RegisterRequest extends BaseFormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'email' => strtolower($this->email ?? ''),
+        ]);
+    }
+
     public function rules(): array
     {
         return [

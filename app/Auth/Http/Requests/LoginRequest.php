@@ -18,6 +18,7 @@ class LoginRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
+            'email'      => strtolower($this->email ?? ''),
             'deviceName' => $this->deviceName ?? $this->header('User-Agent'),
         ]);
     }
