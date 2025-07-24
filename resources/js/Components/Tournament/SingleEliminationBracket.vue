@@ -1,4 +1,4 @@
-resources/js/Components/Tournament/SingleElimination.vue
+// resources/js/Components/Tournament/SingleElimination.vue
 <script lang="ts" setup>
 import {computed, provide, ref, watch} from 'vue';
 import type {Tournament, TournamentMatch} from '@/types/api';
@@ -43,6 +43,7 @@ const {
     handleWheel,
     toggleFullscreen,
     findMyMatch,
+    highlightMatchId,
 } = useBracket(
     props.currentUserId,
     {initialZoom: 1}
@@ -71,9 +72,24 @@ const bracketMatches = computed(() => {
         'third_place': 6
     };
 
-    return props.matches
-        .filter(m => m.round && roundMap[m.round] !== undefined && m.bracket_side !== 'lower')
-        .map(m => transformMatch(m, null, roundMap[m.round!]))
+    // Filter matches and get their round indices
+    const filteredMatches = props.matches
+        .filter(m => m.round && roundMap[m.round] !== undefined && m.bracket_side !== 'lower');
+
+    // Find the minimum round index to normalize from 0
+    const roundIndices = filteredMatches.map(m => roundMap[m.round!]);
+    const minRoundIndex = roundIndices.length > 0 ? Math.min(...roundIndices) : 0;
+
+    // Check if this is Olympic stage
+    const isOlympicStage = props.tournament.stage === 'olympic' ||
+        props.matches.some(m => m.stage === 'olympic');
+
+    return filteredMatches
+        .map(m => {
+            // Pass 'olympic' as bracketSide to get 'O' prefix in display number
+            const bracketSide = isOlympicStage ? 'olympic' as any : null;
+            return transformMatch(m, bracketSide, roundMap[m.round!] - minRoundIndex);
+        })
         .sort((a, b) => a.round - b.round || a.slot - b.slot);
 });
 
@@ -212,6 +228,7 @@ watch(baseBracketRef, (newRef) => {
                         :current-user-id="currentUserId"
                         :card-width="nodeWidth"
                         :card-height="nodeHeight"
+                        :highlight-match-id="highlightMatchId"
                         @click="handleMatchClick"
                     />
                 </g>

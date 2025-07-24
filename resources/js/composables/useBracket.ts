@@ -14,6 +14,7 @@ export interface BracketMatch {
     winner_id?: number;
     status: string;
     match_code: string;
+    displayNumber: string; // New field for user-friendly display
     isWalkover: boolean;
     bracketSide?: 'upper' | 'lower' | null;
     stage: string;
@@ -70,34 +71,55 @@ export function useBracket(
         m: TournamentMatch,
         bracketSide: 'upper' | 'lower' | null,
         round: number
-    ): BracketMatch => ({
-        id: m.id,
-        round,
-        slot: m.bracket_position || 0,
-        player1: m.player1 ? {
-            id: m.player1_id!,
-            name: `${m.player1.firstname} ${m.player1.lastname}`
-        } : null,
-        player2: m.player2 ? {
-            id: m.player2_id!,
-            name: `${m.player2.firstname} ${m.player2.lastname}`
-        } : null,
-        player1_score: m.player1_score,
-        player2_score: m.player2_score,
-        winner_id: m.winner_id,
-        match_code: m.match_code,
-        status: m.status,
-        isWalkover: m.status === 'completed' && (
-            (!!m.player1_id && !m.player2_id) || (!m.player1_id && !!m.player2_id)
-        ),
-        bracketSide,
-        stage: m.stage,
-        next_match_id: m.next_match_id,
-        previous_match1_id: m.previous_match1_id,
-        previous_match2_id: m.previous_match2_id,
-        loser_next_match_id: m.loser_next_match_id,
-        loser_next_match_position: m.loser_next_match_position
-    });
+    ): BracketMatch => {
+        const slot = m.bracket_position || 0;
+
+        // Create display number based on round and slot
+        // Special handling for grand finals
+        let displayNumber: string;
+        if (m.match_code === 'GF') {
+            displayNumber = 'GF';
+        } else if (m.match_code === 'GF_RESET') {
+            displayNumber = 'GF2';
+        } else {
+            // Regular matches: Round-Match format (1-based)
+            displayNumber = `${round + 1}-${slot + 1}`;
+            // Add bracket side indicator for lower bracket
+            if (bracketSide === 'lower') {
+                displayNumber = `L${displayNumber}`;
+            }
+        }
+
+        return {
+            id: m.id,
+            round,
+            slot,
+            player1: m.player1 ? {
+                id: m.player1_id!,
+                name: `${m.player1.firstname} ${m.player1.lastname}`
+            } : null,
+            player2: m.player2 ? {
+                id: m.player2_id!,
+                name: `${m.player2.firstname} ${m.player2.lastname}`
+            } : null,
+            player1_score: m.player1_score,
+            player2_score: m.player2_score,
+            winner_id: m.winner_id,
+            match_code: m.match_code,
+            displayNumber,
+            status: m.status,
+            isWalkover: m.status === 'completed' && (
+                (!!m.player1_id && !m.player2_id) || (!m.player1_id && !!m.player2_id)
+            ),
+            bracketSide,
+            stage: m.stage,
+            next_match_id: m.next_match_id,
+            previous_match1_id: m.previous_match1_id,
+            previous_match2_id: m.previous_match2_id,
+            loser_next_match_id: m.loser_next_match_id,
+            loser_next_match_position: m.loser_next_match_position
+        };
+    };
 
     // Zoom functions
     const setZoom = (newZoom: number) => {

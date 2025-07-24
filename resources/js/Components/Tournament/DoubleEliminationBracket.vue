@@ -67,22 +67,34 @@ const upperBracketMatches = computed(() => {
         semifinals: 5,
         finals: 6,
     }
-    return props.matches
+
+    // Get all upper bracket matches
+    const upperMatches = props.matches
         .filter(m => m.bracket_side === 'upper' && m.round && roundMap[m.round] !== undefined)
-        .map(m => transformMatch(m, 'upper', roundMap[m.round!]))
+
+    // Find the minimum round index to normalize from 0
+    const minRoundIndex = Math.min(...upperMatches.map(m => roundMap[m.round!]))
+
+    return upperMatches
+        .map(m => transformMatch(m, 'upper', roundMap[m.round!] - minRoundIndex))
         .sort((a, b) => a.round - b.round || a.slot - b.slot)
 })
 
 const lowerBracketMatches = computed(() => {
-    return props.matches
+    const lowerMatches = props.matches
         .filter(m => m.bracket_side === 'lower')
-        .map(m =>
-            transformMatch(
-                m,
-                'lower',
-                parseInt(m.match_code.split('_R')[1]?.split('M')[0] || '0') - 1,
-            ),
-        )
+
+    // Find the minimum round number to normalize from 0
+    const roundNumbers = lowerMatches.map(m =>
+        parseInt(m.match_code.split('_R')[1]?.split('M')[0] || '1') - 1
+    )
+    const minRound = Math.min(...roundNumbers)
+
+    return lowerMatches
+        .map(m => {
+            const absoluteRound = parseInt(m.match_code.split('_R')[1]?.split('M')[0] || '1') - 1
+            return transformMatch(m, 'lower', absoluteRound - minRound)
+        })
         .sort((a, b) => a.round - b.round || a.slot - b.slot)
 })
 
@@ -349,6 +361,7 @@ watch(baseBracketRef, newRef => {
                         :card-height="nodeHeight"
                         :show-loser-drop="true"
                         :matches-by-id="matchesById"
+                        :all-positioned-matches="allPositionedMatches"
                         :highlight-match-id="highlightMatchId"
                         @click="handleMatchClick"
                         @loser-drop-click="handleLoserDropClick"

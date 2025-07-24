@@ -1,3 +1,4 @@
+// Components/Tournament/MatchCard.vue
 <template>
     <g
         :class="[canEdit ? 'cursor-pointer' : 'cursor-not-allowed']"
@@ -33,9 +34,9 @@
             </text>
         </g>
 
-        <!-- Match number - more compact positioning -->
+        <!-- Match number - using displayNumber instead of match_code -->
         <text :x="x + cardWidth - 25" :y="y + 10" class="match-number compact" text-anchor="end">
-            {{ match.match_code }}
+            {{ match.displayNumber }}
         </text>
 
         <!-- Player 1 - compact height -->
@@ -94,7 +95,7 @@
         />
 
         <!-- Loser drop indicator (for double elimination) -->
-        <g v-if="showLoserDrop && match.loser_next_match_id && matchesById?.get(match.loser_next_match_id)">
+        <g v-if="showLoserDrop && match.loser_next_match_id && loserDropTargetMatch">
             <rect
                 :x="x"
                 :y="y + cardHeight + 3"
@@ -114,7 +115,7 @@
                 class="loser-drop-text"
                 font-size="9"
             >
-                {{ t('Drops to') }} {{ matchesById?.get(match.loser_next_match_id)?.match_code }}
+                {{ t('Drops to') }} {{ loserDropTargetMatch.displayNumber }}
             </text>
         </g>
     </g>
@@ -128,6 +129,7 @@ import type {TournamentMatch} from '@/types/api';
 interface TransformedMatch {
     id: number;
     match_code: string;
+    displayNumber: string;
     round: number;
     slot: number;
     status: string;
@@ -149,6 +151,7 @@ interface Props {
     currentUserId?: number;
     showLoserDrop?: boolean;
     matchesById?: Map<number, TournamentMatch>;
+    allPositionedMatches?: Array<TransformedMatch & { x: number; y: number }>;
     cardWidth?: number;
     cardHeight?: number;
     highlightMatchId?: number | null;
@@ -182,6 +185,12 @@ const isHighlighted = computed(() => {
     const isUserMatch = props.match.player1?.id === props.currentUserId ||
         props.match.player2?.id === props.currentUserId;
     return isUserMatch && props.match.status !== 'completed';
+});
+
+// Get the target match for loser drop display
+const loserDropTargetMatch = computed(() => {
+    if (!props.match.loser_next_match_id || !props.allPositionedMatches) return null;
+    return props.allPositionedMatches.find(m => m.id === props.match.loser_next_match_id);
 });
 
 // Helper functions
