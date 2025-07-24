@@ -26,21 +26,7 @@ class AdminUserSearchController
         $query = $validated['query'];
         $limit = $validated['limit'] ?? 20;
 
-        $users = User::where(static function ($q) use ($query) {
-            $q
-                ->where('firstname', 'LIKE', "%$query%")
-                ->orWhere('lastname', 'LIKE', "%$query%")
-                ->orWhere('email', 'LIKE', "%$query%")
-                ->orWhereRaw("CONCAT(firstname, ' ', lastname) LIKE ?", ["%$query%"])
-                ->orWhereRaw("CONCAT(lastname, ' ', firstname) LIKE ?", ["%$query%"])
-            ;
-        })
-            ->where('is_active', true)
-            ->orderBy('lastname')
-            ->orderBy('firstname')
-            ->limit($limit)
-            ->get()
-        ;
+        $users = User::searchUser($query, $limit);
 
         return UserResource::collection($users);
     }

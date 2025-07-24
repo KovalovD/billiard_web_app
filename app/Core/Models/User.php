@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
@@ -133,5 +134,26 @@ class User extends Authenticatable
         return Attribute::make(
             get: fn($value) => $this->lastname.' '.$this->firstname,
         );
+    }
+
+    public static function searchUser(string $query, int $limit = 20): Collection
+    {
+        $query = mb_strtolower($query);
+
+        return self::where(static function ($q) use ($query) {
+            $q
+                ->whereRaw('LOWER(firstname) LIKE ?', ["%$query%"])
+                ->orWhereRaw('LOWER(lastname) LIKE ?', ["%$query%"])
+                ->orWhereRaw('LOWER(email) LIKE ?', ["%$query%"])
+                ->orWhereRaw("LOWER(CONCAT(firstname, ' ', lastname)) LIKE ?", ["%$query%"])
+                ->orWhereRaw("LOWER(CONCAT(lastname, ' ', firstname)) LIKE ?", ["%$query%"])
+            ;
+        })
+            ->where('is_active', true)
+            ->orderBy('lastname')
+            ->orderBy('firstname')
+            ->limit($limit)
+            ->get()
+        ;
     }
 }

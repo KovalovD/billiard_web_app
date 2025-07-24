@@ -522,16 +522,7 @@ readonly class TournamentService
      */
     public function searchUsers(string $query): Collection
     {
-        return User::where(static function ($q) use ($query) {
-            $q
-                ->where('firstname', 'LIKE', "%$query%")
-                ->orWhere('lastname', 'LIKE', "%$query%")
-                ->orWhere('email', 'LIKE', "%$query%")
-            ;
-        })
-            ->limit(20)
-            ->get()
-        ;
+        return User::searchUser($query);
     }
 
     /**
