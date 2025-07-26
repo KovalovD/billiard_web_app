@@ -128,5 +128,5 @@ return [
     'All :count rounds'                                                              => 'All :count rounds',
     'Default: :count races'                                                          => 'Default: :count races',
     'Top :count'                                                                     => 'Top :count',
-    'Set races to win for all :count lower bracket rounds'                                                                     => 'Set races to win for all :count lower bracket rounds',
+    'Set races to win for all :count lower bracket rounds'                           => 'Set races to win for all :count lower bracket rounds',
 ];

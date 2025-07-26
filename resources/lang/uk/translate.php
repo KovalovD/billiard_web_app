@@ -767,6 +767,15 @@ return [
 
     // Donate Button
     'Support'                                                                                                                                                                           => 'Підтримати',
-    'Loading...'                                                                                                                                                                        => 'Завантаження...',
     'QR Code for donation'                                                                                                                                                              => 'QR-код для пожертви',
+    'All :count lower bracket rounds'                                                                                                                                                   => 'All :count lower bracket rounds',
+    'Rounds 1-:count'                                                                                                                                                                   => 'Rounds 1-:count',
+    'default_races_to'                                                                                                                                                                  => 'Default races to win is :count. You can customize each round as needed.',
+    'Top :count players'                                                                                                                                                                => 'Top :count players',
+    'R:num'                                                                                                                                                                             => 'R:num',
+    'All :count rounds'                                                                                                                                                                 => 'All :count rounds',
+    'Default: :count races'                                                                                                                                                             => 'Default: :count races',
+    'Top :count'                                                                                                                                                                        => 'Top :count',
+    'Set races to win for all :count lower bracket rounds'                                                                                                                              => 'Set races to win for all :count lower bracket rounds',
+    'Round :num'                                                                                                                              => 'Round :num',
 ];
